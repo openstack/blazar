@@ -1,0 +1,3 @@
+eventlet
+iso8601
+oslo.config>=1.1.0

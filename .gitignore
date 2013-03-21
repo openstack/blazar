@@ -10,8 +10,6 @@ dist
 build
 eggs
 parts
-bin
-var
 sdist
 develop-eggs
 .installed.cfg
@@ -29,7 +27,5 @@ nosetests.xml
 # Translations
 *.mo
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+AUTHORS
+ChangeLog
