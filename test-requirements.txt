@@ -1,0 +1,7 @@
+nose
+mock
+mox
+sphinxcontrib-httpdomain
+
+-f http://tarballs.openstack.org/nova/nova-master.tar.gz#egg=nova-master
+nova>=master

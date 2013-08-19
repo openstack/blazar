@@ -25,9 +25,13 @@ from climate.service import prepare_service
 from climate.scheduler import service as scheduler_service
 from climate.openstack.common import service
 
-if __name__ == '__main__':
+
+def main():
     prepare_service(sys.argv)
     service.launch(
         scheduler_service.SchedulerService(cfg.CONF.host,
                                            'climate.scheduler')
     ).wait()
+
+if __name__ == '__main__':
+    main()
