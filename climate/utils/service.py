@@ -15,10 +15,54 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import functools
+
 from oslo.config import cfg
 
+from climate import context
 from climate.openstack.common import log
 from climate.openstack.common import rpc
+import climate.openstack.common.rpc.proxy as rpc_proxy
+
+
+class RpcProxy(rpc_proxy.RpcProxy):
+    def cast(self, name, topic=None, version=None, ctx=None, **kwargs):
+        if ctx is None:
+            ctx = context.Context.current()
+        msg = self.make_msg(name, **kwargs)
+        return super(RpcProxy, self).cast(ctx, msg,
+                                          topic=topic, version=version)
+
+    def call(self, name, topic=None, version=None, ctx=None, **kwargs):
+        if ctx is None:
+            ctx = context.Context.current()
+        msg = self.make_msg(name, **kwargs)
+        return super(RpcProxy, self).call(ctx, msg,
+                                          topic=topic, version=version)
+
+
+def export_context(func):
+    @functools.wraps(func)
+    def decorator(manager, ctx, *args, **kwargs):
+        try:
+            context.Context.current()
+        except RuntimeError:
+            new_ctx = context.Context(**ctx.values)
+            with new_ctx:
+                return func(manager, *args, **kwargs)
+        else:
+            return func(manager, ctx, *args, **kwargs)
+
+    return decorator
+
+
+def with_empty_context(func):
+    @functools.wraps(func)
+    def decorator(*args, **kwargs):
+        with context.Context():
+            return func(*args, **kwargs)
+
+    return decorator
 
 
 def prepare_service(argv=[]):

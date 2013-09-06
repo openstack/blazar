@@ -31,37 +31,6 @@ eventlet.monkey_patch(
     os=True, select=True, socket=True, thread=True, time=True)
 
 
-opts = [
-    cfg.StrOpt('os_auth_protocol',
-               default='http',
-               help='Protocol used to access OpenStack Identity service'),
-    cfg.StrOpt('os_auth_host',
-               default='127.0.0.1',
-               help='IP or hostname of machine on which OpenStack Identity '
-                    'service is located'),
-    cfg.StrOpt('os_auth_port',
-               default='35357',
-               help='Port of OpenStack Identity service'),
-    cfg.StrOpt('os_admin_username',
-               default='admin',
-               help='This OpenStack user is used to verify provided tokens. '
-                    'The user must have admin role in <os_admin_tenant_name> '
-                    'tenant'),
-    cfg.StrOpt('os_admin_password',
-               default='nova',
-               help='Password of the admin user'),
-    cfg.StrOpt('os_admin_tenant_name',
-               default='admin',
-               help='Name of tenant where the user is admin'),
-    cfg.StrOpt('os_auth_version',
-               default='v2.0',
-               help='By default use Keystone API v2.0.'),
-]
-
-CONF = cfg.CONF
-CONF.register_opts(opts)
-
-
 def make_json_error(ex):
     if isinstance(ex, werkzeug_exceptions.HTTPException):
         status_code = ex.code
@@ -100,22 +69,22 @@ def make_app():
     for code in werkzeug_exceptions.default_exceptions.iterkeys():
         app.error_handler_spec[None][code] = make_json_error
 
-    if CONF.debug and not CONF.log_exchange:
+    if cfg.CONF.debug and not cfg.CONF.log_exchange:
         LOG.debug('Logging of request/response exchange could be enabled using'
                   ' flag --log-exchange')
 
-    if CONF.log_exchange:
+    if cfg.CONF.log_exchange:
         app.wsgi_app = debug.Debug.factory(app.config)(app.wsgi_app)
 
     app.wsgi_app = auth_token.filter_factory(
         app.config,
-        auth_host=CONF.os_auth_host,
-        auth_port=CONF.os_auth_port,
-        auth_protocol=CONF.os_auth_protocol,
-        admin_user=CONF.os_admin_username,
-        admin_password=CONF.os_admin_password,
-        admin_tenant_name=CONF.os_admin_tenant_name,
-        auth_version=CONF.os_auth_version,
+        auth_host=cfg.CONF.os_auth_host,
+        auth_port=cfg.CONF.os_auth_port,
+        auth_protocol=cfg.CONF.os_auth_protocol,
+        admin_user=cfg.CONF.os_admin_username,
+        admin_password=cfg.CONF.os_admin_password,
+        admin_tenant_name=cfg.CONF.os_admin_tenant_name,
+        auth_version=cfg.CONF.os_auth_version,
     )(app.wsgi_app)
 
     return app

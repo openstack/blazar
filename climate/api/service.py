@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from climate import exceptions
+from climate.manager import rpcapi as manager_rpcapi
 from climate.openstack.common import log as logging
 
 
@@ -21,11 +23,14 @@ LOG = logging.getLogger(__name__)
 
 class API(object):
 
+    def __init__(self):
+        self.manager_rpcapi = manager_rpcapi.ManagerRPCAPI()
+
     ## Leases operations
 
     def get_leases(self):
         """List all existing leases."""
-        pass
+        return self.manager_rpcapi.list_leases()
 
     def create_lease(self, data):
         """Create new lease.
@@ -33,7 +38,10 @@ class API(object):
         :param data: New lease characteristics.
         :type data: dict
         """
-        pass
+        # here API should go to Keystone API v3 and create trust
+        trust = 'trust'
+        data.update({'trust': trust})
+        return self.manager_rpcapi.create_lease(data)
 
     def get_lease(self, lease_id):
         """Get lease by its ID.
@@ -41,7 +49,7 @@ class API(object):
         :param lease_id: ID of the lease in Climate DB.
         :type lease_id: str
         """
-        pass
+        return self.manager_rpcapi.get_lease(lease_id)
 
     def update_lease(self, lease_id, data):
         """Update lease. Only name changing and prolonging may be proceeded.
@@ -51,7 +59,22 @@ class API(object):
         :param data: New lease characteristics.
         :type data: dict
         """
-        pass
+        new_name = data.pop('name', None)
+        end_date = data.pop('end_date', None)
+        start_date = data.pop('start_date', None)
+
+        if data:
+            raise exceptions.ClimateException('Only name changing and '
+                                              'dates changing may be '
+                                              'proceeded.')
+        data = {}
+        if new_name:
+            data['name'] = new_name
+        if end_date:
+            data['end_date'] = end_date
+        if start_date:
+            data['start_date'] = start_date
+        return self.manager_rpcapi.update_lease(lease_id, data)
 
     def delete_lease(self, lease_id):
         """Delete specified lease.
@@ -59,7 +82,7 @@ class API(object):
         :param lease_id: ID of the lease in Climate DB.
         :type lease_id: str
         """
-        pass
+        self.manager_rpcapi.delete_lease(lease_id)
 
     ## Plugins operations
 

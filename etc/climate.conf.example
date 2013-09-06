@@ -1,0 +1,15 @@
+[DEFAULT]
+
+os_auth_host=<auth_host>
+os_auth_port=<auth_port>
+os_auth_protocol=<http, for example>
+os_admin_username=<username>
+os_admin_password=<password>
+os_admin_tenant_name=<tenant_name>
+
+[manager]
+plugins=dummy.vm.plugin
+
+[virtual:instance]
+on_start = wake_up
+on_end = delete

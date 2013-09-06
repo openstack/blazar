@@ -302,6 +302,12 @@ def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
     if 'status' in filters:
         events_query = \
             events_query.filter(models.Event.status == filters['status'])
+    if 'lease_id' in filters:
+        events_query = \
+            events_query.filter(models.Event.lease_id == filters['lease_id'])
+    if 'event_type' in filters:
+        events_query = events_query.filter(models.Event.event_type ==
+                                           filters['event_type'])
 
     events_query = events_query.order_by(
         sort_fn[sort_dir](getattr(models.Event, sort_key))

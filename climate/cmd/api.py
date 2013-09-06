@@ -15,7 +15,6 @@
 
 import gettext
 import os
-import socket
 import sys
 
 import eventlet
@@ -32,12 +31,6 @@ from climate.utils import service as service_utils
 
 
 opts = [
-    cfg.StrOpt('host', default=socket.getfqdn(),
-               help='Name of this node.  This can be an opaque identifier.  '
-               'It is not necessarily a hostname, FQDN, or IP address. '
-               'However, the node name must be valid within '
-               'an AMQP key, and if using ZeroMQ, a valid '
-               'hostname, FQDN, or IP address'),
     cfg.IntOpt('port', default=1234,
                help='Port that will be used to listen on'),
 ]
