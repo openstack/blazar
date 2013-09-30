@@ -201,9 +201,10 @@ def event_get(context, event_id):
 
 
 @to_dict
-def event_get_all_sorted_by_filters(context, sort_key=None, filters=None):
+def event_get_all_sorted_by_filters(context, sort_key, sort_dir, filters):
     """Return instances sorted by param"""
-    return IMPL.event_get_all_sorted_by_filters(context, sort_key, filters)
+    return IMPL.event_get_all_sorted_by_filters(context, sort_key, sort_dir,
+                                                filters)
 
 
 @to_dict
