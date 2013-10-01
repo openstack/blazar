@@ -27,6 +27,7 @@ from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 from climate.openstack.common.rpc import service as rpc_service
 from climate.utils import service as service_utils
+from climate.utils import trusts
 
 manager_opts = [
     cfg.StrOpt('rpc_topic',
@@ -219,22 +220,27 @@ class ManagerService(rpc_service.Service):
         lease = self.get_lease(lease_id)
         if (datetime.datetime.utcnow() < lease['start_date'] or
                 datetime.datetime.utcnow() > lease['end_date']):
-            for reservation in lease['reservations']:
-                try:
-                    self.plugins[reservation['resource_type']]\
-                        .on_end(reservation['resource_id'])
-                except RuntimeError:
-                    LOG.exception("Failed to delete a reservation")
-            db_api.lease_destroy(lease_id)
+            with trusts.create_ctx_from_trust(lease['trust_id']):
+                for reservation in lease['reservations']:
+                    try:
+                        self.plugins[reservation['resource_type']]\
+                            .on_end(reservation['resource_id'])
+                    except RuntimeError:
+                        LOG.exception("Failed to delete a reservation")
+                db_api.lease_destroy(lease_id)
         else:
             raise exceptions.NotAuthorized(
                 'Already started lease cannot be deleted')
 
     def start_lease(self, lease_id, event_id):
-        self._basic_action(lease_id, event_id, 'on_start', 'active')
+        lease = self.get_lease(lease_id)
+        with trusts.create_ctx_from_trust(lease['trust_id']):
+            self._basic_action(lease_id, event_id, 'on_start', 'active')
 
     def end_lease(self, lease_id, event_id):
-        self._basic_action(lease_id, event_id, 'on_end', 'deleted')
+        lease = self.get_lease(lease_id)
+        with trusts.create_ctx_from_trust(lease['trust_id']):
+            self._basic_action(lease_id, event_id, 'on_end', 'deleted')
 
     def _basic_action(self, lease_id, event_id, action_time,
                       reservation_status=None):

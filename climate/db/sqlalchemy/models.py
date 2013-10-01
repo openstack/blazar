@@ -54,7 +54,7 @@ class Lease(mb.ClimateBase):
     tenant_id = sa.Column(sa.String(255), nullable=True)
     start_date = sa.Column(sa.DateTime, nullable=False)
     end_date = sa.Column(sa.DateTime, nullable=False)
-    trust = sa.Column(sa.String(36), nullable=False)
+    trust_id = sa.Column(sa.String(36))
     reservations = relationship('Reservation', cascade="all,delete",
                                 backref='lease', lazy='joined')
     events = relationship('Event', cascade="all,delete",

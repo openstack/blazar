@@ -17,7 +17,7 @@ from climate import exceptions
 from climate.manager import rpcapi as manager_rpcapi
 from climate.openstack.common import log as logging
 from climate import policy
-
+from climate.utils import trusts
 
 LOG = logging.getLogger(__name__)
 
@@ -42,8 +42,10 @@ class API(object):
         :type data: dict
         """
         # here API should go to Keystone API v3 and create trust
-        trust = 'trust'
-        data.update({'trust': trust})
+        trust = trusts.create_trust()
+        trust_id = trust.id
+        data.update({'trust_id': trust_id})
+
         return self.manager_rpcapi.create_lease(data)
 
     @policy.authorize('leases', 'get')
