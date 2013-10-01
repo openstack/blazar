@@ -76,3 +76,15 @@ class ServiceCatalogNotFound(NotFound):
 
 class WrongFormat(ClimateException):
     msg_fmt = _("Unenxpectable object format")
+
+
+class ServiceClient(ClimateException):
+    msg_fmt = _("Service %(service)s have some problems")
+
+
+class TaskFailed(ClimateException):
+    msg_fmt = _('Current task failed')
+
+
+class Timeout(ClimateException):
+    msg_fmt = _('Current task failed with timeout')

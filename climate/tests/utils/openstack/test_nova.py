@@ -68,7 +68,6 @@ class TestCNClient(tests.TestCase):
         self.client.assert_called_once_with(version=self.version,
                                             username=self.ctx().user_name,
                                             api_key=None,
-                                            auth_token=self.ctx().auth_token,
                                             project_id=self.ctx().tenant_id,
                                             auth_url='http://fake.com/')
 
