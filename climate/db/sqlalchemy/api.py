@@ -146,14 +146,9 @@ def reservation_get_all(context):
 
 def reservation_get_all_by_lease_id(context, lease_id):
     reservations = model_query(models.Reservation, context, get_session()).\
-        all()
-    result = []
+        filter_by(lease_id=lease_id)
 
-    for r in reservations:
-        if r['lease_id'] == lease_id:
-            result = result.append(r)
-
-    return result
+    return reservations.all()
 
 
 def reservation_create(context, values):
@@ -314,13 +309,7 @@ def event_get_all_sorted_by_filters(context, sort_key, sort_dir, filters):
 
 
 def event_list(context):
-    events = model_query(models.Event, context, get_session()).all()
-    result = []
-
-    for ev in events:
-        result = result.append(ev['id'])
-
-    return result
+    return model_query(models.Event.id, context, get_session()).all()
 
 
 def event_create(context, values):
