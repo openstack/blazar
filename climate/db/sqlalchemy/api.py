@@ -153,6 +153,17 @@ def reservation_get_all_by_lease_id(lease_id):
     return reservations.all()
 
 
+def reservation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+
+    reservation_query = model_query(models.Reservation, get_session())
+    for name, value in kwargs.items():
+        column = getattr(models.Reservation, name, None)
+        if column:
+            reservation_query = reservation_query.filter(column == value)
+    return reservation_query.all()
+
+
 def reservation_create(values):
     values = values.copy()
     reservation = models.Reservation()
@@ -357,3 +368,242 @@ def event_destroy(event_id):
             raise RuntimeError("Event not found!")
 
         session.delete(event)
+
+
+#ComputeHostReservation
+def _host_reservation_get(session, host_reservation_id):
+    query = model_query(models.ComputeHostReservation, session)
+    return query.filter_by(id=host_reservation_id).first()
+
+
+def host_reservation_get(host_reservation_id):
+    return _host_reservation_get(get_session(),
+                                 host_reservation_id)
+
+
+def host_reservation_get_all():
+    query = model_query(models.ComputeHostReservation, get_session())
+    return query.all()
+
+
+def _host_reservation_get_by_reservation_id(session, reservation_id):
+    query = model_query(models.ComputeHostReservation, session)
+    return query.filter_by(reservation_id=reservation_id).first()
+
+
+def host_reservation_get_by_reservation_id(reservation_id):
+    return _host_reservation_get_by_reservation_id(get_session(),
+                                                   reservation_id)
+
+
+def host_reservation_create(values):
+    values = values.copy()
+    host_reservation = models.ComputeHostReservation()
+    host_reservation.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            host_reservation.save(session=session)
+        except db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+
+    return host_reservation_get(host_reservation.id)
+
+
+def host_reservation_update(host_reservation_id, values):
+    session = get_session()
+
+    with session.begin():
+        host_reservation = _host_reservation_get(session,
+                                                 host_reservation_id)
+        host_reservation.update(values)
+        host_reservation.save(session=session)
+
+    return host_reservation_get(host_reservation_id)
+
+
+def host_reservation_destroy(host_reservation_id):
+    session = get_session()
+    with session.begin():
+        host_reservation = _host_reservation_get(session,
+                                                 host_reservation_id)
+
+        if not host_reservation:
+            # raise not found error
+            raise RuntimeError("Host Reservation not found!")
+
+        session.delete(host_reservation)
+
+
+#ComputeHost
+def _host_get(session, host_id):
+    query = model_query(models.ComputeHost, session)
+    return query.filter_by(id=host_id).first()
+
+
+def _host_get_all(session):
+    query = model_query(models.ComputeHost, session)
+    return query
+
+
+def host_get(host_id):
+    return _host_get(get_session(), host_id)
+
+
+def host_list():
+    return model_query(models.ComputeHost, get_session()).all()
+
+
+def host_get_all_by_filters(filters):
+    """Returns hosts filtered by name of the field."""
+
+    hosts_query = _host_get_all(get_session())
+
+    if 'status' in filters:
+        hosts_query = hosts_query.\
+            filter(models.ComputeHost.status == filters['status'])
+
+    return hosts_query.all()
+
+
+def host_get_all_by_queries(queries):
+    """Returns hosts filtered by an array of queries.
+
+    :param queries: array of queries "key op value" where op can be
+        http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
+            #sqlalchemy.sql.operators.ColumnOperators
+    """
+
+    hosts_query = model_query(models.ComputeHost, get_session())
+
+    oper = dict({'<': 'lt', '>': 'gt', '<=': 'le', '>=': 'ge', '==': 'eq',
+                 '!=': 'ne'})
+    for query in queries:
+        try:
+            key, op, value = query.split(' ', 3)
+        except ValueError:
+            raise RuntimeError('Invalid filter: %s' % query)
+        column = getattr(models.ComputeHost, key, None)
+        if not column:
+            raise RuntimeError('Invalid filter column: %s' % key)
+        if op == 'in':
+            filt = column.in_(value.split(','))
+        else:
+            if op in oper:
+                op = oper[op]
+            try:
+                attr = filter(lambda e: hasattr(column, e % op),
+                              ['%s', '%s_', '__%s__'])[0] % op
+            except IndexError:
+                raise RuntimeError('Invalid filter operator: %s' % op)
+            if value == 'null':
+                value = None
+            filt = getattr(column, attr)(value)
+        hosts_query = hosts_query.filter(filt)
+
+    return hosts_query.all()
+
+
+def host_create(values):
+    values = values.copy()
+    host = models.ComputeHost()
+    host.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            host.save(session=session)
+        except db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+
+    return host_get(host.id)
+
+
+def host_update(host_id, values):
+    session = get_session()
+
+    with session.begin():
+        host = _host_get(session, host_id)
+        host.update(values)
+        host.save(session=session)
+
+    return host_get(host_id)
+
+
+def host_destroy(host_id):
+    session = get_session()
+    with session.begin():
+        host = _host_get(session, host_id)
+
+        if not host:
+            # raise not found error
+            raise RuntimeError("Host not found!")
+
+        session.delete(host)
+
+
+#ComputeHostExtraCapability
+def _host_extra_capability_get(session, host_extra_capability_id):
+    query = model_query(models.ComputeHostExtraCapability, session)
+    return query.filter_by(id=host_extra_capability_id).first()
+
+
+def host_extra_capability_get(host_extra_capability_id):
+    return _host_extra_capability_get(get_session(),
+                                      host_extra_capability_id)
+
+
+def _host_extra_capability_get_all_per_host(session, host_id):
+    query = model_query(models.ComputeHostExtraCapability, session)
+    return query.filter_by(computehost_id=host_id).all()
+
+
+def host_extra_capability_get_all_per_host(host_id):
+    return _host_extra_capability_get_all_per_host(get_session(),
+                                                   host_id)
+
+
+def host_extra_capability_create(values):
+    values = values.copy()
+    host_extra_capability = models.ComputeHostExtraCapability()
+    host_extra_capability.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            host_extra_capability.save(session=session)
+        except db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+
+    return host_extra_capability_get(host_extra_capability.id)
+
+
+def host_extra_capability_update(host_extra_capability_id, values):
+    session = get_session()
+
+    with session.begin():
+        host_extra_capability = \
+            _host_extra_capability_get(session,
+                                       host_extra_capability_id)
+        host_extra_capability.update(values)
+        host_extra_capability.save(session=session)
+
+    return host_extra_capability_get(host_extra_capability_id)
+
+
+def host_extra_capability_destroy(host_extra_capability_id):
+    session = get_session()
+    with session.begin():
+        host_extra_capability = \
+            _host_extra_capability_get(session,
+                                       host_extra_capability_id)
+
+        if not host_extra_capability:
+            # raise not found error
+            raise RuntimeError("Host Extracapability not found!")
+
+        session.delete(host_extra_capability)

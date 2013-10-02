@@ -112,9 +112,15 @@ def reservation_create(reservation_values):
 
 
 @to_dict
-def reservation_get_all_by_lease(lease_id):
+def reservation_get_all_by_lease_id(lease_id):
     """Return all reservations belongs to specific lease."""
-    return IMPL.reservation_get_all_by_lease(lease_id)
+    return IMPL.reservation_get_all_by_lease_id(lease_id)
+
+
+@to_dict
+def reservation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    return IMPL.reservation_get_all_by_values(**kwargs)
 
 
 @to_dict
@@ -221,3 +227,110 @@ def event_destroy(event_id):
 def event_update(event_id, event_values):
     """Update event or raise if not exists."""
     IMPL.event_update(event_id, event_values)
+
+
+# Host reservations
+
+def host_reservation_create(host_reservation_values):
+    """Create a host reservation from the values."""
+    return IMPL.host_reservation_create(host_reservation_values)
+
+
+@to_dict
+def host_reservation_get_by_reservation_id(reservation_id):
+    """Return host reservation belonging to specific reservation."""
+    return IMPL.host_reservation_get_by_reservation_id(reservation_id)
+
+
+@to_dict
+def host_reservation_get(host_reservation_id):
+    """Return specific host reservation."""
+    return IMPL.host_reservation_get(host_reservation_id)
+
+
+@to_dict
+def host_reservation_get_all():
+    """Return all hosts reservations."""
+    return IMPL.host_reservation_get_all()
+
+
+def host_reservation_destroy(host_reservation_id):
+    """Delete specific host reservation."""
+    IMPL.host_reservation_destroy(host_reservation_id)
+
+
+def host_reservation_update(host_reservation_id,
+                            host_reservation_values):
+    """Update host reservation."""
+    IMPL.host_reservation_update(host_reservation_id,
+                                 host_reservation_values)
+
+
+# Compute Hosts
+
+def host_create(values):
+    """Create a Compute host from the values."""
+    return IMPL.host_create(values)
+
+
+@to_dict
+def host_get(host_id):
+    """Return a specific Compute host."""
+    return IMPL.host_get(host_id)
+
+
+@to_dict
+def host_list():
+    """Return a list of events."""
+    return IMPL.host_list()
+
+
+@to_dict
+def host_get_all_by_filters(filters):
+    """Returns Compute hosts filtered by name of the field."""
+    return IMPL.host_get_all_by_filters(filters)
+
+
+@to_dict
+def host_get_all_by_queries(queries):
+    """Returns hosts filtered by an array of queries."""
+    return IMPL.host_get_all_by_queries(queries)
+
+
+def host_destroy(host_id):
+    """Delete specific Compute host."""
+    IMPL.host_destroy(host_id)
+
+
+def host_update(host_id, values):
+    """Update Compute host."""
+    IMPL.host_update(host_id, values)
+
+
+# ComputeHostExtraCapabilities
+
+def host_extra_capability_create(values):
+    """Create a Host ExtraCapability from the values."""
+    return IMPL.host_extra_capability_create(values)
+
+
+@to_dict
+def host_extra_capability_get(host_extra_capability_id):
+    """Return a specific Host Extracapability."""
+    return IMPL.host_extra_capability_get(host_extra_capability_id)
+
+
+@to_dict
+def host_extra_capability_get_all_per_host(host_id):
+    """Return all extra_capabilities belonging to a specific Compute host."""
+    return IMPL.host_extra_capability_get_all_per_host(host_id)
+
+
+def host_extra_capability_destroy(host_extra_capability_id):
+    """Delete specific host ExtraCapability."""
+    IMPL.host_extra_capability_destroy(host_extra_capability_id)
+
+
+def host_extra_capability_update(host_extra_capability_id, values):
+    """Update specific host ExtraCapability."""
+    IMPL.host_extra_capability_update(host_extra_capability_id, values)

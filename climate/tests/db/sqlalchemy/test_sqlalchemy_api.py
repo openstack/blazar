@@ -92,6 +92,43 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     return db_api.lease_create(values)
 
 
+def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
+                                      reservation_id=_get_fake_random_uuid()):
+    return {'id': id,
+            'reservation_id': reservation_id,
+            'resource_properties': "fake",
+            'hypervisor_properties': "fake"}
+
+
+def _get_fake_cpu_info():
+    return str({'vendor': 'Intel',
+                'model': 'Westmere',
+                'arch': 'x86_64',
+                'features': ['rdtscp', 'pdpe1gb', 'hypervisor', 'vmx', 'ss',
+                         'vme'],
+                'topology': {'cores': 1, 'threads': 1, 'sockets': 2}})
+
+
+def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
+    return {'id': id,
+            'vcpu': 1,
+            'cpu_info': _get_fake_cpu_info(),
+            'hypervisor_type': 'QEMU',
+            'hypervisor_version': 1000,
+            'memory_mb': mem,
+            'local_gb': disk,
+            'status': 'free'
+            }
+
+
+def _get_fake_host_extra_capabilities(id=_get_fake_random_uuid(),
+                                      computehost_id=_get_fake_random_uuid()):
+    return {'id': id,
+            'computehost_id': computehost_id,
+            'capability_name': 'vgpu',
+            'capability_value': '2'}
+
+
 class SQLAlchemyDBApiTestCase(tests.DBTestCase):
     """Test case for SQLAlchemy DB API."""
 
@@ -182,3 +219,194 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
             values={'start_date': _get_datetime('2014-02-01 00:00')})
         self.assertEqual(_get_datetime('2014-02-01 00:00'),
                          result['start_date'])
+
+    # Reservations
+
+    def test_create_reservation(self):
+        """Create a reservation and verify that all tables have been
+        populated.
+        """
+
+        result = db_api.reservation_create(_get_fake_phys_reservation_values())
+        self.assertEqual(result['lease_id'],
+                         _get_fake_phys_reservation_values()
+                         ['lease_id'])
+
+    def test_reservation_get_all_by_values(self):
+        """Create two reservations and verify that we can find reservation per
+        resource_id or resource_type.
+        """
+        db_api.reservation_create(_get_fake_phys_reservation_values())
+        db_api.reservation_create(_get_fake_virt_reservation_values())
+        self.assertEqual(2, len(db_api.reservation_get_all_by_values()))
+        self.assertEqual(1, len(db_api.reservation_get_all_by_values(
+            resource_id='5678')))
+        self.assertEqual(1, len(db_api.reservation_get_all_by_values(
+            resource_type='physical:host')))
+
+    # Host reservations
+
+    def test_create_host_reservation(self):
+        """Create a host reservation and verify that all tables
+        have been populated.
+        """
+
+        result = db_api.host_reservation_create(
+            _get_fake_host_reservation_values(id='1'))
+        self.assertEqual(result['id'],
+                         _get_fake_host_reservation_values(id='1')
+                         ['id'])
+        # Making sure we still raise a DuplicateDBEntry
+        self.assertRaises(RuntimeError, db_api.host_reservation_create,
+                          _get_fake_host_reservation_values(id='1'))
+
+    def test_delete_host_reservation(self):
+        """Check all deletion cases for host reservation,
+        including cascade deletion from reservations table.
+        """
+
+        self.assertRaises(RuntimeError,
+                          db_api.host_reservation_destroy, 'fake_id')
+
+        result = db_api.host_reservation_create(
+            _get_fake_host_reservation_values())
+        db_api.host_reservation_destroy(result['id'])
+        self.assertIsNone(db_api.host_reservation_get(result['id']))
+        reserv = db_api.reservation_create(_get_fake_phys_reservation_values())
+        result = db_api.host_reservation_create(
+            _get_fake_host_reservation_values(reservation_id=reserv['id']))
+        db_api.reservation_destroy(reserv['id'])
+        self.assertIsNone(db_api.host_reservation_get(result['id']))
+
+    def test_host_reservation_get_all(self):
+        """Check that we return 2 hosts."""
+
+        db_api.host_reservation_create(_get_fake_host_reservation_values(id=1))
+        db_api.host_reservation_create(_get_fake_host_reservation_values(id=2))
+        hosts_reservations = db_api.host_reservation_get_all()
+        self.assertEqual(['1', '2'], [x['id'] for x in hosts_reservations])
+
+    def test_host_reservation_get_by_reservation_id(self):
+        """Check that we return 2 hosts."""
+
+        db_api.host_reservation_create(
+            _get_fake_host_reservation_values(id=1, reservation_id=1))
+        db_api.host_reservation_create(
+            _get_fake_host_reservation_values(id=2, reservation_id=2))
+        res = db_api.host_reservation_get_by_reservation_id(2)
+        self.assertEqual('2', res['id'])
+
+    def test_update_host_reservation(self):
+        db_api.host_reservation_create(_get_fake_host_reservation_values(id=1))
+        db_api.host_reservation_update(1, {'resource_properties': 'updated'})
+        res = db_api.host_reservation_get(1)
+        self.assertEqual('updated', res['resource_properties'])
+
+    def test_create_host(self):
+        """Create a host and verify that all tables
+        have been populated.
+        """
+        result = db_api.host_create(_get_fake_host_values(id='1'))
+        self.assertEqual(result['id'], _get_fake_host_values(id='1')['id'])
+        # Making sure we still raise a DuplicateDBEntry
+        self.assertRaises(RuntimeError, db_api.host_create,
+                          _get_fake_host_values(id='1'))
+
+    def test_search_for_hosts_by_ram(self):
+        """Create two hosts and check that we can find a host per its RAM info.
+        """
+        db_api.host_create(_get_fake_host_values(id=1, mem=2048))
+        db_api.host_create(_get_fake_host_values(id=2, mem=4096))
+        self.assertEqual(2, len(
+            db_api.host_get_all_by_queries(['memory_mb >= 2048'])))
+        self.assertEqual(0, len(
+            db_api.host_get_all_by_queries(['memory_mb lt 2048'])))
+
+    def test_search_for_hosts_by_cpu_info(self):
+        """Create one host and search within cpu_info."""
+
+        db_api.host_create(_get_fake_host_values())
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['cpu_info like %Westmere%'])))
+
+    def test_search_for_hosts_by_composed_queries(self):
+        """Create one host and test composed queries."""
+
+        db_api.host_create(_get_fake_host_values(mem=8192))
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['memory_mb > 2048',
+                                            'cpu_info like %Westmere%'])))
+        self.assertEqual(0, len(
+            db_api.host_get_all_by_queries(['memory_mb < 2048',
+                                            'cpu_info like %Westmere%'])))
+        self.assertRaises(RuntimeError,
+                          db_api.host_get_all_by_queries, ['memory_mb <'])
+        self.assertRaises(RuntimeError,
+                          db_api.host_get_all_by_queries, ['apples < 2048'])
+        self.assertRaises(RuntimeError,
+                          db_api.host_get_all_by_queries,
+                          ['memory_mb wrongop 2048'])
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['memory_mb in 4096,8192'])))
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['memory_mb != null'])))
+
+    def test_list_hosts(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.host_create(_get_fake_host_values(id=2))
+        self.assertEqual(2, len(db_api.host_list()))
+
+    def test_get_hosts_per_filter(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.host_create(_get_fake_host_values(id=2))
+        filters = {'status': 'free'}
+        self.assertEqual(2, len(
+            db_api.host_get_all_by_filters(filters)))
+
+    def test_update_host(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.host_update(1, {'status': 'updated'})
+        self.assertEqual('updated', db_api.host_get(1)['status'])
+
+    def test_delete_host(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.host_destroy(1)
+        self.assertEqual(None, db_api.host_get(1))
+        self.assertRaises(RuntimeError, db_api.host_destroy, 2)
+
+    def test_create_host_extra_capability(self):
+        result = db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id=1))
+        self.assertEqual(result['id'], _get_fake_host_values(id='1')['id'])
+        # Making sure we still raise a DuplicateDBEntry
+        self.assertRaises(RuntimeError, db_api.host_extra_capability_create,
+                          _get_fake_host_extra_capabilities(id='1'))
+
+    def test_get_host_extra_capability_per_id(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='1'))
+        result = db_api.host_extra_capability_get('1')
+        self.assertEqual('1', result['id'])
+
+    def test_host_extra_capability_get_all_per_host(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='1', computehost_id='1'))
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='2', computehost_id='1'))
+        res = db_api.host_extra_capability_get_all_per_host('1')
+        self.assertEqual(2, len(res))
+
+    def test_update_host_extra_capability(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='1'))
+        db_api.host_extra_capability_update('1', {'capability_value': '2'})
+        res = db_api.host_extra_capability_get('1')
+        self.assertEqual('2', res['capability_value'])
+
+    def test_delete_host_extra_capability(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='1'))
+        db_api.host_extra_capability_destroy('1')
+        self.assertEqual(None, db_api.host_extra_capability_get('1'))
+        self.assertRaises(RuntimeError,
+                          db_api.host_extra_capability_destroy, '1')

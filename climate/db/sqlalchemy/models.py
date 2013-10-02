@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
 
 from climate.db.sqlalchemy import model_base as mb
@@ -24,6 +25,10 @@ from climate.openstack.common import uuidutils
 
 def _generate_unicode_uuid():
     return unicode(uuidutils.generate_uuid())
+
+
+def MediumText():
+    return sa.Text().with_variant(MEDIUMTEXT(), 'mysql')
 
 
 def _id_column():
@@ -72,6 +77,11 @@ class Reservation(mb.ClimateBase):
     resource_id = sa.Column(sa.String(36))
     resource_type = sa.Column(sa.String(66))
     status = sa.Column(sa.String(13))
+    computehost_reservations = relationship('ComputeHostReservation',
+                                            uselist=False,
+                                            cascade="all,delete",
+                                            backref='reservation',
+                                            lazy='joined')
 
     def to_dict(self):
         return super(Reservation, self).to_dict()
@@ -90,3 +100,62 @@ class Event(mb.ClimateBase):
 
     def to_dict(self):
         return super(Event, self).to_dict()
+
+
+class ComputeHostReservation(mb.ClimateBase):
+    """Specifies resources asked by reservation from
+    Compute Host Reservation API.
+    """
+
+    __tablename__ = 'computehost_reservations'
+
+    id = _id_column()
+    reservation_id = sa.Column(sa.String(36), sa.ForeignKey('reservations.id'))
+    resource_properties = sa.Column(MediumText())
+    count_range = sa.Column(sa.String(36))
+    hypervisor_properties = sa.Column(MediumText())
+    status = sa.Column(sa.String(13))
+
+    def to_dict(self):
+        return super(ComputeHostReservation, self).to_dict()
+
+
+class ComputeHost(mb.ClimateBase):
+    """Specifies resources asked by reservation from
+    Compute Host Reservation API.
+    """
+
+    __tablename__ = 'computehosts'
+
+    id = _id_column()
+    vcpu = sa.Column(sa.Integer, nullable=False)
+    cpu_info = sa.Column(MediumText(), nullable=False)
+    hypervisor_type = sa.Column(MediumText(), nullable=False)
+    hypervisor_version = sa.Column(sa.Integer, nullable=False)
+    hypervisor_hostname = sa.Column(sa.String(255), nullable=True)
+    memory_mb = sa.Column(sa.Integer, nullable=False)
+    local_gb = sa.Column(sa.Integer, nullable=False)
+    status = sa.Column(sa.String(13))
+    computehost_extra_capabilities = relationship('ComputeHostExtraCapability',
+                                                  cascade="all,delete",
+                                                  backref='computehost',
+                                                  lazy='joined')
+
+    def to_dict(self):
+        return super(ComputeHost, self).to_dict()
+
+
+class ComputeHostExtraCapability(mb.ClimateBase):
+    """Allows to define extra capabilities per administrator request for each
+    Compute Host added.
+    """
+
+    __tablename__ = 'computehost_extra_capabilities'
+
+    id = _id_column()
+    computehost_id = sa.Column(sa.String(36), sa.ForeignKey('computehosts.id'))
+    capability_name = sa.Column(sa.String(64), nullable=False)
+    capability_value = sa.Column(MediumText(), nullable=False)
+
+    def to_dict(self):
+        return super(ComputeHostExtraCapability, self).to_dict()
