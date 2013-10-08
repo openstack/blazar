@@ -1,5 +1,7 @@
-eventlet
-iso8601
-oslo.config>=1.1.0
-python-novaclient
-SQLAlchemy>=0.7.8,<0.8
+pbr>=0.5.21,<1.0
+
+eventlet>=0.13.0
+iso8601>=0.1.4
+oslo.config>=1.2.0
+python-novaclient>=2.15.0
+SQLAlchemy>=0.7.8,<=0.7.99

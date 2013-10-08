@@ -1,8 +1,10 @@
 hacking>=0.5.6,<0.8
 
+docutils==0.9.1
 nose
-mock
-mox
+mock>=1.0
+mox>=0.5.3
+sphinx>=1.1.2
 sphinxcontrib-httpdomain
 
 -f http://tarballs.openstack.org/nova/nova-master.tar.gz#egg=nova-master
