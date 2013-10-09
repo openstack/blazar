@@ -17,7 +17,7 @@
 
 import unittest
 
-from climate import service
+from climate.utils import service
 
 
 class ServiceTestCase(unittest.TestCase):

@@ -23,11 +23,11 @@ from oslo.config import cfg
 
 from climate.openstack.common import service
 from climate.scheduler import service as scheduler_service
-from climate.service import prepare_service
+from climate.utils import service as service_utils
 
 
 def main():
-    prepare_service(sys.argv)
+    service_utils.prepare_service(sys.argv)
     service.launch(
         scheduler_service.SchedulerService(cfg.CONF.host,
                                            'climate.scheduler')
