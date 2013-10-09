@@ -107,76 +107,76 @@ def to_dict(func):
 #Reservation
 
 def reservation_create(context, reservation_values):
-    """Create a reservation from the values"""
+    """Create a reservation from the values."""
     return IMPL.reservation_create(context, reservation_values)
 
 
 @to_dict
 def reservation_get_all_by_lease(context, lease_id):
-    """Return all reservations belongs to specific lease"""
+    """Return all reservations belongs to specific lease."""
     return IMPL.reservation_get_all_by_lease(context, lease_id)
 
 
 @to_dict
 def reservation_get(context, reservation_id):
-    """Return specific reservation"""
+    """Return specific reservation."""
     return IMPL.reservation_get(context, reservation_id)
 
 
 def reservation_destroy(context, reservation_id):
-    """Delete specific reservation"""
+    """Delete specific reservation."""
     IMPL.reservation_destroy(context, reservation_id)
 
 
 def reservation_update(context, reservation_id, reservation_values):
-    """Update reservation"""
+    """Update reservation."""
     IMPL.reservation_update(context, reservation_id, reservation_values)
 
 
 #Lease
 
 def lease_create(context, lease_values):
-    """Create a lease from values"""
+    """Create a lease from values."""
     return IMPL.lease_create(context, lease_values)
 
 
 @to_dict
 def lease_get_all(context):
-    """Return all leases"""
+    """Return all leases."""
     return IMPL.lease_get_all(context)
 
 
 @to_dict
 def lease_get_all_by_tenant(context, tenant_id):
-    """Return all leases in specific tenant"""
+    """Return all leases in specific tenant."""
     return IMPL.lease_get_all_by_tenant(context, tenant_id)
 
 
 @to_dict
 def lease_get_all_by_user(context, user_id):
-    """Return all leases belongs to specific user"""
+    """Return all leases belongs to specific user."""
     return IMPL.lease_get_all_by_user(context, user_id)
 
 
 @to_dict
 def lease_get(context, lease_id):
-    """Return lease"""
+    """Return lease."""
     return IMPL.lease_get(context, lease_id)
 
 
 @to_dict
 def lease_list(context):
-    """Return a list of all existing leases"""
+    """Return a list of all existing leases."""
     return IMPL.lease_list(context)
 
 
 def lease_destroy(context, lease_id):
-    """Delete lease or raise if not exists"""
+    """Delete lease or raise if not exists."""
     IMPL.lease_destroy(context, lease_id)
 
 
 def lease_update(context, lease_id, lease_values):
-    """Update lease or raise if not exists"""
+    """Update lease or raise if not exists."""
     IMPL.lease_update(context, lease_id, lease_values)
 
 
@@ -184,40 +184,40 @@ def lease_update(context, lease_id, lease_values):
 
 @to_dict
 def event_create(context, event_values):
-    """Create an event from values"""
+    """Create an event from values."""
     return IMPL.event_create(context, event_values)
 
 
 @to_dict
 def event_get_all(context):
-    """Return all events"""
+    """Return all events."""
     return IMPL.event_get_all(context)
 
 
 @to_dict
 def event_get(context, event_id):
-    """Return a specific event"""
+    """Return a specific event."""
     return IMPL.event_get(context, event_id)
 
 
 @to_dict
 def event_get_all_sorted_by_filters(context, sort_key, sort_dir, filters):
-    """Return instances sorted by param"""
+    """Return instances sorted by param."""
     return IMPL.event_get_all_sorted_by_filters(context, sort_key, sort_dir,
                                                 filters)
 
 
 @to_dict
 def event_list(context, param):
-    """Return a list of events"""
+    """Return a list of events."""
     return IMPL.event_list(context)
 
 
 def event_destroy(context, event_id):
-    """Delete event or raise if not exists"""
+    """Delete event or raise if not exists."""
     IMPL.event_destroy(context, event_id)
 
 
 def event_update(context, event_id, event_values):
-    """Update event or raise if not exists"""
+    """Update event or raise if not exists."""
     IMPL.event_update(context, event_id, event_values)

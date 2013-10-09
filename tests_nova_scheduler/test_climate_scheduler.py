@@ -18,6 +18,7 @@
 import unittest
 
 from nova.tests.scheduler import fakes
+
 from climate.nova import climate_filter
 
 

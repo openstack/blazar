@@ -15,9 +15,10 @@
 # under the License.
 
 import os
-from oslo.config import cfg
 
 from novaclient import client
+from oslo.config import cfg
+
 from climate import inventory
 
 

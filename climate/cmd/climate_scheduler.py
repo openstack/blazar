@@ -21,9 +21,9 @@ import sys
 
 from oslo.config import cfg
 
-from climate.service import prepare_service
-from climate.scheduler import service as scheduler_service
 from climate.openstack.common import service
+from climate.scheduler import service as scheduler_service
+from climate.service import prepare_service
 
 
 def main():

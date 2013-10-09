@@ -22,6 +22,6 @@ class ClimateFilter(filters.BaseHostFilter):
 
     def host_passes(self, host_state, filter_properties):
         """Filter based on Climate."""
-        scheduler_hints = filter_properties.get('scheduler_hints') or {}
+        # scheduler_hints = filter_properties.get('scheduler_hints') or {}
         # XXX send host_state + to Climate API
         return True
