@@ -65,7 +65,7 @@ from oslo.config import cfg
 import six
 
 from climate.openstack.common import fileutils
-from climate.openstack.common.gettextutils import _
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import jsonutils
 from climate.openstack.common import log as logging
 
@@ -115,12 +115,18 @@ class Rules(dict):
     def __missing__(self, key):
         """Implements the default rule handling."""
 
+        if isinstance(self.default_rule, dict):
+            raise KeyError(key)
+
         # If the default rule isn't actually defined, do something
         # reasonably intelligent
         if not self.default_rule or self.default_rule not in self:
             raise KeyError(key)
 
-        return self[self.default_rule]
+        if isinstance(self.default_rule, BaseCheck):
+            return self.default_rule
+        elif isinstance(self.default_rule, six.string_types):
+            return self[self.default_rule]
 
     def __str__(self):
         """Dumps a string representation of the rules."""
@@ -153,7 +159,7 @@ class Enforcer(object):
     """
 
     def __init__(self, policy_file=None, rules=None, default_rule=None):
-        self.rules = Rules(rules)
+        self.rules = Rules(rules, default_rule)
         self.default_rule = default_rule or CONF.policy_default_rule
 
         self.policy_path = None
@@ -172,13 +178,14 @@ class Enforcer(object):
                             "got %s instead") % type(rules))
 
         if overwrite:
-            self.rules = Rules(rules)
+            self.rules = Rules(rules, self.default_rule)
         else:
-            self.update(rules)
+            self.rules.update(rules)
 
     def clear(self):
         """Clears Enforcer rules, policy's cache and policy's path."""
         self.set_rules({})
+        self.default_rule = None
         self.policy_path = None
 
     def load_rules(self, force_reload=False):
@@ -194,8 +201,7 @@ class Enforcer(object):
 
         reloaded, data = fileutils.read_cached_file(self.policy_path,
                                                     force_reload=force_reload)
-
-        if reloaded:
+        if reloaded or not self.rules:
             rules = Rules.load_json(data, self.default_rule)
             self.set_rules(rules)
             LOG.debug(_("Rules successfully reloaded"))
@@ -215,7 +221,7 @@ class Enforcer(object):
         if policy_file:
             return policy_file
 
-        raise cfg.ConfigFilesNotFoundError(path=CONF.policy_file)
+        raise cfg.ConfigFilesNotFoundError((self.policy_file,))
 
     def enforce(self, rule, target, creds, do_raise=False,
                 exc=None, *args, **kwargs):
@@ -285,7 +291,7 @@ class BaseCheck(object):
         pass
 
     @abc.abstractmethod
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Triggers if instance of the class is called.
 
         Performs the check. Returns False to reject the access or a
@@ -303,7 +309,7 @@ class FalseCheck(BaseCheck):
 
         return "!"
 
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Check the policy."""
 
         return False
@@ -317,7 +323,7 @@ class TrueCheck(BaseCheck):
 
         return "@"
 
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Check the policy."""
 
         return True
@@ -363,13 +369,13 @@ class NotCheck(BaseCheck):
 
         return "not %s" % self.rule
 
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Check the policy.
 
         Returns the logical inverse of the wrapped check.
         """
 
-        return not self.rule(target, cred)
+        return not self.rule(target, cred, enforcer)
 
 
 class AndCheck(BaseCheck):
@@ -391,14 +397,14 @@ class AndCheck(BaseCheck):
 
         return "(%s)" % ' and '.join(str(r) for r in self.rules)
 
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Check the policy.
 
         Requires that all rules accept in order to return True.
         """
 
         for rule in self.rules:
-            if not rule(target, cred):
+            if not rule(target, cred, enforcer):
                 return False
 
         return True
@@ -434,16 +440,15 @@ class OrCheck(BaseCheck):
 
         return "(%s)" % ' or '.join(str(r) for r in self.rules)
 
-    def __call__(self, target, cred):
+    def __call__(self, target, cred, enforcer):
         """Check the policy.
 
         Requires that at least one rule accept in order to return True.
         """
 
         for rule in self.rules:
-            if rule(target, cred):
+            if rule(target, cred, enforcer):
                 return True
-
         return False
 
     def add_check(self, rule):
@@ -750,7 +755,7 @@ def _parse_text_rule(rule):
         return state.result
     except ValueError:
         # Couldn't parse the rule
-        LOG.exception(_("Failed to understand rule %(rule)r") % locals())
+        LOG.exception(_("Failed to understand rule %r") % rule)
 
         # Fail closed
         return FalseCheck()
@@ -840,7 +845,13 @@ class GenericCheck(Check):
         """
 
         # TODO(termie): do dict inspection via dot syntax
-        match = self.match % target
+        try:
+            match = self.match % target
+        except KeyError:
+            # While doing GenericCheck if key not
+            # present in Target return false
+            return False
+
         if self.kind in creds:
             return match == six.text_type(creds[self.kind])
         return False

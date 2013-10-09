@@ -29,7 +29,7 @@ import inspect
 
 from oslo.config import cfg
 
-from climate.openstack.common.gettextutils import _
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import importutils
 from climate.openstack.common import local
 from climate.openstack.common import log as logging
@@ -56,8 +56,7 @@ rpc_opts = [
                help='Seconds to wait before a cast expires (TTL). '
                     'Only supported by impl_zmq.'),
     cfg.ListOpt('allowed_rpc_exception_modules',
-                default=['climate.openstack.common.exception',
-                         'nova.exception',
+                default=['nova.exception',
                          'cinder.exception',
                          'exceptions',
                          ],

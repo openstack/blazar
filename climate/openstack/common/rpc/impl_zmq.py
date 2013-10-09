@@ -27,7 +27,7 @@ import greenlet
 from oslo.config import cfg
 
 from climate.openstack.common import excutils
-from climate.openstack.common.gettextutils import _
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import importutils
 from climate.openstack.common import jsonutils
 from climate.openstack.common.rpc import common as rpc_common
@@ -383,6 +383,7 @@ class ZmqBaseReactor(ConsumerBase):
         LOG.info(_("In reactor registered"))
 
     def consume_in_thread(self):
+        @excutils.forever_retry_uncaught_exceptions
         def _consume(sock):
             LOG.info(_("Consuming socket"))
             while True:

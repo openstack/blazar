@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-#    Copyright 2011 OpenStack Foundation
+# Copyright (c) 2013 Rackspace Hosting
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,27 +15,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
-eventlet.monkey_patch()
+"""Middleware that attaches a correlation id to WSGI request"""
 
-import contextlib
-import sys
-
-from oslo.config import cfg
-
-from climate.openstack.common import log as logging
-from climate.openstack.common import rpc
-from climate.openstack.common.rpc import impl_zmq
-
-CONF = cfg.CONF
-CONF.register_opts(rpc.rpc_opts)
-CONF.register_opts(impl_zmq.zmq_opts)
+from climate.openstack.common.middleware import base
+from climate.openstack.common import uuidutils
 
 
-def main():
-    CONF(sys.argv[1:], project='oslo')
-    logging.setup("oslo")
+class CorrelationIdMiddleware(base.Middleware):
 
-    with contextlib.closing(impl_zmq.ZmqProxy(CONF)) as reactor:
-        reactor.consume_in_thread()
-        reactor.wait()
+    def process_request(self, req):
+        correlation_id = (req.headers.get("X_CORRELATION_ID") or
+                          uuidutils.generate_uuid())
+        req.headers['X_CORRELATION_ID'] = correlation_id

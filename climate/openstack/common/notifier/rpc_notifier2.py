@@ -18,7 +18,7 @@
 from oslo.config import cfg
 
 from climate.openstack.common import context as req_context
-from climate.openstack.common.gettextutils import _
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 from climate.openstack.common import rpc
 
@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 notification_topic_opt = cfg.ListOpt(
     'topics', default=['notifications', ],
-    help='AMQP topic(s) used for openstack notifications')
+    help='AMQP topic(s) used for OpenStack notifications')
 
 opt_group = cfg.OptGroup(name='rpc_notifier2',
                          title='Options for rpc_notifier2')
@@ -49,4 +49,5 @@ def notify(context, message):
             rpc.notify(context, topic, message, envelope=True)
         except Exception:
             LOG.exception(_("Could not send notification to %(topic)s. "
-                            "Payload=%(message)s"), locals())
+                            "Payload=%(message)s"),
+                          {"topic": topic, "message": message})

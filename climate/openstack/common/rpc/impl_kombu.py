@@ -30,15 +30,19 @@ import kombu.messaging
 from oslo.config import cfg
 
 from climate.openstack.common import excutils
-from climate.openstack.common.gettextutils import _
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import network_utils
 from climate.openstack.common.rpc import amqp as rpc_amqp
 from climate.openstack.common.rpc import common as rpc_common
+from climate.openstack.common import sslutils
 
 kombu_opts = [
     cfg.StrOpt('kombu_ssl_version',
                default='',
-               help='SSL version to use (valid only if SSL enabled)'),
+               help='SSL version to use (valid only if SSL enabled). '
+                    'valid values are TLSv1, SSLv23 and SSLv3. SSLv2 may '
+                    'be available on some distributions'
+               ),
     cfg.StrOpt('kombu_ssl_keyfile',
                default='',
                help='SSL key file (valid only if SSL enabled)'),
@@ -82,9 +86,6 @@ kombu_opts = [
                default=0,
                help='maximum retries with trying to connect to RabbitMQ '
                     '(the default of 0 implies an infinite retry count)'),
-    cfg.BoolOpt('rabbit_durable_queues',
-                default=False,
-                help='use durable queues in RabbitMQ'),
     cfg.BoolOpt('rabbit_ha_queues',
                 default=False,
                 help='use H/A queues in RabbitMQ (x-ha-policy: all).'
@@ -145,29 +146,23 @@ class ConsumerBase(object):
         Messages that are processed without exception are ack'ed.
 
         If the message processing generates an exception, it will be
-        ack'ed if ack_on_error=True. Otherwise it will be .reject()'ed.
-        Rejection is better than waiting for the message to timeout.
-        Rejected messages are immediately requeued.
+        ack'ed if ack_on_error=True. Otherwise it will be .requeue()'ed.
         """
 
-        ack_msg = False
         try:
             msg = rpc_common.deserialize_msg(message.payload)
             callback(msg)
-            ack_msg = True
         except Exception:
             if self.ack_on_error:
-                ack_msg = True
                 LOG.exception(_("Failed to process message"
                                 " ... skipping it."))
+                message.ack()
             else:
                 LOG.exception(_("Failed to process message"
                                 " ... will requeue."))
-        finally:
-            if ack_msg:
-                message.ack()
-            else:
-                message.reject()
+                message.requeue()
+        else:
+            message.ack()
 
     def consume(self, *args, **kwargs):
         """Actually declare the consumer on the amqp channel.  This will
@@ -256,9 +251,9 @@ class TopicConsumer(ConsumerBase):
         Other kombu options may be passed as keyword arguments
         """
         # Default options
-        options = {'durable': conf.rabbit_durable_queues,
+        options = {'durable': conf.amqp_durable_queues,
                    'queue_arguments': _get_queue_arguments(conf),
-                   'auto_delete': False,
+                   'auto_delete': conf.amqp_auto_delete,
                    'exclusive': False}
         options.update(kwargs)
         exchange_name = exchange_name or rpc_amqp.get_control_exchange(conf)
@@ -362,8 +357,8 @@ class TopicPublisher(Publisher):
 
         Kombu options may be passed as keyword args to override defaults
         """
-        options = {'durable': conf.rabbit_durable_queues,
-                   'auto_delete': False,
+        options = {'durable': conf.amqp_durable_queues,
+                   'auto_delete': conf.amqp_auto_delete,
                    'exclusive': False}
         options.update(kwargs)
         exchange_name = rpc_amqp.get_control_exchange(conf)
@@ -393,7 +388,7 @@ class NotifyPublisher(TopicPublisher):
     """Publisher class for 'notify'."""
 
     def __init__(self, conf, channel, topic, **kwargs):
-        self.durable = kwargs.pop('durable', conf.rabbit_durable_queues)
+        self.durable = kwargs.pop('durable', conf.amqp_durable_queues)
         self.queue_arguments = _get_queue_arguments(conf)
         super(NotifyPublisher, self).__init__(conf, channel, topic, **kwargs)
 
@@ -477,7 +472,8 @@ class Connection(object):
 
         # http://docs.python.org/library/ssl.html - ssl.wrap_socket
         if self.conf.kombu_ssl_version:
-            ssl_params['ssl_version'] = self.conf.kombu_ssl_version
+            ssl_params['ssl_version'] = sslutils.validate_ssl_version(
+                self.conf.kombu_ssl_version)
         if self.conf.kombu_ssl_keyfile:
             ssl_params['keyfile'] = self.conf.kombu_ssl_keyfile
         if self.conf.kombu_ssl_certfile:
@@ -488,12 +484,8 @@ class Connection(object):
             # future with this?
             ssl_params['cert_reqs'] = ssl.CERT_REQUIRED
 
-        if not ssl_params:
-            # Just have the default behavior
-            return True
-        else:
-            # Return the extended behavior
-            return ssl_params
+        # Return the extended behavior or just have the default behavior
+        return ssl_params or True
 
     def _connect(self, params):
         """Connect to rabbit.  Re-establish any queues that may have
@@ -791,6 +783,7 @@ class Connection(object):
             callback=callback,
             connection_pool=rpc_amqp.get_connection_pool(self.conf,
                                                          Connection),
+            wait_for_consumers=not ack_on_error
         )
         self.proxy_callbacks.append(callback_wrapper)
         self.declare_topic_consumer(
