@@ -16,19 +16,20 @@
 # under the License.
 
 import mock
-import stubout
-import unittest
 
 from climate.inventory import nova
+from climate import test
 
 
-class ServiceTestCase(unittest.TestCase):
+class ServiceTestCase(test.TestCase):
+    """This test class should be removed, but is kept as an example for unit
+    testing.
+    """
 
     @staticmethod
     def fake_hypervisors_list():
-        a = mock.MagicMock()
+        a, b = mock.MagicMock(), mock.MagicMock()
         a.id = 1
-        b = mock.MagicMock()
         b.id = 2
         return [a, b]
 
@@ -38,12 +39,13 @@ class ServiceTestCase(unittest.TestCase):
                 'cpu_info': {'arch': 'x86'}}
 
     def setUp(self):
+        super(ServiceTestCase, self).setUp()
         self.i = nova.NovaInventory()
-        self.stubs = stubout.StubOutForTesting()
-        self.stubs.Set(self.i.novaclient.hypervisors, "list",
-                       self.fake_hypervisors_list)
-        self.stubs.Set(self.i.novaclient.hypervisors, "get",
-                       self.fake_hypervisors_get)
+        self.patch(self.i.novaclient.hypervisors, "list").\
+            side_effect = self.fake_hypervisors_list
+
+        self.patch(self.i.novaclient.hypervisors, "get").\
+            side_effect = self.fake_hypervisors_get
 
     def test_list_hosts(self):
         hosts = self.i.list_hosts()
@@ -53,7 +55,3 @@ class ServiceTestCase(unittest.TestCase):
         hosts = self.i.list_hosts()
         detail = self.i.get_host_details(hosts[0])
         self.assertEqual(detail['cpu_info']['arch'], 'x86')
-
-    def tearDown(self):
-        self.stubs.UnsetAll()
-        self.stubs.SmartUnsetAll()

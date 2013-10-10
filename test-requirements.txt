@@ -7,5 +7,7 @@ mox>=0.5.3
 sphinx>=1.1.2,<1.2a0
 sphinxcontrib-httpdomain
 
--f http://tarballs.openstack.org/nova/nova-master.tar.gz#egg=nova-master
-nova>=master
+fixtures>=0.3.12
+testtools>=0.9.27
+
+http://tarballs.openstack.org/nova/nova-master.tar.gz#egg=nova

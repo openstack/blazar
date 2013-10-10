@@ -15,11 +15,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
-
+from climate import test
 from climate.utils import service
 
 
-class ServiceTestCase(unittest.TestCase):
+class ServiceTestCase(test.TestCase):
     def test_prepare_service(self):
         service.prepare_service()

@@ -15,14 +15,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
-
 from nova.tests.scheduler import fakes
 
 from climate.nova import climate_filter
+from climate import test
 
 
-class ClimateSchedulerTestCase(unittest.TestCase):
+class ClimateSchedulerTestCase(test.TestCase):
+
     def test_climate_scheduler(self):
         f = climate_filter.ClimateFilter()
         host = fakes.FakeHostState('host1', 'node1', {})

@@ -4,4 +4,5 @@ eventlet>=0.13.0
 iso8601>=0.1.4
 oslo.config>=1.2.0
 python-novaclient>=2.15.0
+netaddr
 SQLAlchemy>=0.7.8,<=0.7.99
