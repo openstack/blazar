@@ -15,9 +15,11 @@
 
 import flask
 from keystoneclient.middleware import auth_token
+from oslo.config import cfg
 from werkzeug import exceptions as werkzeug_exceptions
 
 from climate.api import app
+from climate.api.oshosts import v1_0 as host_api_v1_0
 from climate.api import utils as api_utils
 from climate import tests
 
@@ -69,3 +71,21 @@ class AppTestCase(tests.TestCase):
                                              auth_version='v2.0',
                                              admin_password='climate',
                                              auth_host='127.0.0.1')
+
+
+class AppTestCaseForHostsPlugin(tests.TestCase):
+
+    def setUp(self):
+        super(AppTestCaseForHostsPlugin, self).setUp()
+
+        cfg.CONF.set_override('plugins', ['physical.host.plugin'], 'manager')
+        self.app = app
+        self.host_api_v1_0 = host_api_v1_0
+        self.flask = flask
+        self.fake_blueprint = self.patch(self.flask.Flask,
+                                         'register_blueprint')
+
+    def test_make_app_with_host_plugin(self):
+        self.app.make_app()
+        self.fake_blueprint.assert_called_with(self.host_api_v1_0.rest,
+                                               url_prefix='/v1/os-hosts')

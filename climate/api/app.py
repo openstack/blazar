@@ -19,6 +19,7 @@ from keystoneclient.middleware import auth_token
 from oslo.config import cfg
 from werkzeug import exceptions as werkzeug_exceptions
 
+from climate.api.oshosts import v1_0 as host_api_v1_0
 from climate.api import utils as api_utils
 from climate.api import v1_0 as api_v1_0
 from climate.openstack.common import log
@@ -69,6 +70,13 @@ def make_app():
 
     app.route('/', methods=['GET'])(version_list)
     app.register_blueprint(api_v1_0.rest, url_prefix='/v1')
+
+    LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)
+    # TODO(sbauza) : Change this whole crap by removing hardcoded values and
+    #   maybe using stevedore for achieving this
+    if cfg.CONF.manager.plugins \
+            and 'physical.host.plugin' in cfg.CONF.manager.plugins:
+        app.register_blueprint(host_api_v1_0.rest, url_prefix='/v1/os-hosts')
 
     for code in werkzeug_exceptions.default_exceptions.iterkeys():
         app.error_handler_spec[None][code] = make_json_error
