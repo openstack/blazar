@@ -9,3 +9,5 @@ User guide
 ----------
 .. toctree::
    :maxdepth: 1
+
+   rest_api_v1.0
