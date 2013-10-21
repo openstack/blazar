@@ -31,6 +31,7 @@ from climate.openstack.common import test
 CONF = cfg.CONF
 CONF.set_override('use_stderr', False)
 
+
 logging.setup('climate')
 _DB_CACHE = None
 
