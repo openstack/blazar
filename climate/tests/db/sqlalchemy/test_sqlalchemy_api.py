@@ -111,7 +111,7 @@ def _get_fake_cpu_info():
 
 def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
     return {'id': id,
-            'vcpu': 1,
+            'vcpus': 1,
             'cpu_info': _get_fake_cpu_info(),
             'hypervisor_type': 'QEMU',
             'hypervisor_version': 1000,
@@ -410,3 +410,12 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(None, db_api.host_extra_capability_get('1'))
         self.assertRaises(RuntimeError,
                           db_api.host_extra_capability_destroy, '1')
+
+    def test_host_extra_capability_get_all_per_name(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id='1', computehost_id='1'))
+        res = db_api.host_extra_capability_get_all_per_name('1', 'vgpu')
+        self.assertEqual(1, len(res))
+        self.assertEqual([],
+                         db_api.host_extra_capability_get_all_per_name('1',
+                                                                       'bad'))

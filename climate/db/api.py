@@ -334,3 +334,9 @@ def host_extra_capability_destroy(host_extra_capability_id):
 def host_extra_capability_update(host_extra_capability_id, values):
     """Update specific host ExtraCapability."""
     IMPL.host_extra_capability_update(host_extra_capability_id, values)
+
+
+def host_extra_capability_get_all_per_name(host_id,
+                                           extra_capability_name):
+    return IMPL.host_extra_capability_get_all_per_name(host_id,
+                                                       extra_capability_name)

@@ -558,12 +558,12 @@ def host_extra_capability_get(host_extra_capability_id):
 
 def _host_extra_capability_get_all_per_host(session, host_id):
     query = model_query(models.ComputeHostExtraCapability, session)
-    return query.filter_by(computehost_id=host_id).all()
+    return query.filter_by(computehost_id=host_id)
 
 
 def host_extra_capability_get_all_per_host(host_id):
     return _host_extra_capability_get_all_per_host(get_session(),
-                                                   host_id)
+                                                   host_id).all()
 
 
 def host_extra_capability_create(values):
@@ -607,3 +607,11 @@ def host_extra_capability_destroy(host_extra_capability_id):
             raise RuntimeError("Host Extracapability not found!")
 
         session.delete(host_extra_capability)
+
+
+def host_extra_capability_get_all_per_name(host_id, capability_name):
+    session = get_session()
+
+    with session.begin():
+        query = _host_extra_capability_get_all_per_host(session, host_id)
+        return query.filter_by(capability_name=capability_name).all()

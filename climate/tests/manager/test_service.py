@@ -25,6 +25,7 @@ from climate.db import api as db_api
 from climate import exceptions
 from climate.manager import service
 from climate.plugins import dummy_vm_plugin
+from climate.plugins import physical_host_plugin
 from climate import tests
 
 
@@ -42,8 +43,13 @@ class ServiceTestCase(tests.TestCase):
         self.db_api = db_api
         self.dummy_plugin = dummy_vm_plugin
 
-        self.manager = self.service.ManagerService('127.0.0.1')
         self.fake_plugin = self.patch(self.dummy_plugin, 'DummyVMPlugin')
+
+        self.physical_host_plugin = physical_host_plugin
+        self.fake_phys_plugin = self.patch(self.physical_host_plugin,
+                                           'PhysicalHostPlugin')
+
+        self.manager = self.service.ManagerService('127.0.0.1')
 
         self.lease_id = '11-22-33'
         self.lease = {'id': self.lease_id,
@@ -237,3 +243,39 @@ class ServiceTestCase(tests.TestCase):
         self.reservation_update.assert_called_once_with(
             '111', {'status': 'IN_USE'})
         self.event_update.assert_called_once_with('1', {'status': 'DONE'})
+
+    def test_getattr_with_correct_plugin_and_method(self):
+        self.fake_list_computehosts = \
+            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts.return_value = 'foo'
+
+        self.manager.plugins = {'physical:host': self.fake_phys_plugin}
+        self.assertEqual('foo', getattr(self.manager,
+                                        'physical:host:list_computehosts')())
+
+    def test_getattr_with_incorrect_method_name(self):
+        self.fake_list_computehosts = \
+            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts.return_value = 'foo'
+
+        self.manager.plugins = {'physical:host': self.fake_phys_plugin}
+        self.assertRaises(AttributeError, getattr, self.manager,
+                          'simplefakecallwithValueError')
+
+    def test_getattr_with_missing_plugin(self):
+        self.fake_list_computehosts = \
+            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts.return_value = 'foo'
+
+        self.manager.plugins = {'physical:host': self.fake_phys_plugin}
+        self.assertRaises(AttributeError, getattr, self.manager,
+                          'plugin:not_present:list_computehosts')
+
+    def test_getattr_with_missing_method_in_plugin(self):
+        self.fake_list_computehosts = \
+            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts.return_value = 'foo'
+
+        self.manager.plugins = {'physical:host': None}
+        self.assertRaises(AttributeError, getattr, self.manager,
+                          'physical:host:method_not_present')

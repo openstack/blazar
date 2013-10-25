@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from climate import exceptions
 from climate.manager.oshosts import rpcapi as manager_rpcapi
 from climate.openstack.common import log as logging
 
@@ -35,9 +34,6 @@ class API(object):
         :param data: New computehost characteristics.
         :type data: dict
         """
-        # here API should go to Keystone API v3 and create trust
-        trust = 'trust'
-        data.update({'trust': trust})
 
         return self.manager_rpcapi.create_computehost(data)
 
@@ -57,13 +53,6 @@ class API(object):
         :param data: New computehost characteristics.
         :type data: dict
         """
-        new_name = data.pop('name', None)
-        if len(data) > 0:
-            raise exceptions.ClimateException('Only name changing may be '
-                                              'proceeded.')
-        data = {}
-        if new_name:
-            data['name'] = new_name
         return self.manager_rpcapi.update_computehost(host_id, data)
 
     def delete_computehost(self, host_id):

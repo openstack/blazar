@@ -128,7 +128,7 @@ class ComputeHost(mb.ClimateBase):
     __tablename__ = 'computehosts'
 
     id = _id_column()
-    vcpu = sa.Column(sa.Integer, nullable=False)
+    vcpus = sa.Column(sa.Integer, nullable=False)
     cpu_info = sa.Column(MediumText(), nullable=False)
     hypervisor_type = sa.Column(MediumText(), nullable=False)
     hypervisor_version = sa.Column(sa.Integer, nullable=False)

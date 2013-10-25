@@ -103,7 +103,7 @@ class ManagerService(rpc_service.Service):
             actions[resource_type] = {}
             actions[resource_type]['on_start'] = plugin.on_start
             actions[resource_type]['on_end'] = plugin.on_end
-
+            plugin.setup(None)
         return actions
 
     @service_utils.with_empty_context
@@ -211,3 +211,26 @@ class ManagerService(rpc_service.Service):
                                           {'status': reservation_status})
 
         db_api.event_update(event_id, {'status': 'DONE'})
+
+    def __getattr__(self, name):
+        """RPC Dispatcher for plugins methods."""
+
+        fn = None
+        try:
+            resource_type, method = name.rsplit(':', 1)
+        except ValueError:
+            # NOTE(sbauza) : the dispatcher needs to know which plugin to use,
+            #  raising error if consequently not
+            raise AttributeError(name)
+        try:
+            try:
+                fn = getattr(self.plugins[resource_type], method)
+            except KeyError:
+                LOG.error("Plugin with resource type %s not found",
+                          resource_type)
+        except AttributeError:
+            LOG.error("Plugin %s doesn't include method %s",
+                      self.plugins[resource_type], method)
+        if fn is not None:
+            return fn
+        raise AttributeError(name)

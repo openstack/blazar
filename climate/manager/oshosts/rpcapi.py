@@ -37,20 +37,23 @@ class ManagerRPCAPI(service.RpcProxy):
 
     def get_computehost(self, host_id):
         """Get detailed info about some computehost."""
-        return self.call('get_computehost', host_id=host_id)
+        return self.call('physical:host:get_computehost', host_id=host_id)
 
     def list_computehosts(self):
         """List all computehosts."""
-        return self.call('list_computehosts')
+        return self.call('physical:host:list_computehosts')
 
     def create_computehost(self, host_values):
         """Create computehost with specified parameters."""
-        return self.call('create_computehost', host_values=host_values)
+        return self.call('physical:host:create_computehost',
+                         host_values=host_values)
 
     def update_computehost(self, host_id, values):
         """Update computehost with passes values dictionary."""
-        return self.call('update_computehost', host_id=host_id, values=values)
+        return self.call('physical:host:update_computehost', host_id=host_id,
+                         values=values)
 
     def delete_computehost(self, host_id):
         """Delete specified computehost."""
-        return self.cast('delete_computehost', host_id=host_id)
+        return self.cast('physical:host:delete_computehost',
+                         host_id=host_id)
