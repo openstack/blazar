@@ -18,6 +18,7 @@ import tempfile
 import fixtures
 from oslo.config import cfg
 
+from climate import context
 from climate.db.sqlalchemy import api as db_api
 from climate.openstack.common.db.sqlalchemy import session as db_session
 from climate.openstack.common.fixture import config
@@ -62,11 +63,17 @@ class TestCase(test.BaseTestCase):
         super(TestCase, self).setUp()
         self.useFixture(config.Config())
         cfg.CONF([], project='climate')
+        self.context_mock = None
 
     def patch(self, obj, attr):
         """Returns a Mocked object on the patched attribute."""
         mockfixture = self.useFixture(mockpatch.PatchObject(obj, attr))
         return mockfixture.mock
+
+    def set_context(self, ctx):
+        if self.context_mock is None:
+            self.context_mock = self.patch(context.Context, 'current')
+        self.context_mock.return_value = ctx
 
 
 class DBTestCase(TestCase):

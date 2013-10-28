@@ -106,118 +106,118 @@ def to_dict(func):
 
 #Reservation
 
-def reservation_create(ctx, reservation_values):
+def reservation_create(reservation_values):
     """Create a reservation from the values."""
-    return IMPL.reservation_create(ctx, reservation_values)
+    return IMPL.reservation_create(reservation_values)
 
 
 @to_dict
-def reservation_get_all_by_lease(ctx, lease_id):
+def reservation_get_all_by_lease(lease_id):
     """Return all reservations belongs to specific lease."""
-    return IMPL.reservation_get_all_by_lease(ctx, lease_id)
+    return IMPL.reservation_get_all_by_lease(lease_id)
 
 
 @to_dict
-def reservation_get(ctx, reservation_id):
+def reservation_get(reservation_id):
     """Return specific reservation."""
-    return IMPL.reservation_get(ctx, reservation_id)
+    return IMPL.reservation_get(reservation_id)
 
 
-def reservation_destroy(ctx, reservation_id):
+def reservation_destroy(reservation_id):
     """Delete specific reservation."""
-    IMPL.reservation_destroy(ctx, reservation_id)
+    IMPL.reservation_destroy(reservation_id)
 
 
-def reservation_update(ctx, reservation_id, reservation_values):
+def reservation_update(reservation_id, reservation_values):
     """Update reservation."""
-    IMPL.reservation_update(ctx, reservation_id, reservation_values)
+    IMPL.reservation_update(reservation_id, reservation_values)
 
 
 #Lease
 
-def lease_create(ctx, lease_values):
+def lease_create(lease_values):
     """Create a lease from values."""
-    return IMPL.lease_create(ctx, lease_values)
+    return IMPL.lease_create(lease_values)
 
 
 @to_dict
-def lease_get_all(ctx):
+def lease_get_all():
     """Return all leases."""
-    return IMPL.lease_get_all(ctx)
+    return IMPL.lease_get_all()
 
 
 @to_dict
-def lease_get_all_by_tenant(ctx, tenant_id):
+def lease_get_all_by_tenant(tenant_id):
     """Return all leases in specific tenant."""
-    return IMPL.lease_get_all_by_tenant(ctx, tenant_id)
+    return IMPL.lease_get_all_by_tenant(tenant_id)
 
 
 @to_dict
-def lease_get_all_by_user(ctx, user_id):
+def lease_get_all_by_user(user_id):
     """Return all leases belongs to specific user."""
-    return IMPL.lease_get_all_by_user(ctx, user_id)
+    return IMPL.lease_get_all_by_user(user_id)
 
 
 @to_dict
-def lease_get(ctx, lease_id):
+def lease_get(lease_id):
     """Return lease."""
-    return IMPL.lease_get(ctx, lease_id)
+    return IMPL.lease_get(lease_id)
 
 
 @to_dict
-def lease_list(ctx):
+def lease_list():
     """Return a list of all existing leases."""
-    return IMPL.lease_list(ctx)
+    return IMPL.lease_list()
 
 
-def lease_destroy(ctx, lease_id):
+def lease_destroy(lease_id):
     """Delete lease or raise if not exists."""
-    IMPL.lease_destroy(ctx, lease_id)
+    IMPL.lease_destroy(lease_id)
 
 
-def lease_update(ctx, lease_id, lease_values):
+def lease_update(lease_id, lease_values):
     """Update lease or raise if not exists."""
-    IMPL.lease_update(ctx, lease_id, lease_values)
+    IMPL.lease_update(lease_id, lease_values)
 
 
 #Events
 
 @to_dict
-def event_create(ctx, event_values):
+def event_create(event_values):
     """Create an event from values."""
-    return IMPL.event_create(ctx, event_values)
+    return IMPL.event_create(event_values)
 
 
 @to_dict
-def event_get_all(ctx):
+def event_get_all():
     """Return all events."""
-    return IMPL.event_get_all(ctx)
+    return IMPL.event_get_all()
 
 
 @to_dict
-def event_get(ctx, event_id):
+def event_get(event_id):
     """Return a specific event."""
-    return IMPL.event_get(ctx, event_id)
+    return IMPL.event_get(event_id)
 
 
 @to_dict
-def event_get_all_sorted_by_filters(ctx, sort_key, sort_dir, filters):
+def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
     """Return instances sorted by param."""
-    return IMPL.event_get_all_sorted_by_filters(ctx, sort_key, sort_dir,
+    return IMPL.event_get_all_sorted_by_filters(sort_key, sort_dir,
                                                 filters)
 
 
 @to_dict
-def event_list(ctx, param):
+def event_list(param):
     """Return a list of events."""
-    return IMPL.event_list(ctx)
+    return IMPL.event_list()
 
 
-def event_destroy(ctx, event_id):
+def event_destroy(event_id):
     """Delete event or raise if not exists."""
-    IMPL.event_destroy(ctx, event_id)
+    IMPL.event_destroy(event_id)
 
 
-def event_update(ctx, event_id, event_values):
+def event_update(event_id, event_values):
     """Update event or raise if not exists."""
-    IMPL.event_update(ctx, event_id, event_values)
+    IMPL.event_update(event_id, event_values)

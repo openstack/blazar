@@ -77,21 +77,19 @@ def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
             }
 
 
-def _create_virtual_lease(context=context.get_admin_context(),
-                          values=_get_fake_virt_lease_values(),
+def _create_virtual_lease(values=_get_fake_virt_lease_values(),
                           random=False):
     """Creating fake lease having a single virtual resource."""
-    return db_api.lease_create(context, values)
+    return db_api.lease_create(values)
 
 
-def _create_physical_lease(context=context.get_admin_context(),
-                           values=_get_fake_phys_lease_values(),
+def _create_physical_lease(values=_get_fake_phys_lease_values(),
                            random=False):
     """Creating fake lease having a single physical resource."""
     if random is True:
         values = _get_fake_phys_lease_values(id=_get_fake_random_uuid(),
                                              name=_get_fake_random_uuid())
-    return db_api.lease_create(context, values)
+    return db_api.lease_create(values)
 
 
 class SQLAlchemyDBApiTestCase(test.DBTestCase):
@@ -99,71 +97,68 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
 
     def setUp(self):
         super(SQLAlchemyDBApiTestCase, self).setUp()
-        self.context = context.get_admin_context()
+        self.set_context(context.get_admin_context())
 
     def test_create_virt_lease(self):
         """Create a virtual lease and verify that all tables have been
         populated.
         """
 
-        result = db_api.lease_create(self.context,
-                                     _get_fake_virt_lease_values())
+        result = db_api.lease_create(_get_fake_virt_lease_values())
         self.assertEquals(result['name'],
                           _get_fake_virt_lease_values()['name'])
-        self.assertEqual(0, len(db_api.event_get_all(self.context)))
-        self.assertEqual(1, len(db_api.reservation_get_all(self.context)))
+        self.assertEqual(0, len(db_api.event_get_all()))
+        self.assertEqual(1, len(db_api.reservation_get_all()))
 
     def test_create_phys_lease(self):
         """Create a physical lease and verify that all tables have been
         populated.
         """
 
-        result = db_api.lease_create(self.context,
-                                     _get_fake_phys_lease_values())
+        result = db_api.lease_create(_get_fake_phys_lease_values())
         self.assertEquals(result['name'],
                           _get_fake_phys_lease_values()['name'])
-        self.assertEqual(0, len(db_api.event_get_all(self.context)))
-        self.assertEqual(1, len(db_api.reservation_get_all(self.context)))
+        self.assertEqual(0, len(db_api.event_get_all()))
+        self.assertEqual(1, len(db_api.reservation_get_all()))
 
     def test_create_duplicate_leases(self):
         """Create two leases with same names, and checks it raises an error.
         """
 
-        db_api.lease_create(self.context, _get_fake_phys_lease_values())
+        db_api.lease_create(_get_fake_phys_lease_values())
         self.assertRaises(RuntimeError, db_api.lease_create,
-                          self.context, _get_fake_phys_lease_values())
+                          _get_fake_phys_lease_values())
 
     def test_create_lease_with_event(self):
         """Create a lease including a fake event and check all tables."""
 
         lease = _get_fake_phys_lease_values()
         lease['events'].append(_get_fake_event_values(lease_id=lease['id']))
-        result = db_api.lease_create(self.context, lease)
+        result = db_api.lease_create(lease)
         self.assertEquals(result['name'],
                           _get_fake_phys_lease_values()['name'])
-        self.assertEqual(1, len(db_api.event_get_all(self.context)))
+        self.assertEqual(1, len(db_api.event_get_all()))
 
     def test_delete_wrong_lease(self):
         """Delete a lease that doesn't exist and check that raises an error."""
-        self.assertRaises(RuntimeError,
-                          db_api.lease_destroy, self.context, 'fake_id')
+        self.assertRaises(RuntimeError, db_api.lease_destroy, 'fake_id')
 
     def test_delete_correct_lease(self):
         """Delete a lease and check that deletion has been cascaded to FKs."""
         lease = _get_fake_phys_lease_values()
         lease['events'].append(_get_fake_event_values(lease_id=lease['id']))
         result = _create_physical_lease(values=lease)
-        db_api.lease_destroy(self.context, result['id'])
-        self.assertIsNone(db_api.lease_get(self.context, result['id']))
-        self.assertEqual(0, len(db_api.reservation_get_all(self.context)))
-        self.assertEqual(0, len(db_api.event_get_all(self.context)))
+        db_api.lease_destroy(result['id'])
+        self.assertIsNone(db_api.lease_get(result['id']))
+        self.assertEqual(0, len(db_api.reservation_get_all()))
+        self.assertEqual(0, len(db_api.event_get_all()))
 
     def test_lease_get_all(self):
         """Check the number of leases we get."""
         _create_physical_lease(random=True)
-        self.assertEqual(1, len(db_api.lease_get_all(self.context)))
+        self.assertEqual(1, len(db_api.lease_get_all()))
         _create_physical_lease(random=True)
-        self.assertEqual(2, len(db_api.lease_get_all(self.context)))
+        self.assertEqual(2, len(db_api.lease_get_all()))
 
     def test_lease_list(self):
         """Not implemented yet until lease_list returns list of IDs."""
@@ -174,16 +169,16 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
             values=_get_fake_phys_lease_values(id='1', name='fake1'))
         _create_physical_lease(
             values=_get_fake_phys_lease_values(id='2', name='fake2'))
-        self.assertEquals(['1', '2'], db_api.lease_list(self.context))
+        self.assertEquals(['1', '2'], db_api.lease_list())
 
     def test_lease_update(self):
         """Update both start_time and name and check lease has been updated."""
         result = _create_physical_lease()
-        result = db_api.lease_update(self.context, result['id'],
+        result = db_api.lease_update(result['id'],
                                      values={'name': 'lease_renamed'})
         self.assertEquals('lease_renamed', result['name'])
         result = db_api.lease_update(
-            self.context, result['id'],
+            result['id'],
             values={'start_date': _get_datetime('2014-02-01 00:00')})
         self.assertEquals(_get_datetime('2014-02-01 00:00'),
                           result['start_date'])

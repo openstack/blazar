@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
+from climate import context
 from climate.db.sqlalchemy import models
 from climate.openstack.common.db import exception as db_exc
 from climate.openstack.common.db.sqlalchemy import session as db_session
@@ -38,30 +39,31 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def model_query(model, ctx, session=None, project_only=None):
+def model_query(model, session=None, project_only=None):
     """Query helper.
 
     :param model: base model to query
-    :param ctx: ctx to query under
-    :param project_only: if present and ctx is user-type, then restrict
-            query to match the ctx's project_id.
+    :param project_only: if present and current context is user-type,
+            then restrict query to match the project_id from current context.
     """
     session = session or get_session()
 
     query = session.query(model)
 
     if project_only:
+        ctx = context.Context.current()
         query = query.filter_by(tenant_id=ctx.project_id)
 
     return query
 
 
-def column_query(ctx, *columns, **kwargs):
+def column_query(*columns, **kwargs):
     session = kwargs.get("session") or get_session()
 
     query = session.query(*columns)
 
     if kwargs.get("project_only"):
+        ctx = context.Context.current()
         query = query.filter_by(tenant_id=ctx.tenant_id)
 
     return query
@@ -130,28 +132,28 @@ class InequalityCondition(object):
 
 
 #Reservation
-def _reservation_get(ctx, session, reservation_id):
-    query = model_query(models.Reservation, ctx, session)
+def _reservation_get(session, reservation_id):
+    query = model_query(models.Reservation, session)
     return query.filter_by(id=reservation_id).first()
 
 
-def reservation_get(ctx, reservation_id):
-    return _reservation_get(ctx, get_session(), reservation_id)
+def reservation_get(reservation_id):
+    return _reservation_get(get_session(), reservation_id)
 
 
-def reservation_get_all(ctx):
-    query = model_query(models.Reservation, ctx, get_session())
+def reservation_get_all():
+    query = model_query(models.Reservation, get_session())
     return query.all()
 
 
-def reservation_get_all_by_lease_id(ctx, lease_id):
-    reservations = model_query(models.Reservation, ctx, get_session()).\
+def reservation_get_all_by_lease_id(lease_id):
+    reservations = model_query(models.Reservation, get_session()).\
         filter_by(lease_id=lease_id)
 
     return reservations.all()
 
 
-def reservation_create(ctx, values):
+def reservation_create(values):
     values = values.copy()
     reservation = models.Reservation()
     reservation.update(values)
@@ -164,24 +166,24 @@ def reservation_create(ctx, values):
             # raise exception about duplicated columns (e.columns)
             raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
 
-    return reservation_get(ctx, reservation.id)
+    return reservation_get(reservation.id)
 
 
-def reservation_update(ctx, reservation_id, values):
+def reservation_update(reservation_id, values):
     session = get_session()
 
     with session.begin():
-        reservation = _reservation_get(ctx, session, reservation_id)
+        reservation = _reservation_get(session, reservation_id)
         reservation.update(values)
         reservation.save(session=session)
 
-    return reservation_get(ctx, reservation_id)
+    return reservation_get(reservation_id)
 
 
-def reservation_destroy(ctx, reservation_id):
+def reservation_destroy(reservation_id):
     session = get_session()
     with session.begin():
-        reservation = _reservation_get(ctx, session, reservation_id)
+        reservation = _reservation_get(session, reservation_id)
 
         if not reservation:
             # raise not found error
@@ -191,33 +193,33 @@ def reservation_destroy(ctx, reservation_id):
 
 
 #Lease
-def _lease_get(ctx, session, lease_id):
-    query = model_query(models.Lease, ctx, session)
+def _lease_get(session, lease_id):
+    query = model_query(models.Lease, session)
     return query.filter_by(id=lease_id).first()
 
 
-def lease_get(ctx, lease_id):
-    return _lease_get(ctx, get_session(), lease_id)
+def lease_get(lease_id):
+    return _lease_get(get_session(), lease_id)
 
 
-def lease_get_all(ctx):
-    query = model_query(models.Lease, ctx, get_session())
+def lease_get_all():
+    query = model_query(models.Lease, get_session())
     return query.all()
 
 
-def lease_get_all_by_tenant(ctx, tenant_id):
+def lease_get_all_by_tenant(tenant_id):
     raise NotImplementedError
 
 
-def lease_get_all_by_user(ctx, user_id):
+def lease_get_all_by_user(user_id):
     raise NotImplementedError
 
 
-def lease_list(ctx):
-    return model_query(models.Lease, ctx, get_session()).all()
+def lease_list():
+    return model_query(models.Lease, get_session()).all()
 
 
-def lease_create(ctx, values):
+def lease_create(values):
     values = values.copy()
     lease = models.Lease()
     reservations = values.pop("reservations", [])
@@ -245,24 +247,24 @@ def lease_create(ctx, values):
             # raise exception about duplicated columns (e.columns)
             raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
 
-    return lease_get(ctx, lease.id)
+    return lease_get(lease.id)
 
 
-def lease_update(ctx, lease_id, values):
+def lease_update(lease_id, values):
     session = get_session()
 
     with session.begin():
-        lease = _lease_get(ctx, session, lease_id)
+        lease = _lease_get(session, lease_id)
         lease.update(values)
         lease.save(session=session)
 
-    return lease_get(ctx, lease_id)
+    return lease_get(lease_id)
 
 
-def lease_destroy(ctx, lease_id):
+def lease_destroy(lease_id):
     session = get_session()
     with session.begin():
-        lease = _lease_get(ctx, session, lease_id)
+        lease = _lease_get(session, lease_id)
 
         if not lease:
             # raise not found error
@@ -272,30 +274,30 @@ def lease_destroy(ctx, lease_id):
 
 
 #Event
-def _event_get(ctx, session, event_id):
-    query = model_query(models.Event, ctx, session)
+def _event_get(session, event_id):
+    query = model_query(models.Event, session)
     return query.filter_by(id=event_id).first()
 
 
-def _event_get_all(ctx, session):
-    query = model_query(models.Event, ctx, session)
+def _event_get_all(session):
+    query = model_query(models.Event, session)
     return query
 
 
-def event_get(ctx, event_id):
-    return _event_get(ctx, get_session(), event_id)
+def event_get(event_id):
+    return _event_get(get_session(), event_id)
 
 
-def event_get_all(ctx):
-    return _event_get_all(ctx, get_session()).all()
+def event_get_all():
+    return _event_get_all(get_session()).all()
 
 
-def event_get_all_sorted_by_filters(ctx, sort_key, sort_dir, filters):
+def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
     """Return events filtered and sorted by name of the field."""
 
     sort_fn = {'desc': desc, 'asc': asc}
 
-    events_query = _event_get_all(ctx, get_session())
+    events_query = _event_get_all(get_session())
 
     if 'status' in filters:
         events_query = \
@@ -308,11 +310,11 @@ def event_get_all_sorted_by_filters(ctx, sort_key, sort_dir, filters):
     return events_query.all()
 
 
-def event_list(ctx):
-    return model_query(models.Event.id, ctx, get_session()).all()
+def event_list():
+    return model_query(models.Event.id, get_session()).all()
 
 
-def event_create(ctx, values):
+def event_create(values):
     values = values.copy()
     event = models.Event()
     event.update(values)
@@ -325,24 +327,24 @@ def event_create(ctx, values):
             # raise exception about duplicated columns (e.columns)
             raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
 
-    return event_get(ctx, event.id)
+    return event_get(event.id)
 
 
-def event_update(ctx, event_id, values):
+def event_update(event_id, values):
     session = get_session()
 
     with session.begin():
-        event = _event_get(ctx, session, event_id)
+        event = _event_get(session, event_id)
         event.update(values)
         event.save(session=session)
 
-    return event_get(ctx, event_id)
+    return event_get(event_id)
 
 
-def event_destroy(ctx, event_id):
+def event_destroy(event_id):
     session = get_session()
     with session.begin():
-        event = _event_get(ctx, session, event_id)
+        event = _event_get(session, event_id)
 
         if not event:
             # raise not found error
