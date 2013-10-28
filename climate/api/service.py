@@ -19,53 +19,50 @@ from climate.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-## Leases operations
+class API(object):
 
-def get_leases():
-    """List all existing leases."""
-    pass
+    ## Leases operations
 
+    def get_leases():
+        """List all existing leases."""
+        pass
 
-def create_lease(data):
-    """Create new lease.
+    def create_lease(data):
+        """Create new lease.
 
-    :param data: New lease characteristics.
-    :type data: dict
-    """
-    pass
+        :param data: New lease characteristics.
+        :type data: dict
+        """
+        pass
 
+    def get_lease(lease_id):
+        """Get lease by its ID.
 
-def get_lease(lease_id):
-    """Get lease by its ID.
+        :param lease_id: ID of the lease in Climate DB.
+        :type lease_id: str
+        """
+        pass
 
-    :param lease_id: ID of the lease in Climate DB.
-    :type lease_id: str
-    """
-    pass
+    def update_lease(lease_id, data):
+        """Update lease. Only name changing and prolonging may be proceeded.
 
+        :param lease_id: ID of the lease in Climate DB.
+        :type lease_id: str
+        :param data: New lease characteristics.
+        :type data: dict
+        """
+        pass
 
-def update_lease(lease_id, data):
-    """Update lease. Only name changing and prolonging may be proceeded.
+    def delete_lease(lease_id):
+        """Delete specified lease.
 
-    :param lease_id: ID of the lease in Climate DB.
-    :type lease_id: str
-    :param data: New lease characteristics.
-    :type data: dict
-    """
-    pass
+        :param lease_id: ID of the lease in Climate DB.
+        :type lease_id: str
+        """
+        pass
 
+    ## Plugins operations
 
-def delete_lease(lease_id):
-    """Delete specified lease.
-
-    :param lease_id: ID of the lease in Climate DB.
-    :type lease_id: str
-    """
-    pass
-
-
-## Plugins operations
-
-def get_plugins():
-    """List all possible plugins."""
-    pass
+    def get_plugins():
+        """List all possible plugins."""
+        pass

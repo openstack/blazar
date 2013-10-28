@@ -12,3 +12,21 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
+
+
+class LazyProxy(object):
+
+    def __init__(self, klass, *args, **kwargs):
+        self.klass = klass
+        self.args = args
+        self.kwargs = kwargs
+        self.instance = None
+
+    def __getattr__(self, name):
+        return functools.partial(self.__run_method, name)
+
+    def __run_method(self, __name, *args, **kwargs):
+        if self.instance is None:
+            self.instance = self.klass(*self.args, **self.kwargs)
+        return getattr(self.instance, __name)(*args, **kwargs)

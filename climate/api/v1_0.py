@@ -17,10 +17,12 @@ from climate.api import service
 from climate.api import utils as api_utils
 from climate.api import validation
 from climate.openstack.common import log as logging
+from climate import utils
 
 LOG = logging.getLogger(__name__)
 
 rest = api_utils.Rest('v1_0', __name__)
+_api = utils.LazyProxy(service.API)
 
 
 ## Leases operations
@@ -28,34 +30,34 @@ rest = api_utils.Rest('v1_0', __name__)
 @rest.get('/leases')
 def leases_list():
     """List all existing leases."""
-    return api_utils.render(leases=service.get_leases())
+    return api_utils.render(leases=_api.get_leases())
 
 
 @rest.post('/leases')
 def leases_create(data):
     """Create new lease."""
-    return api_utils.render(lease=service.create_lease(data))
+    return api_utils.render(lease=_api.create_lease(data))
 
 
 @rest.get('/leases/<lease_id>')
-@validation.check_exists(service.get_lease, 'lease_id')
+@validation.check_exists(_api.get_lease, lease_id='lease_id')
 def leases_get(lease_id):
     """Get lease by its ID."""
-    return api_utils.render(lease=service.get_lease(lease_id))
+    return api_utils.render(lease=_api.get_lease(lease_id))
 
 
 @rest.put('/leases/<lease_id>')
-@validation.check_exists(service.get_lease, 'lease_id')
+@validation.check_exists(_api.get_lease, lease_id='lease_id')
 def leases_update(lease_id, data):
     """Update lease. Only name changing and prolonging may be proceeded."""
-    return api_utils.render(lease=service.update_lease(lease_id, data))
+    return api_utils.render(lease=_api.update_lease(lease_id, data))
 
 
 @rest.delete('/leases/<lease_id>')
-@validation.check_exists(service.get_lease, 'lease_id')
+@validation.check_exists(_api.get_lease, lease_id='lease_id')
 def leases_delete(lease_id):
     """Delete specified lease."""
-    service.delete_lease(lease_id)
+    _api.delete_lease(lease_id)
     return api_utils.render()
 
 
@@ -64,4 +66,4 @@ def leases_delete(lease_id):
 @rest.get('/plugins')
 def plugins_list():
     """List all possible plugins."""
-    return api_utils.render(plugins=service.get_plugins())
+    return api_utils.render(plugins=_api.get_plugins())
