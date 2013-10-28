@@ -23,11 +23,11 @@ class API(object):
 
     ## Leases operations
 
-    def get_leases():
+    def get_leases(self):
         """List all existing leases."""
         pass
 
-    def create_lease(data):
+    def create_lease(self, data):
         """Create new lease.
 
         :param data: New lease characteristics.
@@ -35,7 +35,7 @@ class API(object):
         """
         pass
 
-    def get_lease(lease_id):
+    def get_lease(self, lease_id):
         """Get lease by its ID.
 
         :param lease_id: ID of the lease in Climate DB.
@@ -43,7 +43,7 @@ class API(object):
         """
         pass
 
-    def update_lease(lease_id, data):
+    def update_lease(self, lease_id, data):
         """Update lease. Only name changing and prolonging may be proceeded.
 
         :param lease_id: ID of the lease in Climate DB.
@@ -53,7 +53,7 @@ class API(object):
         """
         pass
 
-    def delete_lease(lease_id):
+    def delete_lease(self, lease_id):
         """Delete specified lease.
 
         :param lease_id: ID of the lease in Climate DB.
@@ -63,6 +63,6 @@ class API(object):
 
     ## Plugins operations
 
-    def get_plugins():
+    def get_plugins(self):
         """List all possible plugins."""
         pass
