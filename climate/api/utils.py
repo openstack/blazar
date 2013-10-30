@@ -111,6 +111,7 @@ def render(result=None, response_type=None, status=None, **kwargs):
     elif kwargs:
         # can't merge kwargs into the non-dict res
         abort_and_log(500, "Non-dict and non-empty kwargs passed to render.")
+        return
 
     status_code = getattr(flask.request, 'status_code', None)
     if status:
@@ -127,8 +128,10 @@ def render(result=None, response_type=None, status=None, **kwargs):
         serializer = wsgi.JSONDictSerializer()
     else:
         abort_and_log(400, "Content type '%s' isn't supported" % response_type)
+        return
 
     body = serializer.serialize(result)
+
     response_type = str(response_type)
 
     return flask.Response(response=body, status=status_code,
@@ -153,6 +156,7 @@ def request_data():
         deserializer = wsgi.JSONDeserializer()
     else:
         abort_and_log(400, "Content type '%s' isn't supported" % content_type)
+        return
 
     # parsed request data to avoid unwanted re-parsings
     parsed_data = deserializer.deserialize(flask.request.data)['body']
