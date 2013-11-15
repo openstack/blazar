@@ -105,8 +105,8 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
         """
 
         result = db_api.lease_create(_get_fake_virt_lease_values())
-        self.assertEquals(result['name'],
-                          _get_fake_virt_lease_values()['name'])
+        self.assertEqual(result['name'],
+                         _get_fake_virt_lease_values()['name'])
         self.assertEqual(0, len(db_api.event_get_all()))
         self.assertEqual(1, len(db_api.reservation_get_all()))
 
@@ -116,8 +116,8 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
         """
 
         result = db_api.lease_create(_get_fake_phys_lease_values())
-        self.assertEquals(result['name'],
-                          _get_fake_phys_lease_values()['name'])
+        self.assertEqual(result['name'],
+                         _get_fake_phys_lease_values()['name'])
         self.assertEqual(0, len(db_api.event_get_all()))
         self.assertEqual(1, len(db_api.reservation_get_all()))
 
@@ -135,8 +135,8 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
         lease = _get_fake_phys_lease_values()
         lease['events'].append(_get_fake_event_values(lease_id=lease['id']))
         result = db_api.lease_create(lease)
-        self.assertEquals(result['name'],
-                          _get_fake_phys_lease_values()['name'])
+        self.assertEqual(result['name'],
+                         _get_fake_phys_lease_values()['name'])
         self.assertEqual(1, len(db_api.event_get_all()))
 
     def test_delete_wrong_lease(self):
@@ -169,16 +169,16 @@ class SQLAlchemyDBApiTestCase(test.DBTestCase):
             values=_get_fake_phys_lease_values(id='1', name='fake1'))
         _create_physical_lease(
             values=_get_fake_phys_lease_values(id='2', name='fake2'))
-        self.assertEquals(['1', '2'], db_api.lease_list())
+        self.assertEqual(['1', '2'], db_api.lease_list())
 
     def test_lease_update(self):
         """Update both start_time and name and check lease has been updated."""
         result = _create_physical_lease()
         result = db_api.lease_update(result['id'],
                                      values={'name': 'lease_renamed'})
-        self.assertEquals('lease_renamed', result['name'])
+        self.assertEqual('lease_renamed', result['name'])
         result = db_api.lease_update(
             result['id'],
             values={'start_date': _get_datetime('2014-02-01 00:00')})
-        self.assertEquals(_get_datetime('2014-02-01 00:00'),
-                          result['start_date'])
+        self.assertEqual(_get_datetime('2014-02-01 00:00'),
+                         result['start_date'])

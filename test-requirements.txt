@@ -1,4 +1,4 @@
-hacking>=0.5.6,<0.8a0
+hacking>=0.8.0,<0.9
 
 docutils==0.9.1
 nose
