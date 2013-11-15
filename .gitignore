@@ -16,6 +16,10 @@ develop-eggs
 lib
 lib64
 
+# vim files
+.*sw[op]
+.*~
+
 # Installer logs
 pip-log.txt
 
