@@ -33,3 +33,5 @@ nosetests.xml
 
 AUTHORS
 ChangeLog
+
+.testrepository
