@@ -16,6 +16,7 @@
 from climate import exceptions
 from climate.manager import rpcapi as manager_rpcapi
 from climate.openstack.common import log as logging
+from climate import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -28,10 +29,12 @@ class API(object):
 
     ## Leases operations
 
+    @policy.authorize('leases', 'get')
     def get_leases(self):
         """List all existing leases."""
         return self.manager_rpcapi.list_leases()
 
+    @policy.authorize('leases', 'create')
     def create_lease(self, data):
         """Create new lease.
 
@@ -43,6 +46,7 @@ class API(object):
         data.update({'trust': trust})
         return self.manager_rpcapi.create_lease(data)
 
+    @policy.authorize('leases', 'get')
     def get_lease(self, lease_id):
         """Get lease by its ID.
 
@@ -51,6 +55,7 @@ class API(object):
         """
         return self.manager_rpcapi.get_lease(lease_id)
 
+    @policy.authorize('leases', 'update')
     def update_lease(self, lease_id, data):
         """Update lease. Only name changing and prolonging may be proceeded.
 
@@ -76,6 +81,7 @@ class API(object):
             data['start_date'] = start_date
         return self.manager_rpcapi.update_lease(lease_id, data)
 
+    @policy.authorize('leases', 'delete')
     def delete_lease(self, lease_id):
         """Delete specified lease.
 
@@ -86,6 +92,7 @@ class API(object):
 
     ## Plugins operations
 
+    @policy.authorize('plugins', 'get')
     def get_plugins(self):
         """List all possible plugins."""
         pass

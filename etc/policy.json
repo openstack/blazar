@@ -1,0 +1,20 @@
+{
+    "admin": "is_admin:True or role:admin or role:masterofuniverse",
+
+    "admin_or_owner":  "rule:admin or tenant_id:%(tenant_id)s",
+
+    "default": "!",
+    "admin_api": "rule:admin",
+
+    "climate:leases:get": "rule:admin_or_owner",
+    "climate:leases:create": "rule:admin_or_owner",
+    "climate:leases:delete": "rule:admin_or_owner",
+    "climate:leases:update": "rule:admin_or_owner",
+
+    "climate:plugins:get": "@",
+
+    "climate:oshosts:get": "rule:admin_or_owner",
+    "climate:oshosts:create": "rule:admin_api",
+    "climate:oshosts:delete": "rule:admin_api",
+    "climate:oshosts:update": "rule:admin_api"
+}
