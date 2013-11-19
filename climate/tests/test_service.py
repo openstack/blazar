@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-#
-# Copyright © 2013 Julien Danjou <julien@danjou.info>
+# Copyright (c) 2013 Julien Danjou <julien@danjou.info>
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,10 +12,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from climate import test
+from climate import tests
 from climate.utils import service
 
 
-class ServiceTestCase(test.TestCase):
+class ServiceTestCase(tests.TestCase):
     def test_prepare_service(self):
         service.prepare_service()

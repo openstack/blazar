@@ -18,7 +18,7 @@ import datetime
 from climate.db.sqlalchemy import api as db_api
 from climate.openstack.common import context
 from climate.openstack.common import uuidutils
-from climate import test
+from climate import tests
 
 
 def _get_fake_random_uuid():
@@ -92,7 +92,7 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     return db_api.lease_create(values)
 
 
-class SQLAlchemyDBApiTestCase(test.DBTestCase):
+class SQLAlchemyDBApiTestCase(tests.DBTestCase):
     """Test case for SQLAlchemy DB API."""
 
     def setUp(self):
