@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-#
-# Copyright © 2013 Julien Danjou <julien@danjou.info>
+# Copyright (c) 2013 Julien Danjou <julien@danjou.info>
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -18,10 +15,10 @@
 import mock
 
 from climate.inventory import nova
-from climate import test
+from climate import tests
 
 
-class ServiceTestCase(test.TestCase):
+class ServiceTestCase(tests.TestCase):
     """This test class should be removed, but is kept as an example for unit
     testing.
     """

@@ -14,10 +14,10 @@
 # limitations under the License.
 
 from climate.db import api as db_api
-from climate import test
+from climate import tests
 
 
-class DBApiTestCase(test.TestCase):
+class DBApiTestCase(tests.TestCase):
     """Test case for DB API."""
 
     # TODO(sbauza) : Extend methods to CRUD lease

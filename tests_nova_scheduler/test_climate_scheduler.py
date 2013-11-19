@@ -18,10 +18,10 @@
 from nova.tests.scheduler import fakes
 
 from climate.nova import climate_filter
-from climate import test
+from climate import tests
 
 
-class ClimateSchedulerTestCase(test.TestCase):
+class ClimateSchedulerTestCase(tests.TestCase):
 
     def test_climate_scheduler(self):
         f = climate_filter.ClimateFilter()
