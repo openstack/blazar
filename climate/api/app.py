@@ -25,7 +25,17 @@ from climate import context
 from climate.openstack.common import log
 from climate.openstack.common.middleware import debug
 
+
 LOG = log.getLogger(__name__)
+
+cfg.CONF.import_opt('log_exchange', 'climate.config')
+cfg.CONF.import_opt('os_auth_host', 'climate.config')
+cfg.CONF.import_opt('os_auth_port', 'climate.config')
+cfg.CONF.import_opt('os_auth_protocol', 'climate.config')
+cfg.CONF.import_opt('os_admin_username', 'climate.config')
+cfg.CONF.import_opt('os_admin_password', 'climate.config')
+cfg.CONF.import_opt('os_admin_tenant_name', 'climate.config')
+cfg.CONF.import_opt('os_auth_version', 'climate.config')
 
 eventlet.monkey_patch(
     os=True, select=True, socket=True, thread=True, time=True)
