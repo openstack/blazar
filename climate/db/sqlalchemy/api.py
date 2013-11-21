@@ -51,7 +51,7 @@ def model_query(model, session=None, project_only=None):
     query = session.query(model)
 
     if project_only:
-        ctx = context.Context.current()
+        ctx = context.current()
         query = query.filter_by(tenant_id=ctx.project_id)
 
     return query
@@ -63,7 +63,7 @@ def column_query(*columns, **kwargs):
     query = session.query(*columns)
 
     if kwargs.get("project_only"):
-        ctx = context.Context.current()
+        ctx = context.current()
         query = query.filter_by(tenant_id=ctx.tenant_id)
 
     return query

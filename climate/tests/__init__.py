@@ -74,7 +74,7 @@ class TestCase(test.BaseTestCase):
 
     def set_context(self, ctx):
         if self.context_mock is None:
-            self.context_mock = self.patch(context.Context, 'current')
+            self.context_mock = self.patch(context.ClimateContext, 'current')
         self.context_mock.return_value = ctx
 
 

@@ -28,14 +28,14 @@ import climate.openstack.common.rpc.proxy as rpc_proxy
 class RpcProxy(rpc_proxy.RpcProxy):
     def cast(self, name, topic=None, version=None, ctx=None, **kwargs):
         if ctx is None:
-            ctx = context.Context.current()
+            ctx = context.current()
         msg = self.make_msg(name, **kwargs)
         return super(RpcProxy, self).cast(ctx, msg,
                                           topic=topic, version=version)
 
     def call(self, name, topic=None, version=None, ctx=None, **kwargs):
         if ctx is None:
-            ctx = context.Context.current()
+            ctx = context.current()
         msg = self.make_msg(name, **kwargs)
         return super(RpcProxy, self).call(ctx, msg,
                                           topic=topic, version=version)
@@ -45,9 +45,9 @@ def export_context(func):
     @functools.wraps(func)
     def decorator(manager, ctx, *args, **kwargs):
         try:
-            context.Context.current()
+            context.current()
         except RuntimeError:
-            new_ctx = context.Context(**ctx.values)
+            new_ctx = context.ClimateContext(ctx.values)
             with new_ctx:
                 return func(manager, *args, **kwargs)
         else:
@@ -59,7 +59,7 @@ def export_context(func):
 def with_empty_context(func):
     @functools.wraps(func)
     def decorator(*args, **kwargs):
-        with context.Context():
+        with context.ClimateContext():
             return func(*args, **kwargs)
 
     return decorator

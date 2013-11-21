@@ -22,7 +22,7 @@ class ContextTestCase(tests.TestCase):
     def setUp(self):
         super(ContextTestCase, self).setUp()
 
-        self.context = self.patch(context, 'Context')
+        self.context = self.patch(context, 'ClimateContext')
         self.fake_headers = {u'X-User-Id': u'1',
                              u'X-Tenant-Id': u'1',
                              u'X-Auth-Token': u'111-111-111',

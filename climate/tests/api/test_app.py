@@ -19,7 +19,6 @@ from werkzeug import exceptions as werkzeug_exceptions
 
 from climate.api import app
 from climate.api import utils as api_utils
-from climate import context
 from climate import tests
 
 
@@ -29,12 +28,10 @@ class AppTestCase(tests.TestCase):
 
         self.app = app
         self.api_utils = api_utils
-        self.context = context
         self.flask = flask
         self.auth_token = auth_token
 
         self.render = self.patch(self.api_utils, 'render')
-        self.context_clear = self.patch(self.context.Context, 'clear')
         self.fake_app = self.patch(self.flask, 'Flask')
         self.fake_ff = self.patch(self.auth_token, 'filter_factory')
 
@@ -61,10 +58,6 @@ class AppTestCase(tests.TestCase):
                 {"id": "v1.0", "status": "CURRENT"},
             ],
         })
-
-    def test_teardown_request(self):
-        self.app.teardown_request()
-        self.context_clear.assert_called_once()
 
     def test_make_app(self):
         self.app.make_app()

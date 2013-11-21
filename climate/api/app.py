@@ -21,7 +21,6 @@ from werkzeug import exceptions as werkzeug_exceptions
 
 from climate.api import utils as api_utils
 from climate.api import v1_0 as api_v1_0
-from climate import context
 from climate.openstack.common import log
 from climate.openstack.common.middleware import debug
 
@@ -61,10 +60,6 @@ def version_list():
     })
 
 
-def teardown_request(_ex=None):
-    context.Context.clear()
-
-
 def make_app():
     """App builder (wsgi).
 
@@ -73,7 +68,6 @@ def make_app():
     app = flask.Flask('climate.api')
 
     app.route('/', methods=['GET'])(version_list)
-    app.teardown_request(teardown_request)
     app.register_blueprint(api_v1_0.rest, url_prefix='/v1')
 
     for code in werkzeug_exceptions.default_exceptions.iterkeys():

@@ -17,7 +17,7 @@ from climate import context
 
 
 def ctx_from_headers(headers):
-    return context.Context(
+    return context.ClimateContext(
         user_id=headers['X-User-Id'],
         tenant_id=headers['X-Tenant-Id'],
         auth_token=headers['X-Auth-Token'],
