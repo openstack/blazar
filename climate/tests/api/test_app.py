@@ -74,5 +74,5 @@ class AppTestCase(tests.TestCase):
                                              auth_port='35357',
                                              auth_protocol='http',
                                              auth_version='v2.0',
-                                             admin_password='nova',
+                                             admin_password='climate',
                                              auth_host='127.0.0.1')

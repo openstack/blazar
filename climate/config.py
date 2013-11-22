@@ -46,7 +46,7 @@ os_opts = [
                     'The user must have admin role in <os_admin_tenant_name> '
                     'tenant'),
     cfg.StrOpt('os_admin_password',
-               default='nova',
+               default='climate',
                help='Password of the admin user'),
     cfg.StrOpt('os_admin_tenant_name',
                default='admin',
