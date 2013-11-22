@@ -52,7 +52,7 @@ class ServiceTestCase(tests.TestCase):
         self.fake_phys_plugin = self.patch(self.host_plugin,
                                            'PhysicalHostPlugin')
 
-        self.manager = self.service.ManagerService('127.0.0.1')
+        self.manager = self.service.ManagerService()
 
         self.lease_id = '11-22-33'
         self.lease = {'id': self.lease_id,

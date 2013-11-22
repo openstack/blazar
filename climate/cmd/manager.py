@@ -35,7 +35,7 @@ def main():
     service_utils.prepare_service(sys.argv)
     db_api.setup_db()
     service.launch(
-        manager_service.ManagerService(cfg.CONF.host)
+        manager_service.ManagerService()
     ).wait()
 
 

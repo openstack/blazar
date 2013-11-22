@@ -22,12 +22,9 @@ class RPCAPITestCase(tests.TestCase):
     def setUp(self):
         super(RPCAPITestCase, self).setUp()
 
-        self.patch(rpcapi, "CONF")
-
         self.manager = rpcapi.ManagerRPCAPI()
 
         self.call = self.patch(self.manager, "call")
-        self.make_msg = self.patch(self.manager, "make_msg")
         self.cast = self.patch(self.manager, "cast")
 
         self.fake_id = 1

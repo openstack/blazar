@@ -18,42 +18,68 @@
 import functools
 
 from oslo.config import cfg
+from oslo import messaging
 
 from climate import context
-from climate.openstack.common import log
-from climate.openstack.common import rpc
-import climate.openstack.common.rpc.proxy as rpc_proxy
+from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
 
 
-class RpcProxy(rpc_proxy.RpcProxy):
-    def cast(self, name, topic=None, version=None, ctx=None, **kwargs):
-        if ctx is None:
-            ctx = context.current()
-        msg = self.make_msg(name, **kwargs)
-        return super(RpcProxy, self).cast(ctx, msg,
-                                          topic=topic, version=version)
+class RPCClient(object):
+    def __init__(self, target):
+        super(RPCClient, self).__init__()
+        self._client = messaging.RPCClient(
+            target=target,
+            transport=messaging.get_transport(cfg.CONF),
+        )
 
-    def call(self, name, topic=None, version=None, ctx=None, **kwargs):
-        if ctx is None:
-            ctx = context.current()
-        msg = self.make_msg(name, **kwargs)
-        return super(RpcProxy, self).call(ctx, msg,
-                                          topic=topic, version=version)
+    def cast(self, name, **kwargs):
+        ctx = context.current()
+        return self._client.cast(ctx.to_dict(), name, **kwargs)
+
+    def call(self, name, **kwargs):
+        ctx = context.current()
+        return self._client.call(ctx.to_dict(), name, **kwargs)
 
 
-def export_context(func):
-    @functools.wraps(func)
-    def decorator(manager, ctx, *args, **kwargs):
+class RPCServer(object):
+    def __init__(self, target):
+        super(RPCServer, self).__init__()
+        self._server = messaging.get_rpc_server(
+            target=target,
+            transport=messaging.get_transport(cfg.CONF),
+            endpoints=[ContextEndpointHandler(self, target)],
+        )
+
+    def start(self):
+        super(RPCServer, self).start()
+        self._server.start()
+
+    def stop(self):
+        super(RPCServer, self).stop()
+        self._server.stop()
+
+
+class ContextEndpointHandler(object):
+    def __init__(self, endpoint, target):
+        self.__endpoint = endpoint
+        self.target = target
+
+    def __getattr__(self, name):
         try:
-            context.current()
-        except RuntimeError:
-            new_ctx = context.ClimateContext(ctx.values)
-            with new_ctx:
-                return func(manager, *args, **kwargs)
-        else:
-            return func(manager, ctx, *args, **kwargs)
+            method = getattr(self.__endpoint, name)
 
-    return decorator
+            def run_method(__ctx, **kwargs):
+                with context.ClimateContext(**__ctx):
+                    return method(**kwargs)
+
+            return run_method
+        except AttributeError:
+            LOG.error(_("No %(method)s method found implemented in "
+                        "%(class)s class"),
+                      {'method': name, 'class': self.__endpoint})
 
 
 def with_empty_context(func):
@@ -66,12 +92,11 @@ def with_empty_context(func):
 
 
 def prepare_service(argv=[]):
-    rpc.set_defaults(control_exchange='climate')
-    cfg.set_defaults(log.log_opts,
+    cfg.set_defaults(logging.log_opts,
                      default_log_levels=['amqplib=WARN',
                                          'qpid.messaging=INFO',
                                          'stevedore=INFO',
                                          'eventlet.wsgi.server=WARN'
                                          ])
     cfg.CONF(argv[1:], project='climate')
-    log.setup('climate')
+    logging.setup('climate')

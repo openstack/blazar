@@ -15,13 +15,14 @@
 
 from oslo.config import cfg
 
+from climate import manager
 from climate.utils import service
 
 CONF = cfg.CONF
 CONF.import_opt('rpc_topic', 'climate.manager.service', 'manager')
 
 
-class ManagerRPCAPI(service.RpcProxy):
+class ManagerRPCAPI(service.RPCClient):
     """Client side for the Manager RPC API.
 
     Used from other services to communicate with climate-manager service.
@@ -30,10 +31,7 @@ class ManagerRPCAPI(service.RpcProxy):
 
     def __init__(self):
         """Initiate RPC API client with needed topic and RPC version."""
-        super(ManagerRPCAPI, self).__init__(
-            topic=CONF.manager.rpc_topic,
-            default_version=self.BASE_RPC_API_VERSION,
-        )
+        super(ManagerRPCAPI, self).__init__(manager.get_target())
 
     def get_computehost(self, host_id):
         """Get detailed info about some computehost."""

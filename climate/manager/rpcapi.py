@@ -13,27 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.config import cfg
-
+from climate import manager
 from climate.utils import service
 
-CONF = cfg.CONF
-CONF.import_opt('rpc_topic', 'climate.manager.service', 'manager')
 
-
-class ManagerRPCAPI(service.RpcProxy):
+class ManagerRPCAPI(service.RPCClient):
     """Client side for the Manager RPC API.
 
     Used from other services to communicate with climate-manager service.
     """
-    BASE_RPC_API_VERSION = '1.0'
-
     def __init__(self):
         """Initiate RPC API client with needed topic and RPC version."""
-        super(ManagerRPCAPI, self).__init__(
-            topic=CONF.manager.rpc_topic,
-            default_version=self.BASE_RPC_API_VERSION,
-        )
+        super(ManagerRPCAPI, self).__init__(manager.get_target())
 
     def get_lease(self, lease_id):
         """Get detailed info about some lease."""

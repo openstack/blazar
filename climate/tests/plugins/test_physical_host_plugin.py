@@ -115,7 +115,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.nova = self.patch(self.nova_client, 'Client').return_value
 
         self.service = service
-        self.manager = self.service.ManagerService('127.0.0.1')
+        self.manager = self.service.ManagerService()
 
         self.fake_host_id = '1'
         self.fake_host = {

@@ -29,7 +29,6 @@ from climate.openstack.common import uuidutils
 from climate.plugins import base
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
-from climate.utils import service as service_utils
 
 
 class PhysicalHostPlugin(base.BasePlugin):
@@ -214,7 +213,6 @@ class PhysicalHostPlugin(base.BasePlugin):
             extra_capabilities[key] = capability['capability_value']
         return extra_capabilities
 
-    @service_utils.export_context
     def get_computehost(self, host_id):
         host = db_api.host_get(host_id)
         extra_capabilities = self._get_extra_capabilities(host_id)
@@ -225,7 +223,6 @@ class PhysicalHostPlugin(base.BasePlugin):
         else:
             return host
 
-    @service_utils.export_context
     def list_computehosts(self):
         raw_host_list = db_api.host_list()
         host_list = []
@@ -233,7 +230,6 @@ class PhysicalHostPlugin(base.BasePlugin):
             host_list.append(self.get_computehost(host['id']))
         return host_list
 
-    @service_utils.export_context
     def create_computehost(self, host_values):
         # TODO(sbauza):
         #  - Exception handling for HostNotFound
@@ -284,7 +280,6 @@ class PhysicalHostPlugin(base.BasePlugin):
         else:
             return None
 
-    @service_utils.export_context
     def update_computehost(self, host_id, values):
         # NOTE (sbauza): Only update existing extra capabilites, don't create
         #  other ones
@@ -312,7 +307,6 @@ class PhysicalHostPlugin(base.BasePlugin):
                     keys=cant_update_extra_capability)
         return self.get_computehost(host_id)
 
-    @service_utils.export_context
     def delete_computehost(self, host_id):
         # TODO(sbauza):
         #  - Check if no leases having this host scheduled

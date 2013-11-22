@@ -23,17 +23,15 @@ from stevedore import enabled
 from climate import context
 from climate.db import api as db_api
 from climate import exceptions as common_ex
+from climate import manager
 from climate.manager import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
-from climate.openstack.common.rpc import service as rpc_service
+from climate.openstack.common import service
 from climate.utils import service as service_utils
 from climate.utils import trusts
 
 manager_opts = [
-    cfg.StrOpt('rpc_topic',
-               default='climate.manager',
-               help='The topic Climate uses for climate-manager messages.'),
     cfg.ListOpt('plugins',
                 default=['dummy.vm.plugin'],
                 help='All plugins to use (one for every resource type to '
@@ -47,17 +45,16 @@ LOG = logging.getLogger(__name__)
 LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 
-class ManagerService(rpc_service.Service):
+class ManagerService(service_utils.RPCServer, service.Service):
     """Service class for the climate-manager service.
 
     Responsible for working with Climate DB, scheduling logic, running events,
     working with plugins, etc.
     """
 
-    RPC_API_VERSION = '1.0'
-
-    def __init__(self, host):
-        super(ManagerService, self).__init__(host, CONF.manager.rpc_topic)
+    def __init__(self):
+        target = manager.get_target()
+        super(ManagerService, self).__init__(target)
         self.plugins = self._get_plugins()
         self.resource_actions = self._setup_actions()
 
@@ -153,15 +150,12 @@ class ManagerService(rpc_service.Service):
 
         return date
 
-    @service_utils.export_context
     def get_lease(self, lease_id):
         return db_api.lease_get(lease_id)
 
-    @service_utils.export_context
     def list_leases(self):
         return db_api.lease_list()
 
-    @service_utils.export_context
     def create_lease(self, lease_values):
         """Create a lease with reservations.
 
@@ -228,7 +222,6 @@ class ManagerService(rpc_service.Service):
             else:
                 return db_api.lease_get(lease['id'])
 
-    @service_utils.export_context
     def update_lease(self, lease_id, values):
         if not values:
             return db_api.lease_get(lease_id)
@@ -320,7 +313,6 @@ class ManagerService(rpc_service.Service):
         db_api.lease_update(lease_id, values)
         return db_api.lease_get(lease_id)
 
-    @service_utils.export_context
     def delete_lease(self, lease_id):
         lease = self.get_lease(lease_id)
         if (datetime.datetime.utcnow() < lease['start_date'] or

@@ -16,6 +16,7 @@
 import traceback
 
 import flask
+from oslo import messaging
 from werkzeug import datastructures
 
 from climate.api import context
@@ -24,7 +25,6 @@ from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common.deprecated import wsgi
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
-from climate.openstack.common.rpc import common as rpc_common
 
 LOG = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class Rest(flask.Blueprint):
                         return func(**kwargs)
                     except ex.ClimateException as e:
                         return bad_request(e)
-                    except rpc_common.RemoteError as e:
+                    except messaging.RemoteError as e:
                         try:
                             # NOTE(sbauza): All Manager Exceptions should be
                             #  defined in climate.manager.exceptions
