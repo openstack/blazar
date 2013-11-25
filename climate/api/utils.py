@@ -211,21 +211,23 @@ def internal_error(status_code, descr, exc=None):
 
 def bad_request(error):
     """Called if Climate exception occurred."""
-    error_code = 400
+    if not error.code:
+        error.code = 400
 
     LOG.debug("Validation Error occurred: "
               "error_code=%s, error_message=%s, error_name=%s",
-              error_code, error.message, error.code)
+              error.code, error.message, error.code)
 
-    return render_error_message(error_code, error.message, error.code)
+    return render_error_message(error.code, error.message, error.code)
 
 
 def not_found(error):
     """Called if object was not found."""
-    error_code = 404
+    if not error.code:
+        error.code = 404
 
     LOG.debug("Not Found exception occurred: "
               "error_code=%s, error_message=%s, error_name=%s",
-              error_code, error.message, error.code)
+              error.code, error.message, error.code)
 
-    return render_error_message(error_code, error.message, error.code)
+    return render_error_message(error.code, error.message, error.code)

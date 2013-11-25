@@ -122,11 +122,21 @@ class UtilsTestCase(tests.TestCase):
     def test_bad_request(self):
         error_message = self.patch(self.utils, 'render_error_message')
         self.utils.bad_request(self.error)
-        error_message.assert_called_once_with(
-            400, 'message', 'code')
+        error_message.assert_called_once_with('code', 'message', 'code')
+
+    def test_bad_request_with_default_errorcode(self):
+        error_message = self.patch(self.utils, 'render_error_message')
+        error = Error("message")
+        self.utils.bad_request(error)
+        error_message.assert_called_once_with(400, 'message', 400)
 
     def test_not_found(self):
         error_message = self.patch(self.utils, 'render_error_message')
         self.utils.not_found(self.error)
-        error_message.assert_called_once_with(
-            404, 'message', 'code')
+        error_message.assert_called_once_with('code', 'message', 'code')
+
+    def test_not_found_with_default_errorcode(self):
+        error_message = self.patch(self.utils, 'render_error_message')
+        error = Error("message")
+        self.utils.not_found(error)
+        error_message.assert_called_once_with(404, 'message', 404)
