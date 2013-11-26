@@ -13,73 +13,86 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from eventlet import corolocal
-
-from climate.openstack.common import log as logging
+import threading
 
 
-LOG = logging.getLogger(__name__)
+class BaseContext(object):
 
+    _elements = set()
+    _context_stack = threading.local()
 
-class Context(object):
-    """Context class for the Climate operations."""
-    _contexts = {}
+    def __init__(self, __mapping=None, **kwargs):
+        if __mapping is None:
+            self.__values = dict(**kwargs)
+        else:
+            if isinstance(__mapping, BaseContext):
+                __mapping = __mapping.__values
+            self.__values = dict(__mapping)
+            self.__values.update(**kwargs)
+        bad_keys = set(self.__values) - self._elements
+        if bad_keys:
+            raise TypeError("Only %s keys are supported. %s given" %
+                            (tuple(self._elements), tuple(bad_keys)))
 
-    def __init__(self, user_id=None, tenant_id=None, auth_token=None,
-                 service_catalog=None, user_name=None, tenant_name=None,
-                 roles=None, **kwargs):
-        if kwargs:
-            LOG.warn('Arguments dropped when creating context: %s', kwargs)
-
-        self.user_id = user_id
-        self.user_name = user_name
-        self.tenant_id = tenant_id
-        self.tenant_name = tenant_name
-        self.auth_token = auth_token
-        self.service_catalog = service_catalog
-        self.roles = roles
-        self._db_session = None
+    def __getattr__(self, name):
+        try:
+            return self.__values[name]
+        except KeyError:
+            if name in self._elements:
+                return None
+            else:
+                raise AttributeError(name)
 
     def __enter__(self):
-        stack = self._contexts.setdefault(corolocal.get_ident(), [])
+        try:
+            stack = self._context_stack.stack
+        except AttributeError:
+            stack = []
+            self._context_stack.stack = stack
         stack.append(self)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        stack = self._contexts[corolocal.get_ident()]
-        stack.pop()
-        if not stack:
-            del self._contexts[corolocal.get_ident()]
+        res = self._context_stack.stack.pop()
+        assert res is self, "self should be the top element of the stack"
 
     @classmethod
     def current(cls):
         try:
-            return cls._contexts[corolocal.get_ident()][-1]
-        except (KeyError, IndexError):
+            return cls._context_stack.stack[-1]
+        except (AttributeError, IndexError):
             raise RuntimeError("Context isn't available here")
 
-    @classmethod
-    def clear(cls):
-        try:
-            del cls._contexts[corolocal.get_ident()]
-        except KeyError:
-            pass
-
-    def clone(self):
-        return Context(self.user_id,
-                       self.tenant_id,
-                       self.auth_token,
-                       self.service_catalog,
-                       self.user_name,
-                       self.tenant_name,
-                       self.roles)
-
+    # NOTE(yorik-sar): as long as oslo.rpc requires this
     def to_dict(self):
-        return {
-            'user_id': self.user_id,
-            'user_name': self.user_name,
-            'tenant_id': self.tenant_id,
-            'tenant_name': self.tenant_name,
-            'auth_token': self.auth_token,
-            'service_catalog': self.service_catalog,
-            'roles': self.roles,
-        }
+        return self.__values
+
+
+class ClimateContext(BaseContext):
+
+    _elements = set([
+        "user_id",
+        "tenant_id",
+        "auth_token",
+        "service_catalog",
+        "user_name",
+        "tenant_name",
+        "roles",
+        "is_admin",
+    ])
+
+    @classmethod
+    def elevated(cls):
+        try:
+            ctx = cls.current()
+        except RuntimeError:
+            ctx = None
+        return cls(ctx, is_admin=True)
+
+
+def current():
+    return ClimateContext.current()
+
+
+def elevated():
+    return ClimateContext.elevated()
