@@ -20,6 +20,7 @@ import six
 from oslo.config import cfg
 from stevedore import enabled
 
+from climate import context
 from climate.db import api as db_api
 from climate import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
@@ -159,6 +160,10 @@ class ManagerService(rpc_service.Service):
             start_date = datetime.datetime.strptime(start_date,
                                                     "%Y-%m-%d %H:%M")
         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+
+        ctx = context.current()
+        lease_values['user_id'] = ctx.user_id
+        lease_values['tenant_id'] = ctx.tenant_id
 
         lease_values['start_date'] = start_date
         lease_values['end_date'] = end_date

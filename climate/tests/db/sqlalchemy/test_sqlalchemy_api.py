@@ -15,8 +15,9 @@
 
 import datetime
 
+from climate import context
 from climate.db.sqlalchemy import api as db_api
-from climate.openstack.common import context
+from climate.db.sqlalchemy import models
 from climate.openstack.common import uuidutils
 from climate import tests
 
@@ -57,6 +58,8 @@ def _get_fake_virt_lease_values(id=_get_fake_lease_uuid(),
                                 name='fake_virt_lease'):
     return {'id': id,
             'name': name,
+            'user_id': 'fake',
+            'tenant_id': 'fake',
             'start_date': _get_datetime('2030-01-01 00:00'),
             'end_date': _get_datetime('2030-01-02 00:00'),
             'trust': 'trust',
@@ -69,6 +72,8 @@ def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
                                 name='fake_phys_lease'):
     return {'id': id,
             'name': name,
+            'user_id': 'fake',
+            'tenant_id': 'fake',
             'start_date': _get_datetime('2030-01-01 00:00'),
             'end_date': _get_datetime('2030-01-02 00:00'),
             'trust': 'trust',
@@ -134,7 +139,28 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def setUp(self):
         super(SQLAlchemyDBApiTestCase, self).setUp()
-        self.set_context(context.get_admin_context())
+
+        self.set_context(context.ClimateContext(user_id='fake',
+                                                tenant_id='fake'))
+
+    def test_model_query(self):
+        db_api.lease_create(_get_fake_virt_lease_values())
+        query = db_api.model_query(models.Lease, project_only=None)
+        self.assertEqual(1, len(query.all()))
+        query = db_api.model_query(models.Lease, project_only=True)
+        self.assertEqual(1, len(query.all()))
+        self.set_context(context.ClimateContext(user_id='fake',
+                                                tenant_id='wrong'))
+        query = db_api.model_query(models.Lease, project_only=True)
+        self.assertEqual(0, len(query.all()))
+
+    def test_model_query_as_admin(self):
+        db_api.lease_create(_get_fake_virt_lease_values())
+        self.set_context(context.ClimateContext(user_id='fake',
+                                                tenant_id='wrong',
+                                                is_admin=True))
+        query = db_api.model_query(models.Lease, project_only=True)
+        self.assertEqual(1, len(query.all()))
 
     def test_create_virt_lease(self):
         """Create a virtual lease and verify that all tables have been

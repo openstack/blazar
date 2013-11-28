@@ -14,10 +14,11 @@
 # limitations under the License.
 
 from climate import context
+from climate import policy
 
 
 def ctx_from_headers(headers):
-    return context.ClimateContext(
+    ctx = context.ClimateContext(
         user_id=headers['X-User-Id'],
         tenant_id=headers['X-Tenant-Id'],
         auth_token=headers['X-Auth-Token'],
@@ -26,3 +27,8 @@ def ctx_from_headers(headers):
         tenant_name=headers['X-Tenant-Name'],
         roles=map(unicode.strip, headers['X-Roles'].split(',')),
     )
+    target = {'tenant_id': ctx.tenant_id, 'user_id': ctx.user_id}
+    if policy.enforce(ctx, "admin", target, do_raise=False):
+        return ctx.elevated()
+    else:
+        return ctx
