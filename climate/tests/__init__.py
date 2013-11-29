@@ -64,7 +64,6 @@ class TestCase(test.BaseTestCase):
         """Run before each test method to initialize test environment."""
         super(TestCase, self).setUp()
         self.useFixture(config.Config())
-        cfg.CONF([], project='climate')
         self.context_mock = None
 
     def patch(self, obj, attr):
