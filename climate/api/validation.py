@@ -49,10 +49,7 @@ def check_exists(get_function, object_id=None, **get_args):
             except exceptions.NotFound:
                 obj = None
             if obj is None:
-                e = exceptions.NotFound(
-                    get_kwargs,
-                    template='Object with %s not found',
-                )
+                e = exceptions.NotFound(object=get_kwargs)
                 return api_utils.not_found(e)
 
             return func(*args, **kwargs)

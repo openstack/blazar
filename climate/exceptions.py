@@ -1,4 +1,5 @@
 # Copyright (c) 2013 Mirantis Inc.
+# Copyright (c) 2013 Bull.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,38 +14,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common import log as logging
+
+
+LOG = logging.getLogger(__name__)
+
 
 class ClimateException(Exception):
-    """Base Exception for the Climate.
+    """Base Climate Exception.
 
     To correctly use this class, inherit from it and define
-    a 'message' and 'code' properties.
+    a 'msg_fmt' and 'code' properties.
     """
-    template = "An unknown exception occurred"
-    code = "UNKNOWN_EXCEPTION"
+    msg_fmt = _("An unknown exception occurred")
+    code = 500
 
-    def __init__(self, *args, **kwargs):
-        super(ClimateException, self).__init__(*args)
-        template = kwargs.pop('template', None)
-        if template:
-            self.template = template
+    def __init__(self, message=None, **kwargs):
+        self.kwargs = kwargs
 
-    def __str__(self):
-        return self.template % self.args
+        if 'code' not in self.kwargs:
+            self.kwargs['code'] = self.code
 
-    def __repr__(self):
-        if self.template != type(self).template:
-            tmpl = ", template=%r" % (self.template,)
-        else:
-            tmpl = ""
-        args = ", ".join(map(repr, self.args))
-        return "%s(%s%s)" % (type(self).__name__, args, tmpl)
+        if not message:
+            try:
+                message = self.msg_fmt % kwargs
+            except KeyError:
+                # kwargs doesn't match a variable in the message
+                # log the issue and the kwargs
+                LOG.exception(_('Exception in string format operation'))
+                for name, value in kwargs.iteritems():
+                    LOG.error("%s: %s" % (name, value))
+
+                message = self.msg_fmt
+
+        super(ClimateException, self).__init__(message)
 
 
 class NotFound(ClimateException):
     """Object not found exception."""
-    template = "Object not found"
-    code = "NOT_FOUND"
+    msg_fmt = _("Object with %(object)s not found")
+    code = 404
 
-    def __init__(self, *args, **kwargs):
-        super(NotFound, self).__init__(*args, **kwargs)
+
+class NotAuthorized(ClimateException):
+    msg_fmt = _("Not authorized")
+    code = 403
+
+
+class PolicyNotAuthorized(NotAuthorized):
+    msg_fmt = _("Policy doesn't allow %(action)s to be performed")
+
+
+class ConfigNotFound(ClimateException):
+    msg_fmt = _("Could not find config at %(path)s")
