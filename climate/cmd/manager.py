@@ -13,16 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import eventlet
-eventlet.monkey_patch()
+import gettext
 import sys
 
+import eventlet
+eventlet.monkey_patch()
 from oslo.config import cfg
+
+gettext.install('climate', unicode=1)
 
 from climate.db import api as db_api
 from climate.manager import service as manager_service
 from climate.openstack.common import service
 from climate.utils import service as service_utils
+
 
 cfg.CONF.import_opt('host', 'climate.config')
 

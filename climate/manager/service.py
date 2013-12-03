@@ -22,6 +22,7 @@ from stevedore import enabled
 
 from climate.db import api as db_api
 from climate import exceptions
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 from climate.openstack.common.rpc import service as rpc_service
 from climate.utils import service as service_utils
@@ -113,7 +114,7 @@ class ManagerService(rpc_service.Service):
         If there is an event in Climate DB to be done, do it and change its
         status to 'DONE'.
         """
-        LOG.debug('Trying to get event from DB.')
+        LOG.debug(_('Trying to get event from DB.'))
         events = db_api.event_get_all_sorted_by_filters(
             sort_key='time',
             sort_dir='asc',
@@ -137,7 +138,7 @@ class ManagerService(rpc_service.Service):
                                  event['lease_id'], event['id'])
             except Exception:
                 db_api.event_update(event['id'], {'status': 'ERROR'})
-                LOG.exception('Error occurred while event handling.')
+                LOG.exception(_('Error occurred while event handling.'))
 
     @service_utils.export_context
     def get_lease(self, lease_id):

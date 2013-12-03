@@ -21,7 +21,6 @@ import eventlet
 from eventlet import wsgi
 from oslo.config import cfg
 
-
 gettext.install('climate', unicode=1)
 
 from climate.api import app as api_app

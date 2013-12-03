@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gettext
+
 from oslo.config import cfg
 
-from climate.db import api as db_api
+gettext.install('climate', unicode=1)
 
+from climate.db import api as db_api
+from climate.openstack.common.gettextutils import _  # noqa
 
 CONF = cfg.CONF
 
@@ -27,9 +31,9 @@ def map_status(status):
 
 def db_sync():
     drop_status = db_api.drop_db()
-    print("Dropping database: %s" % map_status(drop_status))
+    print(_("Dropping database: %s") % map_status(drop_status))
     start_status = db_api.setup_db()
-    print("Creating database: %s" % map_status(start_status))
+    print(_("Creating database: %s") % map_status(start_status))
 
 
 def add_command_parsers(subparsers):
