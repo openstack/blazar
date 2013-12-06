@@ -1,0 +1,201 @@
+# lib/climate
+# Install and start **climate** reservations service
+
+# Dependencies:
+# - functions
+# - DEST, DATA_DIR, STACK_USER must be defined
+# SERVICE_{TENANT_NAME|PASSWORD} must be defined
+# ``KEYSTONE_TOKEN_FORMAT`` must be defined
+
+# stack.sh
+# ---------
+# install_climate #
+# configure_climate #
+# start_climate #
+# stop_climate #
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+CLIMATE_DEBUG=${CLIMATE_DEBUG:-True}
+CLIMATE_USER_NAME=${CLIMATE_USER_NAME:-climate}
+
+# Set up default repos
+CLIMATE_REPO=${CLIMATE_REPO:-${GIT_BASE}/stackforge/climate.git}
+CLIMATE_BRANCH=${CLIMATE_BRANCH:-master}
+CLIMATECLIENT_REPO=${CLIMATECLIENT_REPO:-${GIT_BASE}/stackforge/python-climateclient.git}
+CLIMATECLIENT_BRANCH=${CLIMATECLIENT_BRANCH:-master}
+CLIMATENOVA_REPO=${CLIMATENOVA_REPO:-${GIT_BASE}/stackforge/climate-nova.git}
+CLIMATENOVA_BRANCH=${CLIMATENOVA_BRANCH:-master}
+
+# Set up default directories
+CLIMATE_DIR=$DEST/climate
+CLIMATE_CONF_DIR=${CLIMATE_CONF_DIR:-/etc/climate}
+CLIMATE_CONF_FILE=$CLIMATE_CONF_DIR/climate.conf
+CLIMATECLIENT_DIR=$DEST/python-climateclient
+CLIMATENOVA_DIR=$DEST/climate-nova
+
+CLIMATE_SERVICE_HOST=${CLIMATE_SERVICE_HOST:-$SERVICE_HOST}
+CLIMATE_SERVICE_PORT=${CLIMATE_SERVICE_PORT:-1234}
+CLIMATE_SERVICE_PROTOCOL=${CLIMATE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
+# Support entry points installation of console scripts
+if [[ -d $CLIMATE_DIR/bin ]]; then
+    CLIMATE_BIN_DIR=$CLIMATE_DIR/bin
+else
+    CLIMATE_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+# Oslo.Messaging RPC iniupdate cofiguration
+function iniupdate_rpc_backend() {
+    local file=$1
+    local section=$2
+    if is_service_enabled zeromq; then
+        iniset $file $section rpc_backend zmq
+    elif is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
+        iniset $file $section rpc_backend qpid
+    elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
+        iniset $file $section rpc_backend rabbit
+    fi
+}
+
+# configure_climate() - Set config files, create data dirs, etc
+function configure_climate() {
+    if [[ ! -d $CLIMATE_CONF_DIR ]]; then
+        sudo mkdir -p $CLIMATE_CONF_DIR
+    fi
+    sudo chown $STACK_USER $CLIMATE_CONF_DIR
+
+    CLIMATE_POLICY_FILE=$CLIMATE_CONF_DIR/policy.json
+    cp $CLIMATE_DIR/etc/policy.json $CLIMATE_POLICY_FILE
+
+    touch $CLIMATE_CONF_FILE
+
+    iniset $CLIMATE_CONF_FILE DEFAULT os_auth_version v3
+    iniset $CLIMATE_CONF_FILE DEFAULT os_auth_port $KEYSTONE_SERVICE_PORT
+    iniset $CLIMATE_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
+    iniset $CLIMATE_CONF_FILE DEFAULT os_admin_username climate
+    iniset $CLIMATE_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
+
+    iniset $CLIMATE_CONF_FILE DEFAULT climate_username $CLIMATE_USER_NAME
+    iniset $CLIMATE_CONF_FILE DEFAULT climate_password $SERVICE_PASSWORD
+    iniset $CLIMATE_CONF_FILE DEFAULT climate_tenant_name $SERVICE_TENANT_NAME
+
+    iniset $CLIMATE_CONF_FILE DEFAULT host $HOST_IP
+    iniset $CLIMATE_CONF_FILE DEFAULT debug $CLIMATE_DEBUG
+
+    iniset $CLIMATE_CONF_FILE manager plugins basic.vm.plugin,physical.host.plugin
+
+    recreate_database climate utf8
+    iniset $CLIMATE_CONF_FILE database connection `database_connection_url climate`
+
+    iniset $CLIMATE_CONF_FILE DEFAULT use_syslog $SYSLOG
+
+    iniset_rpc_backend climate $CLIMATE_CONF_FILE DEFAULT
+    iniupdate_rpc_backend $CLIMATE_CONF_FILE DEFAULT
+
+    ACTUAL_FILTERS=$(iniget $NOVA_CONF DEFAULT scheduler_default_filters)
+    if [[ -z "$ACTUAL_FILTERS" ]]; then
+        iniadd $NOVA_CONF DEFAULT scheduler_default_filters "ClimateFilter"
+    else
+        iniset $NOVA_CONF DEFAULT scheduler_default_filters "$ACTUAL_FILTERS,ClimateFilter"
+    fi
+
+    iniadd $NOVA_CONF DEFAULT scheduler_available_filters "climatenova.scheduler.filters.climate_filter.ClimateFilter"
+
+    iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.default_reservation.Default_reservation"
+    iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.reservation.Reservation"
+}
+
+
+# create_climate_accounts() - Set up common required CLIMATE accounts
+#
+# Tenant               User       Roles
+# ------------------------------------------------------------------
+# service              CLIMATE     admin        # if enabled
+#
+function create_climate_accounts() {
+    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+
+    CLIMATE_USER_ID=$(keystone user-create \
+        --name=$CLIMATE_USER_NAME \
+        --pass="$SERVICE_PASSWORD" \
+        --tenant_id $SERVICE_TENANT \
+        --email=climate@example.com \
+        | grep " id " | get_field 2)
+    keystone user-role-add \
+        --tenant_id $SERVICE_TENANT \
+        --user_id $CLIMATE_USER_ID \
+        --role_id $ADMIN_ROLE
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        CLIMATE_SERVICE=$(keystone service-create \
+            --name=climate \
+            --type=reservation \
+            --description="Climate Reservations Service" \
+            | grep " id " | get_field 2)
+        keystone endpoint-create \
+            --region RegionOne \
+            --service_id $CLIMATE_SERVICE \
+            --publicurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
+            --adminurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
+            --internalurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1"
+
+        KEYSTONEV3_SERVICE=$(keystone service-list \
+                             | grep keystonev3 | get_field 1)
+        if [[ -z "$KEYSTONEV3_SERVICE" ]]; then
+            KEYSTONEV3_SERVICE=$(keystone service-create \
+                --name=keystonev3 \
+                --type=identityv3 \
+                --description="Keystone Identity Service V3" \
+                | grep " id " | get_field 2)
+            keystone endpoint-create \
+                --region RegionOne \
+                --service_id $KEYSTONEV3_SERVICE \
+                --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
+                --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
+                --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
+        fi
+    fi
+}
+
+
+# install_climate() - Collect sources and install
+function install_climate() {
+    git_clone $CLIMATE_REPO $CLIMATE_DIR $CLIMATE_BRANCH
+    git_clone $CLIMATECLIENT_REPO $CLIMATECLIENT_DIR $CLIMATECLIENT_BRANCH
+    git_clone $CLIMATENOVA_REPO $CLIMATENOVA_DIR $CLIMATENOVA_BRANCH
+
+    setup_develop $CLIMATE_DIR
+    setup_develop $CLIMATECLIENT_DIR
+    setup_develop $CLIMATENOVA_DIR
+}
+
+
+# start_climate() - Start running processes, including screen
+function start_climate() {
+    screen_it climate-a "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-api --debug --config-file $CLIMATE_CONF_FILE"
+    screen_it climate-m "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-manager --debug --config-file $CLIMATE_CONF_FILE"
+}
+
+
+# stop_climate() - Stop running processes
+function stop_climate() {
+    # Kill the climate screen windows
+    for serv in climate-a climate-m; do
+        screen_stop $serv
+    done
+
+    # Hack to be sure that the manager is really stop
+    CLIMATE_MANGER_PID=$(ps aux | grep climate-manager | grep -v grep \
+                         | awk '{print $2}')
+    [ ! -z "$CLIMATE_MANGER_PID" ] && sudo kill -9 $CLIMATE_MANGER_PID
+}
+
+# Restore xtrace
+$XTRACE
