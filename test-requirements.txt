@@ -4,7 +4,7 @@ docutils==0.9.1
 nose
 mock>=1.0
 mox>=0.5.3
-sphinx>=1.1.2
+sphinx>=1.1.2,<1.2
 sphinxcontrib-httpdomain
 
 discover
