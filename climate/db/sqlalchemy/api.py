@@ -25,6 +25,7 @@ from climate import context
 from climate.db.sqlalchemy import models
 from climate.openstack.common.db import exception as db_exc
 from climate.openstack.common.db.sqlalchemy import session as db_session
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 
 
@@ -74,7 +75,7 @@ def setup_db():
         engine = db_session.get_engine(sqlite_fk=True)
         models.Lease.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
-        LOG.error("Database registration exception: %s", e)
+        LOG.error(_("Database registration exception: %s"), e)
         return False
     return True
 
@@ -84,7 +85,7 @@ def drop_db():
         engine = db_session.get_engine(sqlite_fk=True)
         models.Lease.metadata.drop_all(engine)
     except Exception as e:
-        LOG.error("Database shutdown exception: %s", e)
+        LOG.error(_("Database shutdown exception: %s"), e)
         return False
     return True
 

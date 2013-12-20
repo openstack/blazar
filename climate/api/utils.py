@@ -21,6 +21,7 @@ from werkzeug import datastructures
 from climate.api import context
 from climate import exceptions as ex
 from climate.openstack.common.deprecated import wsgi
+from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class Rest(flask.Blueprint):
             endpoint = options.pop('endpoint', func.__name__)
 
             def handler(**kwargs):
-                LOG.debug("Rest.route.decorator.handler, kwargs=%s", kwargs)
+                LOG.debug(_("Rest.route.decorator.handler, kwargs=%s"), kwargs)
 
                 _init_resp_type(file_upload)
 
@@ -110,7 +111,8 @@ def render(result=None, response_type=None, status=None, **kwargs):
         result.update(kwargs)
     elif kwargs:
         # can't merge kwargs into the non-dict res
-        abort_and_log(500, "Non-dict and non-empty kwargs passed to render.")
+        abort_and_log(500,
+                      _("Non-dict and non-empty kwargs passed to render."))
         return
 
     status_code = getattr(flask.request, 'status_code', None)
@@ -127,7 +129,8 @@ def render(result=None, response_type=None, status=None, **kwargs):
         response_type = RT_JSON
         serializer = wsgi.JSONDictSerializer()
     else:
-        abort_and_log(400, "Content type '%s' isn't supported" % response_type)
+        abort_and_log(400,
+                      _("Content type '%s' isn't supported") % response_type)
         return
 
     body = serializer.serialize(result)
@@ -144,7 +147,7 @@ def request_data():
         return flask.request.parsed_data
 
     if not flask.request.content_length > 0:
-        LOG.debug("Empty body provided in request")
+        LOG.debug(_("Empty body provided in request"))
         return dict()
 
     if flask.request.file_upload:
@@ -155,7 +158,8 @@ def request_data():
     if not content_type or content_type in RT_JSON:
         deserializer = wsgi.JSONDeserializer()
     else:
-        abort_and_log(400, "Content type '%s' isn't supported" % content_type)
+        abort_and_log(400,
+                      _("Content type '%s' isn't supported") % content_type)
         return
 
     # parsed request data to avoid unwanted re-parsings
@@ -171,8 +175,8 @@ def get_request_args():
 
 def abort_and_log(status_code, descr, exc=None):
     """Process occurred errors."""
-    LOG.error("Request aborted with status code %s and message '%s'",
-              status_code, descr)
+    LOG.error(_("Request aborted with status code %(code)s and "
+                "message '%(msg)s'"), {'code': status_code, 'msg': descr})
 
     if exc is not None:
         LOG.error(traceback.format_exc())
@@ -196,8 +200,8 @@ def render_error_message(error_code, error_message, error_name):
 
 def internal_error(status_code, descr, exc=None):
     """Called if internal error occurred."""
-    LOG.error("Request aborted with status code %s and message '%s'",
-              status_code, descr)
+    LOG.error(_("Request aborted with status code %(code)s "
+                "and message '%(msg)s'"), {'code': status_code, 'msg': descr})
 
     if exc is not None:
         LOG.error(traceback.format_exc())
@@ -214,9 +218,9 @@ def bad_request(error):
     if not error.code:
         error.code = 400
 
-    LOG.debug("Validation Error occurred: "
-              "error_code=%s, error_message=%s, error_name=%s",
-              error.code, error.message, error.code)
+    LOG.debug(_("Validation Error occurred: error_code=%(code)s, "
+                "error_message=%(msg)s, error_name=%(name)s"),
+              {'code': error.code, 'msg': error.message, 'name': error.code})
 
     return render_error_message(error.code, error.message, error.code)
 
@@ -226,8 +230,8 @@ def not_found(error):
     if not error.code:
         error.code = 404
 
-    LOG.debug("Not Found exception occurred: "
-              "error_code=%s, error_message=%s, error_name=%s",
-              error.code, error.message, error.code)
+    LOG.debug(_("Not Found exception occurred: error_code=%(code)s, "
+                "error_message=%(msg)s, error_name=%(name)s"),
+              {'code': error.code, 'msg': error.message, 'name': error.code})
 
     return render_error_message(error.code, error.message, error.code)
