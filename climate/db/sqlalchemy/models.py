@@ -84,6 +84,11 @@ class Reservation(mb.ClimateBase):
                                             cascade="all,delete",
                                             backref='reservation',
                                             lazy='joined')
+    computehost_allocations = relationship('ComputeHostAllocation',
+                                           uselist=False,
+                                           cascade="all,delete",
+                                           backref='reservation',
+                                           lazy='joined')
 
     def to_dict(self):
         return super(Reservation, self).to_dict()
@@ -120,6 +125,22 @@ class ComputeHostReservation(mb.ClimateBase):
 
     def to_dict(self):
         return super(ComputeHostReservation, self).to_dict()
+
+
+class ComputeHostAllocation(mb.ClimateBase):
+    """Mapping between ComputeHost, ComputeHostReservation and Reservation.
+    """
+
+    __tablename__ = 'computehost_allocations'
+
+    id = _id_column()
+    compute_host_id = sa.Column(sa.String(36),
+                                sa.ForeignKey('computehosts.id'))
+    reservation_id = sa.Column(sa.String(36),
+                               sa.ForeignKey('reservations.id'))
+
+    def to_dict(self):
+        return super(ComputeHostAllocation, self).to_dict()
 
 
 class ComputeHost(mb.ClimateBase):

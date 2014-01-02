@@ -31,15 +31,17 @@ def _get_fake_lease_uuid():
     return 'aaaaaaaa-1111-bbbb-2222-cccccccccccc'
 
 
-def _get_fake_phys_reservation_values(lease_id=_get_fake_lease_uuid()):
+def _get_fake_phys_reservation_values(lease_id=_get_fake_lease_uuid(),
+                                      resource_id=None):
     return {'lease_id': lease_id,
-            'resource_id': '1234',
+            'resource_id': '1234' if not resource_id else resource_id,
             'resource_type': 'physical:host'}
 
 
-def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid()):
+def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
+                                      resource_id=None):
     return {'lease_id': lease_id,
-            'resource_id': '5678',
+            'resource_id': '5678' if not resource_id else resource_id,
             'resource_type': 'virtual:instance'}
 
 
@@ -50,34 +52,44 @@ def _get_fake_event_values(lease_id=_get_fake_lease_uuid(),
             'time': _get_datetime('2030-03-01 00:00')}
 
 
-def _get_datetime(value):
-    return datetime.datetime.strptime(value, "%Y-%m-%d %H:%M")
+def _get_datetime(value='2030-01-01 00:00'):
+    return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M')
 
 
 def _get_fake_virt_lease_values(id=_get_fake_lease_uuid(),
-                                name='fake_virt_lease'):
+                                name='fake_virt_lease',
+                                start_date=_get_datetime('2030-01-01 00:00'),
+                                end_date=_get_datetime('2030-01-02 00:00'),
+                                resource_id=None):
     return {'id': id,
             'name': name,
             'user_id': 'fake',
             'tenant_id': 'fake',
-            'start_date': _get_datetime('2030-01-01 00:00'),
-            'end_date': _get_datetime('2030-01-02 00:00'),
+            'start_date': start_date,
+            'end_date': end_date,
             'trust': 'trust',
-            'reservations': [_get_fake_virt_reservation_values(lease_id=id)],
+            'reservations': [_get_fake_virt_reservation_values(
+                lease_id=id,
+                resource_id=resource_id)],
             'events': []
             }
 
 
 def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
-                                name='fake_phys_lease'):
+                                name='fake_phys_lease',
+                                start_date=_get_datetime('2030-01-01 00:00'),
+                                end_date=_get_datetime('2030-01-02 00:00'),
+                                resource_id=None):
     return {'id': id,
             'name': name,
             'user_id': 'fake',
             'tenant_id': 'fake',
-            'start_date': _get_datetime('2030-01-01 00:00'),
-            'end_date': _get_datetime('2030-01-02 00:00'),
+            'start_date': start_date,
+            'end_date': end_date,
             'trust': 'trust',
-            'reservations': [_get_fake_phys_reservation_values(lease_id=id)],
+            'reservations': [_get_fake_phys_reservation_values(
+                lease_id=id,
+                resource_id=resource_id)],
             'events': []
             }
 
@@ -94,7 +106,15 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     if random is True:
         values = _get_fake_phys_lease_values(id=_get_fake_random_uuid(),
                                              name=_get_fake_random_uuid())
-    return db_api.lease_create(values)
+    lease = db_api.lease_create(values)
+    for reservation in db_api.reservation_get_all_by_lease_id(lease['id']):
+        allocation_values = {
+            'id': _get_fake_random_uuid(),
+            'compute_host_id': values['reservations'][0]['resource_id'],
+            'reservation_id': reservation['id']
+        }
+        db_api.host_allocation_create(allocation_values)
+    return lease
 
 
 def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
@@ -354,6 +374,24 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.host_create(_get_fake_host_values())
         self.assertEqual(1, len(
             db_api.host_get_all_by_queries(['cpu_info like %Westmere%'])))
+
+    def test_search_for_hosts_by_extra_capability(self):
+        """Create one host and test extra capability queries."""
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(computehost_id=1))
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['vgpu == 2'])))
+        self.assertEqual(0, len(
+            db_api.host_get_all_by_queries(['vgpu != 2'])))
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['cpu_info like %Westmere%',
+                                            'vgpu == 2'])))
+        self.assertEqual(0, len(
+            db_api.host_get_all_by_queries(['cpu_info like %wrongcpu%',
+                                            'vgpu == 2'])))
+        self.assertRaises(RuntimeError,
+                          db_api.host_get_all_by_queries, ['apples < 2048'])
 
     def test_search_for_hosts_by_composed_queries(self):
         """Create one host and test composed queries."""
