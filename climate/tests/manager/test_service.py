@@ -25,7 +25,7 @@ from climate.db import api as db_api
 from climate import exceptions
 from climate.manager import service
 from climate.plugins import dummy_vm_plugin
-from climate.plugins import physical_host_plugin
+from climate.plugins.oshosts import host_plugin
 from climate import tests
 from climate.utils import trusts
 
@@ -47,8 +47,8 @@ class ServiceTestCase(tests.TestCase):
 
         self.fake_plugin = self.patch(self.dummy_plugin, 'DummyVMPlugin')
 
-        self.physical_host_plugin = physical_host_plugin
-        self.fake_phys_plugin = self.patch(self.physical_host_plugin,
+        self.host_plugin = host_plugin
+        self.fake_phys_plugin = self.patch(self.host_plugin,
                                            'PhysicalHostPlugin')
 
         self.manager = self.service.ManagerService('127.0.0.1')

@@ -68,6 +68,8 @@ class HostHavingServers(exceptions.ClimateException):
     msg_fmt = _("Servers [%(servers)s] found for host %(host)s")
 
 
+# oshost plugin related exceptions
+
 class CantAddExtraCapability(exceptions.ClimateException):
     code = 409
     msg_fmt = _("Can't add extracapabilities %(keys)s to Host %(host)s")
@@ -91,3 +93,7 @@ class WrongClientVersion(exceptions.ClimateException):
 class NoManagementUrl(exceptions.NotFound):
     code = 404
     msg_fmt = _("You haven't management url for service")
+
+
+class HypervisorNotFound(exceptions.ClimateException):
+    msg_fmt = _("Aggregate '%(pool)s' not found!")
