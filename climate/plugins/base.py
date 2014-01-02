@@ -17,6 +17,7 @@ import abc
 
 from oslo.config import cfg
 
+from climate.db import api as db_api
 from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -56,6 +57,16 @@ class BasePlugin(object):
             'title': self.title,
             'description': self.description,
         }
+
+    def create_reservation(self, values):
+        """Create reservation."""
+        reservation_values = {
+            'lease_id': values['lease_id'],
+            'resource_id': values['resource_id'],
+            'resource_type': values['resource_type'],
+            'status': 'pending'
+        }
+        db_api.reservation_create(reservation_values)
 
     @abc.abstractmethod
     def on_end(self, resource_id):

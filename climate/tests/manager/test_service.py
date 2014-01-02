@@ -57,8 +57,8 @@ class ServiceTestCase(tests.TestCase):
                                         'resource_id': '111',
                                         'resource_type': 'virtual:instance',
                                         'status': 'FAKE PROGRESS'}],
-                      'start_date': 'now',
-                      'end_date': '2026-12-13 13:13'}
+                      'start_date': datetime.datetime(2013, 12, 20, 13, 00),
+                      'end_date': datetime.datetime(2013, 12, 20, 15, 00)}
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
                                                     '%Y-%m-%d %H:%M')
         self.extension = mock.MagicMock()
@@ -203,13 +203,46 @@ class ServiceTestCase(tests.TestCase):
         self.lease_update.assert_not_called()
         self.assertEqual(lease, self.lease)
 
-    def test_delete_lease(self):
+    def test_delete_lease_before_starting_date(self):
         self.patch(self.manager, 'get_lease').\
             return_value = self.lease
 
-        self.manager.delete_lease(self.lease_id)
+        target = datetime.datetime(2013, 12, 20, 12, 00)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.manager.delete_lease(self.lease_id)
 
         self.lease_destroy.assert_called_once_with(self.lease_id)
+
+    def test_delete_lease_after_ending_date(self):
+        self.patch(self.manager, 'get_lease').\
+            return_value = self.lease
+
+        target = datetime.datetime(2013, 12, 20, 16, 00)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.manager.delete_lease(self.lease_id)
+
+        self.lease_destroy.assert_called_once_with(self.lease_id)
+
+    def test_delete_lease_after_starting_date(self):
+        self.patch(self.manager, 'get_lease').\
+            return_value = self.lease
+
+        target = datetime.datetime(2013, 12, 20, 13, 30)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+
+            self.assertRaises(
+                exceptions.NotAuthorized,
+                self.manager.delete_lease,
+                self.lease_id)
 
     def test_start_lease(self):
         basic_action = self.patch(self.manager, '_basic_action')

@@ -150,6 +150,14 @@ class ManagerService(rpc_service.Service):
 
     @service_utils.export_context
     def create_lease(self, lease_values):
+        """Create a lease with reservations.
+
+        Return either the model of created lease or None if any error.
+        """
+        # Remove and keep reservation values
+        reservations = lease_values.pop("reservations", [])
+
+        # Create the lease without the reservations
         start_date = lease_values['start_date']
         end_date = lease_values['end_date']
 
@@ -162,6 +170,7 @@ class ManagerService(rpc_service.Service):
 
         lease_values['start_date'] = start_date
         lease_values['end_date'] = end_date
+
         if not lease_values.get('events'):
             lease_values['events'] = []
 
@@ -172,9 +181,27 @@ class ManagerService(rpc_service.Service):
                                        'time': end_date,
                                        'status': 'UNDONE'})
 
-        lease = db_api.lease_create(lease_values)
-
-        return db_api.lease_get(lease['id'])
+        #TODO(scroiset): catch DB Exception when they will become alive
+        # see bug #1237293
+        try:
+            lease = db_api.lease_create(lease_values)
+            lease_id = lease['id']
+        except RuntimeError:
+            LOG.exception('Cannot create a lease')
+        else:
+            try:
+                for reservation in reservations:
+                    reservation['lease_id'] = lease['id']
+                    reservation['start_date'] = lease['start_date']
+                    reservation['end_date'] = lease['end_date']
+                    resource_type = reservation['resource_type']
+                    self.plugins[resource_type].create_reservation(reservation)
+            except RuntimeError:
+                LOG.exception("Failed to create reservation for a lease. "
+                              "Rollback the lease and associated reservations")
+                db_api.lease_destroy(lease_id)
+            else:
+                return db_api.lease_get(lease['id'])
 
     @service_utils.export_context
     def update_lease(self, lease_id, values):
@@ -185,10 +212,18 @@ class ManagerService(rpc_service.Service):
     @service_utils.export_context
     def delete_lease(self, lease_id):
         lease = self.get_lease(lease_id)
-        for reservation in lease['reservations']:
-            self.plugins[reservation['resource_type']]\
-                .on_end(reservation['resource_id'])
-        db_api.lease_destroy(lease_id)
+        if (datetime.datetime.utcnow() < lease['start_date'] or
+                datetime.datetime.utcnow() > lease['end_date']):
+            for reservation in lease['reservations']:
+                try:
+                    self.plugins[reservation['resource_type']]\
+                        .on_end(reservation['resource_id'])
+                except RuntimeError:
+                    LOG.exception("Failed to delete a reservation")
+            db_api.lease_destroy(lease_id)
+        else:
+            raise exceptions.NotAuthorized(
+                'Already started lease cannot be deleted')
 
     def start_lease(self, lease_id, event_id):
         self._basic_action(lease_id, event_id, 'on_start', 'active')
@@ -203,9 +238,17 @@ class ManagerService(rpc_service.Service):
 
         for reservation in lease['reservations']:
             resource_type = reservation['resource_type']
-            self.resource_actions[resource_type][action_time](
-                reservation['resource_id']
-            )
+            try:
+                self.resource_actions[resource_type][action_time](
+                    reservation['resource_id']
+                )
+            except exceptions.ClimateException:
+                LOG.exception("Failed to execute action %(action)s "
+                              "for lease %(lease)d"
+                              % {
+                                  'action': action_time,
+                                  'lease': lease_id,
+                              })
 
             if reservation_status is not None:
                 db_api.reservation_update(reservation['id'],
