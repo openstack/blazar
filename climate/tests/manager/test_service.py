@@ -193,21 +193,195 @@ class ServiceTestCase(tests.TestCase):
         self.assertRaises(
             ValueError, self.manager.create_lease, lease_values)
 
-    def test_update_lease_is_values(self):
-        lease_values = {'end_date': '2025-12-12 13:13'}
-
-        lease = self.manager.update_lease(self.lease_id, lease_values)
-
+    def test_update_lease_completed_lease_rename(self):
+        lease_values = {'name': 'renamed'}
+        target = datetime.datetime(2015, 1, 1)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            lease = self.manager.update_lease(self.lease_id, lease_values)
         self.lease_update.assert_called_once_with(self.lease_id, lease_values)
         self.assertEqual(lease, self.lease)
 
+    def test_update_lease_not_started_modify_dates(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'start_date': '2015-12-01 20:00',
+            'end_date': '2015-12-01 22:00'
+        }
+        reservation_get_all = \
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+                'start_date': datetime.datetime(2013, 12, 20, 20, 00),
+                'end_date': datetime.datetime(2013, 12, 20, 21, 00)
+            }
+        ]
+        event_get_all = self.patch(db_api, 'event_get_all_sorted_by_filters')
+        event_get_all.side_effect = fake_event_get_all
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.manager.update_lease(self.lease_id, lease_values)
+        self.fake_plugin.update_reservation.assert_called_with(
+            '593e7028-c0d1-4d76-8642-2ffd890b324c',
+            {
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+                'start_date': datetime.datetime(2015, 12, 1, 20, 00),
+                'end_date': datetime.datetime(2015, 12, 1, 22, 00)
+            }
+        )
+        calls = [mock.call('2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+                           {'time': datetime.datetime(2015, 12, 1, 20, 00)}),
+                 mock.call('7085381b-45e0-4e5d-b24a-f965f5e6e5d7',
+                           {'time': datetime.datetime(2015, 12, 1, 22, 00)})
+                 ]
+        self.event_update.assert_has_calls(calls)
+        self.lease_update.assert_called_once_with(self.lease_id, lease_values)
+
+    def test_update_lease_started_modify_end_date(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'end_date': '2013-12-20 16:00'
+        }
+        reservation_get_all = \
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+                'start_date': datetime.datetime(2013, 12, 20, 13, 00),
+                'end_date': datetime.datetime(2013, 12, 20, 15, 00)
+            }
+        ]
+        event_get_all = self.patch(db_api, 'event_get_all_sorted_by_filters')
+        event_get_all.side_effect = fake_event_get_all
+        target = datetime.datetime(2013, 12, 20, 14, 00)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.manager.update_lease(self.lease_id, lease_values)
+        self.fake_plugin.update_reservation.assert_called_with(
+            '593e7028-c0d1-4d76-8642-2ffd890b324c',
+            {
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+                'start_date': datetime.datetime(2013, 12, 20, 13, 00),
+                'end_date': datetime.datetime(2013, 12, 20, 16, 00)
+            }
+        )
+        calls = [mock.call('2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+                           {'time': datetime.datetime(2013, 12, 20, 13, 00)}),
+                 mock.call('7085381b-45e0-4e5d-b24a-f965f5e6e5d7',
+                           {'time': datetime.datetime(2013, 12, 20, 16, 00)})
+                 ]
+        self.event_update.assert_has_calls(calls)
+        self.lease_update.assert_called_once_with(self.lease_id, lease_values)
+
     def test_update_lease_is_not_values(self):
         lease_values = None
-
         lease = self.manager.update_lease(self.lease_id, lease_values)
-
-        self.lease_update.assert_not_called()
+        self.lease_get.assert_called_once_with(self.lease_id)
         self.assertEqual(lease, self.lease)
+
+    def test_update_lease_started_modify_start_date(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'start_date': '2013-12-20 16:00'
+        }
+        target = datetime.datetime(2013, 12, 20, 14, 00)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                exceptions.NotAuthorized, self.manager.update_lease,
+                self.lease_id, lease_values)
+
+    def test_update_lease_not_started_start_date_before_current_time(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'start_date': '2013-12-14 13:00'
+        }
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                exceptions.NotAuthorized, self.manager.update_lease,
+                self.lease_id, lease_values)
+
+    def test_update_lease_end_date_before_current_time(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'end_date': '2013-12-14 13:00'
+        }
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                exceptions.NotAuthorized, self.manager.update_lease,
+                self.lease_id, lease_values)
+
+    def test_update_lease_completed_modify_dates(self):
+        def fake_event_get_all(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+            else:
+                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+
+        lease_values = {
+            'name': 'renamed',
+            'end_date': '2013-12-15 20:00'
+        }
+        target = datetime.datetime(2015, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                exceptions.NotAuthorized, self.manager.update_lease,
+                self.lease_id, lease_values)
 
     def test_delete_lease_before_starting_date(self):
         self.patch(self.manager, 'get_lease').\

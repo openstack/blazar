@@ -68,6 +68,13 @@ class BasePlugin(object):
         }
         db_api.reservation_create(reservation_values)
 
+    def update_reservation(self, reservation_id, values):
+        """Update reservation."""
+        reservation_values = {
+            'resource_id': values['resource_id']
+        }
+        db_api.reservation_update(reservation_id, reservation_values)
+
     @abc.abstractmethod
     def on_end(self, resource_id):
         """Delete resource."""

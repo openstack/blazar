@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
 import json
 import six
 
@@ -86,6 +87,70 @@ class PhysicalHostPlugin(base.BasePlugin):
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
                                           'reservation_id': reservation['id']})
+
+    def update_reservation(self, reservation_id, values):
+        """Update reservation."""
+        reservation = db_api.reservation_get(reservation_id)
+        lease = db_api.lease_get(reservation['lease_id'])
+        hosts_in_pool = self.pool.get_computehosts(
+            reservation['resource_id'])
+        if (values['start_date'] < lease['start_date'] or
+                values['end_date'] > lease['end_date']):
+            allocations = []
+            for allocation in db_api.host_allocation_get_all_by_values(
+                    reservation_id=reservation_id):
+                full_periods = db_utils.get_full_periods(
+                    allocation['compute_host_id'],
+                    values['start_date'],
+                    values['end_date'],
+                    datetime.timedelta(seconds=1))
+                if lease['start_date'] < values['start_date']:
+                    max_start = values['start_date']
+                else:
+                    max_start = lease['start_date']
+                if lease['end_date'] < values['end_date']:
+                    min_end = lease['end_date']
+                else:
+                    min_end = values['end_date']
+                if not (len(full_periods) == 0 or
+                        (len(full_periods) == 1 and
+                         full_periods[0][0] == max_start and
+                         full_periods[0][1] == min_end)):
+                    allocations.append(allocation)
+                    if (hosts_in_pool and
+                            self.nova.hypervisors.get(
+                                self._get_hypervisor_from_name(
+                                    allocation['compute_host_id'])
+                            ).__dict__['running_vms'] > 0):
+                        raise RuntimeError('Not enough hosts available')
+            if allocations:
+                host_reservation = \
+                    db_api.host_reservation_get_by_reservation_id(
+                        reservation_id)
+                host_ids = self._matching_hosts(
+                    host_reservation['hypervisor_properties'],
+                    host_reservation['resource_properties'],
+                    str(len(allocations)) + '-' + str(len(allocations)),
+                    values['start_date'],
+                    values['end_date'])
+                if not host_ids:
+                    raise RuntimeError('Not enough hosts available')
+                if hosts_in_pool:
+                    old_hosts = [allocation['compute_host_id']
+                                 for allocation in allocations]
+                    self.pool.remove_computehost(reservation['resource_id'],
+                                                 old_hosts)
+                for allocation in allocations:
+                    db_api.host_allocation_destroy(allocation['id'])
+                for host_id in host_ids:
+                    db_api.host_allocation_create(
+                        {'compute_host_id': host_id,
+                         'reservation_id': reservation_id})
+                    if hosts_in_pool:
+                        host = db_api.host_get(host_id)
+                        host_name = host['hypervisor_hostname']
+                        self.pool.add_computehost(reservation['resource_id'],
+                                                  host_name)
 
     def on_start(self, resource_id):
         """Add the hosts in the pool."""

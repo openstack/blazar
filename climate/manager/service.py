@@ -163,17 +163,26 @@ class ManagerService(rpc_service.Service):
         start_date = lease_values['start_date']
         end_date = lease_values['end_date']
 
+        now = datetime.datetime.utcnow()
+        now = datetime.datetime(now.year,
+                                now.month,
+                                now.day,
+                                now.hour,
+                                now.minute)
         if start_date == 'now':
-            start_date = datetime.datetime.utcnow()
+            start_date = now
         else:
             start_date = datetime.datetime.strptime(start_date,
                                                     "%Y-%m-%d %H:%M")
         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
 
+        if start_date < now:
+            raise exceptions.NotAuthorized(
+                'Start date must later than current date')
+
         ctx = context.current()
         lease_values['user_id'] = ctx.user_id
         lease_values['tenant_id'] = ctx.tenant_id
-
         lease_values['start_date'] = start_date
         lease_values['end_date'] = end_date
 
@@ -211,8 +220,95 @@ class ManagerService(rpc_service.Service):
 
     @service_utils.export_context
     def update_lease(self, lease_id, values):
-        if values:
+        if not values:
+            return db_api.lease_get(lease_id)
+
+        if len(values) == 1 and 'name' in values:
             db_api.lease_update(lease_id, values)
+            return db_api.lease_get(lease_id)
+
+        lease = db_api.lease_get(lease_id)
+        start_date = values.get(
+            'start_date',
+            datetime.datetime.strftime(lease['start_date'], "%Y-%m-%d %H:%M"))
+        end_date = values.get(
+            'end_date',
+            datetime.datetime.strftime(lease['end_date'], "%Y-%m-%d %H:%M"))
+
+        now = datetime.datetime.utcnow()
+        now = datetime.datetime(now.year,
+                                now.month,
+                                now.day,
+                                now.hour,
+                                now.minute)
+        if start_date == 'now':
+            start_date = now
+        else:
+            start_date = datetime.datetime.strptime(start_date,
+                                                    "%Y-%m-%d %H:%M")
+        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+
+        values['start_date'] = start_date
+        values['end_date'] = end_date
+
+        if (lease['start_date'] < now and
+                values['start_date'] != lease['start_date']):
+            raise exceptions.NotAuthorized(
+                'Cannot modify the start date of already started leases')
+
+        if (lease['start_date'] > now and
+                values['start_date'] < now):
+            raise exceptions.NotAuthorized(
+                'Start date must later than current date')
+
+        if lease['end_date'] < now:
+            raise exceptions.NotAuthorized(
+                'Terminated leases can only be renamed')
+
+        if (values['end_date'] < now or
+           values['end_date'] < values['start_date']):
+            raise exceptions.NotAuthorized(
+                'End date must be later than current and start date')
+
+        #TODO(frossigneux) rollback if an exception is raised
+        for reservation in \
+                db_api.reservation_get_all_by_lease_id(lease_id):
+            reservation['start_date'] = values['start_date']
+            reservation['end_date'] = values['end_date']
+            resource_type = reservation['resource_type']
+            self.plugins[resource_type].update_reservation(
+                reservation['id'],
+                reservation)
+
+        events = db_api.event_get_all_sorted_by_filters(
+            'lease_id',
+            'asc',
+            {
+                'lease_id': lease_id,
+                'event_type': 'start_lease'
+            }
+        )
+        if len(events) != 1:
+            raise exceptions.ClimateException(
+                'Start lease event not found')
+        event = events[0]
+        db_api.event_update(event['id'], {'time': values['start_date']})
+
+        events = db_api.event_get_all_sorted_by_filters(
+            'lease_id',
+            'asc',
+            {
+                'lease_id': lease_id,
+                'event_type': 'end_lease'
+            }
+        )
+        if len(events) != 1:
+            raise exceptions.ClimateException(
+                'End lease event not found')
+        event = events[0]
+        db_api.event_update(event['id'], {'time': values['end_date']})
+
+        db_api.lease_update(lease_id, values)
         return db_api.lease_get(lease_id)
 
     @service_utils.export_context
