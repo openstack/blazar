@@ -14,20 +14,19 @@
 # limitations under the License.
 
 from climate.manager.oshosts import rpcapi as manager_rpcapi
-from climate.openstack.common import log as logging
-
-
-LOG = logging.getLogger(__name__)
+from climate import policy
 
 
 class API(object):
     def __init__(self):
         self.manager_rpcapi = manager_rpcapi.ManagerRPCAPI()
 
+    @policy.authorize('oshosts', 'get')
     def get_computehosts(self):
         """List all existing computehosts."""
         return self.manager_rpcapi.list_computehosts()
 
+    @policy.authorize('oshosts', 'create')
     def create_computehost(self, data):
         """Create new computehost.
 
@@ -37,6 +36,7 @@ class API(object):
 
         return self.manager_rpcapi.create_computehost(data)
 
+    @policy.authorize('oshosts', 'get')
     def get_computehost(self, host_id):
         """Get computehost by its ID.
 
@@ -45,6 +45,7 @@ class API(object):
         """
         return self.manager_rpcapi.get_computehost(host_id)
 
+    @policy.authorize('oshosts', 'update')
     def update_computehost(self, host_id, data):
         """Update computehost. Only name changing may be proceeded.
 
@@ -55,6 +56,7 @@ class API(object):
         """
         return self.manager_rpcapi.update_computehost(host_id, data)
 
+    @policy.authorize('oshosts', 'delete')
     def delete_computehost(self, host_id):
         """Delete specified computehost.
 
