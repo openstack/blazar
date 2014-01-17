@@ -8,8 +8,12 @@ os_admin_password=<password>
 os_admin_tenant_name=<tenant_name>
 
 [manager]
-plugins=dummy.vm.plugin
+plugins=dummy.vm.plugin,physical.host.plugin
 
 [virtual:instance]
+on_start = wake_up
+on_end = delete
+
+[physical:host]
 on_start = wake_up
 on_end = delete
