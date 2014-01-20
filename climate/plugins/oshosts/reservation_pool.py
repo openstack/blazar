@@ -56,10 +56,10 @@ class ReservationPool(object):
                                         cfg.CONF.os_auth_host,
                                         cfg.CONF.os_auth_port)
         self.nova = client.Client('2',
-                                  username=cfg.CONF.os_admin_username,
-                                  api_key=cfg.CONF.os_admin_password,
+                                  username=cfg.CONF.climate_username,
+                                  api_key=cfg.CONF.climate_password,
                                   auth_url=auth_url,
-                                  project_id=cfg.CONF.os_admin_tenant_name)
+                                  project_id=cfg.CONF.climate_tenant_name)
 
     def get_aggregate_from_name_or_id(self, aggregate_obj):
         """Return an aggregate by name or an id."""

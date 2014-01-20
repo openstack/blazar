@@ -1,4 +1,0 @@
-climate
-=======
-
-OpenStack Reservation Service

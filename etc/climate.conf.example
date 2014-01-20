@@ -6,6 +6,9 @@ os_auth_protocol=<http, for example>
 os_admin_username=<username>
 os_admin_password=<password>
 os_admin_tenant_name=<tenant_name>
+climate_username=<username>
+climate_password=<password>
+climate_tenant_name=<tenant_name>
 
 [manager]
 plugins=dummy.vm.plugin,physical.host.plugin
