@@ -18,24 +18,7 @@ from novaclient import exceptions as nova_exceptions
 from oslo.config import cfg
 
 from climate import context
-from climate import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
-
-
-class HostNotFound(exceptions.ClimateException):
-    msg_fmt = _("Host '%(host)s' not found!")
-
-
-class InvalidHost(exceptions.ClimateException):
-    msg_fmt = _("Invalid values for host %(host)s")
-
-
-class MultipleHostsFound(exceptions.ClimateException):
-    msg_fmt = _("Multiple Hosts found for pattern '%(host)s'")
-
-
-class HostHavingServers(exceptions.ClimateException):
-    msg_fmt = _("Servers [%(servers)s] found for host %(host)s")
+from climate.manager import exceptions as manager_exceptions
 
 
 class NovaInventory(object):
@@ -64,9 +47,9 @@ class NovaInventory(object):
             try:
                 hypervisors_list = self.nova.hypervisors.search(host)
             except nova_exceptions.NotFound:
-                raise HostNotFound(host=host)
+                raise manager_exceptions.HostNotFound(host=host)
             if len(hypervisors_list) > 1:
-                raise MultipleHostsFound(host)
+                raise manager_exceptions.MultipleHostsFound(host)
             else:
                 hypervisor_id = hypervisors_list[0].id
                 # NOTE(sbauza): No need to catch the exception as we're sure
@@ -82,7 +65,7 @@ class NovaInventory(object):
                     'memory_mb': hypervisor.memory_mb,
                     'local_gb': hypervisor.local_gb}
         except AttributeError:
-            raise InvalidHost(host=host)
+            raise manager_exceptions.InvalidHost(host=host)
 
     def get_servers_per_host(self, host):
         """List all servers of a nova-compute host
@@ -93,9 +76,9 @@ class NovaInventory(object):
         try:
             hypervisors_list = self.nova.hypervisors.search(host, servers=True)
         except nova_exceptions.NotFound:
-            raise HostNotFound(host=host)
+            raise manager_exceptions.HostNotFound(host=host)
         if len(hypervisors_list) > 1:
-            raise MultipleHostsFound(host)
+            raise manager_exceptions.MultipleHostsFound(host)
         else:
             try:
                 return hypervisors_list[0].servers

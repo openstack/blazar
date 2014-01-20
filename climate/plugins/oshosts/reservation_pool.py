@@ -21,8 +21,7 @@ from novaclient import exceptions as nova_exceptions
 from oslo.config import cfg
 
 from climate import context
-from climate import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common import log as logging
 
 
@@ -45,35 +44,6 @@ opts = [
 ]
 
 cfg.CONF.register_opts(opts, 'physical:host')
-
-
-class NoFreePool(exceptions.ClimateException):
-    pass
-
-
-class HostNotInFreePool(exceptions.ClimateException):
-    msg_fmt = _("Host %(host)s not in freepool '%(freepool_name)s'")
-
-
-class CantRemoveHost(exceptions.ClimateException):
-    msg_fmt = _("Can't remove host(s) %(host)s from Aggregate %(pool)s")
-
-
-class CantAddHost(exceptions.ClimateException):
-    msg_fmt = _("Can't add host(s) %(host)s to Aggregate %(pool)s")
-
-
-class AggregateHaveHost(exceptions.ClimateException):
-    msg_fmt = _("Can't delete Aggregate '%(name)s', "
-                "host(s) attached to it : %(hosts)s")
-
-
-class AggregateNotFound(exceptions.ClimateException):
-    msg_fmt = _("Aggregate '%(pool)s' not found!")
-
-
-class HostNotFound(exceptions.ClimateException):
-    msg_fmt = _("Host '%(host)s' not found!")
 
 
 class ReservationPool(object):
@@ -118,7 +88,7 @@ class ReservationPool(object):
         if aggregate:
             return aggregate
         else:
-            raise AggregateNotFound(pool=aggregate_obj)
+            raise manager_exceptions.AggregateNotFound(pool=aggregate_obj)
 
     @staticmethod
     def _generate_aggregate_name():
@@ -164,12 +134,12 @@ class ReservationPool(object):
 
         hosts = agg.hosts
         if len(hosts) > 0 and not force:
-            raise AggregateHaveHost(name=agg.name, hosts=agg.hosts)
-
+            raise manager_exceptions.AggregateHaveHost(name=agg.name,
+                                                       hosts=agg.hosts)
         try:
             freepool_agg = self.get(self.freepool_name)
-        except AggregateNotFound:
-            raise NoFreePool()
+        except manager_exceptions.AggregateNotFound:
+            raise manager_exceptions.NoFreePool()
         for host in hosts:
             LOG.debug("Removing host '%s' from aggregate "
                       "'%s')" % (host, agg.id))
@@ -196,7 +166,7 @@ class ReservationPool(object):
         try:
             agg = self.get_aggregate_from_name_or_id(pool)
             return agg.hosts
-        except AggregateNotFound:
+        except manager_exceptions.AggregateNotFound:
             return []
 
     def add_computehost(self, pool, host):
@@ -213,25 +183,28 @@ class ReservationPool(object):
 
         try:
             freepool_agg = self.get(self.freepool_name)
-        except AggregateNotFound:
-            raise NoFreePool()
+        except manager_exceptions.AggregateNotFound:
+            raise manager_exceptions.NoFreePool()
 
         if freepool_agg.id != agg.id:
             if host not in freepool_agg.hosts:
-                raise HostNotInFreePool(host=host,
-                                        freepool_name=freepool_agg.name)
+                raise manager_exceptions.HostNotInFreePool(
+                    host=host, freepool_name=freepool_agg.name)
             LOG.info("removing host '%s' "
                      "from aggregate freepool %s" % (host, freepool_agg.name))
             try:
                 self.remove_computehost(freepool_agg.id, host)
             except nova_exceptions.NotFound:
-                raise HostNotFound(host=host)
+                raise manager_exceptions.HostNotFound(host=host)
 
         LOG.info("adding host '%s' to aggregate %s" % (host, agg.id))
         try:
             return self.nova.aggregates.add_host(agg.id, host)
         except nova_exceptions.NotFound:
-            raise HostNotFound(host=host)
+            raise manager_exceptions.HostNotFound(host=host)
+        except nova_exceptions.Conflict:
+            raise manager_exceptions.AggregateAlreadyHasHost(pool=pool,
+                                                             host=host)
 
     def remove_all_computehosts(self, pool):
         """Remove all compute hosts attached to an aggregate."""
@@ -249,8 +222,8 @@ class ReservationPool(object):
 
         try:
             freepool_agg = self.get(self.freepool_name)
-        except AggregateNotFound:
-            raise NoFreePool()
+        except manager_exceptions.AggregateNotFound:
+            raise manager_exceptions.NoFreePool()
 
         hosts_failing_to_remove = []
         hosts_failing_to_add = []
@@ -273,12 +246,14 @@ class ReservationPool(object):
                         hosts_failing_to_add.append(host)
 
         if hosts_failing_to_remove:
-            raise CantRemoveHost(host=hosts_failing_to_remove, pool=agg)
+            raise manager_exceptions.CantRemoveHost(
+                host=hosts_failing_to_remove, pool=agg)
         if hosts_failing_to_add:
-            raise CantAddHost(host=hosts_failing_to_add, pool=freepool_agg)
+            raise manager_exceptions.CantAddHost(host=hosts_failing_to_add,
+                                                 pool=freepool_agg)
         if hosts_not_in_freepool:
-            raise HostNotInFreePool(host=hosts_not_in_freepool,
-                                    freepool_name=freepool_agg.name)
+            raise manager_exceptions.HostNotInFreePool(
+                host=hosts_not_in_freepool, freepool_name=freepool_agg.name)
 
     def add_project(self, pool, project_id):
         """Add a project to an aggregate."""

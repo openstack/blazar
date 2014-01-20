@@ -17,6 +17,7 @@ import testtools
 
 from climate import context
 from climate.db import api as db_api
+from climate.manager import exceptions as manager_exceptions
 from climate.manager import service
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
@@ -60,7 +61,7 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
 
     def test__freepool_exists_with_freepool_missing(self):
         def fake_get_aggregate_from_name_or_id(*args, **kwargs):
-            raise rp.AggregateNotFound
+            raise manager_exceptions.AggregateNotFound
         mock = self.patch(self.rp.ReservationPool,
                           'get_aggregate_from_name_or_id')
         mock.side_effect = fake_get_aggregate_from_name_or_id
@@ -187,12 +188,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertEqual(host, fake_host)
 
     def test_create_host_with_invalid_values(self):
-        self.assertRaises(nova_inventory.InvalidHost,
+        self.assertRaises(manager_exceptions.InvalidHost,
                           self.fake_phys_plugin.create_computehost, {})
 
     def test_create_host_with_existing_vms(self):
         self.get_servers_per_host.return_value = ['server1', 'server2']
-        self.assertRaises(nova_inventory.HostHavingServers,
+        self.assertRaises(manager_exceptions.HostHavingServers,
                           self.fake_phys_plugin.create_computehost,
                           self.fake_host)
 
@@ -213,7 +214,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_create.return_value = self.fake_host
         self.db_host_extra_capability_create.side_effect = \
             fake_db_host_extra_capability_create
-        self.assertRaises(physical_host_plugin.CantAddExtraCapability,
+        self.assertRaises(manager_exceptions.CantAddExtraCapability,
                           self.fake_phys_plugin.create_computehost,
                           fake_request)
 
@@ -239,7 +240,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
              'capability_value': 'bar'}]
         self.db_host_extra_capability_update.side_effect = \
             fake_db_host_extra_capability_update
-        self.assertRaises(physical_host_plugin.CantAddExtraCapability,
+        self.assertRaises(manager_exceptions.CantAddExtraCapability,
                           self.fake_phys_plugin.update_computehost,
                           self.fake_host_id, host_values)
 
@@ -250,13 +251,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def test_delete_host_having_vms(self):
         self.get_servers_per_host.return_value = ['server1', 'server2']
-        self.assertRaises(nova_inventory.HostHavingServers,
+        self.assertRaises(manager_exceptions.HostHavingServers,
                           self.fake_phys_plugin.delete_computehost,
                           self.fake_host_id)
 
     def test_delete_host_not_existing_in_db(self):
         self.db_host_get.return_value = None
-        self.assertRaises(rp.HostNotFound,
+        self.assertRaises(manager_exceptions.HostNotFound,
                           self.fake_phys_plugin.delete_computehost,
                           self.fake_host_id)
 
@@ -264,6 +265,6 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         def fake_db_host_destroy(*args, **kwargs):
             raise RuntimeError
         self.db_host_destroy.side_effect = fake_db_host_destroy
-        self.assertRaises(rp.CantRemoveHost,
+        self.assertRaises(manager_exceptions.CantRemoveHost,
                           self.fake_phys_plugin.delete_computehost,
                           self.fake_host_id)

@@ -18,16 +18,11 @@ from oslo.config import cfg
 
 from climate import context
 from climate.db import api as db_api
-from climate import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.manager import exceptions as manager_exceptions
 from climate.plugins import base
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
 from climate.utils import service as service_utils
-
-
-class CantAddExtraCapability(exceptions.ClimateException):
-    msg_fmt = _("Can't add extracapabilities %(keys)s to Host %(host)s")
 
 
 class PhysicalHostPlugin(base.BasePlugin):
@@ -62,7 +57,7 @@ class PhysicalHostPlugin(base.BasePlugin):
         try:
             self.pool.get_aggregate_from_name_or_id(self.freepool_name)
             return True
-        except rp.AggregateNotFound:
+        except manager_exceptions.AggregateNotFound:
             return False
 
     def _get_extra_capabilities(self, host_id):
@@ -102,11 +97,11 @@ class PhysicalHostPlugin(base.BasePlugin):
 
         host_ref = host_id or host_name
         if host_ref is None:
-            raise nova_inventory.InvalidHost(host=host_values)
+            raise manager_exceptions.InvalidHost(host=host_values)
         servers = self.inventory.get_servers_per_host(host_ref)
         if servers:
-            raise nova_inventory.HostHavingServers(host=host_ref,
-                                                   servers=servers)
+            raise manager_exceptions.HostHavingServers(host=host_ref,
+                                                       servers=servers)
         host_details = self.inventory.get_host_details(host_ref)
         # NOTE(sbauza): Only last duplicate name for same extra capability will
         #  be stored
@@ -134,8 +129,8 @@ class PhysicalHostPlugin(base.BasePlugin):
                 except RuntimeError:
                     cantaddextracapability.append(key)
         if cantaddextracapability:
-            raise CantAddExtraCapability(keys=cantaddextracapability,
-                                         host=host['id'])
+            raise manager_exceptions.CantAddExtraCapability(
+                keys=cantaddextracapability, host=host['id'])
         if host:
             return self.get_computehost(host['id'])
         else:
@@ -161,8 +156,8 @@ class PhysicalHostPlugin(base.BasePlugin):
                         cantupdateextracapability.append(
                             raw_capability['capability_name'])
             if cantupdateextracapability:
-                raise CantAddExtraCapability(host=host_id,
-                                             keys=cantupdateextracapability)
+                raise manager_exceptions.CantAddExtraCapability(
+                    host=host_id, keys=cantupdateextracapability)
         return self.get_computehost(host_id)
 
     @service_utils.export_context
@@ -171,11 +166,11 @@ class PhysicalHostPlugin(base.BasePlugin):
         #  - Check if no leases having this host scheduled
         servers = self.inventory.get_servers_per_host(host_id)
         if servers:
-            raise nova_inventory.HostHavingServers(host=host_id,
-                                                   servers=servers)
+            raise manager_exceptions.HostHavingServers(host=host_id,
+                                                       servers=servers)
         host = db_api.host_get(host_id)
         if not host:
-            raise rp.HostNotFound(host=host_id)
+            raise manager_exceptions.HostNotFound(host=host_id)
         try:
             self.pool.remove_computehost(self.freepool_name,
                                          host['hypervisor_hostname'])
@@ -184,4 +179,5 @@ class PhysicalHostPlugin(base.BasePlugin):
             db_api.host_destroy(host_id)
         except RuntimeError:
             # Nothing so bad, but we need to advert the admin he has to rerun
-            raise rp.CantRemoveHost(host=host_id, pool=self.freepool_name)
+            raise manager_exceptions.CantRemoveHost(host=host_id,
+                                                    pool=self.freepool_name)
