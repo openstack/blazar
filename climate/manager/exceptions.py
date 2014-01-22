@@ -71,3 +71,23 @@ class HostHavingServers(exceptions.ClimateException):
 class CantAddExtraCapability(exceptions.ClimateException):
     code = 409
     msg_fmt = _("Can't add extracapabilities %(keys)s to Host %(host)s")
+
+
+class EndpointsNotFound(exceptions.NotFound):
+    code = 404
+    msg_fmt = _("No endpoints for %(service)s")
+
+
+class ServiceNotFound(exceptions.NotFound):
+    code = 404
+    msg_fmt = _("Service %(service)s not found")
+
+
+class WrongClientVersion(exceptions.ClimateException):
+    code = 400
+    msg_fmt = _("Unfortunately you use wrong client version")
+
+
+class NoManagementUrl(exceptions.NotFound):
+    code = 404
+    msg_fmt = _("You haven't management url for service")

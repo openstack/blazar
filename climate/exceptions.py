@@ -68,3 +68,11 @@ class PolicyNotAuthorized(NotAuthorized):
 
 class ConfigNotFound(ClimateException):
     msg_fmt = _("Could not find config at %(path)s")
+
+
+class ServiceCatalogNotFound(NotFound):
+    msg_fmt = _("Could not find service catalog")
+
+
+class WrongFormat(ClimateException):
+    msg_fmt = _("Unenxpectable object format")
