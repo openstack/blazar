@@ -15,6 +15,7 @@
 
 from climate.api import context as api_context
 from climate import context
+from climate import policy
 from climate import tests
 
 
@@ -22,7 +23,6 @@ class ContextTestCase(tests.TestCase):
     def setUp(self):
         super(ContextTestCase, self).setUp()
 
-        self.context = self.patch(context, 'ClimateContext')
         self.fake_headers = {u'X-User-Id': u'1',
                              u'X-Tenant-Id': u'1',
                              u'X-Auth-Token': u'111-111-111',
@@ -32,6 +32,7 @@ class ContextTestCase(tests.TestCase):
                              u'X-Roles': u'user_name0, user_name1'}
 
     def test_ctx_from_headers(self):
+        self.context = self.patch(context, 'ClimateContext')
         api_context.ctx_from_headers(self.fake_headers)
         self.context.assert_called_once_with(user_id=u'1',
                                              roles=[u'user_name0',
@@ -41,3 +42,8 @@ class ContextTestCase(tests.TestCase):
                                              service_catalog=u'catalog',
                                              tenant_id=u'1',
                                              user_name=u'user_name')
+
+    def test_ctx_from_headers_with_admin(self):
+        self.patch(policy, 'enforce').return_value = True
+        ctx = api_context.ctx_from_headers(self.fake_headers)
+        self.assertEqual(True, ctx.is_admin)

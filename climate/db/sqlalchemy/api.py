@@ -40,32 +40,30 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def model_query(model, session=None, project_only=None):
+def model_query(model, session=None, project_only=False):
     """Query helper.
 
     :param model: base model to query
     :param project_only: if present and current context is user-type,
-            then restrict query to match the project_id from current context.
+            then restrict query to match the tenant_id from current context.
     """
     session = session or get_session()
 
     query = session.query(model)
 
+    if project_only and 'tenant_id' not in model.__table__.columns:
+        # model not having tenant_id as attribute
+        LOG.debug("Query not filtered per tenant")
+        return query
+
     if project_only:
-        ctx = context.current()
-        query = query.filter_by(tenant_id=ctx.project_id)
-
-    return query
-
-
-def column_query(*columns, **kwargs):
-    session = kwargs.get("session") or get_session()
-
-    query = session.query(*columns)
-
-    if kwargs.get("project_only"):
-        ctx = context.current()
-        query = query.filter_by(tenant_id=ctx.tenant_id)
+        try:
+            ctx = context.current()
+        except RuntimeError:
+            # Context is not available
+            return query
+        if context.is_user_context(ctx):
+            query = query.filter_by(tenant_id=ctx.tenant_id)
 
     return query
 
@@ -228,7 +226,7 @@ def lease_get_all_by_user(user_id):
 
 
 def lease_list():
-    return model_query(models.Lease, get_session()).all()
+    return model_query(models.Lease, get_session(), project_only=True).all()
 
 
 def lease_create(values):
