@@ -22,7 +22,8 @@ from stevedore import enabled
 
 from climate import context
 from climate.db import api as db_api
-from climate import exceptions
+from climate import exceptions as common_ex
+from climate.manager import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
 from climate.openstack.common.rpc import service as rpc_service
@@ -75,17 +76,16 @@ class ManagerService(rpc_service.Service):
 
         for ext in extension_manager.extensions:
             if ext.obj.resource_type in plugins:
-                raise exceptions.ClimateException(
-                    'You have provided several plugins for one resource type '
-                    'in configuration file. '
-                    'Please set one plugin per resource type.'
-                )
+                msg = "You have provided several plugins for " \
+                      "one resource type in configuration file. " \
+                      "Please set one plugin per resource type."
+                raise exceptions.PluginConfigurationError(error=msg)
 
             plugins[ext.obj.resource_type] = ext.obj
 
         if len(plugins) < len(config_plugins):
-            raise exceptions.ClimateException('Not all requested plugins are '
-                                              'loaded.')
+            msg = 'Not all requested plugins are loaded.'
+            raise exceptions.PluginConfigurationError(error=msg)
 
         return plugins
 
@@ -133,7 +133,7 @@ class ManagerService(rpc_service.Service):
             event_type = event['event_type']
             event_fn = getattr(self, event_type, None)
             if event_fn is None:
-                raise exceptions.ClimateException('Event type %s is not '
+                raise exceptions.EventError(error='Event type %s is not '
                                                   'supported' % event_type)
             try:
                 eventlet.spawn_n(service_utils.with_empty_context(event_fn),
@@ -177,7 +177,7 @@ class ManagerService(rpc_service.Service):
         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
 
         if start_date < now:
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'Start date must later than current date')
 
         ctx = context.current()
@@ -253,21 +253,21 @@ class ManagerService(rpc_service.Service):
 
         if (lease['start_date'] < now and
                 values['start_date'] != lease['start_date']):
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'Cannot modify the start date of already started leases')
 
         if (lease['start_date'] > now and
                 values['start_date'] < now):
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'Start date must later than current date')
 
         if lease['end_date'] < now:
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'Terminated leases can only be renamed')
 
         if (values['end_date'] < now or
            values['end_date'] < values['start_date']):
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'End date must be later than current and start date')
 
         #TODO(frossigneux) rollback if an exception is raised
@@ -325,7 +325,7 @@ class ManagerService(rpc_service.Service):
                         LOG.exception("Failed to delete a reservation")
                 db_api.lease_destroy(lease_id)
         else:
-            raise exceptions.NotAuthorized(
+            raise common_ex.NotAuthorized(
                 'Already started lease cannot be deleted')
 
     def start_lease(self, lease_id, event_id):

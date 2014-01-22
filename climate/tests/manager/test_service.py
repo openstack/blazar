@@ -23,6 +23,7 @@ import testtools
 from climate import context
 from climate.db import api as db_api
 from climate import exceptions
+from climate.manager import exceptions as manager_ex
 from climate.manager import service
 from climate.plugins import dummy_vm_plugin
 from climate.plugins.oshosts import host_plugin
@@ -99,6 +100,13 @@ class ServiceTestCase(tests.TestCase):
 
         self.manager._get_plugins()
 
+    def test_get_bad_config_plugins(self):
+        config = self.patch(cfg, "CONF")
+        config.manager.plugins = ['foo.plugin']
+
+        self.assertRaises(manager_ex.PluginConfigurationError,
+                          self.manager._get_plugins)
+
     def test_setup_actions(self):
         actions = {'virtual:instance':
                    {'on_start': self.fake_plugin.on_start,
@@ -124,7 +132,7 @@ class ServiceTestCase(tests.TestCase):
                                 'event_type': 'wrong_type',
                                 'lease_id': self.lease_id}]
 
-        self.assertRaises(self.exceptions.ClimateException,
+        self.assertRaises(manager_ex.EventError,
                           self.manager._event)
 
     def test_event_wrong_eventlet_fail(self):

@@ -81,10 +81,17 @@ class Rest(flask.Blueprint):
                             #  defined in climate.manager.exceptions
                             cls = getattr(manager_exceptions, e.exc_type)
                         except AttributeError:
-                            # We obfuscate all Exceptions but Climate ones for
-                            #  security reasons
-                            return internal_error(500, 'Internal Server Error',
-                                                  e)
+                            try:
+                                #NOTE(scroiset) : but common Exceptions
+                                # can reside in climate.exceptions
+                                # like NotAuthorized
+                                cls = getattr(ex, e.exc_type)
+                            except AttributeError:
+                                # We obfuscate all Exceptions
+                                # but Climate ones for
+                                #  security reasons
+                                err = 'Internal Server Error'
+                                return internal_error(500, err, e)
                         return render_error_message(cls.code, e.value,
                                                     cls.code)
                     except Exception as e:

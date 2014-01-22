@@ -68,6 +68,14 @@ class HostHavingServers(exceptions.ClimateException):
     msg_fmt = _("Servers [%(servers)s] found for host %(host)s")
 
 
+class PluginConfigurationError(exceptions.ClimateException):
+    msg_fmt = _("Plugin Configuration error : %(error)s")
+
+
+class EventError(exceptions.ClimateException):
+    msg_fmt = '%(error)s'
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.ClimateException):
