@@ -66,7 +66,7 @@ class ReservationPoolTestCase(tests.TestCase):
         self.p_name = self.patch(self.pool, '_generate_aggregate_name')
         self.p_name.return_value = self.pool_name
 
-    def _patch_get_agg_from_whatever(self):
+    def _patch_get_aggregate_from_name_or_id(self):
         def get_fake_aggregate(*args):
             if self.freepool_name in args:
                 return self.fake_freepool
@@ -127,7 +127,7 @@ class ReservationPoolTestCase(tests.TestCase):
                                                             None)
 
     def test_delete_with_host(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         agg = self.pool.get('foo')
 
         self.pool.delete(agg)
@@ -144,7 +144,7 @@ class ReservationPoolTestCase(tests.TestCase):
                           force=False)
 
     def test_delete_with_no_host(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         agg = self.pool.get('foo')
         agg.hosts = []
         self.pool.delete('foo', force=False)
@@ -169,12 +169,12 @@ class ReservationPoolTestCase(tests.TestCase):
         self.nova.aggregates.list.assert_called_once_with()
 
     def test_get(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         agg = self.pool.get('foo')
         self.assertEqual(self.fake_aggregate, agg)
 
     def test_add_computehost(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.add_computehost('pool', 'host3')
 
         self.nova.aggregates.add_host\
@@ -182,8 +182,14 @@ class ReservationPoolTestCase(tests.TestCase):
         self.nova.aggregates.remove_host\
             .assert_any_call(self.fake_aggregate.id, 'host3')
 
+    def test_add_computehost_with_host_id(self):
+        # NOTE(sbauza): Freepool.hosts only contains names of hosts, not UUIDs
+        self._patch_get_aggregate_from_name_or_id()
+        self.assertRaises(manager_exceptions.HostNotInFreePool,
+                          self.pool.add_computehost, 'pool', '3')
+
     def test_add_computehost_not_in_freepool(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.assertRaises(manager_exceptions.HostNotInFreePool,
                           self.pool.add_computehost,
                           'foopool',
@@ -218,27 +224,27 @@ class ReservationPoolTestCase(tests.TestCase):
                           'host3')
 
     def test_add_computehost_to_freepool(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.add_computehost(self.freepool_name, 'host2')
         self.nova.aggregates.add_host\
             .assert_called_once_with(self.fake_freepool.id, 'host2')
 
     def test_remove_computehost_from_freepool(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.remove_computehost(self.freepool_name, 'host3')
 
         self.nova.aggregates.remove_host\
             .assert_called_once_with(self.fake_freepool.id, 'host3')
 
     def test_remove_computehost_not_existing_from_freepool(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.assertRaises(manager_exceptions.HostNotInFreePool,
                           self.pool.remove_computehost,
                           self.freepool_name,
                           'hostXX')
 
     def test_remove_all_computehosts(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.remove_all_computehosts('pool')
         for host in self.fake_aggregate.hosts:
             self.nova.aggregates.remove_host\
@@ -273,7 +279,7 @@ class ReservationPoolTestCase(tests.TestCase):
                           'host3')
 
     def test_remove_computehost_with_wrong_hosts(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.nova.aggregates.remove_host.side_effect = \
             nova_exceptions.NotFound(404)
         self.assertRaises(manager_exceptions.CantRemoveHost,
@@ -282,7 +288,7 @@ class ReservationPoolTestCase(tests.TestCase):
                           'host3')
 
     def test_remove_computehosts_with_duplicate_host(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.nova.aggregates.add_host.side_effect = \
             nova_exceptions.Conflict(409)
         self.assertRaises(manager_exceptions.CantAddHost,
@@ -291,7 +297,7 @@ class ReservationPoolTestCase(tests.TestCase):
                           'host3')
 
     def test_get_computehosts_with_correct_pool(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         hosts = self.pool.get_computehosts('foo')
         self.assertEqual(hosts, self.fake_aggregate.hosts)
 
@@ -299,14 +305,14 @@ class ReservationPoolTestCase(tests.TestCase):
         self.assertEqual([], self.pool.get_computehosts('wrong_pool'))
 
     def test_add_project(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.add_project('pool', 'projectX')
         self.nova.aggregates.set_metadata\
             .assert_called_once_with(self.fake_aggregate.id,
                                      {'projectX': self.tenant_id_key})
 
     def test_remove_project(self):
-        self._patch_get_agg_from_whatever()
+        self._patch_get_aggregate_from_name_or_id()
         self.pool.remove_project('pool', 'projectY')
         self.nova.aggregates.set_metadata\
             .assert_called_once_with(self.fake_aggregate.id,

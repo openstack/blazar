@@ -175,6 +175,10 @@ class ReservationPool(object):
         The `host` must exist otherwise raise an error
         and the `host` must be in the freepool.
 
+        :param pool: Name or UUID of the pool to rattach the host
+        :param host: Name (not UUID) of the host to associate
+        :type host: str
+
         Return the related aggregate.
         Raise an aggregate exception if something wrong.
         """
