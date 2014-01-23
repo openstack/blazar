@@ -27,6 +27,7 @@ from climate.manager import service
 from climate.plugins import dummy_vm_plugin
 from climate.plugins import physical_host_plugin
 from climate import tests
+from climate.utils import trusts
 
 
 class ServiceTestCase(tests.TestCase):
@@ -42,6 +43,7 @@ class ServiceTestCase(tests.TestCase):
         self.datetime = datetime
         self.db_api = db_api
         self.dummy_plugin = dummy_vm_plugin
+        self.trusts = trusts
 
         self.fake_plugin = self.patch(self.dummy_plugin, 'DummyVMPlugin')
 
@@ -58,12 +60,16 @@ class ServiceTestCase(tests.TestCase):
                                         'resource_type': 'virtual:instance',
                                         'status': 'FAKE PROGRESS'}],
                       'start_date': datetime.datetime(2013, 12, 20, 13, 00),
-                      'end_date': datetime.datetime(2013, 12, 20, 15, 00)}
+                      'end_date': datetime.datetime(2013, 12, 20, 15, 00),
+                      'trust_id': 'exxee111qwwwwe'}
+                      #'start_date': 'now',
+                      #'end_date': '2026-12-13 13:13'}
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
                                                     '%Y-%m-%d %H:%M')
         self.extension = mock.MagicMock()
 
         self.patch(self.context, 'ClimateContext')
+        self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
         self.lease_get = self.patch(self.db_api, 'lease_get')
         self.lease_get.return_value = self.lease
         self.lease_list = self.patch(self.db_api, 'lease_list')
@@ -214,6 +220,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.manager.delete_lease(self.lease_id)
 
+        self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         self.lease_destroy.assert_called_once_with(self.lease_id)
 
     def test_delete_lease_after_ending_date(self):
@@ -249,6 +256,7 @@ class ServiceTestCase(tests.TestCase):
 
         self.manager.start_lease(self.lease_id, '1')
 
+        self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         basic_action.assert_called_once_with(self.lease_id, '1', 'on_start',
                                              'active')
 
@@ -257,6 +265,7 @@ class ServiceTestCase(tests.TestCase):
 
         self.manager.end_lease(self.lease_id, '1')
 
+        self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         basic_action.assert_called_once_with(self.lease_id, '1', 'on_end',
                                              'deleted')
 
