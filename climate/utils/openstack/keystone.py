@@ -87,20 +87,21 @@ class ClimateKeystoneClient(object):
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
                     ctx.service_catalog, CONF.identity_service)
+            if not kwargs.get('trust_id'):
+                try:
+                    kwargs.setdefault('endpoint', base.url_for(
+                        ctx.service_catalog, CONF.identity_service,
+                        endpoint_interface='admin'))
+                except AttributeError:
+                    raise manager_exceptions.NoManagementUrl()
             if not kwargs.get('password'):
                 kwargs.setdefault('token', ctx.auth_token)
-                if kwargs['token'] and not kwargs.get('endpoint'):
-                    try:
-                        kwargs['endpoint'] = base.url_for(
-                            ctx.service_catalog, CONF.identity_service,
-                            endpoint_interface='admin')
-                    except AttributeError:
-                        raise manager_exceptions.NoManagementUrl()
 
         try:
             #NOTE(n.s.): we shall remove this try: except: clause when
             #https://review.openstack.org/#/c/66494/ will be merged
             self.keystone = keystone_client.Client(**kwargs)
+            self.keystone.authenticate()
         except AttributeError:
             raise manager_exceptions.WrongClientVersion()
 
