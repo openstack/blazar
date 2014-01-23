@@ -15,6 +15,7 @@
 
 from oslo.config import cfg
 
+RESOURCE_TYPE = u'physical:host'
 
 admin_opts = [
     cfg.StrOpt('climate_username',
@@ -28,4 +29,4 @@ admin_opts = [
                help='Tenant of the user for write operations'),
 ]
 
-cfg.CONF.register_opts(admin_opts)
+cfg.CONF.register_opts(admin_opts, group=RESOURCE_TYPE)

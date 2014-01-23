@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions
+from climate.plugins import oshosts as plugin
 
 
 class NovaInventory(object):
@@ -29,11 +30,12 @@ class NovaInventory(object):
         auth_url = "%s://%s:%s/v2.0" % (cfg.CONF.os_auth_protocol,
                                         cfg.CONF.os_auth_host,
                                         cfg.CONF.os_auth_port)
+        config = cfg.CONF[plugin.RESOURCE_TYPE]
         self.nova = client.Client('2',
-                                  username=cfg.CONF.climate_username,
-                                  api_key=cfg.CONF.climate_password,
+                                  username=config.climate_username,
+                                  api_key=config.climate_password,
                                   auth_url=auth_url,
-                                  project_id=cfg.CONF.climate_tenant_name)
+                                  project_id=config.climate_tenant_name)
 
     def get_host_details(self, host):
         """Get Nova capabilities of a single host

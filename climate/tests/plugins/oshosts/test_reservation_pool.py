@@ -20,6 +20,7 @@ from oslo.config import cfg
 from climate import config
 from climate import context
 from climate.manager import exceptions as manager_exceptions
+from climate.plugins import oshosts as host_plugin
 from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
 from novaclient import client as nova_client
@@ -44,10 +45,11 @@ class ReservationPoolTestCase(tests.TestCase):
         self.fake_aggregate = AggregateFake(i=123,
                                             name='fooname',
                                             hosts=['host1', 'host2'])
-        self.freepool_name = cfg.CONF['physical:host'].aggregate_freepool_name
-        self.tenant_id_key = cfg.CONF['physical:host'].tenant_id_key
-        self.climate_owner = cfg.CONF['physical:host'].climate_owner
-        self.climate_az_prefix = cfg.CONF['physical:host'].climate_az_prefix
+        conf = cfg.CONF[host_plugin.RESOURCE_TYPE]
+        self.freepool_name = conf.aggregate_freepool_name
+        self.tenant_id_key = conf.tenant_id_key
+        self.climate_owner = conf.climate_owner
+        self.climate_az_prefix = conf.climate_az_prefix
 
         self.fake_freepool = AggregateFake(i=456,
                                            name=self.freepool_name,

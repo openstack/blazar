@@ -1,0 +1,2 @@
+export CLIMATE_CONFIG_GENERATOR_EXTRA_MODULES="keystoneclient.middleware.auth_token"
+export CLIMATE_CONFIG_GENERATOR_EXTRA_LIBRARIES="oslo.messaging"

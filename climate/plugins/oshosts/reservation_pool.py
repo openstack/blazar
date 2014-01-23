@@ -23,11 +23,12 @@ from oslo.config import cfg
 from climate import context
 from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common import log as logging
+from climate.plugins import oshosts as plugin
 
 
 LOG = logging.getLogger(__name__)
 
-opts = [
+OPTS = [
     cfg.StrOpt('aggregate_freepool_name',
                default='freepool',
                help='Name of the special aggregate where all hosts '
@@ -43,23 +44,25 @@ opts = [
                help='Prefix for Availability Zones created by Climate'),
 ]
 
-cfg.CONF.register_opts(opts, 'physical:host')
+CONF = cfg.CONF
+CONF.register_opts(OPTS, group=plugin.RESOURCE_TYPE)
 
 
 class ReservationPool(object):
     def __init__(self):
         self.ctx = context.current()
-        self.freepool_name = cfg.CONF['physical:host'].aggregate_freepool_name
-
+        self.config = CONF[plugin.RESOURCE_TYPE]
+        self.freepool_name = self.config.aggregate_freepool_name
         #TODO(scroiset): use catalog to find the url
-        auth_url = "%s://%s:%s/v2.0" % (cfg.CONF.os_auth_protocol,
-                                        cfg.CONF.os_auth_host,
-                                        cfg.CONF.os_auth_port)
+        auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
+                                        CONF.os_auth_host,
+                                        CONF.os_auth_port)
+        #TODO(scroiset): use client wrapped by climate and use trust
         self.nova = client.Client('2',
-                                  username=cfg.CONF.climate_username,
-                                  api_key=cfg.CONF.climate_password,
+                                  username=self.config.climate_username,
+                                  api_key=self.config.climate_password,
                                   auth_url=auth_url,
-                                  project_id=cfg.CONF.climate_tenant_name)
+                                  project_id=self.config.climate_tenant_name)
 
     def get_aggregate_from_name_or_id(self, aggregate_obj):
         """Return an aggregate by name or an id."""
@@ -105,7 +108,7 @@ class ReservationPool(object):
         name = name or self._generate_aggregate_name()
 
         if az:
-            az_name = "%s%s" % (cfg.CONF['physical:host'].climate_az_prefix,
+            az_name = "%s%s" % (self.config.climate_az_prefix,
                                 name)
             LOG.debug('Creating pool aggregate: %s'
                       'with Availability Zone %s' % (name, az_name))
@@ -115,7 +118,7 @@ class ReservationPool(object):
                       'without Availability Zone' % name)
             agg = self.nova.aggregates.create(name, None)
 
-        meta = {cfg.CONF['physical:host'].climate_owner: self.ctx.tenant_id}
+        meta = {self.config.climate_owner: self.ctx.tenant_id}
         self.nova.aggregates.set_metadata(agg, meta)
 
         return agg
@@ -262,7 +265,7 @@ class ReservationPool(object):
     def add_project(self, pool, project_id):
         """Add a project to an aggregate."""
 
-        metadata = {project_id: cfg.CONF['physical:host'].tenant_id_key}
+        metadata = {project_id: self.config.tenant_id_key}
 
         agg = self.get_aggregate_from_name_or_id(pool)
 

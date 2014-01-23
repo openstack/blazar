@@ -21,6 +21,9 @@ from climate.db.sqlalchemy import models
 from climate.openstack.common import uuidutils
 from climate import tests
 
+from climate.plugins import instances as vm_plugin
+from climate.plugins import oshosts as host_plugin
+
 
 def _get_fake_random_uuid():
     return unicode(uuidutils.generate_uuid())
@@ -35,14 +38,14 @@ def _get_fake_phys_reservation_values(lease_id=_get_fake_lease_uuid(),
                                       resource_id=None):
     return {'lease_id': lease_id,
             'resource_id': '1234' if not resource_id else resource_id,
-            'resource_type': 'physical:host'}
+            'resource_type': host_plugin.RESOURCE_TYPE}
 
 
 def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
                                       resource_id=None):
     return {'lease_id': lease_id,
             'resource_id': '5678' if not resource_id else resource_id,
-            'resource_type': 'virtual:instance'}
+            'resource_type': vm_plugin.RESOURCE_TYPE}
 
 
 def _get_fake_event_values(id=_get_fake_random_uuid(),
@@ -295,7 +298,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(1, len(db_api.reservation_get_all_by_values(
             resource_id='5678')))
         self.assertEqual(1, len(db_api.reservation_get_all_by_values(
-            resource_type='physical:host')))
+            resource_type=host_plugin.RESOURCE_TYPE)))
 
     def test_reservation_update(self):
         result = db_api.reservation_create(_get_fake_phys_reservation_values())

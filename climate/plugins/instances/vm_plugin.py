@@ -19,24 +19,27 @@ from oslo.config import cfg
 from climate import exceptions as climate_exceptions
 from climate.openstack.common import log as logging
 from climate.plugins import base
+from climate.plugins import instances as plugin
 from climate.utils.openstack import nova
 
 LOG = logging.getLogger(__name__)
 
-
 plugin_opts = [
     cfg.StrOpt('on_end',
                default='create_image, delete',
-               help='Actions which we will use in the end of the lease')
+               help='Actions which we will use in the end of the lease'),
+    cfg.StrOpt('on_start',
+               default='on_start',
+               help='Actions which we will use at the start of the lease'),
 ]
 
 CONF = cfg.CONF
-CONF.register_opts(plugin_opts, 'virtual:instance')
+CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
 
 class VMPlugin(base.BasePlugin):
     """Base plugin for VM reservation."""
-    resource_type = 'virtual:instance'
+    resource_type = plugin.RESOURCE_TYPE
     title = "Basic VM Plugin"
     description = ("This is basic plugin for VM management. "
                    "It can start, snapshot and suspend VMs")
@@ -50,7 +53,7 @@ class VMPlugin(base.BasePlugin):
 
     def on_end(self, resource_id):
         nova_client = nova.ClimateNovaClient()
-        actions = self._split_actions(CONF['virtual:instance'].on_end)
+        actions = self._split_actions(CONF[plugin.RESOURCE_TYPE].on_end)
 
         # actions will be processed in following order:
         # - create image from VM

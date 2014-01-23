@@ -23,6 +23,7 @@ from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_exceptions
 from climate.manager import service
 from climate.openstack.common import uuidutils
+from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import host_plugin
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
@@ -312,13 +313,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_properties': '',
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00),
-            'resource_type': u'physical:host',
+            'resource_type': plugin.RESOURCE_TYPE,
         }
         reservation_values = {
             'id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'resource_id': '1',
-            'resource_type': u'physical:host',
+            'resource_type': plugin.RESOURCE_TYPE,
             'status': 'pending',
         }
         generate_uuid = self.patch(uuidutils, 'generate_uuid')
@@ -353,13 +354,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_properties': '',
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00),
-            'resource_type': u'physical:host',
+            'resource_type': plugin.RESOURCE_TYPE,
         }
         reservation_values = {
             'id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'resource_id': '1',
-            'resource_type': u'physical:host',
+            'resource_type': plugin.RESOURCE_TYPE,
             'status': 'pending',
         }
         generate_uuid = self.patch(uuidutils, 'generate_uuid')

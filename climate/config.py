@@ -21,7 +21,7 @@ cli_opts = [
     cfg.BoolOpt('log-exchange', default=False,
                 help='Log request/response exchange details: environ, '
                      'headers and bodies'),
-    cfg.StrOpt('host', default=socket.getfqdn(),
+    cfg.StrOpt('host', default=socket.gethostname(),
                help='Name of this node.  This can be an opaque identifier.  '
                'It is not necessarily a hostname, FQDN, or IP address. '
                'However, the node name must be valid within '

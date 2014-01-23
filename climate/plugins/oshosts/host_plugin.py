@@ -27,30 +27,45 @@ from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_ex
 from climate.openstack.common import uuidutils
 from climate.plugins import base
+from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
+
+plugin_opts = [
+    cfg.StrOpt('on_end',
+               default='on_end',
+               help='Actions which we will use in the end of the lease'),
+    cfg.StrOpt('on_start',
+               default='on_start',
+               help='Actions which we will use at the start of the lease'),
+]
+
+
+CONF = cfg.CONF
+CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
 
 class PhysicalHostPlugin(base.BasePlugin):
     """Plugin for physical host resource."""
-    resource_type = 'physical:host'
+    resource_type = plugin.RESOURCE_TYPE
     title = 'Physical Host Plugin'
     description = 'This plugin starts and shutdowns the hosts.'
-    freepool_name = cfg.CONF[resource_type].aggregate_freepool_name
+    freepool_name = CONF[resource_type].aggregate_freepool_name
     pool = None
     inventory = None
 
     def __init__(self):
         #TODO(sbauza): use catalog to find the url
-        auth_url = "%s://%s:%s/v2.0" % (cfg.CONF.os_auth_protocol,
-                                        cfg.CONF.os_auth_host,
-                                        cfg.CONF.os_auth_port)
+        auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
+                                        CONF.os_auth_host,
+                                        CONF.os_auth_port)
+        config = CONF[plugin.RESOURCE_TYPE]
         #TODO(scroiset): use client wrapped by climate and use trust
         self.nova = client.Client('2',
-                                  username=cfg.CONF.climate_username,
-                                  api_key=cfg.CONF.climate_password,
+                                  username=config.climate_username,
+                                  api_key=config.climate_password,
                                   auth_url=auth_url,
-                                  project_id=cfg.CONF.climate_tenant_name)
+                                  project_id=config.climate_tenant_name)
 
     def create_reservation(self, values):
         """Create reservation."""
