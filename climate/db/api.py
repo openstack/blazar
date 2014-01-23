@@ -266,6 +266,32 @@ def host_reservation_update(host_reservation_id,
                                  host_reservation_values)
 
 
+#Allocation
+
+def host_allocation_create(allocation_values):
+    """Create an allocation from the values."""
+    return IMPL.host_allocation_create(allocation_values)
+
+
+@to_dict
+def host_allocation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    return IMPL.host_allocation_get_all_by_values(**kwargs)
+
+
+# TODO(frossigneux) get methods
+
+
+def host_allocation_destroy(allocation_id):
+    """Delete specific allocation."""
+    IMPL.host_allocation_destroy(allocation_id)
+
+
+def host_allocation_update(allocation_id, allocation_values):
+    """Update allocation."""
+    IMPL.host_allocation_update(allocation_id, allocation_values)
+
+
 # Compute Hosts
 
 def host_create(values):
@@ -339,4 +365,12 @@ def host_extra_capability_update(host_extra_capability_id, values):
 def host_extra_capability_get_all_per_name(host_id,
                                            extra_capability_name):
     return IMPL.host_extra_capability_get_all_per_name(host_id,
+
                                                        extra_capability_name)
+
+
+# Host matching
+
+def host_get_all_by_queries_including_extracapabilities(queries):
+    """Returns hosts filtered by an array of queries."""
+    return IMPL.host_get_all_by_queries_including_extracapabilities(queries)

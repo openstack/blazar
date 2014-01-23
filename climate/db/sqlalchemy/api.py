@@ -148,7 +148,6 @@ def reservation_get_all():
 def reservation_get_all_by_lease_id(lease_id):
     reservations = model_query(models.Reservation, get_session()).\
         filter_by(lease_id=lease_id)
-
     return reservations.all()
 
 
@@ -436,6 +435,73 @@ def host_reservation_destroy(host_reservation_id):
         session.delete(host_reservation)
 
 
+#ComputeHostAllocation
+def _host_allocation_get(session, host_allocation_id):
+    query = model_query(models.ComputeHostAllocation, session)
+    return query.filter_by(id=host_allocation_id).first()
+
+
+def host_allocation_get(host_allocation_id):
+    return _host_allocation_get(get_session(),
+                                host_allocation_id)
+
+
+def host_allocation_get_all():
+    query = model_query(models.ComputeHostAllocation, get_session())
+    return query.all()
+
+
+def host_allocation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    allocation_query = model_query(models.ComputeHostAllocation, get_session())
+    for name, value in kwargs.items():
+        column = getattr(models.ComputeHostAllocation, name, None)
+        if column:
+            allocation_query = allocation_query.filter(column == value)
+    return allocation_query.all()
+
+
+def host_allocation_create(values):
+    values = values.copy()
+    host_allocation = models.ComputeHostAllocation()
+    host_allocation.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            host_allocation.save(session=session)
+        except db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+
+    return host_allocation_get(host_allocation.id)
+
+
+def host_allocation_update(host_allocation_id, values):
+    session = get_session()
+
+    with session.begin():
+        host_allocation = _host_allocation_get(session,
+                                               host_allocation_id)
+        host_allocation.update(values)
+        host_allocation.save(session=session)
+
+    return host_allocation_get(host_allocation_id)
+
+
+def host_allocation_destroy(host_allocation_id):
+    session = get_session()
+    with session.begin():
+        host_allocation = _host_allocation_get(session,
+                                               host_allocation_id)
+
+        if not host_allocation:
+            # raise not found error
+            raise RuntimeError("Host Allocation not found!")
+
+        session.delete(host_allocation)
+
+
 #ComputeHost
 def _host_get(session, host_id):
     query = model_query(models.ComputeHost, session)
@@ -473,36 +539,64 @@ def host_get_all_by_queries(queries):
     :param queries: array of queries "key op value" where op can be
         http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
             #sqlalchemy.sql.operators.ColumnOperators
+
     """
-
     hosts_query = model_query(models.ComputeHost, get_session())
+    #key_not_found = []
 
-    oper = dict({'<': 'lt', '>': 'gt', '<=': 'le', '>=': 'ge', '==': 'eq',
-                 '!=': 'ne'})
+    oper = {
+        '<': ['lt', lambda a, b: a >= b],
+        '>': ['gt', lambda a, b: a <= b],
+        '<=': ['le', lambda a, b: a > b],
+        '>=': ['ge', lambda a, b: a < b],
+        '==': ['eq', lambda a, b: a != b],
+        '!=': ['ne', lambda a, b: a == b],
+    }
+
+    hosts = []
     for query in queries:
         try:
             key, op, value = query.split(' ', 3)
         except ValueError:
             raise RuntimeError('Invalid filter: %s' % query)
-        column = getattr(models.ComputeHost, key, None)
-        if not column:
-            raise RuntimeError('Invalid filter column: %s' % key)
-        if op == 'in':
-            filt = column.in_(value.split(','))
-        else:
-            if op in oper:
-                op = oper[op]
-            try:
-                attr = filter(lambda e: hasattr(column, e % op),
-                              ['%s', '%s_', '__%s__'])[0] % op
-            except IndexError:
-                raise RuntimeError('Invalid filter operator: %s' % op)
-            if value == 'null':
-                value = None
-            filt = getattr(column, attr)(value)
-        hosts_query = hosts_query.filter(filt)
 
-    return hosts_query.all()
+        column = getattr(models.ComputeHost, key, None)
+        if column:
+            if op == 'in':
+                filt = column.in_(value.split(','))
+            else:
+                if op in oper:
+                    op = oper[op][0]
+                try:
+                    attr = filter(lambda e: hasattr(column, e % op),
+                                  ['%s', '%s_', '__%s__'])[0] % op
+                except IndexError:
+                    raise RuntimeError('Invalid filter operator: %s' % op)
+
+                if value == 'null':
+                    value = None
+
+                filt = getattr(column, attr)(value)
+
+            hosts_query = hosts_query.filter(filt)
+        else:
+            #looking for extra capabilities matches
+            extra_filter = model_query(
+                models.ComputeHostExtraCapability, get_session()
+            ).filter(models.ComputeHostExtraCapability.capability_name == key
+                     ).all()
+            if not extra_filter:
+                raise RuntimeError(
+                    'No Host with ExtraCapability "%s" found' % key)
+
+            for host in extra_filter:
+                if op in oper and oper[op][1](host.capability_value, value):
+                    hosts.append(host.computehost_id)
+                elif op not in oper:
+                    msg = 'Operator %s for extra capabilities not implemented'
+                    raise NotImplementedError(msg % op)
+
+    return hosts_query.filter(~models.ComputeHost.id.in_(hosts)).all()
 
 
 def host_create(values):
