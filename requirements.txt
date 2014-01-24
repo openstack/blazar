@@ -8,7 +8,7 @@ kombu>=2.4.8
 oslo.config>=1.2.0
 python-novaclient>=2.15.0
 netaddr>=0.7.6
-python-keystoneclient>=0.4.1
+python-keystoneclient>=0.4.2
 Routes>=1.12.3
 SQLAlchemy>=0.7.8,<=0.8.99
 stevedore>=0.12
