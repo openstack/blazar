@@ -289,7 +289,7 @@ class ManagerService(rpc_service.Service):
             }
         )
         if len(events) != 1:
-            raise exceptions.ClimateException(
+            raise common_ex.ClimateException(
                 'Start lease event not found')
         event = events[0]
         db_api.event_update(event['id'], {'time': values['start_date']})
@@ -303,7 +303,7 @@ class ManagerService(rpc_service.Service):
             }
         )
         if len(events) != 1:
-            raise exceptions.ClimateException(
+            raise common_ex.ClimateException(
                 'End lease event not found')
         event = events[0]
         db_api.event_update(event['id'], {'time': values['end_date']})
@@ -349,7 +349,7 @@ class ManagerService(rpc_service.Service):
                 self.resource_actions[resource_type][action_time](
                     reservation['resource_id']
                 )
-            except exceptions.ClimateException:
+            except common_ex.ClimateException:
                 LOG.exception("Failed to execute action %(action)s "
                               "for lease %(lease)d"
                               % {
