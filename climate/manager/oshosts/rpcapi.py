@@ -55,5 +55,5 @@ class ManagerRPCAPI(service.RpcProxy):
 
     def delete_computehost(self, host_id):
         """Delete specified computehost."""
-        return self.cast('physical:host:delete_computehost',
+        return self.call('physical:host:delete_computehost',
                          host_id=host_id)

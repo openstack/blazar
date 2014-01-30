@@ -54,4 +54,4 @@ class RPCAPITestCase(tests.TestCase):
 
     def test_delete_lease(self):
         self.manager.delete_lease(self.fake_id)
-        self.cast.assert_called_once_with('delete_lease', lease_id=1)
+        self.call.assert_called_once_with('delete_lease', lease_id=1)

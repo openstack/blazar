@@ -53,4 +53,4 @@ class ManagerRPCAPI(service.RpcProxy):
 
     def delete_lease(self, lease_id):
         """Delete specified lease."""
-        return self.cast('delete_lease', lease_id=lease_id)
+        return self.call('delete_lease', lease_id=lease_id)
