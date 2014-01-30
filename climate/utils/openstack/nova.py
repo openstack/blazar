@@ -15,10 +15,10 @@
 
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exception
+from novaclient.v1_1 import servers
 from oslo.config import cfg
 
 from climate import context
-from climate.manager import exceptions as manager_exceptions
 from climate.utils.openstack import base
 
 
@@ -29,6 +29,9 @@ nova_opts = [
     cfg.StrOpt('compute_service',
                default='compute',
                help='Nova name in keystone'),
+    cfg.StrOpt('image_prefix',
+               default='reserved_',
+               help='Prefix for VM images if you want to create snapshots')
 ]
 
 CONF = cfg.CONF
@@ -65,6 +68,8 @@ class ClimateNovaClient(object):
         """
 
         ctx = kwargs.pop('ctx', None)
+        auth_token = kwargs.pop('auth_token', None)
+        mgmt_url = kwargs.pop('mgmt_url', None)
 
         if ctx is None:
             try:
@@ -75,33 +80,45 @@ class ClimateNovaClient(object):
         if ctx is not None:
             kwargs.setdefault('username', ctx.user_name)
             kwargs.setdefault('api_key', None)
-            kwargs.setdefault('auth_token', ctx.auth_token)
             kwargs.setdefault('project_id', ctx.tenant_id)
-            if not kwargs.get('auth_url'):
-                kwargs['auth_url'] = base.url_for(
-                    ctx.service_catalog, CONF.identity_service)
+            kwargs.setdefault('auth_url', base.url_for(
+                ctx.service_catalog, CONF.identity_service))
 
-        try:
-            mgmt_url = kwargs.pop('mgmt_url', None) or base.url_for(
-                ctx.service_catalog, CONF.compute_service)
-        except AttributeError:
-            raise manager_exceptions.NoManagementUrl()
+            auth_token = auth_token or ctx.auth_token
+            mgmt_url = mgmt_url or base.url_for(ctx.service_catalog,
+                                                CONF.compute_service)
 
         self.nova = nova_client.Client(**kwargs)
-
+        self.nova.client.auth_token = auth_token
         self.nova.client.management_url = mgmt_url
+
+        self.nova.servers = ServerManager(self.nova)
+
         self.exceptions = nova_exception
 
-    def _image_create(self, instance_id):
-        instance = self.nova.servers.get(instance_id)
-        instance_name = instance.name
-        self.nova.servers.create_image(instance_id,
-                                       "reserved_%s" % instance_name)
-
     def __getattr__(self, name):
-        if name == 'create_image':
-            func = self._image_create
-        else:
-            func = getattr(self.nova, name)
+        return getattr(self.nova, name)
 
-        return func
+
+#todo(dbelova): remove these lines after novaclient 2.16.0 will be released
+class ClimateServer(servers.Server):
+    def unshelve(self):
+        """Unshelve -- Unshelve the server."""
+        self.manager.unshelve(self)
+
+
+class ServerManager(servers.ServerManager):
+    resource_class = ClimateServer
+
+    def unshelve(self, server):
+        """Unshelve the server."""
+        self._action('unshelve', server, None)
+
+    def create_image(self, server_id, image_name=None, metadata=None):
+        """Snapshot a server."""
+        server_name = self.get(server_id).name
+        if image_name is None:
+            image_name = cfg.CONF.image_prefix + server_name
+        return super(ServerManager, self).create_image(server_id,
+                                                       image_name=image_name,
+                                                       metadata=metadata)

@@ -11,11 +11,10 @@ climate_password=<password>
 climate_tenant_name=<tenant_name>
 
 [manager]
-plugins=dummy.vm.plugin,physical.host.plugin
+plugins=basic.vm.plugin,physical.host.plugin
 
 [virtual:instance]
-on_start = wake_up
-on_end = delete
+on_end = create_image, delete
 
 [physical:host]
 on_start = wake_up
