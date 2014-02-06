@@ -76,6 +76,11 @@ class EventError(exceptions.ClimateException):
     msg_fmt = '%(error)s'
 
 
+class InvalidDate(exceptions.ClimateException):
+    msg_fmt = _(
+        '%(date)s is an invalid date. Required format: %(date_format)s')
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.ClimateException):

@@ -199,7 +199,18 @@ class ServiceTestCase(tests.TestCase):
                         'end_date': '2025-12-31 13:13'}
 
         self.assertRaises(
-            ValueError, self.manager.create_lease, lease_values)
+            manager_ex.InvalidDate, self.manager.create_lease, lease_values)
+
+    def test_create_lease_start_date_in_past(self):
+        lease_values = {
+            'start_date':
+            datetime.datetime.strftime(
+                datetime.datetime.utcnow() - datetime.timedelta(days=1),
+                service.LEASE_DATE_FORMAT),
+            'end_date': '2025-12-31 13:13'}
+
+        self.assertRaises(
+            exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_update_lease_completed_lease_rename(self):
         lease_values = {'name': 'renamed'}

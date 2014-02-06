@@ -44,6 +44,8 @@ CONF = cfg.CONF
 CONF.register_opts(manager_opts, 'manager')
 LOG = logging.getLogger(__name__)
 
+LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
+
 
 class ManagerService(rpc_service.Service):
     """Service class for the climate-manager service.
@@ -142,6 +144,15 @@ class ManagerService(rpc_service.Service):
                 db_api.event_update(event['id'], {'status': 'ERROR'})
                 LOG.exception(_('Error occurred while event handling.'))
 
+    def _date_from_string(self, date_string, date_format=LEASE_DATE_FORMAT):
+        try:
+            date = datetime.datetime.strptime(date_string, date_format)
+        except ValueError:
+            raise exceptions.InvalidDate(date=date_string,
+                                         date_format=date_format)
+
+        return date
+
     @service_utils.export_context
     def get_lease(self, lease_id):
         return db_api.lease_get(lease_id)
@@ -172,9 +183,8 @@ class ManagerService(rpc_service.Service):
         if start_date == 'now':
             start_date = now
         else:
-            start_date = datetime.datetime.strptime(start_date,
-                                                    "%Y-%m-%d %H:%M")
-        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+            start_date = self._date_from_string(start_date)
+        end_date = self._date_from_string(end_date)
 
         if start_date < now:
             raise common_ex.NotAuthorized(
@@ -230,10 +240,10 @@ class ManagerService(rpc_service.Service):
         lease = db_api.lease_get(lease_id)
         start_date = values.get(
             'start_date',
-            datetime.datetime.strftime(lease['start_date'], "%Y-%m-%d %H:%M"))
+            datetime.datetime.strftime(lease['start_date'], LEASE_DATE_FORMAT))
         end_date = values.get(
             'end_date',
-            datetime.datetime.strftime(lease['end_date'], "%Y-%m-%d %H:%M"))
+            datetime.datetime.strftime(lease['end_date'], LEASE_DATE_FORMAT))
 
         now = datetime.datetime.utcnow()
         now = datetime.datetime(now.year,
@@ -244,9 +254,8 @@ class ManagerService(rpc_service.Service):
         if start_date == 'now':
             start_date = now
         else:
-            start_date = datetime.datetime.strptime(start_date,
-                                                    "%Y-%m-%d %H:%M")
-        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+            start_date = self._date_from_string(start_date)
+        end_date = self._date_from_string(end_date)
 
         values['start_date'] = start_date
         values['end_date'] = end_date
