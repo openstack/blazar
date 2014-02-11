@@ -18,7 +18,6 @@ import json
 from climate.api import context as api_context
 from climate import context
 from climate import exceptions
-from climate import policy
 from climate import tests
 
 
@@ -47,13 +46,6 @@ class ContextTestCase(tests.TestCase):
                                                  u'nova': u'catalog'},
                                              tenant_id=u'1',
                                              user_name=u'user_name')
-
-    def test_ctx_from_headers_with_admin(self):
-        catalog = json.dumps({'nova': 'catalog'})
-        self.fake_headers[u'X-Service-Catalog'] = catalog
-        self.patch(policy, 'enforce').return_value = True
-        ctx = api_context.ctx_from_headers(self.fake_headers)
-        self.assertEqual(True, ctx.is_admin)
 
     def test_ctx_from_headers_no_catalog(self):
         self.assertRaises(

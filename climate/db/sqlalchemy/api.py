@@ -21,7 +21,6 @@ import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
-from climate import context
 from climate.db.sqlalchemy import models
 from climate.openstack.common.db import exception as db_exc
 from climate.openstack.common.db.sqlalchemy import session as db_session
@@ -40,7 +39,7 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def model_query(model, session=None, project_only=False):
+def model_query(model, session=None):
     """Query helper.
 
     :param model: base model to query
@@ -49,23 +48,7 @@ def model_query(model, session=None, project_only=False):
     """
     session = session or get_session()
 
-    query = session.query(model)
-
-    if project_only and 'tenant_id' not in model.__table__.columns:
-        # model not having tenant_id as attribute
-        LOG.debug("Query not filtered per tenant")
-        return query
-
-    if project_only:
-        try:
-            ctx = context.current()
-        except RuntimeError:
-            # Context is not available
-            return query
-        if context.is_user_context(ctx):
-            query = query.filter_by(tenant_id=ctx.tenant_id)
-
-    return query
+    return session.query(model)
 
 
 def setup_db():
@@ -224,8 +207,11 @@ def lease_get_all_by_user(user_id):
     raise NotImplementedError
 
 
-def lease_list():
-    return model_query(models.Lease, get_session(), project_only=True).all()
+def lease_list(tenant_id=None):
+    query = model_query(models.Lease, get_session())
+    if tenant_id is not None:
+        query = query.filter_by(tenant_id=tenant_id)
+    return query.all()
 
 
 def lease_create(values):

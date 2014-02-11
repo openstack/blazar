@@ -102,14 +102,3 @@ class TestClimateContext(tests.TestCase):
             self.assertEqual(ctx.user_id, "user")
             self.assertEqual(ctx.tenant_id, "tenant")
             self.assertEqual(ctx.is_admin, True)
-
-    def test_is_user_context(self):
-        ctx = context.ClimateContext(user_id="user", tenant_id="tenant")
-        self.assertEqual(True, context.is_user_context(ctx))
-        ctx = ctx.elevated()
-        self.assertEqual(False, context.is_user_context(ctx))
-
-    def test_is_user_context_with_empty_context(self):
-        ctx = context.ClimateContext()
-        self.assertEqual(False, context.is_user_context(ctx))
-        self.assertEqual(False, context.is_user_context(None))

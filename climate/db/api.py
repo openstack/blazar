@@ -171,9 +171,9 @@ def lease_get(lease_id):
 
 
 @to_dict
-def lease_list():
+def lease_list(tenant_id=None):
     """Return a list of all existing leases."""
-    return IMPL.lease_list()
+    return IMPL.lease_list(tenant_id)
 
 
 def lease_destroy(lease_id):
