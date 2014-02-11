@@ -43,6 +43,15 @@ class BaseContext(object):
             else:
                 raise AttributeError(name)
 
+    def __setattr__(self, name, value):
+        # NOTE(yorik-sar): only the very first assignment for __values is
+        # allowed. All context arguments should be set at the time the context
+        # object is being created.
+        if not self.__dict__:
+            super(BaseContext, self).__setattr__(name, value)
+        else:
+            raise Exception(self.__dict__, name, value)
+
     def __enter__(self):
         try:
             stack = self._context_stack.stack

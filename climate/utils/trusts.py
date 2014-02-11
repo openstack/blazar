@@ -48,9 +48,10 @@ def delete_trust(lease):
 
 def create_ctx_from_trust(trust_id):
     """Return context built from given trust."""
-    ctx = context.ClimateContext()
-    ctx.user_name = CONF.os_admin_username
-    ctx.tenant_name = CONF.os_admin_tenant_name
+    ctx = context.ClimateContext(
+        user_name=CONF.os_admin_username,
+        tenant_name=CONF.os_admin_tenant_name,
+    )
     auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
                                   CONF.os_auth_host,
                                   CONF.os_auth_port)
@@ -58,12 +59,13 @@ def create_ctx_from_trust(trust_id):
         password=CONF.os_admin_password,
         trust_id=trust_id,
         auth_url=auth_url,
-        ctx=ctx
+        ctx=ctx,
     )
 
-    ctx.auth_token = client.auth_token
-    ctx.service_catalog = client.service_catalog.catalog['catalog']
-    ctx.tenant_id = client.tenant_id
-
     # use 'with ctx' statement in the place you need context from trust
-    return ctx
+    return context.ClimateContext(
+        ctx,
+        auth_token=client.auth_token,
+        service_catalog=client.service_catalog.catalog['catalog'],
+        tenant_id=client.tenant_id,
+    )
