@@ -116,16 +116,14 @@ class ManagerService(service_utils.RPCServer, service.Service):
         status to 'DONE'.
         """
         LOG.debug(_('Trying to get event from DB.'))
-        events = db_api.event_get_all_sorted_by_filters(
+        event = db_api.event_get_first_sorted_by_filters(
             sort_key='time',
             sort_dir='asc',
             filters={'status': 'UNDONE'}
         )
 
-        if not events:
+        if not event:
             return
-
-        event = events[0]
 
         if event['time'] < datetime.datetime.utcnow():
             db_api.event_update(event['id'], {'status': 'IN_PROGRESS'})
@@ -282,7 +280,7 @@ class ManagerService(service_utils.RPCServer, service.Service):
                 reservation['id'],
                 reservation)
 
-        events = db_api.event_get_all_sorted_by_filters(
+        event = db_api.event_get_first_sorted_by_filters(
             'lease_id',
             'asc',
             {
@@ -290,13 +288,12 @@ class ManagerService(service_utils.RPCServer, service.Service):
                 'event_type': 'start_lease'
             }
         )
-        if len(events) != 1:
+        if not event:
             raise common_ex.ClimateException(
                 'Start lease event not found')
-        event = events[0]
         db_api.event_update(event['id'], {'time': values['start_date']})
 
-        events = db_api.event_get_all_sorted_by_filters(
+        event = db_api.event_get_first_sorted_by_filters(
             'lease_id',
             'asc',
             {
@@ -304,10 +301,9 @@ class ManagerService(service_utils.RPCServer, service.Service):
                 'event_type': 'end_lease'
             }
         )
-        if len(events) != 1:
+        if not event:
             raise common_ex.ClimateException(
                 'End lease event not found')
-        event = events[0]
         db_api.event_update(event['id'], {'time': values['end_date']})
 
         db_api.lease_update(lease_id, values)
