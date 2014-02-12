@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import datetime
+import operator
 
 from climate import context
 from climate.db.sqlalchemy import api as db_api
@@ -45,11 +46,16 @@ def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
             'resource_type': 'virtual:instance'}
 
 
-def _get_fake_event_values(lease_id=_get_fake_lease_uuid(),
-                           event_type='fake_event_type'):
-    return {'lease_id': lease_id,
+def _get_fake_event_values(id=_get_fake_random_uuid(),
+                           lease_id=_get_fake_lease_uuid(),
+                           event_type='fake_event_type',
+                           time=None,
+                           status='fake_event_status'):
+    return {'id': id,
+            'lease_id': lease_id,
             'event_type': event_type,
-            'time': _get_datetime('2030-03-01 00:00')}
+            'time': _get_datetime('2030-03-01 00:00') if not time else time,
+            'status': status}
 
 
 def _get_datetime(value='2030-01-01 00:00'):
@@ -92,6 +98,18 @@ def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
                 resource_id=resource_id)],
             'events': []
             }
+
+
+def _get_fake_host_allocation_values(
+        id=None,
+        compute_host_id=_get_fake_random_uuid(),
+        reservation_id=_get_fake_random_uuid()):
+    values = {'compute_host_id': compute_host_id,
+              'reservation_id': reservation_id}
+    if id is not None:
+        values.update({'id': id})
+
+    return values
 
 
 def _create_virtual_lease(values=_get_fake_virt_lease_values(),
@@ -152,6 +170,13 @@ def _get_fake_host_extra_capabilities(id=_get_fake_random_uuid(),
             'computehost_id': computehost_id,
             'capability_name': 'vgpu',
             'capability_value': '2'}
+
+
+def is_result_sorted_correctly(results, sort_key, sort_dir='asc'):
+    sorted_list = sorted(results,
+                         key=operator.itemgetter(sort_key),
+                         reverse=False if sort_dir == 'asc' else True)
+    return sorted_list == results
 
 
 class SQLAlchemyDBApiTestCase(tests.DBTestCase):
@@ -289,6 +314,18 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
             resource_id='5678')))
         self.assertEqual(1, len(db_api.reservation_get_all_by_values(
             resource_type='physical:host')))
+
+    def test_reservation_update(self):
+        result = db_api.reservation_create(_get_fake_phys_reservation_values())
+        self.assertNotEqual('fake', result.resource_type)
+
+        result = db_api.reservation_update(result.id,
+                                           {"resource_type": 'fake'})
+        self.assertEqual('fake', result.resource_type)
+
+    def test_reservation_destroy_for_reservation_not_found(self):
+        self.assertFalse(db_api.reservation_get('1'))
+        self.assertRaises(RuntimeError, db_api.reservation_destroy, '1')
 
     # Host reservations
 
@@ -483,3 +520,337 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual([],
                          db_api.host_extra_capability_get_all_per_name('1',
                                                                        'bad'))
+
+    # Host allocations
+
+    def test_host_allocation_get_all(self):
+        self.assertFalse(db_api.host_allocation_get_all())
+
+        db_api.host_allocation_create(_get_fake_host_allocation_values(id='1'))
+        db_api.host_allocation_create(_get_fake_host_allocation_values(id='2'))
+
+        self.assertEqual(2, len(db_api.host_allocation_get_all()))
+
+    def test_host_allocation_create_for_duplicated_hosts(self):
+        db_api.host_allocation_create(
+            _get_fake_host_allocation_values(id='1')
+        )
+
+        self.assertRaises(RuntimeError, db_api.host_allocation_create,
+                          _get_fake_host_allocation_values(id='1'))
+
+    def test_host_allocation_update_for_host(self):
+        host_allocation = db_api.host_allocation_create(
+            _get_fake_host_allocation_values(
+                compute_host_id="1",
+                reservation_id="1"
+            ))
+
+        new_host_allocation = db_api.host_allocation_update(
+            host_allocation.id,
+            _get_fake_host_allocation_values(
+                compute_host_id="2",
+                reservation_id="2"
+            ))
+
+        self.assertEqual('2', new_host_allocation.compute_host_id)
+        self.assertEqual('2', new_host_allocation.reservation_id)
+        self.assertNotEqual(host_allocation.compute_host_id,
+                            new_host_allocation.compute_host_id)
+
+    def test_host_allocation_destroy_for_host(self):
+        host_allocation = db_api.host_allocation_create(
+            _get_fake_host_allocation_values()
+        )
+        db_api.host_allocation_destroy(host_allocation.id)
+
+        self.assertIsNone(db_api.host_allocation_get(host_allocation.id))
+
+    def test_host_allocation_destroy_for_host_not_found(self):
+        host_allocation_id = _get_fake_random_uuid()
+
+        self.assertIsNone(db_api.host_allocation_get(host_allocation_id))
+        self.assertRaises(RuntimeError, db_api.host_allocation_destroy,
+                          host_allocation_id)
+
+    def test_host_allocation_get_all_by_values(self):
+        db_api.host_allocation_create(_get_fake_host_allocation_values(
+            compute_host_id="1", reservation_id="1"))
+        db_api.host_allocation_create(_get_fake_host_allocation_values(
+            compute_host_id="1", reservation_id="1234"))
+
+        self.assertEqual(2, len(db_api.host_allocation_get_all_by_values()))
+        self.assertEqual(1, len(db_api.host_allocation_get_all_by_values(
+            reservation_id='1234')))
+
+    # Event
+
+    def test_event_create(self):
+        fake_event_type = 'test_event'
+
+        test_event = db_api.event_create(_get_fake_event_values(
+            event_type=fake_event_type))
+        self.assertTrue(test_event)
+        self.assertEqual(fake_event_type, test_event.event_type)
+
+    def test_create_duplicated_event(self):
+        self.assertFalse(db_api.event_get('1'))
+
+        fake_values = _get_fake_event_values(id='1')
+        test_event = db_api.event_create(fake_values)
+
+        self.assertTrue(test_event)
+        self.assertRaises(RuntimeError, db_api.event_create, fake_values)
+
+    def test_event_update(self):
+        self.assertFalse(db_api.event_get('1'))
+
+        test_event = db_api.event_create(_get_fake_event_values(id='1'))
+
+        self.assertTrue(test_event)
+
+        test_event = db_api.event_update(test_event.id, {'status': 'changed'})
+
+        self.assertEqual('changed', test_event.status)
+
+    def test_event_destroy(self):
+        self.assertFalse(db_api.event_get('1'))
+
+        db_api.event_create(_get_fake_event_values(
+            id='1'))
+        self.assertTrue(db_api.event_get('1'))
+        db_api.event_destroy('1')
+        self.assertFalse(db_api.event_get('1'))
+
+    def test_destroy_for_event_not_found(self):
+        self.assertFalse(db_api.event_get('1'))
+        self.assertRaises(RuntimeError, db_api.event_destroy, '1')
+
+    def test_event_get_first_sorted_by_event_type_filter(self):
+        fake_event_type = 'test_event'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1'
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2',
+            event_type=fake_event_type
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='3',
+            event_type=fake_event_type
+        ))
+
+        filtered_events = db_api.event_get_first_sorted_by_filters(
+            sort_key='time',
+            sort_dir='asc',
+            filters={'event_type': fake_event_type}
+        )
+        self.assertEqual(fake_event_type, filtered_events.event_type)
+        self.assertEqual('2', filtered_events.id)
+
+    def test_event_get_first_sorted_by_status_filter(self):
+        fake_status = 'test_status'
+        db_api.event_create(_get_fake_event_values(
+            id='1'
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2',
+            status=fake_status
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='3',
+            status=fake_status
+        ))
+
+        filtered_events = db_api.event_get_first_sorted_by_filters(
+            sort_key='time',
+            sort_dir='asc',
+            filters={'status': fake_status}
+        )
+        self.assertEqual(fake_status, filtered_events.status)
+        self.assertEqual('2', filtered_events.id)
+
+    def test_event_get_first_sorted_by_lease_id_filter(self):
+        fake_lease_id = '1234'
+        db_api.event_create(_get_fake_event_values(
+            id='1'
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2',
+            lease_id=fake_lease_id
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='3',
+            lease_id=fake_lease_id
+        ))
+
+        filtered_events = db_api.event_get_first_sorted_by_filters(
+            sort_key='time',
+            sort_dir='asc',
+            filters={'lease_id': fake_lease_id}
+        )
+        self.assertEqual(fake_lease_id, filtered_events.lease_id)
+        self.assertEqual('2', filtered_events.id)
+
+    def test_event_get_sorted_asc_by_event_type_filter(self):
+        fake_event_type = 'test_event'
+        sort_dir = 'asc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            event_type=fake_event_type,
+            time=datetime.datetime.utcnow()
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2',
+            event_type=fake_event_type,
+            time=datetime.datetime.utcnow()
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'event_type': fake_event_type}
+        )
+        self.assertEqual(2, len(filtered_events))
+        self.assertEqual(fake_event_type, filtered_events[0].event_type)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
+
+    def test_event_get_sorted_asc_by_status_filter(self):
+        fake_status = 'test_status'
+        sort_dir = 'asc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            status=fake_status
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2'
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'status': fake_status}
+        )
+        self.assertEqual(1, len(filtered_events))
+        self.assertEqual(fake_status, filtered_events[0].status)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
+
+    def test_event_get_sorted_asc_by_lease_id_filter(self):
+        fake_lease_id = '1234'
+        sort_dir = 'asc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            lease_id=fake_lease_id
+
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2'
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'lease_id': fake_lease_id}
+        )
+        self.assertEqual(1, len(filtered_events))
+        self.assertEqual(fake_lease_id, filtered_events[0].lease_id)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
+
+    def test_event_get_sorted_desc_by_event_type_filter(self):
+        fake_event_type = 'test_event'
+        sort_dir = 'desc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            event_type=fake_event_type
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2',
+            event_type=fake_event_type
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'event_type': fake_event_type}
+        )
+        self.assertEqual(2, len(filtered_events))
+        self.assertEqual(fake_event_type, filtered_events[0].event_type)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
+
+    def test_event_get_sorted_desc_by_status_filter(self):
+        fake_status = 'test_status'
+        sort_dir = 'desc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            status=fake_status
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2'
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'status': fake_status}
+        )
+        self.assertEqual(1, len(filtered_events))
+        self.assertEqual(fake_status, filtered_events[0].status)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
+
+    def test_event_get_sorted_desc_by_lease_id_filter(self):
+        fake_lease_id = '1234'
+        sort_dir = 'desc'
+        sort_key = 'time'
+
+        db_api.event_create(_get_fake_event_values(
+            id='1',
+            lease_id=fake_lease_id
+
+        ))
+        db_api.event_create(_get_fake_event_values(
+            id='2'
+        ))
+
+        filtered_events = db_api.event_get_all_sorted_by_filters(
+            sort_key=sort_key,
+            sort_dir=sort_dir,
+            filters={'lease_id': fake_lease_id}
+        )
+        self.assertEqual(1, len(filtered_events))
+        self.assertEqual(fake_lease_id, filtered_events[0].lease_id)
+
+        #testing sort
+        self.assertTrue(is_result_sorted_correctly(filtered_events,
+                                                   sort_key=sort_key,
+                                                   sort_dir=sort_dir))
