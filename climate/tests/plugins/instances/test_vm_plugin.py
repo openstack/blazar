@@ -42,7 +42,7 @@ class VMPluginTestCase(tests.TestCase):
 
     @testtools.skip('Will be released later')
     def test_on_start_fail(self):
-        self.client.side_effect =\
+        self.client.side_effect = \
             self.nova.ClimateNovaClient.exceptions.Conflict
 
         self.plugin.on_start(self.fake_id)
@@ -73,7 +73,7 @@ class VMPluginTestCase(tests.TestCase):
         self.client.return_value.servers.delete.assert_called_once_with('1')
 
     def test_on_end_instance_deleted(self):
-        self.client.side_effect =\
+        self.client.side_effect = \
             self.nova.ClimateNovaClient.exceptions.NotFound
 
         self.assertRaises(self.exc.TaskFailed,

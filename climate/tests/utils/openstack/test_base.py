@@ -33,7 +33,7 @@ class TestBaseStackUtils(tests.TestCase):
         pass
 
     def test_url_for_good_v2_public(self):
-        service_catalog =\
+        service_catalog = \
             [{"endpoints": [{"adminURL": self.url % 'admin',
                              "region": "RegionOne",
                              "internalURL": self.url % 'internal',
@@ -45,7 +45,7 @@ class TestBaseStackUtils(tests.TestCase):
         self.assertEqual(url, self.url % 'public')
 
     def test_url_for_good_v2_admin(self):
-        service_catalog =\
+        service_catalog = \
             [{"endpoints": [{"adminURL": self.url % 'admin',
                              "region": "RegionOne",
                              "internalURL": self.url % 'internal',
@@ -58,7 +58,7 @@ class TestBaseStackUtils(tests.TestCase):
         self.assertEqual(url, self.url % 'admin')
 
     def test_url_for_no_service(self):
-        service_catalog =\
+        service_catalog = \
             [{"endpoints": [{"adminURL": self.url % 'admin',
                              "region": "RegionOne",
                              "internalURL": self.url % 'internal',
@@ -70,7 +70,7 @@ class TestBaseStackUtils(tests.TestCase):
                           service_catalog, self.service_type)
 
     def test_url_for_no_endpoints(self):
-        service_catalog =\
+        service_catalog = \
             [{"type": "fake_service",
               "name": "foo"}]
 

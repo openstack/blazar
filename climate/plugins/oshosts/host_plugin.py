@@ -378,18 +378,18 @@ class PhysicalHostPlugin(base.BasePlugin):
             requirements = json.loads(requirements)
         # Requirement list looks like ['<', '$ram', '1024']
         if self._requirements_with_three_elements(requirements):
-                result = []
-                if requirements[0] == '=':
-                    requirements[0] = '=='
-                string = (requirements[1][1:] + " " + requirements[0] + " " +
-                          requirements[2])
-                result.append(string)
-                return result
+            result = []
+            if requirements[0] == '=':
+                requirements[0] = '=='
+            string = (requirements[1][1:] + " " + requirements[0] + " " +
+                      requirements[2])
+            result.append(string)
+            return result
         # Remove the 'and' element at the head of the requirement list
         elif self._requirements_with_and_keyword(requirements):
-                return [self._convert_requirements(x)[0]
-                        for x in requirements[1:]]
-        # Empty requirement list
+            return [self._convert_requirements(x)[0]
+                    for x in requirements[1:]]
+        # Empty requirement list0
         elif isinstance(requirements, list) and not requirements:
             return requirements
         else:

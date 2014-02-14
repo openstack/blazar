@@ -41,7 +41,7 @@ class FakeNovaHypervisors(object):
         try:
             host = int(host)
         except ValueError:
-                raise nova_exceptions.NotFound(404)
+            raise nova_exceptions.NotFound(404)
         if host == cls.FakeHost.id:
             return cls.FakeHost
         else:
@@ -52,7 +52,7 @@ class FakeNovaHypervisors(object):
         if host == 'multiple':
             return [cls.FakeHost, cls.FakeHost]
         if host == cls.FakeHost.hypervisor_hostname:
-                return [cls.FakeHost]
+            return [cls.FakeHost]
         else:
             raise nova_exceptions.NotFound(404)
 

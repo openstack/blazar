@@ -77,23 +77,6 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     return lease
 
 
-def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
-                                name='fake_phys_lease',
-                                start_date=_get_datetime('2030-01-01 00:00'),
-                                end_date=_get_datetime('2030-01-02 00:00'),
-                                resource_id=None):
-    return {'id': id,
-            'name': name,
-            'start_date': start_date,
-            'end_date': end_date,
-            'trust': 'trust',
-            'reservations': [_get_fake_phys_reservation_values(
-                lease_id=id,
-                resource_id=resource_id)],
-            'events': []
-            }
-
-
 class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
     """Test case for SQLAlchemy DB utils."""
 

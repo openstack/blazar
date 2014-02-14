@@ -80,7 +80,7 @@ class ServiceTestCase(tests.TestCase):
         self.reservation_update = self.patch(self.db_api, 'reservation_update')
         self.event_update = self.patch(self.db_api, 'event_update')
         self.manager.plugins = {'virtual:instance': self.fake_plugin}
-        self.manager.resource_actions =\
+        self.manager.resource_actions = \
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
               'on_end': self.fake_plugin.on_end}}

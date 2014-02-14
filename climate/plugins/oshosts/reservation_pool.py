@@ -242,12 +242,12 @@ class ReservationPool(object):
             except nova_exceptions.ClientException:
                 hosts_failing_to_remove.append(host)
             if freepool_agg.id != agg.id:
-                    # NOTE(sbauza) : We don't want to put again the host in
-                    # freepool if the requested pool is the freepool...
-                    try:
-                        self.nova.aggregates.add_host(freepool_agg.id, host)
-                    except nova_exceptions.ClientException:
-                        hosts_failing_to_add.append(host)
+                # NOTE(sbauza) : We don't want to put again the host in
+                # freepool if the requested pool is the freepool...
+                try:
+                    self.nova.aggregates.add_host(freepool_agg.id, host)
+                except nova_exceptions.ClientException:
+                    hosts_failing_to_add.append(host)
 
         if hosts_failing_to_remove:
             raise manager_exceptions.CantRemoveHost(
