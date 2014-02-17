@@ -96,7 +96,6 @@ function configure_climate() {
 
     iniset $CLIMATE_CONF_FILE manager plugins basic.vm.plugin,physical.host.plugin
 
-    recreate_database climate utf8
     iniset $CLIMATE_CONF_FILE database connection `database_connection_url climate`
 
     iniset $CLIMATE_CONF_FILE DEFAULT use_syslog $SYSLOG
@@ -115,6 +114,12 @@ function configure_climate() {
 
     iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.default_reservation.Default_reservation"
     iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.reservation.Reservation"
+
+    # Database
+    recreate_database climate utf8
+
+    # Run Climate db migrations
+    $CLIMATE_BIN_DIR/climate-db-manage --config-file $CLIMATE_CONF_FILE upgrade head
 }
 
 # create_climate_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
