@@ -113,12 +113,21 @@ class ServiceTestCase(tests.TestCase):
                     'on_end': self.fake_plugin.on_end}}
         self.assertEqual(actions, self.manager._setup_actions())
 
-    def test_event_all_okay(self):
-        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
+    def test_no_events(self):
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
-                                'event_type': 'end_lease',
-                                'lease_id': self.lease_id}]
+        events.return_value = None
+
+        self.manager._event()
+
+        self.assertFalse(event_update.called)
+
+    def test_event_all_okay(self):
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        event_update = self.patch(self.db_api, 'event_update')
+        events.return_value = {'id': '111-222-333', 'time': self.good_date,
+                               'event_type': 'end_lease',
+                               'lease_id': self.lease_id}
 
         self.manager._event()
 
@@ -126,24 +135,24 @@ class ServiceTestCase(tests.TestCase):
                                              {'status': 'IN_PROGRESS'})
 
     def test_event_wrong_event_status(self):
-        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
         self.patch(self.db_api, 'event_update')
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
-                                'event_type': 'wrong_type',
-                                'lease_id': self.lease_id}]
+        events.return_value = {'id': '111-222-333', 'time': self.good_date,
+                               'event_type': 'wrong_type',
+                               'lease_id': self.lease_id}
 
         self.assertRaises(manager_ex.EventError,
                           self.manager._event)
 
     def test_event_wrong_eventlet_fail(self):
-        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
         calls = [mock.call('111-222-333', {'status': 'IN_PROGRESS'}),
                  mock.call('111-222-333', {'status': 'ERROR'})]
         self.patch(eventlet, 'spawn_n').side_effect = Exception
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
-                                'event_type': 'end_lease',
-                                'lease_id': self.lease_id}]
+        events.return_value = {'id': '111-222-333', 'time': self.good_date,
+                               'event_type': 'end_lease',
+                               'lease_id': self.lease_id}
 
         self.manager._event()
 
@@ -224,11 +233,11 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(lease, self.lease)
 
     def test_update_lease_not_started_modify_dates(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
+        def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
 
         lease_values = {
             'name': 'renamed',
@@ -245,8 +254,8 @@ class ServiceTestCase(tests.TestCase):
                 'end_date': datetime.datetime(2013, 12, 20, 21, 00)
             }
         ]
-        event_get_all = self.patch(db_api, 'event_get_all_sorted_by_filters')
-        event_get_all.side_effect = fake_event_get_all
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
         target = datetime.datetime(2013, 12, 15)
         with mock.patch.object(datetime,
                                'datetime',
@@ -271,11 +280,11 @@ class ServiceTestCase(tests.TestCase):
         self.lease_update.assert_called_once_with(self.lease_id, lease_values)
 
     def test_update_lease_started_modify_end_date(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
+        def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
+                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
+                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
 
         lease_values = {
             'name': 'renamed',
@@ -291,8 +300,8 @@ class ServiceTestCase(tests.TestCase):
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
             }
         ]
-        event_get_all = self.patch(db_api, 'event_get_all_sorted_by_filters')
-        event_get_all.side_effect = fake_event_get_all
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
         target = datetime.datetime(2013, 12, 20, 14, 00)
         with mock.patch.object(datetime,
                                'datetime',
@@ -323,12 +332,6 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(lease, self.lease)
 
     def test_update_lease_started_modify_start_date(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
-            if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
-            else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
-
         lease_values = {
             'name': 'renamed',
             'start_date': '2013-12-20 16:00'
@@ -343,12 +346,6 @@ class ServiceTestCase(tests.TestCase):
                 self.lease_id, lease_values)
 
     def test_update_lease_not_started_start_date_before_current_time(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
-            if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
-            else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
-
         lease_values = {
             'name': 'renamed',
             'start_date': '2013-12-14 13:00'
@@ -363,12 +360,6 @@ class ServiceTestCase(tests.TestCase):
                 self.lease_id, lease_values)
 
     def test_update_lease_end_date_before_current_time(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
-            if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
-            else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
-
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-14 13:00'
@@ -383,12 +374,6 @@ class ServiceTestCase(tests.TestCase):
                 self.lease_id, lease_values)
 
     def test_update_lease_completed_modify_dates(self):
-        def fake_event_get_all(sort_key, sort_dir, filters):
-            if filters['event_type'] == 'start_lease':
-                return [{'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}]
-            else:
-                return [{'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}]
-
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-15 20:00'
@@ -401,6 +386,49 @@ class ServiceTestCase(tests.TestCase):
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
                 self.lease_id, lease_values)
+
+    def test_update_lease_start_date_event_not_found(self):
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events.return_value = None
+        lease_values = {
+            'name': 'renamed',
+            'start_date': '2013-12-15 20:00'
+        }
+        self.assertRaises(exceptions.ClimateException,
+                          self.manager.update_lease,
+                          self.lease_id,
+                          lease_values)
+
+    def test_update_lease_end_date_event_not_found(self):
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+            else:
+                return None
+
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events.side_effect = fake_event_get
+        event_update = self.patch(self.db_api, 'event_update')
+        reservation_get_all = \
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all.return_value = []
+
+        lease_values = {
+            'name': 'renamed',
+            'end_date': '2013-12-25 20:00'
+        }
+        target = datetime.datetime(2013, 12, 10)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(exceptions.ClimateException,
+                              self.manager.update_lease,
+                              self.lease_id,
+                              lease_values)
+        event_update.assert_called_once_with(
+            '2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+            {'time': datetime.datetime(2013, 12, 20, 13, 0)})
 
     def test_delete_lease_before_starting_date(self):
         self.patch(self.manager, 'get_lease').\

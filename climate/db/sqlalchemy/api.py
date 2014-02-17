@@ -301,8 +301,8 @@ def event_get_all():
     return _event_get_all(get_session()).all()
 
 
-def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
-    """Return events filtered and sorted by name of the field."""
+def _event_get_sorted_by_filters(sort_key, sort_dir, filters):
+    """Return an event query filtered and sorted by name of the field."""
 
     sort_fn = {'desc': desc, 'asc': asc}
 
@@ -322,7 +322,21 @@ def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
         sort_fn[sort_dir](getattr(models.Event, sort_key))
     )
 
-    return events_query.all()
+    return events_query
+
+
+def event_get_first_sorted_by_filters(sort_key, sort_dir, filters):
+    """Return the first result for all events matching the filters
+    and sorted by name of the field.
+    """
+
+    return _event_get_sorted_by_filters(sort_key, sort_dir, filters).first()
+
+
+def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
+    """Return events filtered and sorted by name of the field."""
+
+    return _event_get_sorted_by_filters(sort_key, sort_dir, filters).all()
 
 
 def event_list():
