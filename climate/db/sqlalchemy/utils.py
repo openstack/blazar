@@ -19,10 +19,10 @@ import sys
 
 import sqlalchemy as sa
 
+from climate.db.sqlalchemy import facade_wrapper
 from climate.db.sqlalchemy import models
-from climate.openstack.common.db.sqlalchemy import session as db_session
 
-get_session = db_session.get_session
+get_session = facade_wrapper.get_session
 
 
 def get_backend():

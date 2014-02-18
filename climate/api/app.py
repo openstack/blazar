@@ -22,7 +22,7 @@ from werkzeug import exceptions as werkzeug_exceptions
 from climate.api.oshosts import v1_0 as host_api_v1_0
 from climate.api import utils as api_utils
 from climate.api import v1_0 as api_v1_0
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log
 from climate.openstack.common.middleware import debug
 

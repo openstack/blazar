@@ -15,16 +15,16 @@
 # under the License.
 
 import datetime
+import uuid
 
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import utils as db_utils
 from climate.openstack.common import context
-from climate.openstack.common import uuidutils
 from climate import tests
 
 
 def _get_fake_random_uuid():
-    return unicode(uuidutils.generate_uuid())
+    return unicode(str(uuid.uuid4()))
 
 
 def _get_fake_lease_uuid():

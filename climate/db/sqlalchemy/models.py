@@ -14,17 +14,17 @@
 # limitations under the License.
 
 import sqlalchemy as sa
+import uuid
+
+from climate.db.sqlalchemy import model_base as mb
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
 
-from climate.db.sqlalchemy import model_base as mb
-from climate.openstack.common import uuidutils
-
-
 ## Helpers
 
+
 def _generate_unicode_uuid():
-    return unicode(uuidutils.generate_uuid())
+    return unicode(str(uuid.uuid4()))
 
 
 def MediumText():

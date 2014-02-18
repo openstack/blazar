@@ -35,7 +35,7 @@ import webob.exc
 from xml.dom import minidom
 from xml.parsers import expat
 
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import jsonutils
 from climate.openstack.common import log as logging
 from climate.openstack.common import service

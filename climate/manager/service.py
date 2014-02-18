@@ -26,7 +26,7 @@ from climate.db import exceptions as db_ex
 from climate import exceptions as common_ex
 from climate import manager
 from climate.manager import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
 from climate.utils import trusts

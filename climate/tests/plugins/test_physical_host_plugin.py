@@ -16,6 +16,7 @@
 import datetime
 import mock
 import testtools
+import uuid
 
 from climate import context
 
@@ -24,7 +25,6 @@ from climate.db import exceptions as db_exceptions
 from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_exceptions
 from climate.manager import service
-from climate.openstack.common import uuidutils
 from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import host_plugin
 from climate.plugins.oshosts import nova_inventory
@@ -324,8 +324,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_type': plugin.RESOURCE_TYPE,
             'status': 'pending',
         }
-        generate_uuid = self.patch(uuidutils, 'generate_uuid')
-        generate_uuid.return_value = u'441c1476-9f8f-4700-9f30-cd9b6fef3509'
+        uuid4 = self.patch(uuid, 'uuid4')
+        uuid4.return_value = uuid.UUID('441c1476-9f8f-4700-9f30-cd9b6fef3509')
         self.rp_create.return_value = mock.MagicMock(id='1')
         reservation_create = self.patch(self.db_api, 'reservation_create')
         reservation_create.return_value = {
@@ -365,8 +365,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_type': plugin.RESOURCE_TYPE,
             'status': 'pending',
         }
-        generate_uuid = self.patch(uuidutils, 'generate_uuid')
-        generate_uuid.return_value = u'441c1476-9f8f-4700-9f30-cd9b6fef3509'
+        uuid4 = self.patch(uuid, 'uuid4')
+        uuid4.return_value = uuid.UUID('441c1476-9f8f-4700-9f30-cd9b6fef3509')
         self.rp_create.return_value = mock.MagicMock(id='1')
         reservation_create = self.patch(self.db_api, 'reservation_create')
         reservation_create.return_value = {

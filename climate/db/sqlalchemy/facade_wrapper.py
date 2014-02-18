@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright (c) 2013 Rackspace Hosting
+# Copyright 2014 Intel Corporation
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,15 +13,30 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Middleware that attaches a correlation id to WSGI request"""
-
-from climate.openstack.common.middleware import base
-from climate.openstack.common import uuidutils
+from climate.openstack.common.db import options as db_options
+from climate.openstack.common.db.sqlalchemy import session as db_session
 
 
-class CorrelationIdMiddleware(base.Middleware):
+_engine_facade = None
 
-    def process_request(self, req):
-        correlation_id = (req.headers.get("X_CORRELATION_ID") or
-                          uuidutils.generate_uuid())
-        req.headers['X_CORRELATION_ID'] = correlation_id
+
+def get_session():
+    return _get_facade().get_session()
+
+
+def get_engine():
+    return _get_facade().get_engine()
+
+
+def _clear_engine():
+    global _engine_facade
+    _engine_facade = None
+
+
+def _get_facade():
+    global _engine_facade
+    if not _engine_facade:
+        _engine_facade = db_session.EngineFacade(
+            db_options.CONF.database.connection)
+
+    return _engine_facade

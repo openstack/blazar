@@ -20,7 +20,7 @@ from oslo.config import cfg
 gettext.install('climate', unicode=1)
 
 from climate.db import api as db_api
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 
 CONF = cfg.CONF
 

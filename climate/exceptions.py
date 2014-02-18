@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 
 

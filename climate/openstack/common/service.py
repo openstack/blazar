@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
 # Copyright 2011 Justin Santa Barbara
@@ -20,21 +18,30 @@
 """Generic Node base class for all workers that run on hosts."""
 
 import errno
+import logging as std_logging
 import os
 import random
 import signal
 import sys
 import time
 
+try:
+    # Importing just the symbol here because the io module does not
+    # exist in Python 2.6.
+    from io import UnsupportedOperation  # noqa
+except ImportError:
+    # Python 2.6
+    UnsupportedOperation = None
+
 import eventlet
 from eventlet import event
-import logging as std_logging
 from oslo.config import cfg
 
 from climate.openstack.common import eventlet_backdoor
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _LE, _LI, _LW
 from climate.openstack.common import importutils
 from climate.openstack.common import log as logging
+from climate.openstack.common import systemd
 from climate.openstack.common import threadgroup
 
 
@@ -47,8 +54,32 @@ def _sighup_supported():
     return hasattr(signal, 'SIGHUP')
 
 
-def _is_sighup(signo):
-    return _sighup_supported() and signo == signal.SIGHUP
+def _is_daemon():
+    # The process group for a foreground process will match the
+    # process group of the controlling terminal. If those values do
+    # not match, or ioctl() fails on the stdout file handle, we assume
+    # the process is running in the background as a daemon.
+    # http://www.gnu.org/software/bash/manual/bashref.html#Job-Control-Basics
+    try:
+        is_daemon = os.getpgrp() != os.tcgetpgrp(sys.stdout.fileno())
+    except OSError as err:
+        if err.errno == errno.ENOTTY:
+            # Assume we are a daemon because there is no terminal.
+            is_daemon = True
+        else:
+            raise
+    except UnsupportedOperation:
+        # Could not get the fileno for stdout, so we must be a daemon.
+        is_daemon = True
+    return is_daemon
+
+
+def _is_sighup_and_daemon(signo):
+    if not (_sighup_supported() and signo == signal.SIGHUP):
+        # Avoid checking if we are a daemon, because the signal isn't
+        # SIGHUP.
+        return False
+    return _is_daemon()
 
 
 def _signo_to_signame(signo):
@@ -129,18 +160,20 @@ class ServiceLauncher(Launcher):
     def handle_signal(self):
         _set_signals_handler(self._handle_signal)
 
-    def _wait_for_exit_or_signal(self):
+    def _wait_for_exit_or_signal(self, ready_callback=None):
         status = None
         signo = 0
 
-        LOG.debug(_('Full set of CONF:'))
+        LOG.debug('Full set of CONF:')
         CONF.log_opt_values(LOG, std_logging.DEBUG)
 
         try:
+            if ready_callback:
+                ready_callback()
             super(ServiceLauncher, self).wait()
         except SignalExit as exc:
             signame = _signo_to_signame(exc.signo)
-            LOG.info(_('Caught %s, exiting'), signame)
+            LOG.info(_LI('Caught %s, exiting'), signame)
             status = exc.code
             signo = exc.signo
         except SystemExit as exc:
@@ -152,15 +185,15 @@ class ServiceLauncher(Launcher):
                     rpc.cleanup()
                 except Exception:
                     # We're shutting down, so it doesn't matter at this point.
-                    LOG.exception(_('Exception during rpc cleanup.'))
+                    LOG.exception(_LE('Exception during rpc cleanup.'))
 
         return status, signo
 
-    def wait(self):
+    def wait(self, ready_callback=None):
         while True:
             self.handle_signal()
-            status, signo = self._wait_for_exit_or_signal()
-            if not _is_sighup(signo):
+            status, signo = self._wait_for_exit_or_signal(ready_callback)
+            if not _is_sighup_and_daemon(signo):
                 return status
             self.restart()
 
@@ -174,10 +207,16 @@ class ServiceWrapper(object):
 
 
 class ProcessLauncher(object):
-    def __init__(self):
+    def __init__(self, wait_interval=0.01):
+        """Constructor.
+
+        :param wait_interval: The interval to sleep for between checks
+                              of child process exit.
+        """
         self.children = {}
         self.sigcaught = None
         self.running = True
+        self.wait_interval = wait_interval
         rfd, self.writepipe = os.pipe()
         self.readpipe = eventlet.greenio.GreenPipe(rfd, 'r')
         self.handle_signal()
@@ -197,7 +236,7 @@ class ProcessLauncher(object):
         # dies unexpectedly
         self.readpipe.read()
 
-        LOG.info(_('Parent process has died unexpectedly, exiting'))
+        LOG.info(_LI('Parent process has died unexpectedly, exiting'))
 
         sys.exit(1)
 
@@ -218,7 +257,7 @@ class ProcessLauncher(object):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def _child_wait_for_exit_or_signal(self, launcher):
-        status = None
+        status = 0
         signo = 0
 
         # NOTE(johannes): All exceptions are caught to ensure this
@@ -228,13 +267,13 @@ class ProcessLauncher(object):
             launcher.wait()
         except SignalExit as exc:
             signame = _signo_to_signame(exc.signo)
-            LOG.info(_('Caught %s, exiting'), signame)
+            LOG.info(_LI('Caught %s, exiting'), signame)
             status = exc.code
             signo = exc.signo
         except SystemExit as exc:
             status = exc.code
         except BaseException:
-            LOG.exception(_('Unhandled exception'))
+            LOG.exception(_LE('Unhandled exception'))
             status = 2
         finally:
             launcher.stop()
@@ -267,7 +306,7 @@ class ProcessLauncher(object):
             # start up quickly but ensure we don't fork off children that
             # die instantly too quickly.
             if time.time() - wrap.forktimes[0] < wrap.workers:
-                LOG.info(_('Forking too fast, sleeping'))
+                LOG.info(_LI('Forking too fast, sleeping'))
                 time.sleep(1)
 
             wrap.forktimes.pop(0)
@@ -280,13 +319,13 @@ class ProcessLauncher(object):
             while True:
                 self._child_process_handle_signal()
                 status, signo = self._child_wait_for_exit_or_signal(launcher)
-                if not _is_sighup(signo):
+                if not _is_sighup_and_daemon(signo):
                     break
                 launcher.restart()
 
             os._exit(status)
 
-        LOG.info(_('Started child %d'), pid)
+        LOG.info(_LI('Started child %d'), pid)
 
         wrap.children.add(pid)
         self.children[pid] = wrap
@@ -296,7 +335,7 @@ class ProcessLauncher(object):
     def launch_service(self, service, workers=1):
         wrap = ServiceWrapper(service, workers)
 
-        LOG.info(_('Starting %d workers'), wrap.workers)
+        LOG.info(_LI('Starting %d workers'), wrap.workers)
         while self.running and len(wrap.children) < wrap.workers:
             self._start_child(wrap)
 
@@ -313,15 +352,15 @@ class ProcessLauncher(object):
 
         if os.WIFSIGNALED(status):
             sig = os.WTERMSIG(status)
-            LOG.info(_('Child %(pid)d killed by signal %(sig)d'),
+            LOG.info(_LI('Child %(pid)d killed by signal %(sig)d'),
                      dict(pid=pid, sig=sig))
         else:
             code = os.WEXITSTATUS(status)
-            LOG.info(_('Child %(pid)s exited with status %(code)d'),
+            LOG.info(_LI('Child %(pid)s exited with status %(code)d'),
                      dict(pid=pid, code=code))
 
         if pid not in self.children:
-            LOG.warning(_('pid %d not in child list'), pid)
+            LOG.warning(_LW('pid %d not in child list'), pid)
             return None
 
         wrap = self.children.pop(pid)
@@ -335,7 +374,7 @@ class ProcessLauncher(object):
                 # Yield to other threads if no children have exited
                 # Sleep for a short time to avoid excessive CPU usage
                 # (see bug #1095346)
-                eventlet.greenthread.sleep(.01)
+                eventlet.greenthread.sleep(self.wait_interval)
                 continue
             while self.running and len(wrap.children) < wrap.workers:
                 self._start_child(wrap)
@@ -343,22 +382,25 @@ class ProcessLauncher(object):
     def wait(self):
         """Loop waiting on children to die and respawning as necessary."""
 
-        LOG.debug(_('Full set of CONF:'))
+        LOG.debug('Full set of CONF:')
         CONF.log_opt_values(LOG, std_logging.DEBUG)
 
-        while True:
-            self.handle_signal()
-            self._respawn_children()
-            if self.sigcaught:
-                signame = _signo_to_signame(self.sigcaught)
-                LOG.info(_('Caught %s, stopping children'), signame)
-            if not _is_sighup(self.sigcaught):
-                break
+        try:
+            while True:
+                self.handle_signal()
+                self._respawn_children()
+                if self.sigcaught:
+                    signame = _signo_to_signame(self.sigcaught)
+                    LOG.info(_LI('Caught %s, stopping children'), signame)
+                if not _is_sighup_and_daemon(self.sigcaught):
+                    break
 
-            for pid in self.children:
-                os.kill(pid, signal.SIGHUP)
-            self.running = True
-            self.sigcaught = None
+                for pid in self.children:
+                    os.kill(pid, signal.SIGHUP)
+                self.running = True
+                self.sigcaught = None
+        except eventlet.greenlet.GreenletExit:
+            LOG.info(_LI("Wait called after thread killed.  Cleaning up."))
 
         for pid in self.children:
             try:
@@ -369,7 +411,7 @@ class ProcessLauncher(object):
 
         # Wait for children to die
         if self.children:
-            LOG.info(_('Waiting on %d children to exit'), len(self.children))
+            LOG.info(_LI('Waiting on %d children to exit'), len(self.children))
             while self.children:
                 self._wait_child()
 
@@ -446,14 +488,16 @@ class Services(object):
 
         """
         service.start()
+        systemd.notify_once()
         done.wait()
 
 
-def launch(service, workers=None):
-    if workers:
-        launcher = ProcessLauncher()
-        launcher.launch_service(service, workers=workers)
-    else:
+def launch(service, workers=1):
+    if workers is None or workers == 1:
         launcher = ServiceLauncher()
         launcher.launch_service(service)
+    else:
+        launcher = ProcessLauncher()
+        launcher.launch_service(service, workers=workers)
+
     return launcher

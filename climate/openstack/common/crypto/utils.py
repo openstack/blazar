@@ -19,7 +19,7 @@ import base64
 from Crypto.Hash import HMAC
 from Crypto import Random
 
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import importutils
 
 

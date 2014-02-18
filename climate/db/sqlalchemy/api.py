@@ -23,17 +23,19 @@ from sqlalchemy.sql.expression import desc
 
 from climate.db import exceptions as db_exc
 
+from climate.db.sqlalchemy import facade_wrapper
 from climate.db.sqlalchemy import models
 from climate.openstack.common.db import exception as common_db_exc
+from climate.openstack.common.db import options as db_options
 from climate.openstack.common.db.sqlalchemy import session as db_session
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
 
-get_engine = db_session.get_engine
-get_session = db_session.get_session
+get_engine = facade_wrapper.get_engine
+get_session = facade_wrapper.get_session
 
 
 def get_backend():
@@ -55,7 +57,8 @@ def model_query(model, session=None):
 
 def setup_db():
     try:
-        engine = db_session.get_engine(sqlite_fk=True)
+        engine = db_session.EngineFacade(db_options.CONF.database.connection,
+                                         sqlite_fk=True).get_engine()
         models.Lease.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
         LOG.error(_("Database registration exception: %s"), e)
@@ -65,7 +68,8 @@ def setup_db():
 
 def drop_db():
     try:
-        engine = db_session.get_engine(sqlite_fk=True)
+        engine = db_session.EngineFacade(db_options.CONF.database.connection,
+                                         sqlite_fk=True).get_engine()
         models.Lease.metadata.drop_all(engine)
     except Exception as e:
         LOG.error(_("Database shutdown exception: %s"), e)

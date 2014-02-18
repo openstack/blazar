@@ -12,12 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 """Debug middleware"""
 
 from __future__ import print_function
 
 import sys
 
+import six
 import webob.dec
 
 from climate.openstack.common.middleware import base
@@ -39,7 +41,7 @@ class Debug(base.Middleware):
         resp = req.get_response(self.application)
 
         print(("*" * 40) + " RESPONSE HEADERS")
-        for (key, value) in resp.headers.iteritems():
+        for (key, value) in six.iteritems(resp.headers):
             print(key, "=", value)
         print()
 

@@ -17,6 +17,7 @@
 import datetime
 import json
 import six
+import uuid
 
 from novaclient import client
 from oslo.config import cfg
@@ -27,7 +28,6 @@ from climate.db import api as db_api
 from climate.db import exceptions as db_ex
 from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_ex
-from climate.openstack.common import uuidutils
 from climate.plugins import base
 from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import nova_inventory
@@ -72,7 +72,7 @@ class PhysicalHostPlugin(base.BasePlugin):
     def create_reservation(self, values):
         """Create reservation."""
         pool = rp.ReservationPool()
-        pool_name = uuidutils.generate_uuid()
+        pool_name = str(uuid.uuid4())
         pool_instance = pool.create(name=pool_name)
         reservation_values = {
             'id': pool_name,

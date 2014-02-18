@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from climate import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 
 
 class NoFreePool(exceptions.NotFound):

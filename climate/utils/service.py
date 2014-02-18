@@ -21,7 +21,7 @@ from oslo.config import cfg
 from oslo import messaging
 
 from climate import context
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 from climate.openstack.common import service
 

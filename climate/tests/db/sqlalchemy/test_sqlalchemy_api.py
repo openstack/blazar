@@ -15,12 +15,12 @@
 
 import datetime
 import operator
+import uuid
 
 from climate.db import exceptions as db_exceptions
 
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import models
-from climate.openstack.common import uuidutils
 from climate import tests
 
 from climate.plugins import instances as vm_plugin
@@ -28,7 +28,7 @@ from climate.plugins import oshosts as host_plugin
 
 
 def _get_fake_random_uuid():
-    return unicode(uuidutils.generate_uuid())
+    return unicode(str(uuid.uuid4()))
 
 
 def _get_fake_lease_uuid():

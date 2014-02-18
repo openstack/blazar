@@ -11,40 +11,40 @@
 # Auto-delete queues in amqp. (boolean value)
 #amqp_auto_delete=false
 
-# Size of RPC connection pool (integer value)
+# Size of RPC connection pool. (integer value)
 #rpc_conn_pool_size=30
 
-# Modules of exceptions that are permitted to be recreatedupon
-# receiving exception data from an rpc call. (list value)
+# Modules of exceptions that are permitted to be recreated
+# upon receiving exception data from an rpc call. (list value)
 #allowed_rpc_exception_modules=oslo.messaging.exceptions,nova.exception,cinder.exception,exceptions
 
-# Qpid broker hostname (string value)
+# Qpid broker hostname. (string value)
 #qpid_hostname=localhost
 
-# Qpid broker port (integer value)
+# Qpid broker port. (integer value)
 #qpid_port=5672
 
-# Qpid HA cluster host:port pairs (list value)
+# Qpid HA cluster host:port pairs. (list value)
 #qpid_hosts=$qpid_hostname:$qpid_port
 
-# Username for Qpid connection (string value)
+# Username for Qpid connection. (string value)
 #qpid_username=
 
-# Password for Qpid connection (string value)
+# Password for Qpid connection. (string value)
 #qpid_password=
 
-# Space separated list of SASL mechanisms to use for auth
+# Space separated list of SASL mechanisms to use for auth.
 # (string value)
 #qpid_sasl_mechanisms=
 
-# Seconds between connection keepalive heartbeats (integer
+# Seconds between connection keepalive heartbeats. (integer
 # value)
 #qpid_heartbeat=60
 
-# Transport to use, either 'tcp' or 'ssl' (string value)
+# Transport to use, either 'tcp' or 'ssl'. (string value)
 #qpid_protocol=tcp
 
-# Disable Nagle algorithm (boolean value)
+# Whether to disable the Nagle algorithm. (boolean value)
 #qpid_tcp_nodelay=true
 
 # The qpid topology version to use.  Version 1 is what was
@@ -57,52 +57,59 @@
 
 # SSL version to use (valid only if SSL enabled). valid values
 # are TLSv1, SSLv23 and SSLv3. SSLv2 may be available on some
-# distributions (string value)
+# distributions. (string value)
 #kombu_ssl_version=
 
-# SSL key file (valid only if SSL enabled) (string value)
+# SSL key file (valid only if SSL enabled). (string value)
 #kombu_ssl_keyfile=
 
-# SSL cert file (valid only if SSL enabled) (string value)
+# SSL cert file (valid only if SSL enabled). (string value)
 #kombu_ssl_certfile=
 
-# SSL certification authority file (valid only if SSL enabled)
-# (string value)
+# SSL certification authority file (valid only if SSL
+# enabled). (string value)
 #kombu_ssl_ca_certs=
 
-# The RabbitMQ broker address where a single node is used
+# How long to wait before reconnecting in response to an AMQP
+# consumer cancel notification. (floating point value)
+#kombu_reconnect_delay=1.0
+
+# The RabbitMQ broker address where a single node is used.
 # (string value)
 #rabbit_host=localhost
 
-# The RabbitMQ broker port where a single node is used
+# The RabbitMQ broker port where a single node is used.
 # (integer value)
 #rabbit_port=5672
 
-# RabbitMQ HA cluster host:port pairs (list value)
+# RabbitMQ HA cluster host:port pairs. (list value)
 #rabbit_hosts=$rabbit_host:$rabbit_port
 
-# Connect over SSL for RabbitMQ (boolean value)
+# Connect over SSL for RabbitMQ. (boolean value)
 #rabbit_use_ssl=false
 
-# The RabbitMQ userid (string value)
+# The RabbitMQ userid. (string value)
 #rabbit_userid=guest
 
-# The RabbitMQ password (string value)
+# The RabbitMQ password. (string value)
 #rabbit_password=guest
 
-# The RabbitMQ virtual host (string value)
+# the RabbitMQ login method (string value)
+#rabbit_login_method=AMQPLAIN
+
+# The RabbitMQ virtual host. (string value)
 #rabbit_virtual_host=/
 
-# How frequently to retry connecting with RabbitMQ (integer
+# How frequently to retry connecting with RabbitMQ. (integer
 # value)
 #rabbit_retry_interval=1
 
 # How long to backoff for between retries when connecting to
-# RabbitMQ (integer value)
+# RabbitMQ. (integer value)
 #rabbit_retry_backoff=2
 
 # Maximum number of RabbitMQ connection retries. Default is 0
-# (infinite retry count) (integer value)
+# (infinite retry count). (integer value)
 #rabbit_max_retries=0
 
 # Use HA queues in RabbitMQ (x-ha-policy: all). If you change
@@ -110,7 +117,7 @@
 # value)
 #rabbit_ha_queues=false
 
-# If passed, use a fake RabbitMQ provider (boolean value)
+# If passed, use a fake RabbitMQ provider. (boolean value)
 #fake_rabbit=false
 
 # ZeroMQ bind address. Should be a wildcard (*), an ethernet
@@ -118,20 +125,20 @@
 # to this address. (string value)
 #rpc_zmq_bind_address=*
 
-# MatchMaker driver (string value)
+# MatchMaker driver. (string value)
 #rpc_zmq_matchmaker=oslo.messaging._drivers.matchmaker.MatchMakerLocalhost
 
-# ZeroMQ receiver listening port (integer value)
+# ZeroMQ receiver listening port. (integer value)
 #rpc_zmq_port=9501
 
-# Number of ZeroMQ contexts, defaults to 1 (integer value)
+# Number of ZeroMQ contexts, defaults to 1. (integer value)
 #rpc_zmq_contexts=1
 
 # Maximum number of ingress messages to locally buffer per
 # topic. Default is unlimited. (integer value)
 #rpc_zmq_topic_backlog=<None>
 
-# Directory for holding IPC sockets (string value)
+# Directory for holding IPC sockets. (string value)
 #rpc_zmq_ipc_dir=/var/run/openstack
 
 # Name of this node. Must be a valid hostname, FQDN, or IP
@@ -143,33 +150,33 @@
 # by impl_zmq. (integer value)
 #rpc_cast_timeout=30
 
-# Heartbeat frequency (integer value)
+# Heartbeat frequency. (integer value)
 #matchmaker_heartbeat_freq=300
 
 # Heartbeat time-to-live. (integer value)
 #matchmaker_heartbeat_ttl=600
 
-# Host to locate redis (string value)
+# Host to locate redis. (string value)
 #host=127.0.0.1
 
 # Use this port to connect to redis host. (integer value)
 #port=6379
 
-# Password for Redis server. (optional) (string value)
+# Password for Redis server (optional). (string value)
 #password=<None>
 
-# Size of RPC greenthread pool (integer value)
+# Size of RPC greenthread pool. (integer value)
 #rpc_thread_pool_size=64
 
-# Driver or drivers to handle sending notifications (multi
+# Driver or drivers to handle sending notifications. (multi
 # valued)
 #notification_driver=
 
-# AMQP topic used for OpenStack notifications (list value)
+# AMQP topic used for OpenStack notifications. (list value)
 # Deprecated group/name - [rpc_notifier2]/topics
 #notification_topics=notifications
 
-# Seconds to wait for a response from a call (integer value)
+# Seconds to wait for a response from a call. (integer value)
 #rpc_response_timeout=60
 
 # A URL representing the messaging driver to use and its full
@@ -249,17 +256,6 @@
 
 
 #
-# Options defined in climate.openstack.common.db.sqlalchemy.session
-#
-
-# the filename to use with sqlite (string value)
-#sqlite_db=climate.sqlite
-
-# If true, use synchronous mode for sqlite (boolean value)
-#sqlite_synchronous=true
-
-
-#
 # Options defined in climate.openstack.common.deprecated.wsgi
 #
 
@@ -313,29 +309,29 @@
 # Log output to standard error (boolean value)
 #use_stderr=true
 
-# format string to use for log messages with context (string
+# Format string to use for log messages with context (string
 # value)
-#logging_context_format_string=%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [%(request_id)s %(user)s %(tenant)s] %(instance)s%(message)s
+#logging_context_format_string=%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [%(request_id)s %(user_identity)s] %(instance)s%(message)s
 
-# format string to use for log messages without context
+# Format string to use for log messages without context
 # (string value)
 #logging_default_format_string=%(asctime)s.%(msecs)03d %(process)d %(levelname)s %(name)s [-] %(instance)s%(message)s
 
-# data to append to log format when level is DEBUG (string
+# Data to append to log format when level is DEBUG (string
 # value)
 #logging_debug_format_suffix=%(funcName)s %(pathname)s:%(lineno)d
 
-# prefix each line of exception output with this format
+# Prefix each line of exception output with this format
 # (string value)
 #logging_exception_prefix=%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s
 
-# list of logger=LEVEL pairs (list value)
-#default_log_levels=amqplib=WARN,sqlalchemy=WARN,boto=WARN,suds=INFO,keystone=INFO,eventlet.wsgi.server=WARN
+# List of logger=LEVEL pairs (list value)
+#default_log_levels=amqp=WARN,amqplib=WARN,boto=WARN,qpid=WARN,sqlalchemy=WARN,suds=INFO,iso8601=WARN,requests.packages.urllib3.connectionpool=WARN
 
-# publish error events (boolean value)
+# Publish error events (boolean value)
 #publish_errors=false
 
-# make deprecations fatal (boolean value)
+# Make deprecations fatal (boolean value)
 #fatal_deprecations=false
 
 # If an instance is passed with the log message, format it
@@ -346,12 +342,13 @@
 # it like this (string value)
 #instance_uuid_format="[instance: %(uuid)s] "
 
-# If this option is specified, the logging configuration file
-# specified is used and overrides any other logging options
-# specified. Please see the Python logging module
-# documentation for details on logging configuration files.
-# (string value)
-#log_config=<None>
+# The name of logging configuration file. It does not disable
+# existing loggers, but just appends specified logging
+# configuration to any other existing logging options. Please
+# see the Python logging module documentation for details on
+# logging configuration files. (string value)
+# Deprecated group/name - [DEFAULT]/log_config
+#log_config_append=<None>
 
 # DEPRECATED. A logging.Formatter log message format string
 # which may use any of the available logging.LogRecord
@@ -374,21 +371,19 @@
 # Deprecated group/name - [DEFAULT]/logdir
 #log_dir=<None>
 
-# Use syslog for logging. (boolean value)
+# Use syslog for logging. Existing syslog format is DEPRECATED
+# during I, and then will be changed in J to honor RFC5424
+# (boolean value)
 #use_syslog=false
 
-# syslog facility to receive log lines (string value)
+# (Optional) Use syslog rfc5424 format for logging. If
+# enabled, will add APP-NAME (RFC5424) before the MSG part of
+# the syslog message.  The old format without APP-NAME is
+# deprecated in I, and will be removed in J. (boolean value)
+#use_syslog_rfc_format=false
+
+# Syslog facility to receive log lines (string value)
 #syslog_log_facility=LOG_USER
-
-
-#
-# Options defined in climate.openstack.common.middleware.sizelimit
-#
-
-# the maximum body size per each request(bytes) (integer
-# value)
-# Deprecated group/name - [DEFAULT]/osapi_max_request_body_size
-#max_request_body_size=114688
 
 
 #
@@ -449,38 +444,38 @@
 [database]
 
 #
-# Options defined in climate.openstack.common.db.api
+# Options defined in climate.openstack.common.db.options
 #
+
+# The file name to use with SQLite (string value)
+#sqlite_db=climate.sqlite
+
+# If True, SQLite uses synchronous mode (boolean value)
+#sqlite_synchronous=true
 
 # The backend to use for db (string value)
 # Deprecated group/name - [DEFAULT]/db_backend
 #backend=sqlalchemy
-
-# Enable the experimental use of thread pooling for all DB API
-# calls (boolean value)
-# Deprecated group/name - [DEFAULT]/dbapi_use_tpool
-#use_tpool=false
-
-
-#
-# Options defined in climate.openstack.common.db.sqlalchemy.session
-#
 
 # The SQLAlchemy connection string used to connect to the
 # database (string value)
 # Deprecated group/name - [DEFAULT]/sql_connection
 # Deprecated group/name - [DATABASE]/sql_connection
 # Deprecated group/name - [sql]/connection
-#connection=sqlite:////climate/openstack/common/db/$sqlite_db
+#connection=<None>
 
-# The SQLAlchemy connection string used to connect to the
-# slave database (string value)
-#slave_connection=
+# The SQL mode to be used for MySQL sessions. This option,
+# including the default, overrides any server-set SQL mode. To
+# use whatever SQL mode is set by the server configuration,
+# set this to no value. Example: mysql_sql_mode= (string
+# value)
+#mysql_sql_mode=TRADITIONAL
 
-# timeout before idle sql connections are reaped (integer
+# Timeout before idle sql connections are reaped (integer
 # value)
 # Deprecated group/name - [DEFAULT]/sql_idle_timeout
 # Deprecated group/name - [DATABASE]/sql_idle_timeout
+# Deprecated group/name - [sql]/idle_timeout
 #idle_timeout=3600
 
 # Minimum number of SQL connections to keep open in a pool
@@ -495,13 +490,13 @@
 # Deprecated group/name - [DATABASE]/sql_max_pool_size
 #max_pool_size=<None>
 
-# maximum db connection retries during startup. (setting -1
+# Maximum db connection retries during startup. (setting -1
 # implies an infinite retry count) (integer value)
 # Deprecated group/name - [DEFAULT]/sql_max_retries
 # Deprecated group/name - [DATABASE]/sql_max_retries
 #max_retries=10
 
-# interval between retries of opening a sql connection
+# Interval between retries of opening a sql connection
 # (integer value)
 # Deprecated group/name - [DEFAULT]/sql_retry_interval
 # Deprecated group/name - [DATABASE]/reconnect_interval
@@ -527,6 +522,25 @@
 # (integer value)
 # Deprecated group/name - [DATABASE]/sqlalchemy_pool_timeout
 #pool_timeout=<None>
+
+# Enable the experimental use of database reconnect on
+# connection lost (boolean value)
+#use_db_reconnect=false
+
+# seconds between db connection retries (integer value)
+#db_retry_interval=1
+
+# Whether to increase interval between db connection retries,
+# up to db_max_retry_interval (boolean value)
+#db_inc_retry_interval=true
+
+# max seconds between db connection retries, if
+# db_inc_retry_interval is enabled (integer value)
+#db_max_retry_interval=10
+
+# maximum db connection retries before error is raised.
+# (setting -1 implies an infinite retry count) (integer value)
+#db_max_retries=20
 
 
 [keystone_authtoken]
@@ -686,7 +700,7 @@
 # Options defined in oslo.messaging
 #
 
-# Matchmaker ring file (JSON) (string value)
+# Matchmaker ring file (JSON). (string value)
 # Deprecated group/name - [DEFAULT]/matchmaker_ringfile
 #ringfile=/etc/oslo/matchmaker_ring.json
 
@@ -743,15 +757,15 @@
 # Options defined in climate.openstack.common.sslutils
 #
 
-# CA certificate file to use to verify connecting clients
+# CA certificate file to use to verify connecting clients.
 # (string value)
 #ca_file=<None>
 
-# Certificate file to use when starting the server securely
+# Certificate file to use when starting the server securely.
 # (string value)
 #cert_file=<None>
 
-# Private key file to use when starting the server securely
+# Private key file to use when starting the server securely.
 # (string value)
 #key_file=<None>
 

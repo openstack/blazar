@@ -24,7 +24,7 @@ from climate.db import exceptions as db_exceptions
 from climate import exceptions as ex
 from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common.deprecated import wsgi
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
