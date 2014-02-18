@@ -23,6 +23,7 @@ from oslo import messaging
 from climate import context
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
+from climate.openstack.common import service
 
 LOG = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class RPCClient(object):
         return self._client.call(ctx.to_dict(), name, **kwargs)
 
 
-class RPCServer(object):
+class RPCServer(service.Service):
     def __init__(self, target):
         super(RPCServer, self).__init__()
         self._server = messaging.get_rpc_server(
@@ -55,7 +56,7 @@ class RPCServer(object):
 
     def start(self):
         super(RPCServer, self).start()
-        self._server.start()
+        self.tg.add_thread(self._server.start)
 
     def stop(self):
         super(RPCServer, self).stop()
