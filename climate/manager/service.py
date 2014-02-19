@@ -27,7 +27,6 @@ from climate import manager
 from climate.manager import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
-from climate.openstack.common import service
 from climate.utils import service as service_utils
 from climate.utils import trusts
 
@@ -45,7 +44,7 @@ LOG = logging.getLogger(__name__)
 LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 
-class ManagerService(service_utils.RPCServer, service.Service):
+class ManagerService(service_utils.RPCServer):
     """Service class for the climate-manager service.
 
     Responsible for working with Climate DB, scheduling logic, running events,
