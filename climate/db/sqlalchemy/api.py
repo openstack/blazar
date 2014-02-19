@@ -21,8 +21,10 @@ import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
+from climate.db import exceptions as db_exc
+
 from climate.db.sqlalchemy import models
-from climate.openstack.common.db import exception as db_exc
+from climate.openstack.common.db import exception as common_db_exc
 from climate.openstack.common.db.sqlalchemy import session as db_session
 from climate.openstack.common.gettextutils import _  # noqa
 from climate.openstack.common import log as logging
@@ -154,9 +156,10 @@ def reservation_create(values):
     with session.begin():
         try:
             reservation.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=reservation.__class__.__name__, columns=e.columns)
 
     return reservation_get(reservation.id)
 
@@ -179,7 +182,8 @@ def reservation_destroy(reservation_id):
 
         if not reservation:
             # raise not found error
-            raise RuntimeError("Reservation not found!")
+            raise db_exc.ClimateDBNotFound(id=reservation_id,
+                                           model='Reservation')
 
         session.delete(reservation)
 
@@ -225,22 +229,32 @@ def lease_create(values):
     with session.begin():
         try:
             lease.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=lease.__class__.__name__, columns=e.columns)
 
+        try:
             for r in reservations:
                 reservation = models.Reservation()
                 reservation.update({"lease_id": lease.id})
                 reservation.update(r)
                 reservation.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=reservation.__class__.__name__, columns=e.columns)
 
+        try:
             for e in events:
                 event = models.Event()
                 event.update({"lease_id": lease.id})
                 event.update(e)
                 event.save(session=session)
-
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=event.__class__.__name__, columns=e.columns)
 
     return lease_get(lease.id)
 
@@ -263,7 +277,7 @@ def lease_destroy(lease_id):
 
         if not lease:
             # raise not found error
-            raise RuntimeError("Lease not found!")
+            raise db_exc.ClimateDBNotFound(id=lease_id, model='Lease')
 
         session.delete(lease)
 
@@ -338,9 +352,10 @@ def event_create(values):
     with session.begin():
         try:
             event.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=event.__class__.__name__, columns=e.columns)
 
     return event_get(event.id)
 
@@ -363,7 +378,7 @@ def event_destroy(event_id):
 
         if not event:
             # raise not found error
-            raise RuntimeError("Event not found!")
+            raise db_exc.ClimateDBNotFound(id=event_id, model='Event')
 
         session.delete(event)
 
@@ -403,9 +418,10 @@ def host_reservation_create(values):
     with session.begin():
         try:
             host_reservation.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=host_reservation.__class__.__name__, columns=e.columns)
 
     return host_reservation_get(host_reservation.id)
 
@@ -430,7 +446,8 @@ def host_reservation_destroy(host_reservation_id):
 
         if not host_reservation:
             # raise not found error
-            raise RuntimeError("Host Reservation not found!")
+            raise db_exc.ClimateDBNotFound(
+                id=host_reservation_id, model='ComputeHostReservation')
 
         session.delete(host_reservation)
 
@@ -470,9 +487,10 @@ def host_allocation_create(values):
     with session.begin():
         try:
             host_allocation.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=host_allocation.__class__.__name__, columns=e.columns)
 
     return host_allocation_get(host_allocation.id)
 
@@ -497,7 +515,8 @@ def host_allocation_destroy(host_allocation_id):
 
         if not host_allocation:
             # raise not found error
-            raise RuntimeError("Host Allocation not found!")
+            raise db_exc.ClimateDBNotFound(
+                id=host_allocation_id, model='ComputeHostAllocation')
 
         session.delete(host_allocation)
 
@@ -542,7 +561,6 @@ def host_get_all_by_queries(queries):
 
     """
     hosts_query = model_query(models.ComputeHost, get_session())
-    #key_not_found = []
 
     oper = {
         '<': ['lt', lambda a, b: a >= b],
@@ -558,7 +576,7 @@ def host_get_all_by_queries(queries):
         try:
             key, op, value = query.split(' ', 3)
         except ValueError:
-            raise RuntimeError('Invalid filter: %s' % query)
+            raise db_exc.ClimateDBInvalidFilter(query_filter=query)
 
         column = getattr(models.ComputeHost, key, None)
         if column:
@@ -571,7 +589,8 @@ def host_get_all_by_queries(queries):
                     attr = filter(lambda e: hasattr(column, e % op),
                                   ['%s', '%s_', '__%s__'])[0] % op
                 except IndexError:
-                    raise RuntimeError('Invalid filter operator: %s' % op)
+                    raise db_exc.ClimateDBInvalidFilterOperator(
+                        filter_operator=op)
 
                 if value == 'null':
                     value = None
@@ -586,8 +605,8 @@ def host_get_all_by_queries(queries):
             ).filter(models.ComputeHostExtraCapability.capability_name == key
                      ).all()
             if not extra_filter:
-                raise RuntimeError(
-                    'No Host with ExtraCapability "%s" found' % key)
+                raise db_exc.ClimateDBNotFound(
+                    id=key, model='ComputeHostExtraCapability')
 
             for host in extra_filter:
                 if op in oper and oper[op][1](host.capability_value, value):
@@ -608,9 +627,10 @@ def host_create(values):
     with session.begin():
         try:
             host.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=host.__class__.__name__, columns=e.columns)
 
     return host_get(host.id)
 
@@ -633,7 +653,7 @@ def host_destroy(host_id):
 
         if not host:
             # raise not found error
-            raise RuntimeError("Host not found!")
+            raise db_exc.ClimateDBNotFound(id=host_id, model='Host')
 
         session.delete(host)
 
@@ -668,9 +688,11 @@ def host_extra_capability_create(values):
     with session.begin():
         try:
             host_extra_capability.save(session=session)
-        except db_exc.DBDuplicateEntry as e:
+        except common_db_exc.DBDuplicateEntry as e:
             # raise exception about duplicated columns (e.columns)
-            raise RuntimeError("DBDuplicateEntry: %s" % e.columns)
+            raise db_exc.ClimateDBDuplicateEntry(
+                model=host_extra_capability.__class__.__name__,
+                columns=e.columns)
 
     return host_extra_capability_get(host_extra_capability.id)
 
@@ -697,7 +719,9 @@ def host_extra_capability_destroy(host_extra_capability_id):
 
         if not host_extra_capability:
             # raise not found error
-            raise RuntimeError("Host Extracapability not found!")
+            raise db_exc.ClimateDBNotFound(
+                id=host_extra_capability_id,
+                model='ComputeHostExtraCapability')
 
         session.delete(host_extra_capability)
 
