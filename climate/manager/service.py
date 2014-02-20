@@ -26,6 +26,7 @@ from climate.db import exceptions as db_ex
 from climate import exceptions as common_ex
 from climate import manager
 from climate.manager import exceptions
+from climate.notification import api as notification_api
 from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
@@ -36,6 +37,12 @@ manager_opts = [
                 default=['dummy.vm.plugin'],
                 help='All plugins to use (one for every resource type to '
                      'support.)'),
+    cfg.IntOpt('notify_hours_before_lease_end',
+               default=48,
+               help='Number of hours prior to lease end in which a '
+                    'notification of lease close to expire will be sent. If '
+                    'this is set to 0, then this notification will '
+                    'not be sent.')
 ]
 
 CONF = cfg.CONF
@@ -137,6 +144,11 @@ class ManagerService(service_utils.RPCServer):
             try:
                 eventlet.spawn_n(service_utils.with_empty_context(event_fn),
                                  event['lease_id'], event['id'])
+                lease = db_api.lease_get(event['lease_id'])
+                with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+                    self._send_notification(lease,
+                                            ctx,
+                                            events=['event.%s' % event_type])
             except Exception:
                 db_api.event_update(event['id'], {'status': 'ERROR'})
                 LOG.exception(_('Error occurred while event handling.'))
@@ -200,6 +212,15 @@ class ManagerService(service_utils.RPCServer):
                                        'time': end_date,
                                        'status': 'UNDONE'})
 
+        if CONF.manager.notify_hours_before_lease_end > 0:
+            delta = datetime.timedelta(
+                hours=CONF.manager.notify_hours_before_lease_end)
+            event = {'event_type': 'before_end_lease',
+                     'status': 'UNDONE'}
+            lease_values['events'].append(event)
+
+            self._update_before_end_event_date(event, delta, lease_values)
+
         try:
             lease = db_api.lease_create(lease_values)
             lease_id = lease['id']
@@ -229,7 +250,10 @@ class ManagerService(service_utils.RPCServer):
                 raise
 
             else:
-                return db_api.lease_get(lease['id'])
+                lease = db_api.lease_get(lease['id'])
+                with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+                    self._send_notification(lease, ctx, events=['create'])
+                return lease
 
     def update_lease(self, lease_id, values):
         if not values:
@@ -316,14 +340,22 @@ class ManagerService(service_utils.RPCServer):
                 'End lease event not found')
         db_api.event_update(event['id'], {'time': values['end_date']})
 
+        notifications = ['update']
+        self._update_before_end_event(lease, values, notifications)
+
         db_api.lease_update(lease_id, values)
-        return db_api.lease_get(lease_id)
+
+        lease = db_api.lease_get(lease_id)
+        with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+            self._send_notification(lease, ctx, events=notifications)
+
+        return lease
 
     def delete_lease(self, lease_id):
         lease = self.get_lease(lease_id)
         if (datetime.datetime.utcnow() < lease['start_date'] or
                 datetime.datetime.utcnow() > lease['end_date']):
-            with trusts.create_ctx_from_trust(lease['trust_id']):
+            with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
                 for reservation in lease['reservations']:
                     try:
                         self.plugins[reservation['resource_type']]\
@@ -333,6 +365,7 @@ class ManagerService(service_utils.RPCServer):
                                       "for a lease.")
                         raise
                 db_api.lease_destroy(lease_id)
+                self._send_notification(lease, ctx, events=['delete'])
         else:
             raise common_ex.NotAuthorized(
                 'Already started lease cannot be deleted')
@@ -346,6 +379,9 @@ class ManagerService(service_utils.RPCServer):
         lease = self.get_lease(lease_id)
         with trusts.create_ctx_from_trust(lease['trust_id']):
             self._basic_action(lease_id, event_id, 'on_end', 'deleted')
+
+    def before_end_lease(self, lease_id, event_id):
+        pass
 
     def _basic_action(self, lease_id, event_id, action_time,
                       reservation_status=None):
@@ -371,6 +407,39 @@ class ManagerService(service_utils.RPCServer):
                                           {'status': reservation_status})
 
         db_api.event_update(event_id, {'status': 'DONE'})
+
+    def _send_notification(self, lease, ctx, events=[]):
+        payload = notification_api.format_lease_payload(lease)
+
+        for event in events:
+            notification_api.send_lease_notification(ctx, payload,
+                                                     'lease.%s' % event)
+
+    def _update_before_end_event_date(self, event, delta, lease):
+        event['time'] = lease['end_date'] - delta
+        if event['time'] < lease['start_date']:
+            event['time'] = lease['start_date']
+
+    def _update_before_end_event(self, old_lease, new_lease, notifications):
+        event = db_api.event_get_first_sorted_by_filters(
+            'lease_id',
+            'asc',
+            {
+                'lease_id': old_lease['id'],
+                'event_type': 'before_end_lease'
+            }
+        )
+        if event:
+            # NOTE(casanch1) do nothing if the event does not exist.
+            # This is for backward compatibility
+            delta = old_lease['end_date'] - event['time']
+            update_values = {}
+            self._update_before_end_event_date(update_values, delta, new_lease)
+            if event['status'] == 'DONE':
+                update_values['status'] = 'UNDONE'
+                notifications.append('event.before_end_lease.stop')
+
+            db_api.event_update(event['id'], update_values)
 
     def __getattr__(self, name):
         """RPC Dispatcher for plugins methods."""

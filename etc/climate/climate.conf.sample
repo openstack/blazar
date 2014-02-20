@@ -704,6 +704,11 @@
 # (list value)
 #plugins=dummy.vm.plugin
 
+# Number of hours prior to lease end in which a notification
+# of lease close to expire will be sent. If this is set to 0,
+# then this notification will not be sent. (integer value)
+#notify_hours_before_lease_end=48
+
 
 [matchmaker_ring]
 
@@ -714,6 +719,16 @@
 # Matchmaker ring file (JSON). (string value)
 # Deprecated group/name - [DEFAULT]/matchmaker_ringfile
 #ringfile=/etc/oslo/matchmaker_ring.json
+
+
+[notifications]
+
+#
+# Options defined in climate.notification.notifier
+#
+
+# Publisher ID for notifications (string value)
+#publisher_id=climate.lease
 
 
 [physical:host]

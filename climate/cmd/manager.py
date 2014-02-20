@@ -24,6 +24,7 @@ gettext.install('climate', unicode=1)
 
 from climate.db import api as db_api
 from climate.manager import service as manager_service
+from climate.notification import notifier
 from climate.openstack.common import service
 from climate.utils import service as service_utils
 
@@ -32,6 +33,7 @@ def main():
     cfg.CONF(project='climate', prog='climate-manager')
     service_utils.prepare_service(sys.argv)
     db_api.setup_db()
+    notifier.init()
     service.launch(
         manager_service.ManagerService()
     ).wait()
