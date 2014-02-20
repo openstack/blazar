@@ -101,6 +101,7 @@ class ClimateKeystoneClient(object):
             #NOTE(n.s.): we shall remove this try: except: clause when
             #https://review.openstack.org/#/c/66494/ will be merged
             self.keystone = keystone_client.Client(**kwargs)
+            self.keystone.session.auth = self.keystone
             self.keystone.authenticate()
         except AttributeError:
             raise manager_exceptions.WrongClientVersion()
