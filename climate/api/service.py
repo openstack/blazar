@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from climate import context
 from climate import exceptions
 from climate.manager import rpcapi as manager_rpcapi
 from climate.openstack.common import log as logging
@@ -32,7 +33,12 @@ class API(object):
     @policy.authorize('leases', 'get')
     def get_leases(self):
         """List all existing leases."""
-        return self.manager_rpcapi.list_leases()
+        ctx = context.current()
+        if policy.enforce(ctx, 'admin', {}, do_raise=False):
+            tenant_id = None
+        else:
+            tenant_id = ctx.tenant_id
+        return self.manager_rpcapi.list_leases(tenant_id=tenant_id)
 
     @policy.authorize('leases', 'create')
     def create_lease(self, data):
