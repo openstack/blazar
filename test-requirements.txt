@@ -9,7 +9,7 @@ sphinxcontrib-httpdomain
 
 discover
 fixtures>=0.3.14
-testrepository>=0.0.17
-testtools>=0.9.32
+testrepository>=0.0.18
+testtools>=0.9.34
 coverage>=3.6
 pylint==0.25.2
