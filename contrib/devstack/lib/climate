@@ -82,9 +82,9 @@ function configure_climate() {
     iniset $CLIMATE_CONF_FILE DEFAULT os_admin_username climate
     iniset $CLIMATE_CONF_FILE DEFAULT os_admin_tenant_name $SERVICE_TENANT_NAME
 
-    iniset $CLIMATE_CONF_FILE DEFAULT climate_username $CLIMATE_USER_NAME
-    iniset $CLIMATE_CONF_FILE DEFAULT climate_password $SERVICE_PASSWORD
-    iniset $CLIMATE_CONF_FILE DEFAULT climate_tenant_name $SERVICE_TENANT_NAME
+    iniset $CLIMATE_CONF_FILE physical:host climate_username $CLIMATE_USER_NAME
+    iniset $CLIMATE_CONF_FILE physical:host climate_password $SERVICE_PASSWORD
+    iniset $CLIMATE_CONF_FILE physical:host climate_tenant_name $SERVICE_TENANT_NAME
 
     iniset $CLIMATE_CONF_FILE DEFAULT host $HOST_IP
     iniset $CLIMATE_CONF_FILE DEFAULT debug $CLIMATE_DEBUG
