@@ -31,3 +31,12 @@ User guide
    :maxdepth: 1
 
    restapi/index
+
+Development guide
+-----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   devref/how.to.contribute
+   devref/development.guidelines
