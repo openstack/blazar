@@ -29,14 +29,24 @@ from climate.openstack.common.middleware import debug
 
 LOG = log.getLogger(__name__)
 
-cfg.CONF.import_opt('log_exchange', 'climate.config')
-cfg.CONF.import_opt('os_auth_host', 'climate.config')
-cfg.CONF.import_opt('os_auth_port', 'climate.config')
-cfg.CONF.import_opt('os_auth_protocol', 'climate.config')
-cfg.CONF.import_opt('os_admin_username', 'climate.config')
-cfg.CONF.import_opt('os_admin_password', 'climate.config')
-cfg.CONF.import_opt('os_admin_tenant_name', 'climate.config')
-cfg.CONF.import_opt('os_auth_version', 'climate.config')
+cli_opts = [
+    cfg.BoolOpt('log_exchange', default=False,
+                help='Log request/response exchange details: environ, '
+                     'headers and bodies'),
+]
+
+CONF = cfg.CONF
+
+CONF.import_opt('os_auth_host', 'climate.config')
+CONF.import_opt('os_auth_port', 'climate.config')
+CONF.import_opt('os_auth_protocol', 'climate.config')
+CONF.import_opt('os_admin_username', 'climate.config')
+CONF.import_opt('os_admin_password', 'climate.config')
+CONF.import_opt('os_admin_tenant_name', 'climate.config')
+CONF.import_opt('os_auth_version', 'climate.config')
+
+CONF.register_cli_opts(cli_opts)
+
 
 eventlet.monkey_patch(
     os=True, select=True, socket=True, thread=True, time=True)
@@ -84,7 +94,7 @@ def make_app():
 
     if cfg.CONF.debug and not cfg.CONF.log_exchange:
         LOG.debug(_('Logging of request/response exchange could be enabled '
-                    'using flag --log-exchange'))
+                    'using flag --log_exchange'))
 
     if cfg.CONF.log_exchange:
         app.wsgi_app = debug.Debug.factory(app.config)(app.wsgi_app)

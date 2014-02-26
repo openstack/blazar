@@ -191,10 +191,6 @@
 # Options defined in climate.config
 #
 
-# Log request/response exchange details: environ, headers and
-# bodies (boolean value)
-#log_exchange=false
-
 # Name of this node.  This can be an opaque identifier.  It is
 # not necessarily a hostname, FQDN, or IP address. However,
 # the node name must be valid within an AMQP key, and if using
@@ -225,6 +221,15 @@
 
 # We use API v3 to allow trusts using. (string value)
 #os_auth_version=v2.0
+
+
+#
+# Options defined in climate.api.app
+#
+
+# Log request/response exchange details: environ, headers and
+# bodies (boolean value)
+#log_exchange=false
 
 
 #

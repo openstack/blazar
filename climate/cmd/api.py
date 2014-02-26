@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import gettext
-import os
 import sys
 
 import eventlet
@@ -24,7 +23,6 @@ from oslo.config import cfg
 gettext.install('climate', unicode=1)
 
 from climate.api import app as api_app
-from climate import config
 from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
 
@@ -39,20 +37,12 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 CONF.register_cli_opts(opts)
 
+cfg.CONF.import_opt('host', 'climate.config')
+
 
 def main():
     """Entry point to start Climate API wsgi server."""
-    possible_topdir = os.path.join(os.path.abspath(sys.argv[0]),
-                                   os.pardir, os.pardir)
-    possible_topdir = os.path.normpath(possible_topdir)
-
-    dev_conf = os.path.join(possible_topdir, 'etc', 'climate', 'climate.conf')
-    config_files = None
-
-    if os.path.exists(dev_conf):
-        config_files = [dev_conf]
-
-    config.parse_configs(sys.argv[1:], config_files)
+    cfg.CONF(sys.argv[1:], project='climate', prog='climate-api')
     service_utils.prepare_service(sys.argv)
     logging.setup("climate")
     app = api_app.make_app()
