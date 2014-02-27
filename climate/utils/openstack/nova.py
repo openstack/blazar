@@ -87,6 +87,12 @@ class ClimateNovaClient(object):
             auth_token = auth_token or ctx.auth_token
             mgmt_url = mgmt_url or base.url_for(ctx.service_catalog,
                                                 CONF.compute_service)
+        if not kwargs.get('auth_url', None):
+            #NOTE(scroiset): novaclient v2.17.0 support only Identity API v2.0
+            auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
+                                            CONF.os_auth_host,
+                                            CONF.os_auth_port)
+            kwargs['auth_url'] = auth_url
 
         self.nova = nova_client.Client(**kwargs)
         self.nova.client.auth_token = auth_token
@@ -122,3 +128,18 @@ class ServerManager(servers.ServerManager):
         return super(ServerManager, self).create_image(server_id,
                                                        image_name=image_name,
                                                        metadata=metadata)
+
+
+class NovaClientWrapper(object):
+    def __init__(self):
+        self._nova = None
+        self.username = None
+        self.api_key = None
+        self.project_id = None
+
+    @property
+    def nova(self):
+        return ClimateNovaClient(
+            username=self.username,
+            api_key=self.api_key,
+            project_id=self.project_id)

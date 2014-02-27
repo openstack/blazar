@@ -19,7 +19,6 @@ import json
 import six
 import uuid
 
-from novaclient import client
 from oslo.config import cfg
 
 from climate import context
@@ -32,6 +31,7 @@ from climate.plugins import base
 from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
+from climate.utils.openstack import nova
 
 plugin_opts = [
     cfg.StrOpt('on_end',
@@ -47,7 +47,7 @@ CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
 
-class PhysicalHostPlugin(base.BasePlugin):
+class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for physical host resource."""
     resource_type = plugin.RESOURCE_TYPE
     title = 'Physical Host Plugin'
@@ -57,17 +57,13 @@ class PhysicalHostPlugin(base.BasePlugin):
     inventory = None
 
     def __init__(self):
-        #TODO(sbauza): use catalog to find the url
-        auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
-                                        CONF.os_auth_host,
-                                        CONF.os_auth_port)
-        config = CONF[plugin.RESOURCE_TYPE]
-        #TODO(scroiset): use client wrapped by climate and use trust
-        self.nova = client.Client('2',
-                                  username=config.climate_username,
-                                  api_key=config.climate_password,
-                                  auth_url=auth_url,
-                                  project_id=config.climate_tenant_name)
+        super(PhysicalHostPlugin, self).__init__()
+
+        # Used by nova cli
+        config = cfg.CONF[self.resource_type]
+        self.username = config.climate_username
+        self.api_key = config.climate_password
+        self.project_id = config.climate_tenant_name
 
     def create_reservation(self, values):
         """Create reservation."""

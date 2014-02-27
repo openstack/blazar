@@ -22,6 +22,7 @@ from climate.manager import exceptions as manager_exceptions
 from climate.plugins import oshosts as host_plugin
 from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
+from climate.utils.openstack import base
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 
@@ -61,6 +62,7 @@ class ReservationPoolTestCase(tests.TestCase):
         self.patch(self.nova.aggregates, 'set_metadata')
         self.patch(self.nova.aggregates, 'remove_host')
 
+        self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.pool = rp.ReservationPool()
 
         self.p_name = self.patch(self.pool, '_generate_aggregate_name')

@@ -16,7 +16,6 @@
 
 import uuid as uuidgen
 
-from novaclient import client
 from novaclient import exceptions as nova_exceptions
 from oslo.config import cfg
 
@@ -24,6 +23,7 @@ from climate import context
 from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common import log as logging
 from climate.plugins import oshosts as plugin
+from climate.utils.openstack import nova
 
 
 LOG = logging.getLogger(__name__)
@@ -48,21 +48,18 @@ CONF = cfg.CONF
 CONF.register_opts(OPTS, group=plugin.RESOURCE_TYPE)
 
 
-class ReservationPool(object):
+class ReservationPool(nova.NovaClientWrapper):
     def __init__(self):
+        super(ReservationPool, self).__init__()
         self.ctx = context.current()
         self.config = CONF[plugin.RESOURCE_TYPE]
         self.freepool_name = self.config.aggregate_freepool_name
-        #TODO(scroiset): use catalog to find the url
-        auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
-                                        CONF.os_auth_host,
-                                        CONF.os_auth_port)
-        #TODO(scroiset): use client wrapped by climate and use trust
-        self.nova = client.Client('2',
-                                  username=self.config.climate_username,
-                                  api_key=self.config.climate_password,
-                                  auth_url=auth_url,
-                                  project_id=self.config.climate_tenant_name)
+
+        # Used by nova cli
+        config = cfg.CONF[plugin.RESOURCE_TYPE]
+        self.username = config.climate_username
+        self.api_key = config.climate_password
+        self.project_id = config.climate_tenant_name
 
     def get_aggregate_from_name_or_id(self, aggregate_obj):
         """Return an aggregate by name or an id."""

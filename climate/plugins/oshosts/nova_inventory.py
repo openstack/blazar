@@ -13,29 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from novaclient import client
-from novaclient import exceptions as nova_exceptions
 from oslo.config import cfg
+
+from novaclient import exceptions as nova_exceptions
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions
 from climate.plugins import oshosts as plugin
+from climate.utils.openstack import nova
 
 
-class NovaInventory(object):
+class NovaInventory(nova.NovaClientWrapper):
     def __init__(self):
+        super(NovaInventory, self).__init__()
         self.ctx = context.current()
 
-        #TODO(sbauza): use catalog to find the url
-        auth_url = "%s://%s:%s/v2.0" % (cfg.CONF.os_auth_protocol,
-                                        cfg.CONF.os_auth_host,
-                                        cfg.CONF.os_auth_port)
+        # Used by nova cli
         config = cfg.CONF[plugin.RESOURCE_TYPE]
-        self.nova = client.Client('2',
-                                  username=config.climate_username,
-                                  api_key=config.climate_password,
-                                  auth_url=auth_url,
-                                  project_id=config.climate_tenant_name)
+        self.username = config.climate_username
+        self.api_key = config.climate_password
+        self.project_id = config.climate_tenant_name
 
     def get_host_details(self, host):
         """Get Nova capabilities of a single host
