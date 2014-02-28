@@ -18,9 +18,6 @@ import socket
 from oslo.config import cfg
 
 cli_opts = [
-    cfg.BoolOpt('log-exchange', default=False,
-                help='Log request/response exchange details: environ, '
-                     'headers and bodies'),
     cfg.StrOpt('host', default=socket.gethostname(),
                help='Name of this node.  This can be an opaque identifier.  '
                'It is not necessarily a hostname, FQDN, or IP address. '
@@ -59,17 +56,3 @@ os_opts = [
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 CONF.register_opts(os_opts)
-
-ARGV = []
-
-
-def parse_configs(argv=None, conf_files=None):
-    """Parse Climate configuration file."""
-    if argv is not None:
-        global ARGV
-        ARGV = argv
-    try:
-        CONF(ARGV, project='climate', default_config_files=conf_files)
-    except cfg.RequiredOptError as roe:
-        raise RuntimeError("Option '%s' is required for config group "
-                           "'%s'" % (roe.opt_name, roe.group.name))

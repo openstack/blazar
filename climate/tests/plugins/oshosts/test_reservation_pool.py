@@ -17,7 +17,6 @@ import uuid as uuidgen
 
 from oslo.config import cfg
 
-from climate import config
 from climate import context
 from climate.manager import exceptions as manager_exceptions
 from climate.plugins import oshosts as host_plugin
@@ -39,7 +38,6 @@ class ReservationPoolTestCase(tests.TestCase):
 
     def setUp(self):
         super(ReservationPoolTestCase, self).setUp()
-        config.parse_configs()
         self.pool_name = 'pool-name-xxx'
         self.tenant_id = 'tenant-uuid'
         self.fake_aggregate = AggregateFake(i=123,

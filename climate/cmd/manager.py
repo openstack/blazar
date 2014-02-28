@@ -28,10 +28,8 @@ from climate.openstack.common import service
 from climate.utils import service as service_utils
 
 
-cfg.CONF.import_opt('host', 'climate.config')
-
-
 def main():
+    cfg.CONF(project='climate', prog='climate-manager')
     service_utils.prepare_service(sys.argv)
     db_api.setup_db()
     service.launch(
