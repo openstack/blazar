@@ -23,6 +23,7 @@ set +o xtrace
 # --------
 
 CLIMATE_DEBUG=${CLIMATE_DEBUG:-True}
+CLIMATE_VERBOSE=${CLIMATE_VERBOSE:-True}
 CLIMATE_USER_NAME=${CLIMATE_USER_NAME:-climate}
 
 # Set up default repos
@@ -88,6 +89,7 @@ function configure_climate() {
 
     iniset $CLIMATE_CONF_FILE DEFAULT host $HOST_IP
     iniset $CLIMATE_CONF_FILE DEFAULT debug $CLIMATE_DEBUG
+    iniset $CLIMATE_CONF_FILE DEFAULT verbose $CLIMATE_VERBOSE
 
     iniset $CLIMATE_CONF_FILE manager plugins basic.vm.plugin,physical.host.plugin
 
