@@ -16,6 +16,8 @@
 import datetime
 import operator
 
+from climate.db import exceptions as db_exceptions
+
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import models
 from climate.openstack.common import uuidutils
@@ -34,9 +36,11 @@ def _get_fake_lease_uuid():
     return 'aaaaaaaa-1111-bbbb-2222-cccccccccccc'
 
 
-def _get_fake_phys_reservation_values(lease_id=_get_fake_lease_uuid(),
+def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
+                                      lease_id=_get_fake_lease_uuid(),
                                       resource_id=None):
-    return {'lease_id': lease_id,
+    return {'id': id,
+            'lease_id': lease_id,
             'resource_id': '1234' if not resource_id else resource_id,
             'resource_type': host_plugin.RESOURCE_TYPE}
 
@@ -96,6 +100,7 @@ def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
             'end_date': end_date,
             'trust': 'trust',
             'reservations': [_get_fake_phys_reservation_values(
+                id=_get_fake_random_uuid(),
                 lease_id=id,
                 resource_id=resource_id)],
             'events': []
@@ -219,8 +224,41 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         """
 
         db_api.lease_create(_get_fake_phys_lease_values())
-        self.assertRaises(RuntimeError, db_api.lease_create,
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.lease_create,
                           _get_fake_phys_lease_values())
+
+    def test_create_leases_with_duplicated_reservation(self):
+        """Create two leases with a duplicated reservation,
+        and checks it raises an error.
+        """
+        lease_values = _get_fake_phys_lease_values()
+
+        db_api.lease_create(lease_values)
+
+        lease_values['id'] = _get_fake_random_uuid()
+        lease_values['name'] = 'duplicated_reservation'
+
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.lease_create,
+                          lease_values)
+
+    def test_create_leases_with_duplicated_event(self):
+        """Create two leases with a duplicated event,
+        and checks it raises an error.
+        """
+        lease_values = _get_fake_phys_lease_values()
+        lease_values['events'] = [_get_fake_event_values()]
+
+        db_api.lease_create(lease_values)
+
+        lease_values['id'] = _get_fake_random_uuid()
+        lease_values['name'] = 'duplicated_event'
+        lease_values['reservations'][0]['id'] = _get_fake_random_uuid()
+
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.lease_create,
+                          lease_values)
 
     def test_create_lease_with_event(self):
         """Create a lease including a fake event and check all tables."""
@@ -234,7 +272,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def test_delete_wrong_lease(self):
         """Delete a lease that doesn't exist and check that raises an error."""
-        self.assertRaises(RuntimeError, db_api.lease_destroy, 'fake_id')
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
+                          db_api.lease_destroy, 'fake_id')
 
     def test_delete_correct_lease(self):
         """Delete a lease and check that deletion has been cascaded to FKs."""
@@ -310,7 +349,18 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def test_reservation_destroy_for_reservation_not_found(self):
         self.assertFalse(db_api.reservation_get('1'))
-        self.assertRaises(RuntimeError, db_api.reservation_destroy, '1')
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
+                          db_api.reservation_destroy, '1')
+
+    def test_create_duplicate_reservation(self):
+        """Create a reservation and verify that an exception is raised if a
+        duplicated reservation is created.
+        """
+        uuid = _get_fake_random_uuid()
+        db_api.reservation_create(_get_fake_phys_reservation_values(id=uuid))
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.reservation_create,
+                          _get_fake_phys_reservation_values(id=uuid))
 
     # Host reservations
 
@@ -324,8 +374,16 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(result['id'],
                          _get_fake_host_reservation_values(id='1')
                          ['id'])
-        # Making sure we still raise a DuplicateDBEntry
-        self.assertRaises(RuntimeError, db_api.host_reservation_create,
+
+    def test_create_duplicate_host_reservation(self):
+        """Create a duplicated host reservation and verify that an exception is
+        raised.
+        """
+
+        db_api.host_reservation_create(
+            _get_fake_host_reservation_values(id='1'))
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.host_reservation_create,
                           _get_fake_host_reservation_values(id='1'))
 
     def test_delete_host_reservation(self):
@@ -333,7 +391,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         including cascade deletion from reservations table.
         """
 
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
                           db_api.host_reservation_destroy, 'fake_id')
 
         result = db_api.host_reservation_create(
@@ -376,8 +434,14 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         """
         result = db_api.host_create(_get_fake_host_values(id='1'))
         self.assertEqual(result['id'], _get_fake_host_values(id='1')['id'])
+
+    def test_create_duplicated_host(self):
+        """Create a duplicated host and verify that an exception is raised.
+        """
+        db_api.host_create(_get_fake_host_values(id='1'))
         # Making sure we still raise a DuplicateDBEntry
-        self.assertRaises(RuntimeError, db_api.host_create,
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.host_create,
                           _get_fake_host_values(id='1'))
 
     def test_search_for_hosts_by_ram(self):
@@ -412,7 +476,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(0, len(
             db_api.host_get_all_by_queries(['cpu_info like %wrongcpu%',
                                             'vgpu == 2'])))
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
                           db_api.host_get_all_by_queries, ['apples < 2048'])
 
     def test_search_for_hosts_by_composed_queries(self):
@@ -425,11 +489,11 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(0, len(
             db_api.host_get_all_by_queries(['memory_mb < 2048',
                                             'cpu_info like %Westmere%'])))
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBInvalidFilter,
                           db_api.host_get_all_by_queries, ['memory_mb <'])
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
                           db_api.host_get_all_by_queries, ['apples < 2048'])
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBInvalidFilterOperator,
                           db_api.host_get_all_by_queries,
                           ['memory_mb wrongop 2048'])
         self.assertEqual(1, len(
@@ -458,14 +522,19 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.host_create(_get_fake_host_values(id=1))
         db_api.host_destroy(1)
         self.assertEqual(None, db_api.host_get(1))
-        self.assertRaises(RuntimeError, db_api.host_destroy, 2)
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
+                          db_api.host_destroy, 2)
 
     def test_create_host_extra_capability(self):
         result = db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(id=1))
         self.assertEqual(result['id'], _get_fake_host_values(id='1')['id'])
-        # Making sure we still raise a DuplicateDBEntry
-        self.assertRaises(RuntimeError, db_api.host_extra_capability_create,
+
+    def test_create_duplicated_host_extra_capability(self):
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id=1))
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.host_extra_capability_create,
                           _get_fake_host_extra_capabilities(id='1'))
 
     def test_get_host_extra_capability_per_id(self):
@@ -494,7 +563,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
             _get_fake_host_extra_capabilities(id='1'))
         db_api.host_extra_capability_destroy('1')
         self.assertEqual(None, db_api.host_extra_capability_get('1'))
-        self.assertRaises(RuntimeError,
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
                           db_api.host_extra_capability_destroy, '1')
 
     def test_host_extra_capability_get_all_per_name(self):
@@ -521,7 +590,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
             _get_fake_host_allocation_values(id='1')
         )
 
-        self.assertRaises(RuntimeError, db_api.host_allocation_create,
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.host_allocation_create,
                           _get_fake_host_allocation_values(id='1'))
 
     def test_host_allocation_update_for_host(self):
@@ -555,7 +625,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         host_allocation_id = _get_fake_random_uuid()
 
         self.assertIsNone(db_api.host_allocation_get(host_allocation_id))
-        self.assertRaises(RuntimeError, db_api.host_allocation_destroy,
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
+                          db_api.host_allocation_destroy,
                           host_allocation_id)
 
     def test_host_allocation_get_all_by_values(self):
@@ -585,7 +656,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         test_event = db_api.event_create(fake_values)
 
         self.assertTrue(test_event)
-        self.assertRaises(RuntimeError, db_api.event_create, fake_values)
+        self.assertRaises(db_exceptions.ClimateDBDuplicateEntry,
+                          db_api.event_create, fake_values)
 
     def test_event_update(self):
         self.assertFalse(db_api.event_get('1'))
@@ -609,7 +681,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def test_destroy_for_event_not_found(self):
         self.assertFalse(db_api.event_get('1'))
-        self.assertRaises(RuntimeError, db_api.event_destroy, '1')
+        self.assertRaises(db_exceptions.ClimateDBNotFound,
+                          db_api.event_destroy, '1')
 
     def test_event_get_first_sorted_by_event_type_filter(self):
         fake_event_type = 'test_event'

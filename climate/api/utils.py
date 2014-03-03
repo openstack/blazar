@@ -20,6 +20,7 @@ from oslo import messaging
 from werkzeug import datastructures
 
 from climate.api import context
+from climate.db import exceptions as db_exceptions
 from climate import exceptions as ex
 from climate.manager import exceptions as manager_exceptions
 from climate.openstack.common.deprecated import wsgi
@@ -76,24 +77,29 @@ class Rest(flask.Blueprint):
                     except ex.ClimateException as e:
                         return bad_request(e)
                     except messaging.RemoteError as e:
-                        try:
-                            # NOTE(sbauza): All Manager Exceptions should be
-                            #  defined in climate.manager.exceptions
-                            cls = getattr(manager_exceptions, e.exc_type)
-                        except AttributeError:
-                            try:
-                                #NOTE(scroiset) : but common Exceptions
-                                # can reside in climate.exceptions
-                                # like NotAuthorized
-                                cls = getattr(ex, e.exc_type)
-                            except AttributeError:
+                        # Get the exception from manager and common exceptions
+                        cls = getattr(manager_exceptions, e.exc_type,
+                                      getattr(ex, e.exc_type, None))
+                        if cls is not None:
+                            return render_error_message(cls.code, e.value,
+                                                        cls.code)
+                        else:
+                            # Get the exception from db exceptions and hide
+                            # the message because could contain table/column
+                            # information
+                            cls = getattr(db_exceptions, e.exc_type, None)
+                            if cls is not None:
+                                return render_error_message(
+                                    cls.code,
+                                    '{0}: A database error occurred'.format(
+                                        cls.__name__),
+                                    cls.code)
+                            else:
                                 # We obfuscate all Exceptions
                                 # but Climate ones for
-                                #  security reasons
+                                # security reasons
                                 err = 'Internal Server Error'
                                 return internal_error(500, err, e)
-                        return render_error_message(cls.code, e.value,
-                                                    cls.code)
                     except Exception as e:
                         return internal_error(500, 'Internal Server Error', e)
 

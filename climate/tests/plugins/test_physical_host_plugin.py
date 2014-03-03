@@ -18,7 +18,9 @@ import mock
 import testtools
 
 from climate import context
+
 from climate.db import api as db_api
+from climate.db import exceptions as db_exceptions
 from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_exceptions
 from climate.manager import service
@@ -230,14 +232,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def test_create_host_issuing_rollback(self):
         def fake_db_host_create(*args, **kwargs):
-            raise RuntimeError
+            raise db_exceptions.ClimateDBException
         self.db_host_create.side_effect = fake_db_host_create
         host = self.fake_phys_plugin.create_computehost(self.fake_host)
         self.assertEqual(None, host)
 
     def test_create_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_create(*args, **kwargs):
-            raise RuntimeError
+            raise db_exceptions.ClimateDBException
         fake_host = self.fake_host.copy()
         fake_host.update({'foo': 'bar'})
         fake_request = fake_host.copy()
@@ -298,7 +300,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def test_delete_host_issuing_rollback(self):
         def fake_db_host_destroy(*args, **kwargs):
-            raise RuntimeError
+            raise db_exceptions.ClimateDBException
         self.db_host_destroy.side_effect = fake_db_host_destroy
         self.assertRaises(manager_exceptions.CantRemoveHost,
                           self.fake_phys_plugin.delete_computehost,

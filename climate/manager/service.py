@@ -22,6 +22,7 @@ from stevedore import enabled
 
 from climate import context
 from climate.db import api as db_api
+from climate.db import exceptions as db_ex
 from climate import exceptions as common_ex
 from climate import manager
 from climate.manager import exceptions
@@ -197,13 +198,12 @@ class ManagerService(service_utils.RPCServer):
                                        'time': end_date,
                                        'status': 'UNDONE'})
 
-        #TODO(scroiset): catch DB Exception when they will become alive
-        # see bug #1237293
         try:
             lease = db_api.lease_create(lease_values)
             lease_id = lease['id']
-        except RuntimeError:
+        except db_ex.ClimateDBException:
             LOG.exception('Cannot create a lease')
+            raise
         else:
             try:
                 for reservation in reservations:
@@ -212,7 +212,7 @@ class ManagerService(service_utils.RPCServer):
                     reservation['end_date'] = lease['end_date']
                     resource_type = reservation['resource_type']
                     self.plugins[resource_type].create_reservation(reservation)
-            except RuntimeError:
+            except (db_ex.ClimateDBException, RuntimeError):
                 LOG.exception("Failed to create reservation for a lease. "
                               "Rollback the lease and associated reservations")
                 db_api.lease_destroy(lease_id)
@@ -317,7 +317,7 @@ class ManagerService(service_utils.RPCServer):
                     try:
                         self.plugins[reservation['resource_type']]\
                             .on_end(reservation['resource_id'])
-                    except RuntimeError:
+                    except (db_ex.ClimateDBException, RuntimeError):
                         LOG.exception("Failed to delete a reservation")
                 db_api.lease_destroy(lease_id)
         else:

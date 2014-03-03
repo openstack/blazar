@@ -22,7 +22,9 @@ from novaclient import client
 from oslo.config import cfg
 
 from climate import context
+
 from climate.db import api as db_api
+from climate.db import exceptions as db_ex
 from climate.db import utils as db_utils
 from climate.manager import exceptions as manager_ex
 from climate.openstack.common import uuidutils
@@ -272,7 +274,7 @@ class PhysicalHostPlugin(base.BasePlugin):
         cantaddextracapability = []
         try:
             host = db_api.host_create(host_details)
-        except RuntimeError:
+        except db_ex.ClimateDBException:
             #We need to rollback
             # TODO(sbauza): Investigate use of Taskflow for atomic transactions
             self.pool.remove_computehost(self.freepool_name, host_ref)
@@ -284,7 +286,7 @@ class PhysicalHostPlugin(base.BasePlugin):
                           }
                 try:
                     db_api.host_extra_capability_create(values)
-                except RuntimeError:
+                except db_ex.ClimateDBException:
                     cantaddextracapability.append(key)
         if cantaddextracapability:
             raise manager_ex.CantAddExtraCapability(
@@ -338,7 +340,7 @@ class PhysicalHostPlugin(base.BasePlugin):
             # NOTE(sbauza): Extracapabilities will be destroyed thanks to
             #  the DB FK.
             db_api.host_destroy(host_id)
-        except RuntimeError:
+        except db_ex.ClimateDBException:
             # Nothing so bad, but we need to advert the admin he has to rerun
             raise manager_ex.CantRemoveHost(host=host_id,
                                             pool=self.freepool_name)
