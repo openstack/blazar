@@ -35,10 +35,10 @@ Lease is the main abstraction for the user in the Climate case. Lease means
 some kind of contract where start time, end time and resources to be reserved
 are mentioned.
 
-.. rest-controller:: climate.api.v2.controllers.lease:LeasesController
+.. rest-controller:: climate.api.v2.controllers.extensions.lease:LeasesController
    :webprefix: /v2/leases
 
-.. autotype:: climate.api.v2.controllers.lease.Lease
+.. autotype:: climate.api.v2.controllers.extensions.lease.Lease
    :members:
 
 
@@ -50,8 +50,8 @@ are mentioned.
 Host is the abstraction for a computehost in the Climate case. Host means
 a specific type of resource to be allocated.
 
-.. rest-controller:: climate.api.v2.controllers.host:HostsController
+.. rest-controller:: climate.api.v2.controllers.extensions.host:HostsController
    :webprefix: /v2/os-hosts
 
-.. autotype:: climate.api.v2.controllers.host.Host
+.. autotype:: climate.api.v2.controllers.extensions.host.Host
    :members:

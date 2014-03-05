@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import pecan
-from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from climate.api.v2.controllers import base
+from climate.api.v2.controllers import extensions
 from climate.api.v2.controllers import types
 from climate import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
@@ -95,9 +95,13 @@ class Host(base._Base):
                    )
 
 
-class HostsController(rest.RestController):
+class HostsController(extensions.BaseController):
     """Manages operations on hosts.
     """
+
+    name = 'oshosts'
+    extra_routes = {'os-hosts': 'oshosts',
+                    'oshosts': None}
 
     @policy.authorize('oshosts', 'get')
     @wsme_pecan.wsexpose(Host, types.IntegerType())
