@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from climate.api import service as service_api
-from climate.api import utils as api_utils
-from climate.api import validation as validation_api
+from climate.api.v1 import service as service_api
+from climate.api.v1 import utils as api_utils
+from climate.api.v1 import validation as validation_api
 from climate import exceptions
 from climate import tests
 

@@ -231,7 +231,7 @@
 
 
 #
-# Options defined in climate.api.app
+# Options defined in climate.api.v1.app
 #
 
 # Log request/response exchange details: environ, headers and

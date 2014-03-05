@@ -22,7 +22,7 @@ from oslo.config import cfg
 
 gettext.install('climate', unicode=1)
 
-from climate.api import app as api_app
+from climate.api.v1 import app as v1_app
 from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
 
@@ -45,7 +45,7 @@ def main():
     cfg.CONF(sys.argv[1:], project='climate', prog='climate-api')
     service_utils.prepare_service(sys.argv)
     logging.setup("climate")
-    app = api_app.make_app()
+    app = v1_app.make_app()
 
     wsgi.server(eventlet.listen((CONF.host, CONF.port), backlog=500), app)
 

@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from climate.api.oshosts import service as service_api
-from climate.api.oshosts import v1_0 as api
-from climate.api import utils as utils_api
+from climate.api.v1.oshosts import service as service_api
+from climate.api.v1.oshosts import v1_0 as api
+from climate.api.v1 import utils as utils_api
 from climate import tests
 
 

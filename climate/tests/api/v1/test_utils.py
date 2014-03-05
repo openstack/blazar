@@ -15,7 +15,7 @@
 
 import flask
 
-from climate.api import utils
+from climate.api.v1 import utils
 from climate import tests
 
 

@@ -17,7 +17,7 @@ import functools
 
 import six
 
-from climate.api import utils as api_utils
+from climate.api.v1 import utils as api_utils
 from climate import exceptions
 
 
