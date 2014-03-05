@@ -204,6 +204,10 @@
 # ZeroMQ, a valid hostname, FQDN, or IP address (string value)
 #host=climate
 
+# Log request/response exchange details: environ, headers and
+# bodies (boolean value)
+#log_exchange=false
+
 # Protocol used to access OpenStack Identity service (string
 # value)
 #os_auth_protocol=http
@@ -231,17 +235,20 @@
 
 
 #
-# Options defined in climate.api.v1.app
+# Options defined in climate.api.v2.app
 #
 
-# Log request/response exchange details: environ, headers and
-# bodies (boolean value)
-#log_exchange=false
+# The strategy to use for auth: noauth or keystone. (string
+# value)
+#auth_strategy=keystone
 
 
 #
 # Options defined in climate.cmd.api
 #
+
+# Deploy the v1 API. (boolean value)
+#enable_v1_api=true
 
 # Port that will be used to listen on (integer value)
 #port=1234

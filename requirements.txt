@@ -12,7 +12,10 @@ posix_ipc
 python-novaclient>=2.17.0
 netaddr>=0.7.6
 python-keystoneclient>=0.7.0
+pecan>=0.4.5
 Routes>=1.12.3
 SQLAlchemy>=0.7.8,<=0.9.99
 stevedore>=0.14
 WebOb>=1.2.3
+WSME>=0.6
+

@@ -22,7 +22,18 @@ policy_data = """
 
     "admin_api": "rule:admin",
     "climate:leases": "rule:admin_or_owner",
+    "climate:oshosts": "rule:admin_api",
+
     "climate:leases:get": "rule:admin_or_owner",
-    "climate:os-hosts": "rule:admin_api"
+    "climate:leases:create": "rule:admin_or_owner",
+    "climate:leases:delete": "rule:admin_or_owner",
+    "climate:leases:update": "rule:admin_or_owner",
+
+    "climate:plugins:get": "@",
+
+    "climate:oshosts:get": "rule:admin_api",
+    "climate:oshosts:create": "rule:admin_api",
+    "climate:oshosts:delete": "rule:admin_api",
+    "climate:oshosts:update": "rule:admin_api"
 }
 """

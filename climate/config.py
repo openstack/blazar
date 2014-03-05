@@ -24,6 +24,9 @@ cli_opts = [
                'However, the node name must be valid within '
                'an AMQP key, and if using ZeroMQ, a valid '
                'hostname, FQDN, or IP address'),
+    cfg.BoolOpt('log_exchange', default=False,
+                help='Log request/response exchange details: environ, '
+                     'headers and bodies'),
 ]
 
 os_opts = [
