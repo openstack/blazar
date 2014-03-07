@@ -69,6 +69,9 @@ class ClimateKeystoneClient(object):
         :param endpoint: keystone management (endpoint) url
         :type endpoint: string
 
+        :param trust_id: keystone trust ID
+        :type trust_id: string
+
         :param token: user token to use for authentication
         :type token: string
         """
@@ -96,6 +99,12 @@ class ClimateKeystoneClient(object):
                     raise manager_exceptions.NoManagementUrl()
             if not kwargs.get('password'):
                 kwargs.setdefault('token', ctx.auth_token)
+
+        # NOTE(dbelova): we need this checking to support current
+        # keystoneclient: token can only be scoped now to either
+        # a trust or project, not both.
+        if kwargs.get('trust_id') and kwargs.get('tenant_name'):
+            kwargs.pop('tenant_name')
 
         try:
             #NOTE(n.s.): we shall remove this try: except: clause when
