@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import tempfile
 
 import fixtures
+from oslo.config import cfg
 
 from climate import context
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import facade_wrapper
-from climate.openstack.common.db import options as db_options
 from climate.openstack.common import fileutils
 from climate.openstack.common.fixture import config
 from climate.openstack.common.fixture import mockpatch
@@ -30,6 +29,7 @@ from climate.openstack.common import policy as common_policy
 from climate.openstack.common import test
 from climate.tests import fake_policy
 
+cfg.CONF.set_override('use_stderr', False)
 
 logging.setup('climate')
 _DB_CACHE = None
@@ -43,8 +43,8 @@ class Database(fixtures.Fixture):
         fd = tempfile.NamedTemporaryFile(delete=False)
         self.db_path = fd.name
         database_connection = 'sqlite:///' + self.db_path
-        db_options.CONF.set_override('connection', str(database_connection),
-                                     group='database')
+        cfg.CONF.set_override('connection', str(database_connection),
+                              group='database')
         facade_wrapper._clear_engine()
         self.engine = facade_wrapper.get_engine()
 
@@ -70,7 +70,7 @@ class TestCase(test.BaseTestCase):
         self.read_cached_file.return_value = (True, fake_policy.policy_data)
         self.common_policy = common_policy
         self.patch(self.common_policy.Enforcer, '_get_policy_path')
-        db_options.CONF.set_override('policy_file', 'fake')
+        cfg.CONF.set_override('policy_file', 'fake')
 
     def patch(self, obj, attr):
         """Returns a Mocked object on the patched attribute."""
