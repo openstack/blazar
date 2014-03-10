@@ -36,7 +36,7 @@ class RPCAPITestCase(tests.TestCase):
 
     def test_list_leases(self):
         self.manager.list_leases('fake')
-        self.call.assert_called_once_with('list_leases', tenant_id='fake')
+        self.call.assert_called_once_with('list_leases', project_id='fake')
 
     def test_create_lease(self):
         self.manager.create_lease(self.fake_values)

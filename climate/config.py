@@ -43,14 +43,14 @@ os_opts = [
     cfg.StrOpt('os_admin_username',
                default='admin',
                help='This OpenStack user is used to verify provided tokens. '
-                    'The user must have admin role in <os_admin_tenant_name> '
-                    'tenant'),
+                    'The user must have admin role in <os_admin_project_name> '
+                    'project'),
     cfg.StrOpt('os_admin_password',
                default='climate',
                help='Password of the admin user'),
-    cfg.StrOpt('os_admin_tenant_name',
+    cfg.StrOpt('os_admin_project_name',
                default='admin',
-               help='Name of tenant where the user is admin'),
+               help='Name of project where the user is admin'),
     cfg.StrOpt('os_auth_version',
                default='v2.0',
                help='We use API v3 to allow trusts using.'),

@@ -81,11 +81,11 @@ class ClimateContext(BaseContext):
 
     _elements = set([
         "user_id",
-        "tenant_id",
+        "project_id",
         "auth_token",
         "service_catalog",
         "user_name",
-        "tenant_name",
+        "project_name",
         "roles",
         "is_admin",
     ])

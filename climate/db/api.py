@@ -156,9 +156,9 @@ def lease_get_all():
 
 
 @to_dict
-def lease_get_all_by_tenant(tenant_id):
-    """Return all leases in specific tenant."""
-    return IMPL.lease_get_all_by_tenant(tenant_id)
+def lease_get_all_by_project(project_id):
+    """Return all leases in specific project."""
+    return IMPL.lease_get_all_by_project(project_id)
 
 
 @to_dict
@@ -174,9 +174,9 @@ def lease_get(lease_id):
 
 
 @to_dict
-def lease_list(tenant_id=None):
+def lease_list(project_id=None):
     """Return a list of all existing leases."""
-    return IMPL.lease_list(tenant_id)
+    return IMPL.lease_list(project_id)
 
 
 def lease_destroy(lease_id):

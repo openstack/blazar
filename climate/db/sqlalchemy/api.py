@@ -48,7 +48,7 @@ def model_query(model, session=None):
 
     :param model: base model to query
     :param project_only: if present and current context is user-type,
-            then restrict query to match the tenant_id from current context.
+            then restrict query to match the project_id from current context.
     """
     session = session or get_session()
 
@@ -207,7 +207,7 @@ def lease_get_all():
     return query.all()
 
 
-def lease_get_all_by_tenant(tenant_id):
+def lease_get_all_by_project(project_id):
     raise NotImplementedError
 
 
@@ -215,10 +215,10 @@ def lease_get_all_by_user(user_id):
     raise NotImplementedError
 
 
-def lease_list(tenant_id=None):
+def lease_list(project_id=None):
     query = model_query(models.Lease, get_session())
-    if tenant_id is not None:
-        query = query.filter_by(tenant_id=tenant_id)
+    if project_id is not None:
+        query = query.filter_by(project_id=project_id)
     return query.all()
 
 

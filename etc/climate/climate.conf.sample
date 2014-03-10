@@ -220,15 +220,15 @@
 #os_auth_port=35357
 
 # This OpenStack user is used to verify provided tokens. The
-# user must have admin role in <os_admin_tenant_name> tenant
+# user must have admin role in <os_admin_project_name> project
 # (string value)
 #os_admin_username=admin
 
 # Password of the admin user (string value)
 #os_admin_password=climate
 
-# Name of tenant where the user is admin (string value)
-#os_admin_tenant_name=admin
+# Name of project where the user is admin (string value)
+#os_admin_project_name=admin
 
 # We use API v3 to allow trusts using. (string value)
 #os_auth_version=v2.0
@@ -556,23 +556,29 @@
 # Options defined in keystoneclient.middleware.auth_token
 #
 
-# Prefix to prepend at the beginning of the path (string
-# value)
+# Prefix to prepend at the beginning of the path. Deprecated,
+# use identity_uri. (string value)
 #auth_admin_prefix=
 
-# Host providing the admin Identity API endpoint (string
-# value)
+# Host providing the admin Identity API endpoint. Deprecated,
+# use identity_uri. (string value)
 #auth_host=127.0.0.1
 
-# Port of the admin Identity API endpoint (integer value)
+# Port of the admin Identity API endpoint. Deprecated, use
+# identity_uri. (integer value)
 #auth_port=35357
 
-# Protocol of the admin Identity API endpoint(http or https)
-# (string value)
+# Protocol of the admin Identity API endpoint (http or https).
+# Deprecated, use identity_uri. (string value)
 #auth_protocol=https
 
 # Complete public Identity API endpoint (string value)
 #auth_uri=<None>
+
+# Complete admin Identity API endpoint. This should specify
+# the unversioned root endpoint eg. https://localhost:35357/
+# (string value)
+#identity_uri=<None>
 
 # API version of the admin Identity API endpoint (string
 # value)
@@ -722,8 +728,8 @@
 # Password of the user for write operations (string value)
 #climate_password=climate_password
 
-# Tenant of the user for write operations (string value)
-#climate_tenant_name=admin
+# Project of the user for write operations (string value)
+#climate_project_name=admin
 
 
 #
@@ -743,11 +749,11 @@
 # for physical host reservation (string value)
 #aggregate_freepool_name=freepool
 
-# Aggregate metadata value for key matching tenant_id (string
+# Aggregate metadata value for key matching project_id (string
 # value)
-#tenant_id_key=climate:tenant
+#project_id_key=climate:project
 
-# Aggregate metadata key for knowing owner tenant_id (string
+# Aggregate metadata key for knowing owner project_id (string
 # value)
 #climate_owner=climate:owner
 

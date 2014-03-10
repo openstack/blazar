@@ -26,10 +26,10 @@ class ContextTestCase(tests.TestCase):
         super(ContextTestCase, self).setUp()
 
         self.fake_headers = {u'X-User-Id': u'1',
-                             u'X-Tenant-Id': u'1',
+                             u'X-Project-Id': u'1',
                              u'X-Auth-Token': u'111-111-111',
                              u'X-User-Name': u'user_name',
-                             u'X-Tenant-Name': u'tenant_name',
+                             u'X-Project-Name': u'project_name',
                              u'X-Roles': u'user_name0, user_name1'}
 
     def test_ctx_from_headers(self):
@@ -40,11 +40,11 @@ class ContextTestCase(tests.TestCase):
         self.context.assert_called_once_with(user_id=u'1',
                                              roles=[u'user_name0',
                                                     u'user_name1'],
-                                             tenant_name=u'tenant_name',
+                                             project_name=u'project_name',
                                              auth_token=u'111-111-111',
                                              service_catalog={
                                                  u'nova': u'catalog'},
-                                             tenant_id=u'1',
+                                             project_id=u'1',
                                              user_name=u'user_name')
 
     def test_ctx_from_headers_no_catalog(self):

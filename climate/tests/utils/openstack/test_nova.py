@@ -37,7 +37,7 @@ class TestCNClient(tests.TestCase):
         self.version = '2'
         self.username = 'fake_user'
         self.api_key = self.ctx().auth_token
-        self.project_id = self.ctx().tenant_id
+        self.project_id = self.ctx().project_id
         self.auth_url = 'fake_auth'
         self.mgmt_url = 'fake_mgmt'
 
@@ -68,7 +68,7 @@ class TestCNClient(tests.TestCase):
         self.client.assert_called_once_with(version=self.version,
                                             username=self.ctx().user_name,
                                             api_key=None,
-                                            project_id=self.ctx().tenant_id,
+                                            project_id=self.ctx().project_id,
                                             auth_url='http://fake.com/')
 
     def test_getattr(self):

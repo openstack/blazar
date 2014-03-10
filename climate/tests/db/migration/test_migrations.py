@@ -115,3 +115,7 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
 
     def _check_10e34bba18e8(self, engine, data):
         self.assertColumnExists(engine, 'computehosts', 'service_name')
+
+    def _check_2bcfe76b0474(self, engine, data):
+        self.assertColumnExists(engine, 'leases', 'project_id')
+        self.assertColumnNotExists(engine, 'leases', 'tenant_id')

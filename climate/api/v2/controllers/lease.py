@@ -44,7 +44,7 @@ class Lease(base._Base):
     user_id = types.UuidType()
     "The ID of the user who creates the lease"
 
-    tenant_id = types.UuidType()
+    project_id = types.UuidType()
     "The ID of the project or tenant the lease belongs to"
 
     trust_id = types.UuidType()
@@ -63,7 +63,7 @@ class Lease(base._Base):
                    start_date=u'2014-01-01 01:23',
                    end_date=u'2014-02-01 13:37',
                    user_id=u'efd87807-12d2-4b38-9c70-5f5c2ac427ff',
-                   tenant_id=u'bd9431c1-8d69-4ad3-803a-8d4a6b89fd36',
+                   project_id=u'bd9431c1-8d69-4ad3-803a-8d4a6b89fd36',
                    trust_id=u'35b17138-b364-4e6a-a131-8f3099c5be68',
                    reservations=[{u'resource_id': u'1234',
                                   u'resource_type': u'virtual:instance'}],

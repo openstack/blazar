@@ -17,7 +17,7 @@ policy_data = """
 {
 
     "admin": "is_admin:True or role:admin or role:masterofuniverse",
-    "admin_or_owner":  "rule:admin or tenant_id:%(tenant_id)s",
+    "admin_or_owner":  "rule:admin or project_id:%(project_id)s",
     "default": "!",
 
     "admin_api": "rule:admin",

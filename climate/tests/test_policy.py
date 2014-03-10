@@ -36,14 +36,15 @@ class DefaultPolicyTestCase(tests.TestCase):
             "example:exist": "!",
             "example:allowed": "@",
             "example:my_file": "role:admin or \
-                               tenant_id:%(tenant_id)s"
+                               project_id:%(project_id)s"
         }
         """
 
         self.default_rule = None
         policy.reset()
         self.read_cached_file.return_value = (True, self.rules)
-        self.context = context.ClimateContext(user_id='fake', tenant_id='fake',
+        self.context = context.ClimateContext(user_id='fake',
+                                              project_id='fake',
                                               roles=['member'])
 
     def _set_rules(self, default_rule):
@@ -69,8 +70,8 @@ class DefaultPolicyTestCase(tests.TestCase):
         self.assertEqual(result, True)
 
     def test_templatized_enforcement(self):
-        target_mine = {'tenant_id': 'fake'}
-        target_not_mine = {'tenant_id': 'another'}
+        target_mine = {'project_id': 'fake'}
+        target_not_mine = {'project_id': 'another'}
         action = "example:my_file"
         policy.enforce(self.context, action, target_mine)
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
@@ -82,14 +83,15 @@ class ClimatePolicyTestCase(tests.TestCase):
     def setUp(self):
         super(ClimatePolicyTestCase, self).setUp()
 
-        self.context = context.ClimateContext(user_id='fake', tenant_id='fake',
+        self.context = context.ClimateContext(user_id='fake',
+                                              project_id='fake',
                                               roles=['member'])
 
     def test_standardpolicy(self):
         target_good = {'user_id': self.context.user_id,
-                       'tenant_id': self.context.tenant_id}
+                       'project_id': self.context.project_id}
         target_wrong = {'user_id': self.context.user_id,
-                        'tenant_id': 'bad_tenant'}
+                        'project_id': 'bad_project'}
         action = "climate:leases"
         self.assertEqual(True, policy.enforce(self.context, action,
                                               target_good))
@@ -98,14 +100,14 @@ class ClimatePolicyTestCase(tests.TestCase):
 
     def test_adminpolicy(self):
         target = {'user_id': self.context.user_id,
-                  'tenant_id': self.context.tenant_id}
+                  'project_id': self.context.project_id}
         action = "climate:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def test_elevatedpolicy(self):
         target = {'user_id': self.context.user_id,
-                  'tenant_id': self.context.tenant_id}
+                  'project_id': self.context.project_id}
         action = "climate:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)

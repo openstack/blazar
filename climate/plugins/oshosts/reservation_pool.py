@@ -33,12 +33,12 @@ OPTS = [
                default='freepool',
                help='Name of the special aggregate where all hosts '
                     'are candidate for physical host reservation'),
-    cfg.StrOpt('tenant_id_key',
-               default='climate:tenant',
-               help='Aggregate metadata value for key matching tenant_id'),
+    cfg.StrOpt('project_id_key',
+               default='climate:project',
+               help='Aggregate metadata value for key matching project_id'),
     cfg.StrOpt('climate_owner',
                default='climate:owner',
-               help='Aggregate metadata key for knowing owner tenant_id'),
+               help='Aggregate metadata key for knowing owner project_id'),
     cfg.StrOpt('climate_az_prefix',
                default='climate:',
                help='Prefix for Availability Zones created by Climate'),
@@ -59,7 +59,7 @@ class ReservationPool(nova.NovaClientWrapper):
         config = cfg.CONF[plugin.RESOURCE_TYPE]
         self.username = config.climate_username
         self.api_key = config.climate_password
-        self.project_id = config.climate_tenant_name
+        self.project_id = config.climate_project_name
 
     def get_aggregate_from_name_or_id(self, aggregate_obj):
         """Return an aggregate by name or an id."""
@@ -115,7 +115,7 @@ class ReservationPool(nova.NovaClientWrapper):
                       'without Availability Zone' % name)
             agg = self.nova.aggregates.create(name, None)
 
-        meta = {self.config.climate_owner: self.ctx.tenant_id}
+        meta = {self.config.climate_owner: self.ctx.project_id}
         self.nova.aggregates.set_metadata(agg, meta)
 
         return agg
@@ -262,7 +262,7 @@ class ReservationPool(nova.NovaClientWrapper):
     def add_project(self, pool, project_id):
         """Add a project to an aggregate."""
 
-        metadata = {project_id: self.config.tenant_id_key}
+        metadata = {project_id: self.config.project_id_key}
 
         agg = self.get_aggregate_from_name_or_id(pool)
 

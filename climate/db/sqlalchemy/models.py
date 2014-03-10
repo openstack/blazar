@@ -56,7 +56,7 @@ class Lease(mb.ClimateBase):
     id = _id_column()
     name = sa.Column(sa.String(80), nullable=False)
     user_id = sa.Column(sa.String(255), nullable=True)
-    tenant_id = sa.Column(sa.String(255), nullable=True)
+    project_id = sa.Column(sa.String(255), nullable=True)
     start_date = sa.Column(sa.DateTime, nullable=False)
     end_date = sa.Column(sa.DateTime, nullable=False)
     trust_id = sa.Column(sa.String(36))

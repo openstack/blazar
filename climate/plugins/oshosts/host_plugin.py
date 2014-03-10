@@ -63,7 +63,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         config = cfg.CONF[self.resource_type]
         self.username = config.climate_username
         self.api_key = config.climate_password
-        self.project_id = config.climate_tenant_name
+        self.project_id = config.climate_project_name
 
     def create_reservation(self, values):
         """Create reservation."""

@@ -54,8 +54,8 @@ class TestTrusts(tests.TestCase):
         fake_ctx_dict = {'_BaseContext__values': {
             'auth_token': self.client().auth_token,
             'service_catalog': fake_item,
-            'tenant_id': self.client().tenant_id,
-            'tenant_name': 'admin',
+            'project_id': self.client().tenant_id,
+            'project_name': 'admin',
             'user_name': 'admin',
         }}
 

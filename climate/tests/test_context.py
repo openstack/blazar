@@ -97,8 +97,8 @@ class TestClimateContext(tests.TestCase):
         self.assertEqual(ctx.is_admin, True)
 
     def test_elevated(self):
-        with context.ClimateContext(user_id="user", tenant_id="tenant"):
+        with context.ClimateContext(user_id="user", project_id="project"):
             ctx = context.ClimateContext.elevated()
             self.assertEqual(ctx.user_id, "user")
-            self.assertEqual(ctx.tenant_id, "tenant")
+            self.assertEqual(ctx.project_id, "project")
             self.assertEqual(ctx.is_admin, True)

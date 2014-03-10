@@ -86,7 +86,7 @@ class ClimateKeystoneClient(object):
         kwargs.setdefault('version', cfg.CONF.keystone_client_version)
         if ctx is not None:
             kwargs.setdefault('username', ctx.user_name)
-            kwargs.setdefault('tenant_name', ctx.tenant_name)
+            kwargs.setdefault('tenant_name', ctx.project_name)
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
                     ctx.service_catalog, CONF.identity_service)

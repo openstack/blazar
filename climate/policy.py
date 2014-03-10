@@ -66,7 +66,7 @@ def enforce(context, action, target, do_raise=True):
            ``volume:attach_volume``
        :param target: dictionary representing the object of the action
            for object creation this should be a dictionary representing the
-           location of the object e.g. ``{'tenant_id': context.tenant_id}``
+           location of the object e.g. ``{'project_id': context.project_id}``
        :param do_raise: if True (the default), raises PolicyNotAuthorized;
            if False, returns False
 
@@ -98,7 +98,7 @@ def authorize(extension, action=None, api='climate', ctx=None,
         @functools.wraps(func)
         def wrapped(self, *args, **kwargs):
             cur_ctx = ctx or context.current()
-            tgt = target or {'tenant_id': cur_ctx.tenant_id,
+            tgt = target or {'project_id': cur_ctx.project_id,
                              'user_id': cur_ctx.user_id}
             if action is None:
                 act = '%s:%s' % (api, extension)

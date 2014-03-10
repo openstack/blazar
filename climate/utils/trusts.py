@@ -28,14 +28,14 @@ def create_trust():
     trustee_id = keystone.ClimateKeystoneClient(
         username=CONF.os_admin_username,
         password=CONF.os_admin_password,
-        tenant_name=CONF.os_admin_tenant_name).user_id
+        tenant_name=CONF.os_admin_project_name).user_id
 
     ctx = context.current()
     trust = client.trusts.create(trustor_user=ctx.user_id,
                                  trustee_user=trustee_id,
                                  impersonation=False,
                                  role_names=ctx.roles,
-                                 project=ctx.tenant_id)
+                                 project=ctx.project_id)
     return trust
 
 
@@ -50,7 +50,7 @@ def create_ctx_from_trust(trust_id):
     """Return context built from given trust."""
     ctx = context.ClimateContext(
         user_name=CONF.os_admin_username,
-        tenant_name=CONF.os_admin_tenant_name,
+        project_name=CONF.os_admin_project_name,
     )
     auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
                                   CONF.os_auth_host,
@@ -67,5 +67,5 @@ def create_ctx_from_trust(trust_id):
         ctx,
         auth_token=client.auth_token,
         service_catalog=client.service_catalog.catalog['catalog'],
-        tenant_id=client.tenant_id,
+        project_id=client.tenant_id,
     )

@@ -24,9 +24,9 @@ admin_opts = [
     cfg.StrOpt('climate_password',
                default='climate_password',
                help='Password of the user for write operations'),
-    cfg.StrOpt('climate_tenant_name',
+    cfg.StrOpt('climate_project_name',
                default='admin',
-               help='Tenant of the user for write operations'),
+               help='Project of the user for write operations'),
 ]
 
 cfg.CONF.register_opts(admin_opts, group=RESOURCE_TYPE)

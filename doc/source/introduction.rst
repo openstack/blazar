@@ -4,7 +4,7 @@ Introduction
 Idea of creating Climate originated with two different use cases:
 
 * Compute host reservation (when user with admin privileges can reserve
-  hardware resources that are dedicated to the sole use of a tenant)
+  hardware resources that are dedicated to the sole use of a project)
 * Virtual machine (instance) reservation (when user may ask reservation service
   to provide him working VM not necessary now, but also in the future)
 
@@ -79,7 +79,7 @@ Lease types (concepts)
   cannot be fulfilled immediately. Best-effort mechanism starts something like
   scavenger hunt trying to find resources for reservations. For compute hosts
   reservation that makes much sense, because in case there are instances
-  belonging to other tenant on eligible hosts, and without them there will be
+  belonging to other project on eligible hosts, and without them there will be
   possible to reserve these hosts, Climate may start instances migration.
   This operation can be timely and fairly complex and so different strategies
   may be applied depending on heuristic factors such as the number, type and

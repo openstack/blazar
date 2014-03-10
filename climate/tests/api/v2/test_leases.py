@@ -32,8 +32,8 @@ def fake_lease(**kw):
         u'trust_id': kw.get('trust_id',
                             u'35b17138-b364-4e6a-a131-8f3099c5be68'),
         u'user_id': kw.get('user_id', u'efd87807-12d2-4b38-9c70-5f5c2ac427ff'),
-        u'tenant_id': kw.get('tenant_id',
-                             u'bd9431c1-8d69-4ad3-803a-8d4a6b89fd36'),
+        u'project_id': kw.get('project_id',
+                              u'bd9431c1-8d69-4ad3-803a-8d4a6b89fd36'),
         u'reservations': kw.get('reservations', [
             {
                 u'resource_id': u'1234',
@@ -48,7 +48,7 @@ def fake_lease_request_body(exclude=[], **kw):
     exclude.append('id')
     exclude.append('trust_id')
     exclude.append('user_id')
-    exclude.append('tenant_id')
+    exclude.append('project_id')
     lease_body = fake_lease(**kw)
     return dict((key, lease_body[key])
                 for key in lease_body if key not in exclude)

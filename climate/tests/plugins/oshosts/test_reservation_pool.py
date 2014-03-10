@@ -40,13 +40,13 @@ class ReservationPoolTestCase(tests.TestCase):
     def setUp(self):
         super(ReservationPoolTestCase, self).setUp()
         self.pool_name = 'pool-name-xxx'
-        self.tenant_id = 'tenant-uuid'
+        self.project_id = 'project-uuid'
         self.fake_aggregate = AggregateFake(i=123,
                                             name='fooname',
                                             hosts=['host1', 'host2'])
         conf = cfg.CONF[host_plugin.RESOURCE_TYPE]
         self.freepool_name = conf.aggregate_freepool_name
-        self.tenant_id_key = conf.tenant_id_key
+        self.project_id_key = conf.project_id_key
         self.climate_owner = conf.climate_owner
         self.climate_az_prefix = conf.climate_az_prefix
 
@@ -54,7 +54,7 @@ class ReservationPoolTestCase(tests.TestCase):
                                            name=self.freepool_name,
                                            hosts=['host3'])
 
-        self.set_context(context.ClimateContext(tenant_id=self.tenant_id))
+        self.set_context(context.ClimateContext(project_id=self.project_id))
 
         self.nova_client = nova_client
         self.nova = self.patch(self.nova_client, 'Client').return_value
@@ -115,7 +115,7 @@ class ReservationPoolTestCase(tests.TestCase):
         self.nova.aggregates.create\
             .assert_called_once_with(self.pool_name, az_name)
 
-        meta = {self.climate_owner: self.tenant_id}
+        meta = {self.climate_owner: self.project_id}
         self.nova.aggregates.set_metadata\
             .assert_called_once_with(self.fake_aggregate, meta)
 
@@ -311,7 +311,7 @@ class ReservationPoolTestCase(tests.TestCase):
         self.pool.add_project('pool', 'projectX')
         self.nova.aggregates.set_metadata\
             .assert_called_once_with(self.fake_aggregate.id,
-                                     {'projectX': self.tenant_id_key})
+                                     {'projectX': self.project_id_key})
 
     def test_remove_project(self):
         self._patch_get_aggregate_from_name_or_id()

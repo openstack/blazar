@@ -32,7 +32,7 @@ class NovaInventory(nova.NovaClientWrapper):
         config = cfg.CONF[plugin.RESOURCE_TYPE]
         self.username = config.climate_username
         self.api_key = config.climate_password
-        self.project_id = config.climate_tenant_name
+        self.project_id = config.climate_project_name
 
     def get_host_details(self, host):
         """Get Nova capabilities of a single host

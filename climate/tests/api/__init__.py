@@ -40,15 +40,15 @@ class APITest(tests.TestCase):
         def fake_ctx_from_headers(headers):
             if not headers:
                 return context.ClimateContext(
-                    user_id='fake', tenant_id='fake', roles=['member'])
+                    user_id='fake', project_id='fake', roles=['member'])
             roles = headers.get('X-Roles', six.text_type('member')).split(',')
             return context.ClimateContext(
                 user_id=headers.get('X-User-Id', 'fake'),
-                tenant_id=headers.get('X-Tenant-Id', 'fake'),
+                project_id=headers.get('X-Project-Id', 'fake'),
                 auth_token=headers.get('X-Auth-Token', None),
                 service_catalog=None,
                 user_name=headers.get('X-User-Name', 'fake'),
-                tenant_name=headers.get('X-Tenant-Name', 'fake'),
+                project_name=headers.get('X-Project-Name', 'fake'),
                 roles=roles,
             )
 

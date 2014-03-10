@@ -80,7 +80,7 @@ class ClimateNovaClient(object):
         if ctx is not None:
             kwargs.setdefault('username', ctx.user_name)
             kwargs.setdefault('api_key', None)
-            kwargs.setdefault('project_id', ctx.tenant_id)
+            kwargs.setdefault('project_id', ctx.project_id)
             kwargs.setdefault('auth_url', base.url_for(
                 ctx.service_catalog, CONF.identity_service))
 

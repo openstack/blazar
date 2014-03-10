@@ -114,7 +114,7 @@ are mentioned.
                     }
                 ],
                 "start_date": "1234",
-                "tenant_id": "tenant_id",
+                "project_id": "project_id",
                 "trust_id": "trust_id",
                 "updated_at": null,
                 "user_id": "user_id"
@@ -198,7 +198,7 @@ are mentioned.
                 }
             ],
             "start_date": "1234",
-            "tenant_id": "tenant_id",
+            "project_id": "project_id",
             "trust_id": "trust_id",
             "updated_at": null,
             "user_id": "user_id"
@@ -266,7 +266,7 @@ are mentioned.
                 }
             ],
             "start_date": "1234",
-            "tenant_id": "tenant_id",
+            "project_id": "project_id",
             "trust_id": "trust_id",
             "updated_at": null,
             "user_id": "user_id"
@@ -341,7 +341,7 @@ are mentioned.
                 }
             ],
             "start_date": "1234",
-            "tenant_id": "tenant_id",
+            "project_id": "project_id",
             "trust_id": "trust_id",
             "updated_at": null,
             "user_id": "user_id"

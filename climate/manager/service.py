@@ -153,8 +153,8 @@ class ManagerService(service_utils.RPCServer):
     def get_lease(self, lease_id):
         return db_api.lease_get(lease_id)
 
-    def list_leases(self, tenant_id=None):
-        return db_api.lease_list(tenant_id)
+    def list_leases(self, project_id=None):
+        return db_api.lease_list(project_id)
 
     def create_lease(self, lease_values):
         """Create a lease with reservations.
@@ -186,7 +186,7 @@ class ManagerService(service_utils.RPCServer):
 
         ctx = context.current()
         lease_values['user_id'] = ctx.user_id
-        lease_values['tenant_id'] = ctx.tenant_id
+        lease_values['project_id'] = ctx.project_id
         lease_values['start_date'] = start_date
         lease_values['end_date'] = end_date
 

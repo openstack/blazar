@@ -94,7 +94,7 @@ file using the following example:
     os_auth_protocol=<http, for example>
     os_admin_username=<username>
     os_admin_password=<password>
-    os_admin_tenant_name=<tenant_name>
+    os_admin_project_name=<project_name>
 
     [manager]
     plugins=basic.vm.plugin,physical.host.plugin
@@ -108,7 +108,7 @@ file using the following example:
     on_end=on_end
     climate_username=<username>
     climate_password=<password>
-    climate_tenant_name=<tenant_name>
+    climate_project_name=<project_name>
 
 ..
 

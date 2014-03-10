@@ -39,7 +39,7 @@ class TestCKClient(tests.TestCase):
         self.username = 'fake_user'
         self.token = 'fake_token'
         self.password = 'fake_pass'
-        self.tenant_name = 'fake_tenant'
+        self.tenant_name = 'fake_project'
         self.auth_url = 'fake_url'
         self.trust_id = 'fake_trust'
 
@@ -79,12 +79,13 @@ class TestCKClient(tests.TestCase):
 
         self.keystone.ClimateKeystoneClient()
 
-        self.client.assert_called_once_with(version='3',
-                                            username=self.ctx().user_name,
-                                            token=self.ctx().auth_token,
-                                            tenant_name=self.ctx().tenant_name,
-                                            auth_url='http://fake.com/',
-                                            endpoint='http://fake.com/')
+        self.client.assert_called_once_with(
+            version='3',
+            username=self.ctx().user_name,
+            token=self.ctx().auth_token,
+            tenant_name=self.ctx().project_name,
+            auth_url='http://fake.com/',
+            endpoint='http://fake.com/')
 
     def test_getattr(self):
         #TODO(n.s.): Will be done as soon as pypi package will be updated

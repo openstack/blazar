@@ -35,10 +35,10 @@ class API(object):
         """List all existing leases."""
         ctx = context.current()
         if policy.enforce(ctx, 'admin', {}, do_raise=False):
-            tenant_id = None
+            project_id = None
         else:
-            tenant_id = ctx.tenant_id
-        return self.manager_rpcapi.list_leases(tenant_id=tenant_id)
+            project_id = ctx.project_id
+        return self.manager_rpcapi.list_leases(project_id=project_id)
 
     @policy.authorize('leases', 'create')
     def create_lease(self, data):

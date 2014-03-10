@@ -29,10 +29,10 @@ def ctx_from_headers(headers):
 
     return context.ClimateContext(
         user_id=headers['X-User-Id'],
-        tenant_id=headers['X-Tenant-Id'],
+        project_id=headers['X-Project-Id'],
         auth_token=headers['X-Auth-Token'],
         service_catalog=service_catalog,
         user_name=headers['X-User-Name'],
-        tenant_name=headers['X-Tenant-Name'],
+        project_name=headers['X-Project-Name'],
         roles=map(unicode.strip, headers['X-Roles'].split(',')),
     )

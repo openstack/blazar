@@ -36,7 +36,7 @@ CONF.import_opt('os_auth_port', 'climate.config')
 CONF.import_opt('os_auth_protocol', 'climate.config')
 CONF.import_opt('os_admin_username', 'climate.config')
 CONF.import_opt('os_admin_password', 'climate.config')
-CONF.import_opt('os_admin_tenant_name', 'climate.config')
+CONF.import_opt('os_admin_project_name', 'climate.config')
 CONF.import_opt('os_auth_version', 'climate.config')
 CONF.import_opt('log_exchange', 'climate.config')
 
@@ -99,7 +99,7 @@ def make_app():
         auth_protocol=cfg.CONF.os_auth_protocol,
         admin_user=cfg.CONF.os_admin_username,
         admin_password=cfg.CONF.os_admin_password,
-        admin_tenant_name=cfg.CONF.os_admin_tenant_name,
+        admin_tenant_name=cfg.CONF.os_admin_project_name,
         auth_version=cfg.CONF.os_auth_version,
     )(app.wsgi_app)
 
