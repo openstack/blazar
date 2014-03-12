@@ -38,7 +38,7 @@ class RPCClient(object):
 
     def cast(self, name, **kwargs):
         ctx = context.current()
-        return self._client.cast(ctx.to_dict(), name, **kwargs)
+        self._client.cast(ctx.to_dict(), name, **kwargs)
 
     def call(self, name, **kwargs):
         ctx = context.current()
