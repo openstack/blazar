@@ -1,0 +1,9 @@
+Climate REST API docs
+*********************
+
+This page includes documentation for Climate APIs.
+
+.. toctree::
+   :maxdepth: 1
+
+   rest_api_v1.0
