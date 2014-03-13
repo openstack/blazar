@@ -18,6 +18,13 @@ Overview
 User guide
 ----------
 
+**Installation**
+
+.. toctree::
+   :maxdepth: 1
+
+   userdoc/installation.guide
+
 **APIs**
 
 .. toctree::
