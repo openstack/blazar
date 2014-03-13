@@ -119,3 +119,64 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
     def _check_2bcfe76b0474(self, engine, data):
         self.assertColumnExists(engine, 'leases', 'project_id')
         self.assertColumnNotExists(engine, 'leases', 'tenant_id')
+
+    def _pre_upgrade_1fd6c2eded89(self, engine):
+        data = [{
+            'id': '1',
+            'hypervisor_hostname': 'host01',
+            'hypervisor_type': 'QEMU',
+            'hypervisor_version': 1000000,
+            'service_name': 'host01',
+            'vcpus': 1,
+            'memory_mb': 8192,
+            'local_gb': 50,
+            'cpu_info': "{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                        "\"arch\": \"x86_64\", \"features\": [],"
+                        " \"topology\": {\"cores\": 1}}",
+            'extra_capas': {'vgpus': 2}},
+            {'id': '2',
+             'hypervisor_hostname': 'host01',
+             'hypervisor_type': 'QEMU',
+             'hypervisor_version': 1000000,
+             'service_name': 'host02',
+             'vcpus': 1,
+             'memory_mb': 8192,
+             'local_gb': 50,
+             'cpu_info': "{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                         "\"arch\": \"x86_64\", \"features\": [],"
+                         " \"topology\": {\"cores\": 1}}",
+             'extra_capas': {'vgpus': 2}}]
+        computehosts_table = self.get_table(engine, 'computehosts')
+        engine.execute(computehosts_table.insert(), data)
+        return data
+
+    def _check_1fd6c2eded89(self, engine, data):
+        self.assertColumnExists(engine, 'computehosts', 'trust_id')
+
+        metadata = sqlalchemy.MetaData()
+        metadata.bind = engine
+        computehosts_table = self.get_table(engine, 'computehosts')
+
+        all_computehosts = computehosts_table.select().execute()
+        for computehost in all_computehosts:
+            self.assertIn(computehost.trust_id, ['', None])
+
+        data = {'id': '3',
+                'hypervisor_hostname': 'host01',
+                'hypervisor_type': 'QEMU',
+                'hypervisor_version': 1000000,
+                'service_name': 'host02',
+                'vcpus': 1,
+                'memory_mb': 8192,
+                'local_gb': 50,
+                'cpu_info': "{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                            "\"arch\": \"x86_64\", \"features\": [],"
+                            " \"topology\": {\"cores\": 1}}",
+                'extra_capas': {'vgpus': 2},
+                'trust_id': None}
+
+        if engine.name != 'sqlite':
+            self.assertRaises(sqlalchemy.exc.DBAPIError,
+                              engine.execute,
+                              computehosts_table.insert(),
+                              data)

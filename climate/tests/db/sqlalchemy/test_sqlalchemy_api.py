@@ -45,7 +45,8 @@ def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
             'resource_type': host_plugin.RESOURCE_TYPE,
             'hypervisor_properties': '[\"=\", \"$hypervisor_type\", \"QEMU\"]',
             'resource_properties': '',
-            'min': 1, 'max': 1}
+            'min': 1, 'max': 1,
+            'trust_id': 'exxee111qwwwwe'}
 
 
 def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
@@ -161,7 +162,8 @@ def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
             'reservation_id': reservation_id,
             'resource_properties': "fake",
             'hypervisor_properties': "fake",
-            'min': 1, 'max': 1}
+            'min': 1, 'max': 1,
+            'trust_id': 'exxee111qwwwwe'}
 
 
 def _get_fake_cpu_info():
@@ -181,7 +183,8 @@ def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
             'hypervisor_version': 1000,
             'memory_mb': mem,
             'local_gb': disk,
-            'status': 'free'
+            'status': 'free',
+            'trust_id': 'exxee111qwwwwe',
             }
 
 

@@ -90,6 +90,10 @@ class LeaseNameAlreadyExists(exceptions.ClimateException):
     msg_fmt = _("The lease with name: %(name)s already exists")
 
 
+class MissingTrustId(exceptions.ClimateException):
+    msg_fmt = _("A trust id is required")
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.ClimateException):
@@ -137,3 +141,7 @@ class InvalidState(exceptions.ClimateException):
 
 class InvalidStateUpdate(InvalidState):
     msg_fmt = _("Unable to update ID %(id)s state with %(action)s:%(status)s")
+
+
+class ProjectIdNotFound(exceptions.ClimateException):
+    msg_fmt = _("No project_id found in current context")

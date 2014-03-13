@@ -23,6 +23,7 @@ from climate.plugins import oshosts as host_plugin
 from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
 from climate.utils.openstack import base
+from climate.utils.openstack import nova
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 
@@ -127,6 +128,20 @@ class ReservationPoolTestCase(tests.TestCase):
 
         self.nova.aggregates.create.assert_called_once_with(self.pool_name,
                                                             None)
+
+    def test_create_no_project_id(self):
+        self.patch(self.nova.aggregates, 'create').return_value = \
+            self.fake_aggregate
+
+        self.nova_wrapper = self.patch(nova.NovaClientWrapper, 'nova')
+
+        def raiseRuntimeError():
+            raise RuntimeError()
+
+        self.context_mock.side_effect = raiseRuntimeError
+
+        self.assertRaises(manager_exceptions.ProjectIdNotFound,
+                          self.pool.create)
 
     def test_delete_with_host(self):
         self._patch_get_aggregate_from_name_or_id()

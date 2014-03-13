@@ -20,7 +20,6 @@ import eventlet
 from oslo.config import cfg
 from stevedore import enabled
 
-from climate import context
 from climate.db import api as db_api
 from climate.db import exceptions as db_ex
 from climate import exceptions as common_ex
@@ -173,6 +172,11 @@ class ManagerService(service_utils.RPCServer):
 
         Return either the model of created lease or None if any error.
         """
+        try:
+            trust_id = lease_values.pop('trust_id')
+        except KeyError:
+            raise exceptions.MissingTrustId()
+
         # Remove and keep reservation values
         reservations = lease_values.pop("reservations", [])
 
@@ -196,78 +200,80 @@ class ManagerService(service_utils.RPCServer):
             raise common_ex.NotAuthorized(
                 'Start date must later than current date')
 
-        ctx = context.current()
-        lease_values['user_id'] = ctx.user_id
-        lease_values['project_id'] = ctx.project_id
-        lease_values['start_date'] = start_date
-        lease_values['end_date'] = end_date
+        with trusts.create_ctx_from_trust(trust_id) as ctx:
+            lease_values['user_id'] = ctx.user_id
+            lease_values['project_id'] = ctx.project_id
+            lease_values['start_date'] = start_date
+            lease_values['end_date'] = end_date
 
-        if not lease_values.get('events'):
-            lease_values['events'] = []
+            if not lease_values.get('events'):
+                lease_values['events'] = []
 
-        lease_values['events'].append({'event_type': 'start_lease',
-                                       'time': start_date,
-                                       'status': 'UNDONE'})
-        lease_values['events'].append({'event_type': 'end_lease',
-                                       'time': end_date,
-                                       'status': 'UNDONE'})
+            lease_values['events'].append({'event_type': 'start_lease',
+                                           'time': start_date,
+                                           'status': 'UNDONE'})
+            lease_values['events'].append({'event_type': 'end_lease',
+                                           'time': end_date,
+                                           'status': 'UNDONE'})
 
-        before_end_date = lease_values.get('before_end_notification', None)
-        if before_end_date:
-            # incoming param. Validation check
+            before_end_date = lease_values.get('before_end_notification', None)
+            if before_end_date:
+                # incoming param. Validation check
+                try:
+                    before_end_date = self._date_from_string(
+                        before_end_date)
+                    self._check_date_within_lease_limits(before_end_date,
+                                                         lease_values)
+                except common_ex.ClimateException as e:
+                    LOG.error("Invalid before_end_date param. %s" % e.message)
+                    raise e
+            elif CONF.manager.notify_hours_before_lease_end > 0:
+                delta = datetime.timedelta(
+                    hours=CONF.manager.notify_hours_before_lease_end)
+                before_end_date = lease_values['end_date'] - delta
+
+            if before_end_date:
+                event = {'event_type': 'before_end_lease',
+                         'status': 'UNDONE'}
+                lease_values['events'].append(event)
+                self._update_before_end_event_date(event, before_end_date,
+                                                   lease_values)
+
             try:
-                before_end_date = self._date_from_string(
-                    before_end_date)
-                self._check_date_within_lease_limits(before_end_date,
-                                                     lease_values)
-            except common_ex.ClimateException as e:
-                LOG.error("Invalid before_end_date param. %s" % e.message)
-                raise e
-        elif CONF.manager.notify_hours_before_lease_end > 0:
-            delta = datetime.timedelta(
-                hours=CONF.manager.notify_hours_before_lease_end)
-            before_end_date = lease_values['end_date'] - delta
-
-        if before_end_date:
-            event = {'event_type': 'before_end_lease',
-                     'status': 'UNDONE'}
-            lease_values['events'].append(event)
-            self._update_before_end_event_date(event, before_end_date,
-                                               lease_values)
-
-        try:
-            lease = db_api.lease_create(lease_values)
-            lease_id = lease['id']
-        except db_ex.ClimateDBDuplicateEntry:
-            LOG.exception('Cannot create a lease - duplicated lease name')
-            raise exceptions.LeaseNameAlreadyExists(name=lease_values['name'])
-        except db_ex.ClimateDBException:
-            LOG.exception('Cannot create a lease')
-            raise
-        else:
-            try:
-                for reservation in reservations:
-                    reservation['lease_id'] = lease['id']
-                    reservation['start_date'] = lease['start_date']
-                    reservation['end_date'] = lease['end_date']
-                    resource_type = reservation['resource_type']
-                    if resource_type in self.plugins:
-                        self.plugins[resource_type].create_reservation(
-                            reservation)
-                    else:
-                        raise exceptions.UnsupportedResourceType(resource_type)
-            except (exceptions.UnsupportedResourceType,
-                    common_ex.ClimateException):
-                LOG.exception("Failed to create reservation for a lease. "
-                              "Rollback the lease and associated reservations")
-                db_api.lease_destroy(lease_id)
+                lease = db_api.lease_create(lease_values)
+                lease_id = lease['id']
+            except db_ex.ClimateDBDuplicateEntry:
+                LOG.exception('Cannot create a lease - duplicated lease name')
+                raise exceptions.LeaseNameAlreadyExists(
+                    name=lease_values['name'])
+            except db_ex.ClimateDBException:
+                LOG.exception('Cannot create a lease')
                 raise
-
             else:
-                lease = db_api.lease_get(lease['id'])
-                with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+                try:
+                    for reservation in reservations:
+                        reservation['lease_id'] = lease['id']
+                        reservation['start_date'] = lease['start_date']
+                        reservation['end_date'] = lease['end_date']
+                        resource_type = reservation['resource_type']
+                        if resource_type in self.plugins:
+                            self.plugins[resource_type].create_reservation(
+                                reservation)
+                        else:
+                            raise exceptions.UnsupportedResourceType(
+                                resource_type)
+                except (exceptions.UnsupportedResourceType,
+                        common_ex.ClimateException):
+                    LOG.exception("Failed to create reservation for a lease. "
+                                  "Rollback the lease and associated "
+                                  "reservations")
+                    db_api.lease_destroy(lease_id)
+                    raise
+
+                else:
+                    lease = db_api.lease_get(lease['id'])
                     self._send_notification(lease, ctx, events=['create'])
-                return lease
+                    return lease
 
     def update_lease(self, lease_id, values):
         if not values:
@@ -320,22 +326,25 @@ class ManagerService(service_utils.RPCServer):
             raise common_ex.NotAuthorized(
                 'End date must be later than current and start date')
 
-        if before_end_date:
-            try:
-                before_end_date = self._date_from_string(before_end_date)
-                self._check_date_within_lease_limits(before_end_date, values)
-            except common_ex.ClimateException as e:
-                LOG.error("Invalid before_end_date param. %s" % e.message)
-                raise e
+        with trusts.create_ctx_from_trust(lease['trust_id']):
+            if before_end_date:
+                try:
+                    before_end_date = self._date_from_string(before_end_date)
+                    self._check_date_within_lease_limits(before_end_date,
+                                                         values)
+                except common_ex.ClimateException as e:
+                    LOG.error("Invalid before_end_date param. %s" % e.message)
+                    raise e
 
-        #TODO(frossigneux) rollback if an exception is raised
-        for reservation in \
-                db_api.reservation_get_all_by_lease_id(lease_id):
-            reservation['start_date'] = values['start_date']
-            reservation['end_date'] = values['end_date']
-            resource_type = reservation['resource_type']
-            self.plugins[resource_type].update_reservation(
-                reservation['id'], reservation)
+            #TODO(frossigneux) rollback if an exception is raised
+            for reservation in \
+                    db_api.reservation_get_all_by_lease_id(lease_id):
+                reservation['start_date'] = values['start_date']
+                reservation['end_date'] = values['end_date']
+                resource_type = reservation['resource_type']
+                self.plugins[resource_type].update_reservation(
+                    reservation['id'],
+                    reservation)
 
         event = db_api.event_get_first_sorted_by_filters(
             'lease_id',

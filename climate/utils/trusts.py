@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 from oslo.config import cfg
 
 from climate import context
@@ -69,3 +70,23 @@ def create_ctx_from_trust(trust_id):
         service_catalog=client.service_catalog.catalog['catalog'],
         project_id=client.tenant_id,
     )
+
+
+def use_trust_auth():
+    """This decorator creates a keystone trust, and adds the trust_id to the
+    parameter of the decorated method.
+    """
+    def decorator(func):
+
+        @functools.wraps(func)
+        def wrapped(self, to_update):
+            if to_update is not None:
+                trust = create_trust()
+                if isinstance(to_update, dict):
+                    to_update.update({'trust_id': trust.id})
+                elif isinstance(to_update, object):
+                    setattr(to_update, 'trust_id', trust.id)
+            return func(self, to_update)
+
+        return wrapped
+    return decorator

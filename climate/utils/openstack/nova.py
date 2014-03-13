@@ -131,15 +131,11 @@ class ServerManager(servers.ServerManager):
 
 
 class NovaClientWrapper(object):
-    def __init__(self):
-        self._nova = None
-        self.username = None
-        self.api_key = None
-        self.project_id = None
-
     @property
     def nova(self):
-        return ClimateNovaClient(
-            username=self.username,
-            api_key=self.api_key,
-            project_id=self.project_id)
+        ctx = context.current()
+        nova = ClimateNovaClient(username=ctx.user_name,
+                                 api_key=None,
+                                 project_id=ctx.project_id,
+                                 ctx=ctx)
+        return nova

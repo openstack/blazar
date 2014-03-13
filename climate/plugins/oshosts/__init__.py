@@ -13,20 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.config import cfg
-
 RESOURCE_TYPE = u'physical:host'
-
-admin_opts = [
-    cfg.StrOpt('climate_username',
-               default='climate_admin',
-               help='Name of the user for write operations'),
-    cfg.StrOpt('climate_password',
-               default='climate_password',
-               help='Password of the user for write operations'),
-    cfg.StrOpt('climate_project_name',
-               default='admin',
-               help='Project of the user for write operations'),
-]
-
-cfg.CONF.register_opts(admin_opts, group=RESOURCE_TYPE)

@@ -51,15 +51,8 @@ CONF.register_opts(OPTS, group=plugin.RESOURCE_TYPE)
 class ReservationPool(nova.NovaClientWrapper):
     def __init__(self):
         super(ReservationPool, self).__init__()
-        self.ctx = context.current()
         self.config = CONF[plugin.RESOURCE_TYPE]
         self.freepool_name = self.config.aggregate_freepool_name
-
-        # Used by nova cli
-        config = cfg.CONF[plugin.RESOURCE_TYPE]
-        self.username = config.climate_username
-        self.api_key = config.climate_password
-        self.project_id = config.climate_project_name
 
     def get_aggregate_from_name_or_id(self, aggregate_obj):
         """Return an aggregate by name or an id."""
@@ -115,7 +108,16 @@ class ReservationPool(nova.NovaClientWrapper):
                       'without Availability Zone' % name)
             agg = self.nova.aggregates.create(name, None)
 
-        meta = {self.config.climate_owner: self.ctx.project_id}
+        project_id = None
+        try:
+            ctx = context.current()
+            project_id = ctx.project_id
+        except RuntimeError:
+            e = manager_exceptions.ProjectIdNotFound()
+            LOG.error(e.message)
+            raise e
+
+        meta = {self.config.climate_owner: project_id}
         self.nova.aggregates.set_metadata(agg, meta)
 
         return agg

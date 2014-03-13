@@ -15,6 +15,7 @@
 
 from climate.manager.oshosts import rpcapi as manager_rpcapi
 from climate import policy
+from climate.utils import trusts
 
 
 class API(object):
@@ -27,6 +28,7 @@ class API(object):
         return self.manager_rpcapi.list_computehosts()
 
     @policy.authorize('oshosts', 'create')
+    @trusts.use_trust_auth()
     def create_computehost(self, data):
         """Create new computehost.
 

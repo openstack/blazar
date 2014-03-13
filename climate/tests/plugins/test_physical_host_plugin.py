@@ -31,6 +31,7 @@ from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
 from climate.utils.openstack import base
+from climate.utils import trusts
 from novaclient import client as nova_client
 
 
@@ -57,15 +58,6 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
         self.db_api = db_api
         self.db_host_extra_capability_get_all_per_host = (
             self.patch(self.db_api, 'host_extra_capability_get_all_per_host'))
-
-    def test_setup(self):
-        pool = self.patch(self.rp.ReservationPool, '__init__')
-        pool.return_value = None
-        inventory = self.patch(self.nova_inventory.NovaInventory, '__init__')
-        inventory.return_value = None
-        self.fake_phys_plugin.setup(None)
-        pool.assert_called_once_with()
-        inventory.assert_called_once_with()
 
     def test__get_extra_capabilities_with_values(self):
         self.db_host_extra_capability_get_all_per_host.return_value = [
@@ -114,6 +106,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'hypervisor_version': 1,
             'memory_mb': 8192,
             'local_gb': 10,
+            'trust_id': 'exxee111qwwwwe',
         }
 
         self.patch(base, 'url_for').return_value = 'http://foo.bar'
@@ -164,6 +157,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         self.fake_phys_plugin.setup(None)
 
+        self.trusts = trusts
+        self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
+        self.trust_create = self.patch(self.trusts, 'create_trust')
+
     def test_get_host(self):
         host = self.fake_phys_plugin.get_computehost(self.fake_host_id)
         self.db_host_get.assert_called_once_with('1')
@@ -205,9 +202,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_extra_capability_create.assert_called_once_with(fake_capa)
         self.assertEqual(host, fake_host)
 
-    def test_create_host_with_invalid_values(self):
-        self.assertRaises(manager_exceptions.InvalidHost,
+    def test_create_host_without_trust_id(self):
+        self.assertRaises(manager_exceptions.MissingTrustId,
                           self.fake_phys_plugin.create_computehost, {})
+
+    def test_create_host_without_host_id(self):
+        self.assertRaises(manager_exceptions.InvalidHost,
+                          self.fake_phys_plugin.create_computehost,
+                          {'trust_id': 'exxee111qwwwwe'})
 
     def test_create_host_with_existing_vms(self):
         self.get_servers_per_host.return_value = ['server1', 'server2']

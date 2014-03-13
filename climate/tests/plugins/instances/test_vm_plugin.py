@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import sys
+
+import eventlet
 import testtools
 
 from climate import exceptions as climate_exceptions
@@ -28,25 +30,31 @@ from novaclient import exceptions as nova_exceptions
 class VMPluginTestCase(tests.TestCase):
     def setUp(self):
         super(VMPluginTestCase, self).setUp()
-        self.plugin = vm_plugin.VMPlugin()
         self.nova = nova
         self.exc = climate_exceptions
         self.logging = logging
         self.sys = sys
 
-        self.client = self.patch(self.nova, 'ClimateNovaClient')
+        # To speed up the test run
+        self.eventlet = eventlet
+        self.eventlet_sleep = self.patch(self.eventlet, 'sleep')
+
         self.fake_id = '1'
+
+        self.nova_wrapper = self.patch(self.nova.NovaClientWrapper, 'nova')
+        self.plugin = vm_plugin.VMPlugin()
 
     def test_on_start_ok(self):
         self.plugin.on_start(self.fake_id)
 
-        self.client.return_value.servers.unshelve.assert_called_once_with('1')
+        self.nova_wrapper.servers.unshelve.assert_called_once_with('1')
 
     @testtools.skip('Will be released later')
     def test_on_start_fail(self):
-        self.client.side_effect = \
-            self.nova.ClimateNovaClient.exceptions.Conflict
+        def raise_exception(resource_id):
+            raise climate_exceptions.Conflict(409)
 
+        self.nova_wrapper.servers.unshelve.side_effect = raise_exception
         self.plugin.on_start(self.fake_id)
 
     def test_on_end_create_image_ok(self):
@@ -57,36 +65,39 @@ class VMPluginTestCase(tests.TestCase):
 
         self.plugin.on_end(self.fake_id)
 
-        self.client.return_value.servers.create_image.assert_called_once_with(
-            '1')
+        self.nova_wrapper.servers.create_image.assert_called_once_with('1')
 
     def test_on_end_suspend_ok(self):
         self.patch(self.plugin, '_split_actions').return_value =\
             ['suspend']
 
         self.plugin.on_end(self.fake_id)
-        self.client.return_value.servers.suspend.assert_called_once_with('1')
+        self.nova_wrapper.servers.suspend.assert_called_once_with('1')
 
     def test_on_end_delete_ok(self):
         self.patch(self.plugin, '_split_actions').return_value =\
             ['delete']
 
         self.plugin.on_end(self.fake_id)
-        self.client.return_value.servers.delete.assert_called_once_with('1')
+        self.nova_wrapper.servers.delete.assert_called_once_with('1')
 
     def test_on_end_create_image_instance_or_not_found(self):
-        self.client.return_value.servers.create_image.side_effect = \
-            nova_exceptions.NotFound(404)
+        def raise_exception(resource_id):
+            raise nova_exceptions.NotFound(404)
+
+        self.nova_wrapper.servers.create_image.side_effect = raise_exception
 
         self.plugin.on_end(self.fake_id)
-        self.client.return_value.servers.delete.assert_called_once_with('1')
+        self.nova_wrapper.servers.delete.assert_called_once_with('1')
 
     def test_on_end_create_image_ko_invalid_vm_state(self):
-        self.client.return_value.servers.create_image.side_effect = \
-            nova_exceptions.Conflict(409)
+        def raise_exception(resource_id):
+            raise nova_exceptions.Conflict(409)
+
+        self.nova_wrapper.servers.create_image.side_effect = raise_exception
 
         self.plugin.on_end(self.fake_id)
-        self.client.return_value.servers.delete.assert_called_once_with('1')
+        self.nova_wrapper.servers.delete.assert_called_once_with('1')
 
     @testtools.skip('Will be released later')
     def test_on_end_timeout(self):

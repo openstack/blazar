@@ -41,17 +41,13 @@ class API(object):
         return self.manager_rpcapi.list_leases(project_id=project_id)
 
     @policy.authorize('leases', 'create')
+    @trusts.use_trust_auth()
     def create_lease(self, data):
         """Create new lease.
 
         :param data: New lease characteristics.
         :type data: dict
         """
-        # here API should go to Keystone API v3 and create trust
-        trust = trusts.create_trust()
-        trust_id = trust.id
-        data.update({'trust_id': trust_id})
-
         return self.manager_rpcapi.create_lease(data)
 
     @policy.authorize('leases', 'get')

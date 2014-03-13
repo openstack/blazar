@@ -764,20 +764,6 @@
 [physical:host]
 
 #
-# Options defined in climate.plugins.oshosts
-#
-
-# Name of the user for write operations (string value)
-#climate_username=climate_admin
-
-# Password of the user for write operations (string value)
-#climate_password=climate_password
-
-# Project of the user for write operations (string value)
-#climate_project_name=admin
-
-
-#
 # Options defined in climate.plugins.oshosts.host_plugin
 #
 

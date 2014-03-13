@@ -14,24 +14,14 @@
 # limitations under the License.
 
 from novaclient import exceptions as nova_exceptions
-from oslo.config import cfg
 
-from climate import context
 from climate.manager import exceptions as manager_exceptions
-from climate.plugins import oshosts as plugin
 from climate.utils.openstack import nova
 
 
 class NovaInventory(nova.NovaClientWrapper):
     def __init__(self):
         super(NovaInventory, self).__init__()
-        self.ctx = context.current()
-
-        # Used by nova cli
-        config = cfg.CONF[plugin.RESOURCE_TYPE]
-        self.username = config.climate_username
-        self.api_key = config.climate_password
-        self.project_id = config.climate_project_name
 
     def get_host_details(self, host):
         """Get Nova capabilities of a single host

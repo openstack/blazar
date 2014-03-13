@@ -114,19 +114,15 @@ class LeasesController(extensions.BaseController):
 
     @policy.authorize('leases', 'create')
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=202)
+    @trusts.use_trust_auth()
     def post(self, lease):
         """Creates a new lease.
 
         :param lease: a lease within the request body.
         """
-        # here API should go to Keystone API v3 and create trust
-        trust = trusts.create_trust()
-        trust_id = trust.id
-        lease_dct = lease.as_dict()
-        lease_dct.update({'trust_id': trust_id})
-
         # FIXME(sbauza): DB exceptions are currently catched and return a lease
         #                equal to None instead of being sent to the API
+        lease_dct = lease.as_dict()
         lease = pecan.request.rpcapi.create_lease(lease_dct)
         if lease is not None:
             return Lease.convert(lease)

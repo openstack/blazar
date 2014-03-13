@@ -20,6 +20,7 @@ import uuid
 
 
 from climate.tests import api
+from climate.utils import trusts
 
 
 def fake_computehost(**kw):
@@ -29,6 +30,8 @@ def fake_computehost(**kw):
         u'hypervisor_type': kw.get('hypervisor_type', u'QEMU'),
         u'vcpus': kw.get('vcpus', 1),
         u'hypervisor_version': kw.get('hypervisor_version', 1000000),
+        u'trust_id': kw.get('trust_id',
+                            u'35b17138-b364-4e6a-a131-8f3099c5be68'),
         u'memory_mb': kw.get('memory_mb', 8192),
         u'local_gb': kw.get('local_gb', 50),
         u'cpu_info': kw.get('cpu_info',
@@ -59,6 +62,12 @@ def fake_computehost_from_rpc(**kw):
     if extra_capas is not None:
         computehost.update(extra_capas)
     return computehost
+
+
+def fake_trust(id=fake_computehost()['trust_id']):
+    return type('Trust', (), {
+        'id': id,
+    })
 
 
 class TestIncorrectHostFromRPC(api.APITest):
@@ -206,6 +215,9 @@ class TestCreateHost(api.APITest):
 
         self.headers = {'X-Roles': 'admin'}
 
+        self.trusts = trusts
+        self.patch(self.trusts, 'create_trust').return_value = fake_trust()
+
     def test_create_one(self):
         response = self.post_json(self.path, self.fake_computehost_body,
                                   headers=self.headers)
@@ -293,7 +305,8 @@ class TestUpdateHost(api.APITest):
         self.headers = {'X-Roles': 'admin'}
 
     def test_update_one(self):
-        response = self.put_json(self.path, self.fake_computehost_body,
+        response = self.put_json(self.path, fake_computehost_request_body(
+                                 exclude=['trust_id']),
                                  headers=self.headers)
         self.assertEqual(202, response.status_int)
         self.assertEqual('application/json', response.content_type)

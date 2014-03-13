@@ -21,7 +21,6 @@ import uuid
 
 from oslo.config import cfg
 
-from climate import context
 from climate.db import api as db_api
 from climate.db import exceptions as db_ex
 from climate.db import utils as db_utils
@@ -31,6 +30,7 @@ from climate.plugins import oshosts as plugin
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
 from climate.utils.openstack import nova
+from climate.utils import trusts
 
 plugin_opts = [
     cfg.StrOpt('on_end',
@@ -53,16 +53,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     description = 'This plugin starts and shutdowns the hosts.'
     freepool_name = CONF[resource_type].aggregate_freepool_name
     pool = None
-    inventory = None
 
     def __init__(self):
         super(PhysicalHostPlugin, self).__init__()
-
-        # Used by nova cli
-        config = cfg.CONF[self.resource_type]
-        self.username = config.climate_username
-        self.api_key = config.climate_password
-        self.project_id = config.climate_project_name
 
     def create_reservation(self, values):
         """Create reservation."""
@@ -103,7 +96,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         """Update reservation."""
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
-        hosts_in_pool = self.pool.get_computehosts(
+        pool = rp.ReservationPool()
+        hosts_in_pool = pool.get_computehosts(
             reservation['resource_id'])
         if (values['start_date'] < lease['start_date'] or
                 values['end_date'] > lease['end_date']):
@@ -149,8 +143,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 if hosts_in_pool:
                     old_hosts = [allocation['compute_host_id']
                                  for allocation in allocations]
-                    self.pool.remove_computehost(reservation['resource_id'],
-                                                 old_hosts)
+                    pool.remove_computehost(reservation['resource_id'],
+                                            old_hosts)
                 for allocation in allocations:
                     db_api.host_allocation_destroy(allocation['id'])
                 for host_id in host_ids:
@@ -159,8 +153,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                          'reservation_id': reservation_id})
                     if hosts_in_pool:
                         host = db_api.host_get(host_id)
-                        self.pool.add_computehost(reservation['resource_id'],
-                                                  host['service_name'])
+                        pool.add_computehost(reservation['resource_id'],
+                                             host['service_name'])
 
     def on_start(self, resource_id):
         """Add the hosts in the pool."""
@@ -197,15 +191,6 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                     pool.delete(reservation['resource_id'])
                 #TODO(frossigneux) Kill, migrate, or increase fees...
 
-    def setup(self, conf):
-        # Create freepool if not exists
-        with context.ClimateContext() as ctx:
-            ctx = ctx.elevated()
-            if self.pool is None:
-                self.pool = rp.ReservationPool()
-            if self.inventory is None:
-                self.inventory = nova_inventory.NovaInventory()
-
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
         raw_extra_capabilities = \
@@ -237,52 +222,63 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         #  - Exception handling for HostNotFound
         host_id = host_values.pop('id', None)
         host_name = host_values.pop('name', None)
+        try:
+            trust_id = host_values.pop('trust_id')
+        except KeyError:
+            raise manager_ex.MissingTrustId()
 
         host_ref = host_id or host_name
         if host_ref is None:
             raise manager_ex.InvalidHost(host=host_values)
-        servers = self.inventory.get_servers_per_host(host_ref)
-        if servers:
-            raise manager_ex.HostHavingServers(host=host_ref,
-                                               servers=servers)
-        host_details = self.inventory.get_host_details(host_ref)
-        # NOTE(sbauza): Only last duplicate name for same extra capability will
-        #  be stored
-        to_store = set(host_values.keys()) - set(host_details.keys())
-        extra_capabilities_keys = to_store
-        extra_capabilities = dict(
-            (key, host_values[key]) for key in extra_capabilities_keys
-        )
-        self.pool.add_computehost(self.freepool_name,
-                                  host_details['service_name'])
 
-        host = None
-        cantaddextracapability = []
-        try:
-            host = db_api.host_create(host_details)
-        except db_ex.ClimateDBException:
-            #We need to rollback
-            # TODO(sbauza): Investigate use of Taskflow for atomic transactions
-            self.pool.remove_computehost(self.freepool_name,
-                                         host_details['service_name'])
-        if host:
-            for key in extra_capabilities:
-                values = {'computehost_id': host['id'],
-                          'capability_name': key,
-                          'capability_value': extra_capabilities[key],
-                          }
-                try:
-                    db_api.host_extra_capability_create(values)
-                except db_ex.ClimateDBException:
-                    cantaddextracapability.append(key)
-        if cantaddextracapability:
-            raise manager_ex.CantAddExtraCapability(
-                keys=cantaddextracapability,
-                host=host['id'])
-        if host:
-            return self.get_computehost(host['id'])
-        else:
-            return None
+        with trusts.create_ctx_from_trust(trust_id):
+            inventory = nova_inventory.NovaInventory()
+            servers = inventory.get_servers_per_host(host_ref)
+            if servers:
+                raise manager_ex.HostHavingServers(host=host_ref,
+                                                   servers=servers)
+            host_details = inventory.get_host_details(host_ref)
+            # NOTE(sbauza): Only last duplicate name for same extra capability
+            # will be stored
+            to_store = set(host_values.keys()) - set(host_details.keys())
+            extra_capabilities_keys = to_store
+            extra_capabilities = dict(
+                (key, host_values[key]) for key in extra_capabilities_keys
+            )
+            pool = rp.ReservationPool()
+            pool.add_computehost(self.freepool_name,
+                                 host_details['service_name'])
+
+            host = None
+            cantaddextracapability = []
+            try:
+                if trust_id:
+                    host_details.update({'trust_id': trust_id})
+                host = db_api.host_create(host_details)
+            except db_ex.ClimateDBException:
+                #We need to rollback
+                # TODO(sbauza): Investigate use of Taskflow for atomic
+                # transactions
+                pool.remove_computehost(self.freepool_name,
+                                        host_details['service_name'])
+            if host:
+                for key in extra_capabilities:
+                    values = {'computehost_id': host['id'],
+                              'capability_name': key,
+                              'capability_value': extra_capabilities[key],
+                              }
+                    try:
+                        db_api.host_extra_capability_create(values)
+                    except db_ex.ClimateDBException:
+                        cantaddextracapability.append(key)
+            if cantaddextracapability:
+                raise manager_ex.CantAddExtraCapability(
+                    keys=cantaddextracapability,
+                    host=host['id'])
+            if host:
+                return self.get_computehost(host['id'])
+            else:
+                return None
 
     def update_computehost(self, host_id, values):
         # NOTE (sbauza): Only update existing extra capabilites, don't create
@@ -316,23 +312,28 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         if not host:
             raise manager_ex.HostNotFound(host=host_id)
 
-        # TODO(sbauza):
-        #  - Check if no leases having this host scheduled
-        servers = self.inventory.get_servers_per_host(
-            host['hypervisor_hostname'])
-        if servers:
-            raise manager_ex.HostHavingServers(
-                host=host['hypervisor_hostname'], servers=servers)
-        try:
-            self.pool.remove_computehost(self.freepool_name,
-                                         host['service_name'])
-            # NOTE(sbauza): Extracapabilities will be destroyed thanks to
-            #  the DB FK.
-            db_api.host_destroy(host_id)
-        except db_ex.ClimateDBException:
-            # Nothing so bad, but we need to advert the admin he has to rerun
-            raise manager_ex.CantRemoveHost(host=host_id,
-                                            pool=self.freepool_name)
+        with trusts.create_ctx_from_trust(host['trust_id']):
+            # TODO(sbauza):
+            #  - Check if no leases having this host scheduled
+            inventory = nova_inventory.NovaInventory()
+            servers = inventory.get_servers_per_host(
+                host['hypervisor_hostname'])
+            if servers:
+                raise manager_ex.HostHavingServers(
+                    host=host['hypervisor_hostname'], servers=servers)
+
+            try:
+                pool = rp.ReservationPool()
+                pool.remove_computehost(self.freepool_name,
+                                        host['service_name'])
+                # NOTE(sbauza): Extracapabilities will be destroyed thanks to
+                #  the DB FK.
+                db_api.host_destroy(host_id)
+            except db_ex.ClimateDBException:
+                # Nothing so bad, but we need to advert the admin
+                # he has to rerun
+                raise manager_ex.CantRemoveHost(host=host_id,
+                                                pool=self.freepool_name)
 
     def _matching_hosts(self, hypervisor_properties, resource_properties,
                         count_range, start_date, end_date):

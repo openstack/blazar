@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from novaclient import client
 from novaclient import exceptions as nova_exceptions
+from novaclient.v1_1 import hypervisors
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions
@@ -77,15 +77,12 @@ class NovaInventoryTestCase(tests.TestCase):
         self.context = context
         self.patch(self.context, 'ClimateContext')
         self.nova_inventory = nova_inventory
-        self.client = client
-        self.client = self.patch(self.client, 'Client').return_value
         self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.inventory = self.nova_inventory.NovaInventory()
 
-        self.hypervisors_get = self.patch(self.inventory.nova.hypervisors,
-                                          'get')
+        self.hypervisors_get = self.patch(hypervisors.HypervisorManager, 'get')
         self.hypervisors_get.side_effect = FakeNovaHypervisors.get
-        self.hypervisors_search = self.patch(self.inventory.nova.hypervisors,
+        self.hypervisors_search = self.patch(hypervisors.HypervisorManager,
                                              'search')
         self.hypervisors_search.side_effect = FakeNovaHypervisors.search
 

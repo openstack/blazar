@@ -31,6 +31,7 @@ from climate.plugins import base
 from climate.plugins import dummy_vm_plugin
 from climate.plugins.oshosts import host_plugin
 from climate import tests
+from climate.utils.openstack import base as base_utils
 from climate.utils import trusts
 
 
@@ -82,6 +83,7 @@ class ServiceTestCase(tests.TestCase):
         self.dummy_plugin = dummy_vm_plugin
         self.trusts = trusts
         self.notifier_api = notifier_api
+        self.base_utils = base_utils
 
         self.fake_plugin = self.patch(self.dummy_plugin, 'DummyVMPlugin')
 
@@ -115,6 +117,7 @@ class ServiceTestCase(tests.TestCase):
 
         self.ctx = self.patch(self.context, 'ClimateContext')
         self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
+        self.trust_create = self.patch(self.trusts, 'create_trust')
         self.lease_get = self.patch(self.db_api, 'lease_get')
         self.lease_get.return_value = self.lease
         self.lease_list = self.patch(self.db_api, 'lease_list')
@@ -128,6 +131,8 @@ class ServiceTestCase(tests.TestCase):
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
               'on_end': self.fake_plugin.on_end}}
+        self.patch(
+            self.base_utils, 'url_for').return_value = 'http://www.foo.fake'
 
         self.addCleanup(self.cfg.CONF.clear_override,
                         'notify_hours_before_lease_end',
@@ -239,6 +244,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease_list.assert_called_once_with()
 
     def test_create_lease_now(self):
+        trust_id = 'exxee111qwwwwe'
         lease_values = {
             'id': self.lease_id,
             'reservations': [{'id': '111',
@@ -246,10 +252,12 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': 'now',
-            'end_date': '2026-12-13 13:13'}
+            'end_date': '2026-12-13 13:13',
+            'trust_id': trust_id}
 
         lease = self.manager.create_lease(lease_values)
 
+        self.trust_ctx.assert_called_once_with(trust_id)
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)
         expected_context = self.trust_ctx.return_value
@@ -259,6 +267,7 @@ class ServiceTestCase(tests.TestCase):
             'lease.create')
 
     def test_create_lease_some_time(self):
+        trust_id = 'exxee111qwwwwe'
         lease_values = {
             'id': self.lease_id,
             'reservations': [{'id': '111',
@@ -266,11 +275,14 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13'}
+            'end_date': '2026-12-13 13:13',
+            'trust_id': trust_id}
+
         self.lease['start_date'] = '2026-11-13 13:13'
 
         lease = self.manager.create_lease(lease_values)
 
+        self.trust_ctx.assert_called_once_with(trust_id)
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)
 
@@ -282,7 +294,8 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13'}
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'exxee111qwwwwe'}
         self.lease['start_date'] = '2026-11-13 13:13'
 
         lease = self.manager.create_lease(lease_values)
@@ -319,7 +332,8 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13'}
+            'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe'}
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.cfg.CONF.set_override('notify_hours_before_lease_end', 36,
@@ -360,6 +374,7 @@ class ServiceTestCase(tests.TestCase):
                               'status': 'FAKE PROGRESS'}],
             'start_date': start_date,
             'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe',
             'before_end_notification': before_end_notification}
         self.lease['start_date'] = '2026-11-13 13:13'
 
@@ -376,6 +391,7 @@ class ServiceTestCase(tests.TestCase):
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
             'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe',
             'before_end_notification': before_end_notification}
         self.lease['start_date'] = '2026-11-13 13:13'
 
@@ -390,7 +406,8 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13'}
+            'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe'}
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.cfg.CONF.set_override('notify_hours_before_lease_end', 0,
@@ -424,6 +441,7 @@ class ServiceTestCase(tests.TestCase):
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
             'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe',
             'before_end_notification': before_end_notification}
         self.lease['start_date'] = '2026-11-13 13:13'
 
@@ -455,7 +473,8 @@ class ServiceTestCase(tests.TestCase):
 
     def test_create_lease_wrong_date(self):
         lease_values = {'start_date': '2025-13-35 13:13',
-                        'end_date': '2025-12-31 13:13'}
+                        'end_date': '2025-12-31 13:13',
+                        'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
@@ -464,7 +483,8 @@ class ServiceTestCase(tests.TestCase):
         before_end_notification = '2026-14 10:13'
         lease_values = {'start_date': '2026-11-13 13:13',
                         'end_date': '2026-11-14 13:13',
-                        'before_end_notification': before_end_notification}
+                        'before_end_notification': before_end_notification,
+                        'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
@@ -475,7 +495,8 @@ class ServiceTestCase(tests.TestCase):
             datetime.datetime.strftime(
                 datetime.datetime.utcnow() - datetime.timedelta(days=1),
                 service.LEASE_DATE_FORMAT),
-            'end_date': '2025-12-31 13:13'}
+            'end_date': '2025-12-31 13:13',
+            'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
@@ -488,7 +509,8 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'unsupported:type',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13'}
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(manager_ex.UnsupportedResourceType,
                           self.manager.create_lease, lease_values)
@@ -497,11 +519,21 @@ class ServiceTestCase(tests.TestCase):
         lease_values = {
             'name': 'duplicated_name',
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13'}
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'exxee111qwwwwe'}
 
         self.patch(self.db_api,
                    'lease_create').side_effect = db_ex.ClimateDBDuplicateEntry
         self.assertRaises(manager_ex.LeaseNameAlreadyExists,
+                          self.manager.create_lease, lease_values)
+
+    def test_create_lease_without_trust_id(self):
+        lease_values = {
+            'name': 'name',
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13'}
+
+        self.assertRaises(manager_ex.MissingTrustId,
                           self.manager.create_lease, lease_values)
 
     def test_update_lease_completed_lease_rename(self):

@@ -185,6 +185,7 @@ class ComputeHost(mb.ClimateBase):
     memory_mb = sa.Column(sa.Integer, nullable=False)
     local_gb = sa.Column(sa.Integer, nullable=False)
     status = sa.Column(sa.String(13))
+    trust_id = sa.Column(sa.String(36), nullable=False)
     computehost_extra_capabilities = relationship('ComputeHostExtraCapability',
                                                   cascade="all,delete",
                                                   backref='computehost',

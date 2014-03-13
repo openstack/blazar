@@ -23,6 +23,7 @@ from climate.api.v2.controllers import types
 from climate import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
 from climate import policy
+from climate.utils import trusts
 
 from climate.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
@@ -57,6 +58,9 @@ class Host(base._Base):
 
     cpu_info = types.CPUInfo()
     "The CPU info JSON data given by the hypervisor"
+
+    trust_id = types.UuidType()
+    "The ID of the trust created for delegating the rights of the user"
 
     extra_capas = wtypes.DictType(wtypes.text, types.TextOrInteger())
     "Extra capabilities for the host"
@@ -125,6 +129,7 @@ class HostsController(extensions.BaseController):
 
     @policy.authorize('oshosts', 'create')
     @wsme_pecan.wsexpose(Host, body=Host, status_code=202)
+    @trusts.use_trust_auth()
     def post(self, host):
         """Creates a new host.
 

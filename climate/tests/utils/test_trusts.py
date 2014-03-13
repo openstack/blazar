@@ -31,11 +31,10 @@ class TestTrusts(tests.TestCase):
         self.keystone = keystone
 
         self.client = self.patch(self.keystone, 'ClimateKeystoneClient')
-
-    def test_create_trust(self):
         self.patch(self.context, 'current')
         self.patch(self.base, 'url_for').return_value = 'http://www.foo.fake'
 
+    def test_create_trust(self):
         correct_trust = self.client().trusts.create()
 
         trust = self.trusts.create_trust()
@@ -62,3 +61,35 @@ class TestTrusts(tests.TestCase):
         ctx = self.trusts.create_ctx_from_trust('1')
 
         self.assertEqual(fake_ctx_dict, ctx.__dict__)
+
+    def test_use_trust_auth_dict(self):
+        def to_wrap(self, arg_to_update):
+            return arg_to_update
+
+        correct_trust = self.client().trusts.create()
+        fill_with_trust_id = {}
+        updated_arg = self.trusts.use_trust_auth()(to_wrap)(self,
+                                                            fill_with_trust_id)
+        self.assertIn('trust_id', updated_arg)
+        self.assertEqual(correct_trust.id, updated_arg['trust_id'])
+
+    def test_use_trust_auth_object(self):
+        class AsDict(object):
+            def __init__(self, value):
+                self.value = value
+
+            def as_dict(self):
+                to_return = {}
+                for key in dir(self):
+                    to_return[key] = getattr(self, key)
+                return to_return
+
+        def to_wrap(self, arg_to_update):
+            return arg_to_update
+
+        correct_trust = self.client().trusts.create()
+        fill_with_trust_id = AsDict(1)
+        updated_arg = self.trusts.use_trust_auth()(to_wrap)(self,
+                                                            fill_with_trust_id)
+        self.assertIn('trust_id', updated_arg.as_dict())
+        self.assertEqual(correct_trust.id, updated_arg.trust_id)
