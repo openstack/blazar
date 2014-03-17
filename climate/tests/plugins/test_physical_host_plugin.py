@@ -57,32 +57,13 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
             self.patch(self.db_api, 'host_extra_capability_get_all_per_host'))
 
     def test_setup(self):
-        def fake_setup():
-            freepool = self.patch(self.fake_phys_plugin, '_freepool_exists')
-            freepool.return_value = False
-
         pool = self.patch(self.rp.ReservationPool, '__init__')
-        pool.side_effect = fake_setup
+        pool.return_value = None
         inventory = self.patch(self.nova_inventory.NovaInventory, '__init__')
         inventory.return_value = None
         self.fake_phys_plugin.setup(None)
         pool.assert_called_once_with()
         inventory.assert_called_once_with()
-        self.rp_create.assert_called_once_with(name='freepool', az=None)
-
-    def test__freepool_exists_with_freepool_present(self):
-        self.patch(self.rp.ReservationPool, 'get_aggregate_from_name_or_id')
-        self.fake_phys_plugin.setup(None)
-        self.assertEqual(self.fake_phys_plugin._freepool_exists(), True)
-
-    def test__freepool_exists_with_freepool_missing(self):
-        def fake_get_aggregate_from_name_or_id(*args, **kwargs):
-            raise manager_exceptions.AggregateNotFound
-        rp_mock = self.patch(self.rp.ReservationPool,
-                             'get_aggregate_from_name_or_id')
-        rp_mock.side_effect = fake_get_aggregate_from_name_or_id
-        self.fake_phys_plugin.setup(None)
-        self.assertEqual(self.fake_phys_plugin._freepool_exists(), False)
 
     def test__get_extra_capabilities_with_values(self):
         self.db_host_extra_capability_get_all_per_host.return_value = [

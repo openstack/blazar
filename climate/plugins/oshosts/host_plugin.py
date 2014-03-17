@@ -211,15 +211,6 @@ class PhysicalHostPlugin(base.BasePlugin):
                 self.pool = rp.ReservationPool()
             if self.inventory is None:
                 self.inventory = nova_inventory.NovaInventory()
-        if not self._freepool_exists():
-            self.pool.create(name=self.freepool_name, az=None)
-
-    def _freepool_exists(self):
-        try:
-            self.pool.get_aggregate_from_name_or_id(self.freepool_name)
-            return True
-        except manager_ex.AggregateNotFound:
-            return False
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
