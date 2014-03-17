@@ -11,6 +11,8 @@ if is_service_enabled climate; then
         create_climate_accounts
         configure_climate
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
+        echo_summary "Creating nova aggregate used as freepool for Climate Host Reservation"
+        create_climate_aggregate_freepool
         echo_summary "Starting Climate"
         start_climate
     elif [[ "$1" == "unstack" ]]; then

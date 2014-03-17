@@ -45,6 +45,8 @@ CLIMATE_SERVICE_HOST=${CLIMATE_SERVICE_HOST:-$SERVICE_HOST}
 CLIMATE_SERVICE_PORT=${CLIMATE_SERVICE_PORT:-1234}
 CLIMATE_SERVICE_PROTOCOL=${CLIMATE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 
+CLIMATE_FREEPOOL_NAME=${CLIMATE_FREEPOOL_NAME:-freepool}
+
 # Support entry points installation of console scripts
 if [[ -d $CLIMATE_DIR/bin ]]; then
     CLIMATE_BIN_DIR=$CLIMATE_DIR/bin
@@ -86,6 +88,7 @@ function configure_climate() {
     iniset $CLIMATE_CONF_FILE physical:host climate_username $CLIMATE_USER_NAME
     iniset $CLIMATE_CONF_FILE physical:host climate_password $SERVICE_PASSWORD
     iniset $CLIMATE_CONF_FILE physical:host climate_tenant_name $SERVICE_TENANT_NAME
+    iniset $CLIMATE_CONF_FILE physical:host aggregate_freepool_name $CLIMATE_FREEPOOL_NAME
 
     iniset $CLIMATE_CONF_FILE DEFAULT host $HOST_IP
     iniset $CLIMATE_CONF_FILE DEFAULT debug $CLIMATE_DEBUG
@@ -114,6 +117,10 @@ function configure_climate() {
     iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.reservation.Reservation"
 }
 
+# create_climate_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
+create_climate_aggregate_freepool() {
+    nova aggregate-create $CLIMATE_FREEPOOL_NAME
+}
 
 # create_climate_accounts() - Set up common required CLIMATE accounts
 #
