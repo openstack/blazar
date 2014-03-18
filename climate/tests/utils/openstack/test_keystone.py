@@ -41,8 +41,7 @@ class TestCKClient(tests.TestCase):
         self.password = 'fake_pass'
         self.tenant_name = 'fake_tenant'
         self.auth_url = 'fake_url'
-        self.trust = 'fake_trust'
-        self.mgmt_url = 'fake_url'
+        self.trust_id = 'fake_trust'
 
     def test_client_from_kwargs(self):
 
@@ -52,10 +51,26 @@ class TestCKClient(tests.TestCase):
                                             username=self.username,
                                             password=self.password,
                                             tenant_name=self.tenant_name,
+                                            trust_id=self.trust_id,
+                                            auth_url=self.auth_url)
+
+        self.client.assert_called_once_with(version=self.version,
+                                            trust_id=self.trust_id,
+                                            username=self.username,
+                                            password=self.password,
+                                            auth_url=self.auth_url)
+
+    def test_client_from_kwargs_and_ctx(self):
+
+        self.keystone.ClimateKeystoneClient(version=self.version,
+                                            username=self.username,
+                                            password=self.password,
+                                            tenant_name=self.tenant_name,
                                             auth_url=self.auth_url)
 
         self.client.assert_called_once_with(version=self.version,
                                             tenant_name=self.tenant_name,
+                                            endpoint='http://fake.com/',
                                             username=self.username,
                                             password=self.password,
                                             auth_url=self.auth_url)
