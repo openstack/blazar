@@ -25,10 +25,44 @@ from climate.db import api as db_api
 from climate import exceptions
 from climate.manager import exceptions as manager_ex
 from climate.manager import service
+from climate.plugins import base
 from climate.plugins import dummy_vm_plugin
 from climate.plugins.oshosts import host_plugin
 from climate import tests
 from climate.utils import trusts
+
+
+class FakeExtension():
+    def __init__(self, name, plugin):
+        self.name = name
+        self.plugin = plugin
+
+
+class FakePlugin(base.BasePlugin):
+    resource_type = 'fake:plugin'
+    title = 'Fake Plugin'
+    description = 'This plugin is fake.'
+
+    def on_start(self, resource_id):
+        return 'Resorce %s should be started this moment.' % resource_id
+
+    def on_end(self, resource_id):
+        return 'Resource %s should be deleted this moment.' % resource_id
+
+
+class FakePluginRaisesException(base.BasePlugin):
+    resource_type = 'fake:plugin:raise'
+    title = 'Fake Plugin that raise Exception during initialization'
+    description = 'This plugin is fake.'
+
+    def __init__(self):
+        raise Exception
+
+    def on_start(self, resource_id):
+        return 'Resorce %s should be started this moment.' % resource_id
+
+    def on_end(self, resource_id):
+        return 'Resource %s should be deleted this moment.' % resource_id
 
 
 class ServiceTestCase(tests.TestCase):
@@ -52,6 +86,7 @@ class ServiceTestCase(tests.TestCase):
         self.fake_phys_plugin = self.patch(self.host_plugin,
                                            'PhysicalHostPlugin')
 
+        self.ext_manager = self.patch(self.enabled, 'EnabledExtensionManager')
         self.manager = self.service.ManagerService()
 
         self.lease_id = '11-22-33'
@@ -67,7 +102,6 @@ class ServiceTestCase(tests.TestCase):
                       #'end_date': '2026-12-13 13:13'}
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
                                                     '%Y-%m-%d %H:%M')
-        self.extension = mock.MagicMock()
 
         self.patch(self.context, 'ClimateContext')
         self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
@@ -84,28 +118,38 @@ class ServiceTestCase(tests.TestCase):
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
               'on_end': self.fake_plugin.on_end}}
-        self.ext_manager = self.patch(self.enabled, 'EnabledExtensionManager')
 
     def test_start(self):
         #NOTE(starodubcevna): it's useless to test start() now, but may be in
         #future it become useful
         pass
 
-    @testtools.skip('WIP')
-    def test_get_plugins_all_okay(self):
+    def test_multiple_plugins_same_resource_type(self):
         config = self.patch(cfg, "CONF")
-        config.manager.plugins = ['dummy.vm.plugin']
-        self.extension.obj.resource_type = 'dummy.vm.plugin'
-        self.ext_manager.extensions = ['dummy.vm.plugin']
+        config.manager.plugins = ['fake.plugin.1', 'fake.plugin.2']
+        self.ext_manager.return_value.extensions = [
+            FakeExtension("fake.plugin.1", FakePlugin),
+            FakeExtension("fake.plugin.2", FakePlugin)]
 
-        self.manager._get_plugins()
+        self.assertRaises(manager_ex.PluginConfigurationError,
+                          self.manager._get_plugins)
+
+    def test_plugins_that_fail_to_init(self):
+        config = self.patch(cfg, "CONF")
+        config.manager.plugins = ['fake.plugin.1', 'fake.plugin.2']
+        self.ext_manager.return_value.extensions = [
+            FakeExtension("fake.plugin.1", FakePlugin),
+            FakeExtension("fake.plugin.2", FakePluginRaisesException)]
+
+        plugins = self.manager._get_plugins()
+        self.assertIn("fake:plugin", plugins)
+        self.assertNotIn("fake:plugin:raise", plugins)
 
     def test_get_bad_config_plugins(self):
         config = self.patch(cfg, "CONF")
         config.manager.plugins = ['foo.plugin']
 
-        self.assertRaises(manager_ex.PluginConfigurationError,
-                          self.manager._get_plugins)
+        self.assertEqual({}, self.manager._get_plugins())
 
     def test_setup_actions(self):
         actions = {'virtual:instance':
@@ -220,6 +264,19 @@ class ServiceTestCase(tests.TestCase):
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
+
+    def test_create_lease_unsupported_resource_type(self):
+        lease_values = {
+            'id': self.lease_id,
+            'reservations': [{'id': '111',
+                              'resource_id': '111',
+                              'resource_type': 'unsupported:type',
+                              'status': 'FAKE PROGRESS'}],
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13'}
+
+        self.assertRaises(manager_ex.UnsupportedResourceType,
+                          self.manager.create_lease, lease_values)
 
     def test_update_lease_completed_lease_rename(self):
         lease_values = {'name': 'renamed'}
@@ -531,8 +588,8 @@ class ServiceTestCase(tests.TestCase):
         self.fake_list_computehosts.return_value = 'foo'
 
         self.manager.plugins = {'physical:host': self.fake_phys_plugin}
-        self.assertRaises(AttributeError, getattr, self.manager,
-                          'plugin:not_present:list_computehosts')
+        self.assertRaises(manager_ex.UnsupportedResourceType, getattr,
+                          self.manager, 'plugin:not_present:list_computehosts')
 
     def test_getattr_with_missing_method_in_plugin(self):
         self.fake_list_computehosts = \

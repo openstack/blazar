@@ -70,22 +70,24 @@ class ManagerService(service_utils.RPCServer):
         extension_manager = enabled.EnabledExtensionManager(
             check_func=lambda ext: ext.name in config_plugins,
             namespace='climate.resource.plugins',
-            invoke_on_load=True
+            invoke_on_load=False
         )
 
         for ext in extension_manager.extensions:
-            if ext.obj.resource_type in plugins:
-                msg = "You have provided several plugins for " \
-                      "one resource type in configuration file. " \
-                      "Please set one plugin per resource type."
-                raise exceptions.PluginConfigurationError(error=msg)
+            try:
+                plugin_obj = ext.plugin()
+            except Exception as e:
+                LOG.warning("Could not load {0} plugin "
+                            "for resource type {1} '{2}'".format(
+                                ext.name, ext.plugin.resource_type, e))
+            else:
+                if plugin_obj.resource_type in plugins:
+                    msg = "You have provided several plugins for " \
+                          "one resource type in configuration file. " \
+                          "Please set one plugin per resource type."
+                    raise exceptions.PluginConfigurationError(error=msg)
 
-            plugins[ext.obj.resource_type] = ext.obj
-
-        if len(plugins) < len(config_plugins):
-            msg = 'Not all requested plugins are loaded.'
-            raise exceptions.PluginConfigurationError(error=msg)
-
+                plugins[plugin_obj.resource_type] = plugin_obj
         return plugins
 
     def _setup_actions(self):
@@ -211,11 +213,18 @@ class ManagerService(service_utils.RPCServer):
                     reservation['start_date'] = lease['start_date']
                     reservation['end_date'] = lease['end_date']
                     resource_type = reservation['resource_type']
-                    self.plugins[resource_type].create_reservation(reservation)
-            except (db_ex.ClimateDBException, RuntimeError):
+                    if resource_type in self.plugins:
+                        self.plugins[resource_type].create_reservation(
+                            reservation)
+                    else:
+                        raise exceptions.UnsupportedResourceType(resource_type)
+            except (exceptions.UnsupportedResourceType,
+                    db_ex.ClimateDBException, RuntimeError):
                 LOG.exception("Failed to create reservation for a lease. "
                               "Rollback the lease and associated reservations")
                 db_api.lease_destroy(lease_id)
+                raise
+
             else:
                 return db_api.lease_get(lease['id'])
 
@@ -276,8 +285,7 @@ class ManagerService(service_utils.RPCServer):
             reservation['end_date'] = values['end_date']
             resource_type = reservation['resource_type']
             self.plugins[resource_type].update_reservation(
-                reservation['id'],
-                reservation)
+                reservation['id'], reservation)
 
         event = db_api.event_get_first_sorted_by_filters(
             'lease_id',
@@ -318,7 +326,9 @@ class ManagerService(service_utils.RPCServer):
                         self.plugins[reservation['resource_type']]\
                             .on_end(reservation['resource_id'])
                     except (db_ex.ClimateDBException, RuntimeError):
-                        LOG.exception("Failed to delete a reservation")
+                        LOG.exception("Failed to delete a reservation "
+                                      "for a lease.")
+                        raise
                 db_api.lease_destroy(lease_id)
         else:
             raise common_ex.NotAuthorized(
@@ -375,6 +385,7 @@ class ManagerService(service_utils.RPCServer):
             except KeyError:
                 LOG.error("Plugin with resource type %s not found",
                           resource_type)
+                raise exceptions.UnsupportedResourceType(resource_type)
         except AttributeError:
             LOG.error("Plugin %s doesn't include method %s",
                       self.plugins[resource_type], method)

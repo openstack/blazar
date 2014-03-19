@@ -81,6 +81,10 @@ class InvalidDate(exceptions.ClimateException):
         '%(date)s is an invalid date. Required format: %(date_format)s')
 
 
+class UnsupportedResourceType(exceptions.ClimateException):
+    msg_fmt = _("The %(resource_type)s resource type is not supported")
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.ClimateException):
