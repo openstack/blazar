@@ -17,8 +17,13 @@ import sqlalchemy as sa
 import uuid
 
 from climate.db.sqlalchemy import model_base as mb
+#FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+#from climate.openstack.common import log as logging
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
+
+#FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+#LOG = logging.getLogger(__name__)
 
 ## Helpers
 
@@ -91,7 +96,24 @@ class Reservation(mb.ClimateBase):
                                            lazy='joined')
 
     def to_dict(self):
-        return super(Reservation, self).to_dict()
+        d = super(Reservation, self).to_dict()
+
+        if self.computehost_reservations:
+
+            res = self.computehost_reservations.to_dict()
+            d['hypervisor_properties'] = res['hypervisor_properties']
+            d['resource_properties'] = res['resource_properties']
+
+            if res['count_range']:
+                try:
+                    minMax = res['count_range'].split('-', 1)
+                    (d['min'], d['max']) = map(int, minMax)
+                except ValueError:
+                    #FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+                    #LOG.error("Invalid Range: {0}".format(res['count_range']))
+                    e = "Invalid count range: {0}".format(res['count_range'])
+                    raise RuntimeError(e)
+        return d
 
 
 class Event(mb.ClimateBase):
