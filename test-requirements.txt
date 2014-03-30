@@ -6,6 +6,8 @@ mock>=1.0
 mox>=0.5.3
 sphinx>=1.1.2,<1.2
 sphinxcontrib-httpdomain
+sqlalchemy-migrate>=0.8.2,!=0.8.4
+lockfile>=0.8
 
 discover
 fixtures>=0.3.14
