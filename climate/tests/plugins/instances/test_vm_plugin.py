@@ -22,6 +22,8 @@ from climate.plugins.instances import vm_plugin
 from climate import tests
 from climate.utils.openstack import nova
 
+from novaclient import exceptions as nova_exceptions
+
 
 class VMPluginTestCase(tests.TestCase):
     def setUp(self):
@@ -72,13 +74,19 @@ class VMPluginTestCase(tests.TestCase):
         self.plugin.on_end(self.fake_id)
         self.client.return_value.servers.delete.assert_called_once_with('1')
 
-    def test_on_end_instance_deleted(self):
-        self.client.side_effect = \
-            self.nova.ClimateNovaClient.exceptions.NotFound
+    def test_on_end_create_image_instance_or_not_found(self):
+        self.client.return_value.servers.create_image.side_effect = \
+            nova_exceptions.NotFound(404)
 
-        self.assertRaises(self.exc.TaskFailed,
-                          self.plugin.on_end,
-                          self.fake_id)
+        self.plugin.on_end(self.fake_id)
+        self.client.return_value.servers.delete.assert_called_once_with('1')
+
+    def test_on_end_create_image_ko_invalid_vm_state(self):
+        self.client.return_value.servers.create_image.side_effect = \
+            nova_exceptions.Conflict(409)
+
+        self.plugin.on_end(self.fake_id)
+        self.client.return_value.servers.delete.assert_called_once_with('1')
 
     @testtools.skip('Will be released later')
     def test_on_end_timeout(self):
