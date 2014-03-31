@@ -42,7 +42,10 @@ def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
     return {'id': id,
             'lease_id': lease_id,
             'resource_id': '1234' if not resource_id else resource_id,
-            'resource_type': host_plugin.RESOURCE_TYPE}
+            'resource_type': host_plugin.RESOURCE_TYPE,
+            'hypervisor_properties': '[\"=\", \"$hypervisor_type\", \"QEMU\"]',
+            'resource_properties': '',
+            'min': 1, 'max': 1}
 
 
 def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
@@ -132,6 +135,7 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
         values = _get_fake_phys_lease_values(id=_get_fake_random_uuid(),
                                              name=_get_fake_random_uuid())
     lease = db_api.lease_create(values)
+    phys_res = _get_fake_phys_reservation_values()
     for reservation in db_api.reservation_get_all_by_lease_id(lease['id']):
         allocation_values = {
             'id': _get_fake_random_uuid(),
@@ -139,6 +143,15 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
             'reservation_id': reservation['id']
         }
         db_api.host_allocation_create(allocation_values)
+        computehost_reservations = {
+            'id': _get_fake_random_uuid(),
+            'reservation_id': values['reservations'][0]['id'],
+            'resource_properties': phys_res['resource_properties'],
+            'hypervisor_properties': phys_res['hypervisor_properties'],
+            'count_range': "{0} - {1}".format(phys_res['min'],
+                                              phys_res['max'])
+        }
+        db_api.host_reservation_create(computehost_reservations)
     return lease
 
 
@@ -147,7 +160,8 @@ def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
     return {'id': id,
             'reservation_id': reservation_id,
             'resource_properties': "fake",
-            'hypervisor_properties': "fake"}
+            'hypervisor_properties': "fake",
+            'min': 1, 'max': 1}
 
 
 def _get_fake_cpu_info():
@@ -274,6 +288,22 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         """Delete a lease that doesn't exist and check that raises an error."""
         self.assertRaises(db_exceptions.ClimateDBNotFound,
                           db_api.lease_destroy, 'fake_id')
+
+    def test_get_physical_lease(self):
+        """Test if physical host reservation contains data of reservation."""
+        lease = _get_fake_phys_lease_values()
+        lease['events'].append(_get_fake_event_values(lease_id=lease['id']))
+        result = _create_physical_lease(values=lease)
+        result = db_api.lease_get(result['id'])
+        res = result.to_dict()
+        self.assertEqual(res['reservations'][0]['hypervisor_properties'],
+                         lease['reservations'][0]['hypervisor_properties'])
+        self.assertEqual(res['reservations'][0]['resource_properties'],
+                         lease['reservations'][0]['resource_properties'])
+        self.assertEqual(res['reservations'][0]['min'],
+                         lease['reservations'][0]['min'])
+        self.assertEqual(res['reservations'][0]['max'],
+                         lease['reservations'][0]['max'])
 
     def test_delete_correct_lease(self):
         """Delete a lease and check that deletion has been cascaded to FKs."""
