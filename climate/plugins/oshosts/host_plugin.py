@@ -312,15 +312,17 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         return self.get_computehost(host_id)
 
     def delete_computehost(self, host_id):
-        # TODO(sbauza):
-        #  - Check if no leases having this host scheduled
-        servers = self.inventory.get_servers_per_host(host_id)
-        if servers:
-            raise manager_ex.HostHavingServers(host=host_id,
-                                               servers=servers)
         host = db_api.host_get(host_id)
         if not host:
             raise manager_ex.HostNotFound(host=host_id)
+
+        # TODO(sbauza):
+        #  - Check if no leases having this host scheduled
+        servers = self.inventory.get_servers_per_host(
+            host['hypervisor_hostname'])
+        if servers:
+            raise manager_ex.HostHavingServers(
+                host=host['hypervisor_hostname'], servers=servers)
         try:
             self.pool.remove_computehost(self.freepool_name,
                                          host['hypervisor_hostname'])
