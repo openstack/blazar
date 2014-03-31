@@ -30,6 +30,7 @@ from climate.plugins.oshosts import host_plugin
 from climate.plugins.oshosts import nova_inventory
 from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
+from climate.utils.openstack import base
 from novaclient import client as nova_client
 
 
@@ -47,6 +48,7 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
         super(PhysicalHostPlugingSetupOnlyTestCase, self).setUp()
         self.context = context
         self.patch(self.context, 'ClimateContext')
+        self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.host_plugin = host_plugin
         self.fake_phys_plugin = self.host_plugin.PhysicalHostPlugin()
         self.rp = rp
@@ -113,6 +115,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'local_gb': 10,
         }
 
+        self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.host_plugin = host_plugin
         self.fake_phys_plugin = self.host_plugin.PhysicalHostPlugin()
         self.db_api = db_api

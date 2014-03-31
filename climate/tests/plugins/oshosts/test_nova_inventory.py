@@ -20,6 +20,7 @@ from climate import context
 from climate.manager import exceptions as manager_exceptions
 from climate.plugins.oshosts import nova_inventory
 from climate import tests
+from climate.utils.openstack import base
 
 
 class FakeNovaHypervisors(object):
@@ -75,6 +76,8 @@ class NovaInventoryTestCase(tests.TestCase):
         self.patch(self.context, 'ClimateContext')
         self.nova_inventory = nova_inventory
         self.client = client
+        self.client = self.patch(self.client, 'Client').return_value
+        self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.inventory = self.nova_inventory.NovaInventory()
 
         self.hypervisors_get = self.patch(self.inventory.nova.hypervisors,

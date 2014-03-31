@@ -21,6 +21,7 @@ from climate.openstack.common import log as logging
 from climate.plugins import base
 from climate.plugins import instances as plugin
 from climate.utils.openstack import nova
+from novaclient import exceptions as nova_exceptions
 
 LOG = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
 
-class VMPlugin(base.BasePlugin):
+class VMPlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Base plugin for VM reservation."""
     resource_type = plugin.RESOURCE_TYPE
     title = "Basic VM Plugin"
@@ -45,14 +46,12 @@ class VMPlugin(base.BasePlugin):
                    "It can start, snapshot and suspend VMs")
 
     def on_start(self, resource_id):
-        nova_client = nova.ClimateNovaClient()
         try:
-            nova_client.servers.unshelve(resource_id)
-        except nova_client.exceptions.Conflict:
+            self.nova.servers.unshelve(resource_id)
+        except nova_exceptions.Conflict:
             LOG.error("Instance have been unshelved")
 
     def on_end(self, resource_id):
-        nova_client = nova.ClimateNovaClient()
         actions = self._split_actions(CONF[plugin.RESOURCE_TYPE].on_end)
 
         # actions will be processed in following order:
@@ -65,11 +64,11 @@ class VMPlugin(base.BasePlugin):
         if 'create_image' in actions:
             with eventlet.timeout.Timeout(600, climate_exceptions.Timeout):
                 try:
-                    nova_client.servers.create_image(resource_id)
+                    self.nova.servers.create_image(resource_id)
                     eventlet.sleep(5)
-                    while not self._check_active(resource_id, nova_client):
+                    while not self._check_active(resource_id):
                         eventlet.sleep(1)
-                except nova_client.exceptions.NotFound:
+                except nova_exceptions.NotFound:
                     LOG.error('Instance %s has been already deleted. '
                               'Cannot create image.' % resource_id)
                 except climate_exceptions.Timeout:
@@ -78,20 +77,20 @@ class VMPlugin(base.BasePlugin):
 
         if 'suspend' in actions:
             try:
-                nova_client.servers.suspend(resource_id)
-            except nova_client.exceptions.NotFound:
+                self.nova.servers.suspend(resource_id)
+            except nova_exceptions.NotFound:
                 LOG.error('Instance %s has been already deleted. '
                           'Cannot suspend instance.' % resource_id)
 
         if 'delete' in actions:
             try:
-                nova_client.servers.delete(resource_id)
-            except nova_client.exceptions.NotFound:
+                self.nova.servers.delete(resource_id)
+            except nova_exceptions.NotFound:
                 LOG.error('Instance %s has been already deleted. '
                           'Cannot delete instance.' % resource_id)
 
-    def _check_active(self, resource_id, curr_client):
-        instance = curr_client.servers.get(resource_id)
+    def _check_active(self, resource_id):
+        instance = self.nova.servers.get(resource_id)
         task_state = getattr(instance, 'OS-EXT-STS:task_state', None)
         if task_state is None:
             return True
