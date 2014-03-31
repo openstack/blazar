@@ -316,7 +316,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = []
-        self.assertRaises(RuntimeError,
+        self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
                           self.fake_phys_plugin.create_reservation, values)
         reservation_create.assert_called_once_with(reservation_values)
         host_values = {
@@ -487,7 +487,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=1)
         self.assertRaises(
-            RuntimeError, self.fake_phys_plugin.update_reservation,
+            manager_exceptions.NotEnoughHostsAvailable,
+            self.fake_phys_plugin.update_reservation,
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
         host_reservation_get_by_reservation_id.assert_not_called()

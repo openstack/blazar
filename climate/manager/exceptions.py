@@ -114,3 +114,7 @@ class NoManagementUrl(exceptions.NotFound):
 
 class HypervisorNotFound(exceptions.ClimateException):
     msg_fmt = _("Aggregate '%(pool)s' not found!")
+
+
+class NotEnoughHostsAvailable(exceptions.ClimateException):
+    msg_fmt = _("Not enough hosts available")

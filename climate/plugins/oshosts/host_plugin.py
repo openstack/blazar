@@ -99,7 +99,7 @@ class PhysicalHostPlugin(base.BasePlugin):
             values['end_date'],
         )
         if not host_ids:
-            raise RuntimeError('Not enough hosts available')
+            raise manager_ex.NotEnoughHostsAvailable()
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
                                           'reservation_id': reservation['id']})
@@ -138,7 +138,7 @@ class PhysicalHostPlugin(base.BasePlugin):
                                 self._get_hypervisor_from_name(
                                     allocation['compute_host_id'])
                             ).__dict__['running_vms'] > 0):
-                        raise RuntimeError('Not enough hosts available')
+                        raise manager_ex.NotEnoughHostsAvailable()
             if allocations:
                 host_reservation = \
                     db_api.host_reservation_get_by_reservation_id(
@@ -150,7 +150,7 @@ class PhysicalHostPlugin(base.BasePlugin):
                     values['start_date'],
                     values['end_date'])
                 if not host_ids:
-                    raise RuntimeError('Not enough hosts available')
+                    raise manager_ex.NotEnoughHostsAvailable()
                 if hosts_in_pool:
                     old_hosts = [allocation['compute_host_id']
                                  for allocation in allocations]

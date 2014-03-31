@@ -219,7 +219,7 @@ class ManagerService(service_utils.RPCServer):
                     else:
                         raise exceptions.UnsupportedResourceType(resource_type)
             except (exceptions.UnsupportedResourceType,
-                    db_ex.ClimateDBException, RuntimeError):
+                    common_ex.ClimateException):
                 LOG.exception("Failed to create reservation for a lease. "
                               "Rollback the lease and associated reservations")
                 db_api.lease_destroy(lease_id)
