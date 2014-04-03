@@ -357,7 +357,7 @@ class ManagerService(service_utils.RPCServer):
                 )
             except common_ex.ClimateException:
                 LOG.exception("Failed to execute action %(action)s "
-                              "for lease %(lease)d"
+                              "for lease %(lease)s"
                               % {
                                   'action': action_time,
                                   'lease': lease_id,

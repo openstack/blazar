@@ -564,6 +564,21 @@ class ServiceTestCase(tests.TestCase):
             '111', {'status': 'IN_USE'})
         self.event_update.assert_called_once_with('1', {'status': 'DONE'})
 
+    def test_basic_action_raise_exception(self):
+        def raiseClimateException(resource_id):
+            raise exceptions.ClimateException(resource_id)
+
+        self.manager.resource_actions = \
+            {'virtual:instance':
+             {'on_start': self.fake_plugin.on_start,
+              'on_end': raiseClimateException}}
+
+        self.patch(self.manager, 'get_lease').return_value = self.lease
+
+        self.manager._basic_action(self.lease_id, '1', 'on_end')
+
+        self.event_update.assert_called_once_with('1', {'status': 'DONE'})
+
     def test_getattr_with_correct_plugin_and_method(self):
         self.fake_list_computehosts = \
             self.patch(self.fake_phys_plugin, 'list_computehosts')
