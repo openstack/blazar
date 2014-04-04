@@ -36,6 +36,7 @@ class FakeNovaHypervisors(object):
         local_gb = 10
 
         servers = ['server1', 'server2']
+        service = {'host': 'fake_name'}
 
     @classmethod
     def get(cls, host):
@@ -52,7 +53,7 @@ class FakeNovaHypervisors(object):
     def search(cls, host, servers=False):
         if host == 'multiple':
             return [cls.FakeHost, cls.FakeHost]
-        if host == cls.FakeHost.hypervisor_hostname:
+        if host == cls.FakeHost.service['host']:
             return [cls.FakeHost]
         else:
             raise nova_exceptions.NotFound(404)
@@ -61,6 +62,7 @@ class FakeNovaHypervisors(object):
     def expected(cls):
         return {'id': cls.FakeHost.id,
                 'hypervisor_hostname': cls.FakeHost.hypervisor_hostname,
+                'service_name': cls.FakeHost.service['host'],
                 'vcpus': cls.FakeHost.vcpus,
                 'cpu_info': cls.FakeHost.cpu_info,
                 'hypervisor_type': cls.FakeHost.hypervisor_type,

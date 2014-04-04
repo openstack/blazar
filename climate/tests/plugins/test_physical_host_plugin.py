@@ -107,6 +107,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_host = {
             'id': self.fake_host_id,
             'hypervisor_hostname': 'foo',
+            'service_name': 'foo',
             'vcpus': 4,
             'cpu_info': 'foo',
             'hypervisor_type': 'xen',
@@ -556,7 +557,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
         host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'hypervisor_hostname': 'host2'}
+        host_get.return_value = {'service_name': 'host2'}
         host_reservation_get_by_reservation_id = self.patch(
             self.db_api,
             'host_reservation_get_by_reservation_id')
@@ -627,7 +628,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             {'compute_host_id': 'host1'},
         ]
         host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'hypervisor_hostname': 'host1_hostname'}
+        host_get.return_value = {'service_name': 'host1_hostname'}
         add_computehost = self.patch(
             self.rp.ReservationPool, 'add_computehost')
 

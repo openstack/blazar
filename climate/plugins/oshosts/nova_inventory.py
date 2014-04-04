@@ -57,6 +57,7 @@ class NovaInventory(nova.NovaClientWrapper):
         try:
             return {'id': hypervisor.id,
                     'hypervisor_hostname': hypervisor.hypervisor_hostname,
+                    'service_name': hypervisor.service['host'],
                     'vcpus': hypervisor.vcpus,
                     'cpu_info': hypervisor.cpu_info,
                     'hypervisor_type': hypervisor.hypervisor_type,

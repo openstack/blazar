@@ -160,9 +160,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                          'reservation_id': reservation_id})
                     if hosts_in_pool:
                         host = db_api.host_get(host_id)
-                        host_name = host['hypervisor_hostname']
                         self.pool.add_computehost(reservation['resource_id'],
-                                                  host_name)
+                                                  host['service_name'])
 
     def on_start(self, resource_id):
         """Add the hosts in the pool."""
@@ -173,8 +172,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             for allocation in db_api.host_allocation_get_all_by_values(
                     reservation_id=reservation['id']):
                 host = db_api.host_get(allocation['compute_host_id'])
-                host_name = host['hypervisor_hostname']
-                pool.add_computehost(reservation['resource_id'], host_name)
+                pool.add_computehost(reservation['resource_id'],
+                                     host['service_name'])
 
     def on_end(self, resource_id):
         """Remove the hosts from the pool."""
@@ -255,7 +254,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         extra_capabilities = dict(
             (key, host_values[key]) for key in extra_capabilities_keys
         )
-        self.pool.add_computehost(self.freepool_name, host_ref)
+        self.pool.add_computehost(self.freepool_name,
+                                  host_details['service_name'])
 
         host = None
         cantaddextracapability = []
@@ -264,7 +264,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         except db_ex.ClimateDBException:
             #We need to rollback
             # TODO(sbauza): Investigate use of Taskflow for atomic transactions
-            self.pool.remove_computehost(self.freepool_name, host_ref)
+            self.pool.remove_computehost(self.freepool_name,
+                                         host_details['service_name'])
         if host:
             for key in extra_capabilities:
                 values = {'computehost_id': host['id'],
@@ -325,7 +326,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 host=host['hypervisor_hostname'], servers=servers)
         try:
             self.pool.remove_computehost(self.freepool_name,
-                                         host['hypervisor_hostname'])
+                                         host['service_name'])
             # NOTE(sbauza): Extracapabilities will be destroyed thanks to
             #  the DB FK.
             db_api.host_destroy(host_id)

@@ -112,3 +112,6 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
         self.assertTableExists(engine, 'events')
         self.assertTableExists(engine, 'computehost_allocations')
         self.assertTableExists(engine, 'computehost_reservations')
+
+    def _check_10e34bba18e8(self, engine, data):
+        self.assertColumnExists(engine, 'computehosts', 'service_name')

@@ -178,6 +178,7 @@ class ComputeHost(mb.ClimateBase):
     hypervisor_type = sa.Column(MediumText(), nullable=False)
     hypervisor_version = sa.Column(sa.Integer, nullable=False)
     hypervisor_hostname = sa.Column(sa.String(255), nullable=True)
+    service_name = sa.Column(sa.String(255), nullable=True)
     memory_mb = sa.Column(sa.Integer, nullable=False)
     local_gb = sa.Column(sa.Integer, nullable=False)
     status = sa.Column(sa.String(13))
