@@ -22,6 +22,7 @@ import testtools
 
 from climate import context
 from climate.db import api as db_api
+from climate.db import exceptions as db_ex
 from climate import exceptions
 from climate.manager import exceptions as manager_ex
 from climate.manager import service
@@ -276,6 +277,17 @@ class ServiceTestCase(tests.TestCase):
             'end_date': '2026-12-13 13:13'}
 
         self.assertRaises(manager_ex.UnsupportedResourceType,
+                          self.manager.create_lease, lease_values)
+
+    def test_create_lease_duplicated_name(self):
+        lease_values = {
+            'name': 'duplicated_name',
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13'}
+
+        self.patch(self.db_api,
+                   'lease_create').side_effect = db_ex.ClimateDBDuplicateEntry
+        self.assertRaises(manager_ex.LeaseNameAlreadyExists,
                           self.manager.create_lease, lease_values)
 
     def test_update_lease_completed_lease_rename(self):

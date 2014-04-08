@@ -85,6 +85,11 @@ class UnsupportedResourceType(exceptions.ClimateException):
     msg_fmt = _("The %(resource_type)s resource type is not supported")
 
 
+class LeaseNameAlreadyExists(exceptions.ClimateException):
+    code = 409
+    msg_fmt = _("The lease with name: %(name)s already exists")
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.ClimateException):

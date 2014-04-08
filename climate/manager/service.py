@@ -203,6 +203,9 @@ class ManagerService(service_utils.RPCServer):
         try:
             lease = db_api.lease_create(lease_values)
             lease_id = lease['id']
+        except db_ex.ClimateDBDuplicateEntry:
+            LOG.exception('Cannot create a lease - duplicated lease name')
+            raise exceptions.LeaseNameAlreadyExists(name=lease_values['name'])
         except db_ex.ClimateDBException:
             LOG.exception('Cannot create a lease')
             raise
