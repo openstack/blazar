@@ -7,3 +7,4 @@ This page includes documentation for Climate APIs.
    :maxdepth: 1
 
    rest_api_v1.0
+   rest_api_v2

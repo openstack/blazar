@@ -99,14 +99,14 @@ class ClimatePolicyTestCase(tests.TestCase):
     def test_adminpolicy(self):
         target = {'user_id': self.context.user_id,
                   'tenant_id': self.context.tenant_id}
-        action = "climate:os-hosts"
+        action = "climate:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def test_elevatedpolicy(self):
         target = {'user_id': self.context.user_id,
                   'tenant_id': self.context.tenant_id}
-        action = "climate:os-hosts"
+        action = "climate:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
         elevated_context = self.context.elevated()

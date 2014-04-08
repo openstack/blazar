@@ -26,8 +26,18 @@ import os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.coverage',
-              'sphinx.ext.pngmath', 'sphinx.ext.viewcode', 'sphinxcontrib.httpdomain']
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.doctest',
+              'sphinx.ext.todo',
+              'sphinx.ext.coverage',
+              'sphinx.ext.pngmath',
+              'sphinx.ext.viewcode',
+              'sphinxcontrib.httpdomain',
+              'sphinxcontrib.pecanwsme.rest',
+              'wsmeext.sphinxext',
+              ]
+
+wsme_protocols = ['restjson', 'restxml']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -42,8 +52,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'climate'
-copyright = u'2013, Mirantis Inc.'
+project = u'Climate'
+copyright = u'2013, Mirantis Inc.;2014, Bull.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

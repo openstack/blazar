@@ -88,3 +88,8 @@ class TaskFailed(ClimateException):
 
 class Timeout(ClimateException):
     msg_fmt = _('Current task failed with timeout')
+
+
+class InvalidInput(ClimateException):
+    code = 400
+    msg_fmt = _("Expected a %(cls)s type but received %(value)s.")

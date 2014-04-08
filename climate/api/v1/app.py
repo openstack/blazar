@@ -29,12 +29,6 @@ from climate.openstack.common.middleware import debug
 
 LOG = log.getLogger(__name__)
 
-cli_opts = [
-    cfg.BoolOpt('log_exchange', default=False,
-                help='Log request/response exchange details: environ, '
-                     'headers and bodies'),
-]
-
 CONF = cfg.CONF
 
 CONF.import_opt('os_auth_host', 'climate.config')
@@ -44,8 +38,7 @@ CONF.import_opt('os_admin_username', 'climate.config')
 CONF.import_opt('os_admin_password', 'climate.config')
 CONF.import_opt('os_admin_tenant_name', 'climate.config')
 CONF.import_opt('os_auth_version', 'climate.config')
-
-CONF.register_cli_opts(cli_opts)
+CONF.import_opt('log_exchange', 'climate.config')
 
 
 eventlet.monkey_patch(

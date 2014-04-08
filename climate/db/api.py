@@ -45,6 +45,11 @@ IMPL = db_api.DBAPI(db_options.CONF.database.backend,
 LOG = logging.getLogger(__name__)
 
 
+def get_instance():
+    """Return a DB API instance."""
+    return IMPL
+
+
 def setup_db():
     """Set up database, create tables, etc.
 
