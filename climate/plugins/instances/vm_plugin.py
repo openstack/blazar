@@ -74,6 +74,10 @@ class VMPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 except climate_exceptions.Timeout:
                     LOG.error('Image create failed with timeout. Take a look '
                               'at nova.')
+                except nova_exceptions.Conflict as e:
+                    LOG.warning('Instance is in a invalid state for'
+                                'create_image. Take a look at nova.'
+                                '(Request-ID: %s)' % e.request_id)
 
         if 'suspend' in actions:
             try:
