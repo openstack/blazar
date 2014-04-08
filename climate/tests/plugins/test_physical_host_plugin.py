@@ -269,12 +269,16 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.delete_computehost(self.fake_host_id)
 
         self.db_host_destroy.assert_called_once_with(self.fake_host_id)
+        self.get_servers_per_host.assert_called_once_with(
+            self.fake_host["hypervisor_hostname"])
 
     def test_delete_host_having_vms(self):
         self.get_servers_per_host.return_value = ['server1', 'server2']
         self.assertRaises(manager_exceptions.HostHavingServers,
                           self.fake_phys_plugin.delete_computehost,
                           self.fake_host_id)
+        self.get_servers_per_host.assert_called_once_with(
+            self.fake_host["hypervisor_hostname"])
 
     def test_delete_host_not_existing_in_db(self):
         self.db_host_get.return_value = None
