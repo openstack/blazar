@@ -112,7 +112,6 @@ function configure_climate() {
 
     iniadd $NOVA_CONF DEFAULT scheduler_available_filters "climatenova.scheduler.filters.climate_filter.ClimateFilter"
 
-    iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.default_reservation.Default_reservation"
     iniadd $NOVA_CONF DEFAULT osapi_compute_extension "climatenova.api.extensions.reservation.Reservation"
 
     # Database
