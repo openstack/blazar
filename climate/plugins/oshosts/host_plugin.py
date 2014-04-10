@@ -382,7 +382,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         # TODO(frossigneux) Support the "or" operator
         # Convert text to json
         if isinstance(requirements, six.string_types):
-            requirements = json.loads(requirements)
+            try:
+                requirements = json.loads(requirements)
+            except ValueError:
+                raise manager_ex.MalformedRequirements(rqrms=requirements)
+
         # Requirement list looks like ['<', '$ram', '1024']
         if self._requirements_with_three_elements(requirements):
             result = []
@@ -400,7 +404,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         elif isinstance(requirements, list) and not requirements:
             return requirements
         else:
-            raise RuntimeError('Malformed requirements')
+            raise manager_ex.MalformedRequirements(rqrms=requirements)
 
     def _requirements_with_three_elements(self, requirements):
         """Return true if requirement list looks like ['<', '$ram', '1024']."""
@@ -411,7 +415,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 isinstance(requirements[2], six.string_types) and
                 requirements[0] in ['==', '=', '!=', '>=', '<=', '>', '<'] and
                 len(requirements[1]) > 1 and requirements[1][0] == '$' and
-                len(requirements[2]) > 1)
+                len(requirements[2]) > 0)
 
     def _requirements_with_and_keyword(self, requirements):
         return (len(requirements) > 1 and

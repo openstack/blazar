@@ -123,3 +123,8 @@ class HypervisorNotFound(exceptions.ClimateException):
 
 class NotEnoughHostsAvailable(exceptions.ClimateException):
     msg_fmt = _("Not enough hosts available")
+
+
+class MalformedRequirements(exceptions.ClimateException):
+    code = 400
+    msg_fmt = _("Malformed requirements %(rqrms)s")
