@@ -37,6 +37,12 @@ ResourceReservationGroup = [
                         'publicURL', 'adminURL', 'internalURL'],
                help="The endpoint type to use for the resource_reservation "
                     "service."),
+    cfg.IntOpt('lease_interval',
+               default=10,
+               help="Time in seconds between lease status checks."),
+    cfg.IntOpt('lease_end_timeout',
+               default=300,
+               help="Timeout in seconds to wait for a lease to finish.")
 ]
 
 
