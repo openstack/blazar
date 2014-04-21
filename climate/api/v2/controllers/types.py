@@ -35,12 +35,15 @@ class UuidType(wtypes.UserType):
     # https://bugs.launchpad.net/wsme/+bug/1265590
     __name__ = name
 
-    # FIXME(sbauza): Backport latest trunk of UuidType, WSME==0.6 being buggy
-    #                with validate() returning None
-    @staticmethod
-    def validate(value):
+    def __init__(self, without_dashes=False):
+        self.without_dashes = without_dashes
+
+    def validate(self, value):
         try:
-            return six.text_type(uuid.UUID(value))
+            valid_uuid = six.text_type(uuid.UUID(value))
+            if self.without_dashes:
+                valid_uuid = valid_uuid.replace('-', '')
+            return valid_uuid
         except (TypeError, ValueError, AttributeError):
             error = 'Value should be UUID format'
             raise ValueError(error)
