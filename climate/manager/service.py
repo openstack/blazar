@@ -212,14 +212,28 @@ class ManagerService(service_utils.RPCServer):
                                        'time': end_date,
                                        'status': 'UNDONE'})
 
-        if CONF.manager.notify_hours_before_lease_end > 0:
+        before_end_date = lease_values.get('before_end_notification', None)
+        if before_end_date:
+            # incoming param. Validation check
+            try:
+                before_end_date = self._date_from_string(
+                    before_end_date)
+                self._check_date_within_lease_limits(before_end_date,
+                                                     lease_values)
+            except common_ex.ClimateException as e:
+                LOG.error("Invalid before_end_date param. %s" % e.message)
+                raise e
+        elif CONF.manager.notify_hours_before_lease_end > 0:
             delta = datetime.timedelta(
                 hours=CONF.manager.notify_hours_before_lease_end)
+            before_end_date = lease_values['end_date'] - delta
+
+        if before_end_date:
             event = {'event_type': 'before_end_lease',
                      'status': 'UNDONE'}
             lease_values['events'].append(event)
-
-            self._update_before_end_event_date(event, delta, lease_values)
+            self._update_before_end_event_date(event, before_end_date,
+                                               lease_values)
 
         try:
             lease = db_api.lease_create(lease_values)
@@ -270,6 +284,7 @@ class ManagerService(service_utils.RPCServer):
         end_date = values.get(
             'end_date',
             datetime.datetime.strftime(lease['end_date'], LEASE_DATE_FORMAT))
+        before_end_date = values.get('before_end_notification', None)
 
         now = datetime.datetime.utcnow()
         now = datetime.datetime(now.year,
@@ -304,6 +319,14 @@ class ManagerService(service_utils.RPCServer):
            values['end_date'] < values['start_date']):
             raise common_ex.NotAuthorized(
                 'End date must be later than current and start date')
+
+        if before_end_date:
+            try:
+                before_end_date = self._date_from_string(before_end_date)
+                self._check_date_within_lease_limits(before_end_date, values)
+            except common_ex.ClimateException as e:
+                LOG.error("Invalid before_end_date param. %s" % e.message)
+                raise e
 
         #TODO(frossigneux) rollback if an exception is raised
         for reservation in \
@@ -341,7 +364,8 @@ class ManagerService(service_utils.RPCServer):
         db_api.event_update(event['id'], {'time': values['end_date']})
 
         notifications = ['update']
-        self._update_before_end_event(lease, values, notifications)
+        self._update_before_end_event(lease, values, notifications,
+                                      before_end_date)
 
         db_api.lease_update(lease_id, values)
 
@@ -415,12 +439,21 @@ class ManagerService(service_utils.RPCServer):
             notification_api.send_lease_notification(ctx, payload,
                                                      'lease.%s' % event)
 
-    def _update_before_end_event_date(self, event, delta, lease):
-        event['time'] = lease['end_date'] - delta
+    def _check_date_within_lease_limits(self, date, lease):
+        if not lease['start_date'] < date < lease['end_date']:
+            raise common_ex.NotAuthorized(
+                'Datetime is out of lease limits')
+
+    def _update_before_end_event_date(self, event, before_end_date, lease):
+        event['time'] = before_end_date
         if event['time'] < lease['start_date']:
+            LOG.warning("New start_date greater than before_end_date. "
+                        "Setting before_end_date to %s for lease %s"
+                        % (lease['start_date'], lease['id']))
             event['time'] = lease['start_date']
 
-    def _update_before_end_event(self, old_lease, new_lease, notifications):
+    def _update_before_end_event(self, old_lease, new_lease,
+                                 notifications, before_end_date=None):
         event = db_api.event_get_first_sorted_by_filters(
             'lease_id',
             'asc',
@@ -432,9 +465,15 @@ class ManagerService(service_utils.RPCServer):
         if event:
             # NOTE(casanch1) do nothing if the event does not exist.
             # This is for backward compatibility
-            delta = old_lease['end_date'] - event['time']
             update_values = {}
-            self._update_before_end_event_date(update_values, delta, new_lease)
+            if not before_end_date:
+                # before_end_date needs to be calculated based on
+                # previous delta
+                prev_before_end_delta = old_lease['end_date'] - event['time']
+                before_end_date = new_lease['end_date'] - prev_before_end_delta
+
+            self._update_before_end_event_date(update_values, before_end_date,
+                                               new_lease)
             if event['status'] == 'DONE':
                 update_values['status'] = 'UNDONE'
                 notifications.append('event.before_end_lease.stop')

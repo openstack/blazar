@@ -271,8 +271,8 @@ class TestUpdateLease(api.APITest):
     def test_update_one_with_extra_attrs(self):
         expected = {
             "error_name": 500,
-            "error_message": "Only name changing and dates changing "
-                             "may be proceeded.",
+            "error_message": "Only name changing, dates and before "
+                             "end notifications may be proceeded.",
             "error_code": 500
         }
 
