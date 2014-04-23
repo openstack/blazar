@@ -26,7 +26,7 @@ def format_lease_payload(lease):
     return {
         'lease_id': lease['id'],
         'user_id': lease['user_id'],
-        'tenant_id': lease['tenant_id'],
+        'project_id': lease['project_id'],
         'start_date': lease['start_date'],
         'end_date': lease['end_date']
     }

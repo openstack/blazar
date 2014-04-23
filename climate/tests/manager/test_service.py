@@ -97,10 +97,10 @@ class ServiceTestCase(tests.TestCase):
 
         self.lease_id = '11-22-33'
         self.user_id = '123'
-        self.tenant_id = '555'
+        self.project_id = '555'
         self.lease = {'id': self.lease_id,
                       'user_id': self.user_id,
-                      'tenant_id': self.tenant_id,
+                      'project_id': self.project_id,
                       'reservations': [{'id': '111',
                                         'resource_id': '111',
                                         'resource_type': 'virtual:instance',
