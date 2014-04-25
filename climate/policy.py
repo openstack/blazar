@@ -16,6 +16,7 @@
 """Policy Engine For Climate."""
 
 import functools
+
 from oslo.config import cfg
 
 from climate import context

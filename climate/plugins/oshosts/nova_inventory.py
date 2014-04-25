@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.config import cfg
-
 from novaclient import exceptions as nova_exceptions
+from oslo.config import cfg
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions

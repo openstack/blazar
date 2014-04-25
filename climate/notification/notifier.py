@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from climate.openstack.common import log
 from oslo.config import cfg
 from oslo import messaging
+
+from climate.openstack.common import log
 
 notification_opts = [
     cfg.StrOpt('publisher_id',

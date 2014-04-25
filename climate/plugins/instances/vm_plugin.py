@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import eventlet
+from novaclient import exceptions as nova_exceptions
 from oslo.config import cfg
 
 from climate import exceptions as climate_exceptions
@@ -21,7 +22,6 @@ from climate.openstack.common import log as logging
 from climate.plugins import base
 from climate.plugins import instances as plugin
 from climate.utils.openstack import nova
-from novaclient import exceptions as nova_exceptions
 
 LOG = logging.getLogger(__name__)
 

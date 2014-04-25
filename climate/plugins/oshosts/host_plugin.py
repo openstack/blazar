@@ -22,7 +22,6 @@ import uuid
 from oslo.config import cfg
 
 from climate import context
-
 from climate.db import api as db_api
 from climate.db import exceptions as db_ex
 from climate.db import utils as db_utils

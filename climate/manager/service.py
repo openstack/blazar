@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import datetime
-import eventlet
 import six
 
+import eventlet
 from oslo.config import cfg
 from stevedore import enabled
 
