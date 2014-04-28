@@ -64,6 +64,9 @@ class Lease(mb.ClimateBase):
                                 backref='lease', lazy='joined')
     events = relationship('Event', cascade="all,delete",
                           backref='lease', lazy='joined')
+    action = sa.Column(sa.String(255))
+    status = sa.Column(sa.String(255))
+    status_reason = sa.Column(sa.String(255))
 
     def to_dict(self):
         d = super(Lease, self).to_dict()

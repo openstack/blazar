@@ -59,6 +59,15 @@ class Lease(base._Base):
     before_end_notification = types.Datetime(service.LEASE_DATE_FORMAT)
     "Datetime when notifications will be sent before lease ending"
 
+    action = wtypes.text
+    "The current action running"
+
+    status = wtypes.text
+    "The status of the action running"
+
+    status_reason = wtypes.text
+    "A brief description of the status, if any"
+
     @classmethod
     def sample(cls):
         return cls(id=u'2bb8720a-0873-4d97-babf-0d906851a1eb',
@@ -71,7 +80,10 @@ class Lease(base._Base):
                    reservations=[{u'resource_id': u'1234',
                                   u'resource_type': u'virtual:instance'}],
                    events=[],
-                   before_end_notification=u'2014-02-01 10:37'
+                   before_end_notification=u'2014-02-01 10:37',
+                   action=u'START',
+                   status=u'COMPLETE',
+                   status_reason=u'Lease currently running',
                    )
 
 

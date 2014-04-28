@@ -128,3 +128,12 @@ class NotEnoughHostsAvailable(exceptions.ClimateException):
 class MalformedRequirements(exceptions.ClimateException):
     code = 400
     msg_fmt = _("Malformed requirements %(rqrms)s")
+
+
+class InvalidState(exceptions.ClimateException):
+    code = 409
+    msg_fmt = _("Invalid State %(state)s for %(id)s")
+
+
+class InvalidStateUpdate(InvalidState):
+    msg_fmt = _("Unable to update ID %(id)s state with %(action)s:%(status)s")
