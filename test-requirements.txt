@@ -15,4 +15,4 @@ testrepository>=0.0.18
 testtools>=0.9.34
 coverage>=3.6
 pylint==0.25.2
-sphinxcontrib-pecanwsme>=0.6
+sphinxcontrib-pecanwsme>=0.8
