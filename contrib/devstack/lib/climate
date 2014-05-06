@@ -113,11 +113,15 @@ function configure_climate() {
 
     ACTUAL_FILTERS=$(iniget $NOVA_CONF DEFAULT scheduler_default_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
-        iniadd $NOVA_CONF DEFAULT scheduler_default_filters "ClimateFilter"
+        iniadd $NOVA_CONF DEFAULT scheduler_default_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, ClimateFilter"
     else
         iniset $NOVA_CONF DEFAULT scheduler_default_filters "$ACTUAL_FILTERS,ClimateFilter"
     fi
 
+    ACTUAL_AVAILABLE_FILTERS=$(iniget $NOVA_CONF DEFAULT scheduler_available_filters)
+    if [[ -z "$ACTUAL_AVAILABLE_FILTERS" ]]; then
+        iniset $NOVA_CONF DEFAULT scheduler_available_filters "nova.scheduler.filters.all_filters"
+    fi
     iniadd $NOVA_CONF DEFAULT scheduler_available_filters "climatenova.scheduler.filters.climate_filter.ClimateFilter"
 
     ACTUAL_OSAPI_COMPUTE_EXTENSIONS=$(iniget_multiline $NOVA_CONF DEFAULT osapi_compute_extension)
