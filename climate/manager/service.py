@@ -124,7 +124,7 @@ class ManagerService(service_utils.RPCServer):
         If there is an event in Climate DB to be done, do it and change its
         status to 'DONE'.
         """
-        LOG.debug(_('Trying to get event from DB.'))
+        LOG.debug('Trying to get event from DB.')
         event = db_api.event_get_first_sorted_by_filters(
             sort_key='time',
             sort_dir='asc',

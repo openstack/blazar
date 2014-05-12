@@ -22,7 +22,6 @@ from werkzeug import exceptions as werkzeug_exceptions
 from climate.api.v1.oshosts import v1_0 as host_api_v1_0
 from climate.api.v1 import utils as api_utils
 from climate.api.v1 import v1_0 as api_v1_0
-from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log
 from climate.openstack.common.middleware import debug
 
@@ -86,8 +85,8 @@ def make_app():
         app.error_handler_spec[None][code] = make_json_error
 
     if cfg.CONF.debug and not cfg.CONF.log_exchange:
-        LOG.debug(_('Logging of request/response exchange could be enabled '
-                    'using flag --log_exchange'))
+        LOG.debug('Logging of request/response exchange could be enabled '
+                  'using flag --log_exchange')
 
     if cfg.CONF.log_exchange:
         app.wsgi_app = debug.Debug.factory(app.config)(app.wsgi_app)

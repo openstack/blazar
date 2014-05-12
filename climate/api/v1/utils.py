@@ -60,7 +60,7 @@ class Rest(flask.Blueprint):
             endpoint = options.pop('endpoint', func.__name__)
 
             def handler(**kwargs):
-                LOG.debug(_("Rest.route.decorator.handler, kwargs=%s"), kwargs)
+                LOG.debug("Rest.route.decorator.handler, kwargs=%s", kwargs)
 
                 _init_resp_type(file_upload)
 
@@ -174,7 +174,7 @@ def request_data():
         return flask.request.parsed_data
 
     if not flask.request.content_length > 0:
-        LOG.debug(_("Empty body provided in request"))
+        LOG.debug("Empty body provided in request")
         return dict()
 
     if flask.request.file_upload:
@@ -245,8 +245,8 @@ def bad_request(error):
     if not error.code:
         error.code = 400
 
-    LOG.debug(_("Validation Error occurred: error_code=%(code)s, "
-                "error_message=%(msg)s, error_name=%(name)s"),
+    LOG.debug("Validation Error occurred: error_code=%(code)s, "
+              "error_message=%(msg)s, error_name=%(name)s",
               {'code': error.code, 'msg': error.message, 'name': error.code})
 
     return render_error_message(error.code, error.message, error.code)
@@ -257,8 +257,8 @@ def not_found(error):
     if not error.code:
         error.code = 404
 
-    LOG.debug(_("Not Found exception occurred: error_code=%(code)s, "
-                "error_message=%(msg)s, error_name=%(name)s"),
+    LOG.debug("Not Found exception occurred: error_code=%(code)s, "
+              "error_message=%(msg)s, error_name=%(name)s",
               {'code': error.code, 'msg': error.message, 'name': error.code})
 
     return render_error_message(error.code, error.message, error.code)
