@@ -1,5 +1,5 @@
-# lib/climate
-# Install and start **climate** reservations service
+# lib/blazar
+# Install and start **blazar** reservations service
 
 # Dependencies:
 # - functions
@@ -27,19 +27,19 @@ CLIMATE_VERBOSE=${CLIMATE_VERBOSE:-True}
 CLIMATE_USER_NAME=${CLIMATE_USER_NAME:-climate}
 
 # Set up default repos
-CLIMATE_REPO=${CLIMATE_REPO:-${GIT_BASE}/stackforge/climate.git}
+CLIMATE_REPO=${CLIMATE_REPO:-${GIT_BASE}/stackforge/blazar.git}
 CLIMATE_BRANCH=${CLIMATE_BRANCH:-master}
-CLIMATECLIENT_REPO=${CLIMATECLIENT_REPO:-${GIT_BASE}/stackforge/python-climateclient.git}
+CLIMATECLIENT_REPO=${CLIMATECLIENT_REPO:-${GIT_BASE}/stackforge/python-blazarclient.git}
 CLIMATECLIENT_BRANCH=${CLIMATECLIENT_BRANCH:-master}
-CLIMATENOVA_REPO=${CLIMATENOVA_REPO:-${GIT_BASE}/stackforge/climate-nova.git}
+CLIMATENOVA_REPO=${CLIMATENOVA_REPO:-${GIT_BASE}/stackforge/blazar-nova.git}
 CLIMATENOVA_BRANCH=${CLIMATENOVA_BRANCH:-master}
 
 # Set up default directories
-CLIMATE_DIR=$DEST/climate
+CLIMATE_DIR=$DEST/blazar
 CLIMATE_CONF_DIR=${CLIMATE_CONF_DIR:-/etc/climate}
 CLIMATE_CONF_FILE=$CLIMATE_CONF_DIR/climate.conf
-CLIMATECLIENT_DIR=$DEST/python-climateclient
-CLIMATENOVA_DIR=$DEST/climate-nova
+CLIMATECLIENT_DIR=$DEST/python-blazarclient
+CLIMATENOVA_DIR=$DEST/blazar-nova
 
 CLIMATE_SERVICE_HOST=${CLIMATE_SERVICE_HOST:-$SERVICE_HOST}
 CLIMATE_SERVICE_PORT=${CLIMATE_SERVICE_PORT:-1234}
@@ -208,8 +208,8 @@ function install_climate() {
 
 # start_climate() - Start running processes, including screen
 function start_climate() {
-    screen_it climate-a "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-api --debug --config-file $CLIMATE_CONF_FILE"
-    screen_it climate-m "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-manager --debug --config-file $CLIMATE_CONF_FILE"
+    screen_it blazar-a "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-api --debug --config-file $CLIMATE_CONF_FILE"
+    screen_it blazar-m "cd $CLIMATE_DIR && $CLIMATE_BIN_DIR/climate-manager --debug --config-file $CLIMATE_CONF_FILE"
 }
 
 

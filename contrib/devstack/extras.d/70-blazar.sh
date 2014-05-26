@@ -1,8 +1,8 @@
-if is_service_enabled climate; then
+if is_service_enabled blazar; then
     if [[ "$1" == "source" ]]; then
         source $TOP_DIR/lib/keystone
         source $TOP_DIR/lib/nova
-        source $TOP_DIR/lib/climate
+        source $TOP_DIR/lib/blazar
     elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing Climate"
         install_climate
