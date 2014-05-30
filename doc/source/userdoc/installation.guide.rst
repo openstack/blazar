@@ -15,7 +15,7 @@ This section includes instructions for Climate installation using Devstack.
 
 .. sourcecode:: console
 
-    git clone https://github.com/stackforge/climate.git
+    git clone https://github.com/stackforge/blazar.git
 
 ..
 
@@ -23,10 +23,10 @@ This section includes instructions for Climate installation using Devstack.
 
 .. sourcecode:: console
 
-    cd climate/contrib/devstack
+    cd blazar/contrib/devstack
     DEVSTACK_DIR=../../../devstack
-    cp lib/climate ${DEVSTACK_DIR}/lib
-    cp extras.d/70-climate.sh ${DEVSTACK_DIR}/extras.d
+    cp lib/blazar ${DEVSTACK_DIR}/lib
+    cp extras.d/70-blazar.sh ${DEVSTACK_DIR}/extras.d
 
 ..
 
@@ -36,9 +36,9 @@ This section includes instructions for Climate installation using Devstack.
 .. sourcecode:: console
 
     cd ${DEVSTACK_DIR}
-    echo "enable_service climate" >> localrc
-    echo "enable_service climate-a" >> localrc
-    echo "enable_service climate-m" >> localrc
+    echo "enable_service blazar" >> localrc
+    echo "enable_service blazar-a" >> localrc
+    echo "enable_service blazar-m" >> localrc
 
 ..
 
