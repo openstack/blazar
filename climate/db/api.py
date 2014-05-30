@@ -223,12 +223,6 @@ def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
                                                 filters)
 
 
-@to_dict
-def event_list(param):
-    """Return a list of events."""
-    return IMPL.event_list()
-
-
 def event_destroy(event_id):
     """Delete event or raise if not exists."""
     IMPL.event_destroy(event_id)

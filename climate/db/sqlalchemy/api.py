@@ -343,10 +343,6 @@ def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
     return _event_get_sorted_by_filters(sort_key, sort_dir, filters).all()
 
 
-def event_list():
-    return model_query(models.Event.id, get_session()).all()
-
-
 def event_create(values):
     values = values.copy()
     event = models.Event()
