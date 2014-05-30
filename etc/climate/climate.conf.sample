@@ -448,6 +448,16 @@
 #image_prefix=reserved_
 
 
+[api]
+
+#
+# Options defined in climate.api.v2.controllers
+#
+
+# API extensions to use (list value)
+#api_v2_controllers=oshosts,leases
+
+
 [database]
 
 #

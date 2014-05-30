@@ -16,24 +16,58 @@
 """Version 2 of the API.
 """
 
+from oslo.config import cfg
 import pecan
+from pecan import rest
+from stevedore import enabled
 
-from climate.api.v2.controllers import host
-from climate.api.v2.controllers import lease
-from climate.openstack.common.gettextutils import _  # noqa
+from climate import exceptions
+from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
+api_opts = [
+    cfg.ListOpt('api_v2_controllers',
+                default=['oshosts', 'leases'],
+                help='API extensions to use'),
+]
 
-class V2Controller(pecan.rest.RestController):
+CONF = cfg.CONF
+CONF.register_opts(api_opts, 'api')
+
+
+class V2Controller(rest.RestController):
     """Version 2 API controller root."""
 
-    _routes = {'os-hosts': 'oshosts',
-               'oshosts': 'None'}
+    _routes = {}
 
-    leases = lease.LeasesController()
-    oshosts = host.HostsController()
+    def _log_missing_plugins(self, names):
+        for name in names:
+            if name not in self.extension_manager.names():
+                LOG.error(_("API Plugin %s was not loaded") % name)
+
+    def __init__(self):
+        extensions = []
+
+        self.extension_manager = enabled.EnabledExtensionManager(
+            check_func=lambda ext: ext.name in CONF.api.api_v2_controllers,
+            namespace='climate.api.v2.controllers.extensions',
+            invoke_on_load=True
+        )
+        self._log_missing_plugins(CONF.api.api_v2_controllers)
+
+        for ext in self.extension_manager.extensions:
+            try:
+                setattr(self, ext.obj.name, ext.obj)
+            except TypeError:
+                raise exceptions.ClimateException(
+                    _("API name must be specified for "
+                        "extension {0}").format(ext.name))
+            self._routes.update(ext.obj.extra_routes)
+            extensions.append(ext.obj.name)
+
+        LOG.debug(_("Loaded extensions: {0}").format(extensions))
 
     @pecan.expose()
     def _route(self, args):
@@ -44,7 +78,12 @@ class V2Controller(pecan.rest.RestController):
         """
 
         try:
-            args[0] = self._routes.get(args[0], args[0])
+            route = self._routes.get(args[0], args[0])
+            if route is None:
+                # NOTE(sbauza): Route must map to a non-existing controller
+                args[0] = 'http404-nonexistingcontroller'
+            else:
+                args[0] = route
         except IndexError:
             LOG.error(_("No args found on V2 controller"))
         return super(V2Controller, self)._route(args)

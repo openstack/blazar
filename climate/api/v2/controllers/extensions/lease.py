@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import pecan
-from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from climate.api.v2.controllers import base
+from climate.api.v2.controllers import extensions
 from climate.api.v2.controllers import types
 from climate import exceptions
 from climate.manager import service
@@ -87,9 +87,11 @@ class Lease(base._Base):
                    )
 
 
-class LeasesController(rest.RestController):
+class LeasesController(extensions.BaseController):
     """Manages operations on leases.
     """
+
+    name = 'leases'
 
     @policy.authorize('leases', 'get')
     @wsme_pecan.wsexpose(Lease, types.UuidType())

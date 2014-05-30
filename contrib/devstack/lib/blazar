@@ -104,6 +104,8 @@ function configure_climate() {
 
     iniset $CLIMATE_CONF_FILE manager plugins basic.vm.plugin,physical.host.plugin
 
+    iniset $CLIMATE_CONF_FILE api api_v2_controllers oshosts,leases
+
     iniset $CLIMATE_CONF_FILE database connection `database_connection_url climate`
 
     iniset $CLIMATE_CONF_FILE DEFAULT use_syslog $SYSLOG
