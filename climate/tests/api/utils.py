@@ -19,6 +19,8 @@ Utils for testing the API service.
 import datetime
 import json
 
+from climate.openstack.common import timeutils
+
 ADMIN_TOKEN = '4562138218392831'
 MEMBER_TOKEN = '4562138218392832'
 
@@ -26,38 +28,42 @@ MEMBER_TOKEN = '4562138218392832'
 class FakeMemcache(object):
     """Fake cache that is used for keystone tokens lookup."""
 
-    _cache = {
-        'tokens/%s' % ADMIN_TOKEN: {
-            'access': {
-                'token': {'id': ADMIN_TOKEN},
-                'user': {'id': 'user_id1',
-                         'name': 'user_name1',
-                         'tenantId': '123i2910',
-                         'tenantName': 'mytenant',
-                         'roles': [{'name': 'admin'}]},
-            }
-        },
-        'tokens/%s' % MEMBER_TOKEN: {
-            'access': {
-                'token': {'id': MEMBER_TOKEN},
-                'user': {'id': 'user_id2',
-                         'name': 'user-good',
-                         'tenantId': 'project-good',
-                         'tenantName': 'goodies',
-                         'roles': [{'name': 'Member'}]},
-            }
-        }
-    }
-
     def __init__(self):
         self.set_key = None
         self.set_value = None
         self.token_expiration = None
 
-    def get(self, key):
-        dt = datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
-        return json.dumps((self._cache.get(key), dt.isoformat()))
+        # Expire date will be updated in get()
+        self.dt = datetime.datetime.utcnow() + datetime.timedelta(days=365)
 
-    def set(self, key, value, timeout=None):
+        self._cache = {
+            'tokens/%s' % ADMIN_TOKEN: {
+                'access': {
+                    'token': {'id': ADMIN_TOKEN,
+                              'expires': timeutils.isotime(self.dt)},
+                    'user': {'id': 'user_id1',
+                             'name': 'user_name1',
+                             'tenantId': '123i2910',
+                             'tenantName': 'mytenant',
+                             'roles': [{'name': 'admin'}]},
+                }
+            },
+            'tokens/%s' % MEMBER_TOKEN: {
+                'access': {
+                    'token': {'id': MEMBER_TOKEN,
+                              'expires': timeutils.isotime(self.dt)},
+                    'user': {'id': 'user_id2',
+                             'name': 'user-good',
+                             'tenantId': 'project-good',
+                             'tenantName': 'goodies',
+                             'roles': [{'name': 'Member'}]},
+                }
+            }
+        }
+
+    def get(self, key):
+        return json.dumps((self._cache.get(key), self.dt.isoformat()))
+
+    def set(self, key, value, time=0):
         self.set_value = value
         self.set_key = key
