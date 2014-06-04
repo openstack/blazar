@@ -362,6 +362,26 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(lease_values['start_date'], event['time'])
         self.assertEqual('UNDONE', event['status'])
 
+    def test_create_lease_before_end_event_before_start_without_lease_id(self):
+        lease_values = {
+            'reservations': [{'id': '111',
+                              'resource_id': '111',
+                              'resource_type': 'virtual:instance',
+                              'status': 'FAKE PROGRESS'}],
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-11-14 13:13',
+            'trust_id': 'exxee111qwwwwe'}
+        self.lease['start_date'] = '2026-11-13 13:13'
+
+        self.cfg.CONF.set_override('notify_hours_before_lease_end', 36,
+                                   group='manager')
+
+        lease = self.manager.create_lease(lease_values)
+
+        self.lease_create.assert_called_once_with(lease_values)
+        self.assertEqual(lease, self.lease)
+        self.assertEqual(3, len(lease_values['events']))
+
     def test_create_lease_before_end_param_is_before_lease_start(self):
         before_end_notification = '2026-11-11 13:13'
         start_date = '2026-11-13 13:13'
