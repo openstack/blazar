@@ -17,13 +17,11 @@ import datetime
 import dateutil.parser
 import json
 
-from novaclient import exceptions as nova_exceptions
-
-from tempest.common.utils import test_utils
 from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log as logging
 from tempest.scenario import resource_reservation_scenario as rrs
+from tempest.scenario import utils
 from tempest import test
 
 CONF = config.CONF
@@ -60,7 +58,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             self.image_ref = CONF.compute.image_ref
         if not hasattr(self, 'flavor_ref'):
             self.flavor_ref = CONF.compute.flavor_ref
-        self.image_utils = test_utils.ImageUtils()
+        self.image_utils = utils.ImageUtils()
         if not self.image_utils.is_flavor_enough(self.flavor_ref,
                                                  self.image_ref):
             raise self.skipException(
@@ -109,11 +107,12 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
 
         #check lease events!
         events = lease['events']
-        self.assertTrue(len(events) == 2)
+        self.assertTrue(len(events) >= 3)
 
         self.assertFalse(
             len(filter(lambda evt: evt['event_type'] != 'start_lease' and
-                       evt['event_type'] != 'end_lease',
+                       evt['event_type'] != 'end_lease' and
+                       evt['event_type'] != 'before_end_lease',
                        events)) > 0)
 
         # check that only one reservation was made and it is for a vm
@@ -137,9 +136,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
 
     def check_server_is_removed(self):
         server_id = self.get_resource('server').id
-        self.assertRaises(nova_exceptions.NotFound,
-                          self.compute_client.servers.get,
-                          server_id)
+        self.delete_timeout(self.compute_client.servers, server_id)
 
     def check_server_status(self, expected_status):
         server_id = self.get_resource('server').id
@@ -179,7 +176,8 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.check_lease_creation(lease_data)
 
         # wait for lease end
-        self.wait_for_lease_end(self.get_lease_by_name(lease_name)['id'])
+        created_lease = self.get_lease_by_name(lease_name)
+        self.wait_for_lease_end(created_lease['id'])
 
         # check server final status
         self.check_server_is_snapshoted()
@@ -188,3 +186,6 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         #remove created snapshot
         image_name = LEASE_IMAGE_PREFIX + self.get_resource('server').name
         self.remove_image_snapshot(image_name)
+
+        #remove created lease
+        self.delete_lease(created_lease['id'])
