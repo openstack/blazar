@@ -1073,6 +1073,7 @@ class ServiceTestCase(tests.TestCase):
 
     def test_before_end_lease(self):
         self.manager.before_end_lease(self.lease_id, '1')
+        self.event_update.assert_called_once_with('1', {'status': 'DONE'})
 
     def test_basic_action_no_res_status(self):
         self.patch(self.manager, 'get_lease').return_value = self.lease

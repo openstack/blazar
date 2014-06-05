@@ -416,7 +416,7 @@ class ManagerService(service_utils.RPCServer):
             self._basic_action(lease_id, event_id, 'on_end', 'deleted')
 
     def before_end_lease(self, lease_id, event_id):
-        pass
+        db_api.event_update(event_id, {'status': 'DONE'})
 
     def _basic_action(self, lease_id, event_id, action_time,
                       reservation_status=None):
