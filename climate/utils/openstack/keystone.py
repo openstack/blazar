@@ -111,7 +111,7 @@ class ClimateKeystoneClient(object):
             #https://review.openstack.org/#/c/66494/ will be merged
             self.keystone = keystone_client.Client(**kwargs)
             self.keystone.session.auth = self.keystone
-            self.keystone.authenticate()
+            self.keystone.authenticate(auth_url=kwargs.get('auth_url', None))
         except AttributeError:
             raise manager_exceptions.WrongClientVersion()
 
