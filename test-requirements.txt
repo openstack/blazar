@@ -12,6 +12,7 @@ lockfile>=0.8
 discover
 fixtures>=0.3.14
 testrepository>=0.0.18
+testscenarios>=0.4
 testtools>=0.9.34
 coverage>=3.6
 pylint==0.25.2

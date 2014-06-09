@@ -59,9 +59,13 @@ def make_json_error(ex):
 def version_list():
     return api_utils.render({
         "versions": [
-            {"id": "v1.0", "status": "CURRENT"},
+            {"id": "v1.0",
+             "status": "CURRENT",
+             "links": [{"href": "{0}v1".format(flask.request.host_url),
+                        "rel": "self"}]
+             },
         ],
-    })
+    }, status="300 Multiple Choices")
 
 
 def make_app():
@@ -72,6 +76,7 @@ def make_app():
     app = flask.Flask('climate.api')
 
     app.route('/', methods=['GET'])(version_list)
+    app.route('/versions', methods=['GET'])(version_list)
     app.register_blueprint(api_v1_0.rest, url_prefix='/v1')
 
     LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)

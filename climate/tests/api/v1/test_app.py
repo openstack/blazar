@@ -34,7 +34,6 @@ class AppTestCase(tests.TestCase):
         self.auth_token = auth_token
 
         self.render = self.patch(self.api_utils, 'render')
-        self.fake_app = self.patch(self.flask, 'Flask')
         self.fake_ff = self.patch(self.auth_token, 'filter_factory')
 
         self.ex = werkzeug_exceptions.HTTPException()
@@ -54,16 +53,24 @@ class AppTestCase(tests.TestCase):
              'error_message': 'wrong'}, status=500)
 
     def test_version_list(self):
-        self.app.version_list()
-        self.render.assert_called_once_with({
-            "versions": [
-                {"id": "v1.0", "status": "CURRENT"},
-            ],
-        })
+        a = flask.Flask('dummy')
+        a.config['TESTING'] = True
+        with a.test_request_context():
+            self.app.version_list()
+            self.render.assert_called_once_with({
+                "versions": [
+                    {"id": "v1.0",
+                     "status": "CURRENT",
+                     "links": [{"href": "{0}v1".format(flask.request.host_url),
+                                "rel": "self"}]
+                     },
+                ]},
+                status="300 Multiple Choices")
 
     def test_make_app(self):
+        fake_app = self.patch(self.flask, 'Flask')
         self.app.make_app()
-        self.fake_ff.assert_called_once_with(self.fake_app().config,
+        self.fake_ff.assert_called_once_with(fake_app().config,
                                              admin_user='admin',
                                              admin_tenant_name='admin',
                                              auth_port='35357',

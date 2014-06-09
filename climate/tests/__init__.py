@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tempfile
-
 import fixtures
+import tempfile
+import testscenarios
+
 from oslo.config import cfg
 
 from climate import context
@@ -52,7 +53,7 @@ class Database(fixtures.Fixture):
         self.addCleanup(db_api.drop_db)
 
 
-class TestCase(test.BaseTestCase):
+class TestCase(testscenarios.WithScenarios, test.BaseTestCase):
     """Test case base class for all unit tests.
 
     Due to the slowness of DB access, this class is not supporting DB tests.
