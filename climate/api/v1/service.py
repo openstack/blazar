@@ -28,7 +28,7 @@ class API(object):
     def __init__(self):
         self.manager_rpcapi = manager_rpcapi.ManagerRPCAPI()
 
-    ## Leases operations
+    # Leases operations
 
     @policy.authorize('leases', 'get')
     def get_leases(self):
@@ -94,7 +94,7 @@ class API(object):
         """
         self.manager_rpcapi.delete_lease(lease_id)
 
-    ## Plugins operations
+    # Plugins operations
 
     @policy.authorize('plugins', 'get')
     def get_plugins(self):

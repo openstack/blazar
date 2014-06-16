@@ -61,7 +61,7 @@ def drop_db():
     return IMPL.drop_db()
 
 
-## Helpers for building constraints / equality checks
+# Helpers for building constraints / equality checks
 
 
 def constraint(**conditions):

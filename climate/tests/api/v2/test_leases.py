@@ -15,8 +15,9 @@
 """
 Tests for API /leases/ methods
 """
-import six
 import uuid
+
+import six
 
 
 from climate.tests import api

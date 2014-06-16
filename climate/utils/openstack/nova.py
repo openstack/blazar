@@ -41,7 +41,9 @@ CONF.import_opt('identity_service', 'climate.utils.openstack.keystone')
 
 class ClimateNovaClient(object):
     def __init__(self, **kwargs):
-        """We suppose that in future we may want to use CNC in some places
+        """Description
+
+        We suppose that in future we may want to use CNC in some places
         where context will be available, so we create 2 different ways of
         creating client from context(future) and kwargs(we use it now).
 
@@ -88,7 +90,7 @@ class ClimateNovaClient(object):
             mgmt_url = mgmt_url or base.url_for(ctx.service_catalog,
                                                 CONF.compute_service)
         if not kwargs.get('auth_url', None):
-            #NOTE(scroiset): novaclient v2.17.0 support only Identity API v2.0
+            # NOTE(scroiset): novaclient v2.17.0 support only Identity API v2.0
             auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
                                             CONF.os_auth_host,
                                             CONF.os_auth_port)
@@ -106,7 +108,7 @@ class ClimateNovaClient(object):
         return getattr(self.nova, name)
 
 
-#todo(dbelova): remove these lines after novaclient 2.16.0 will be released
+# TODO(dbelova): remove these lines after novaclient 2.16.0 will be released
 class ClimateServer(servers.Server):
     def unshelve(self):
         """Unshelve -- Unshelve the server."""

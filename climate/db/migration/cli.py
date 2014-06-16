@@ -22,13 +22,10 @@ import os
 from alembic import command as alembic_command
 from alembic import config as alembic_config
 from alembic import util as alembic_util
-
 from oslo.config import cfg
 
 from climate.openstack.common.db import options as db_options
-
 gettext.install('climate', unicode=1)
-
 from climate.openstack.common.gettextutils import _
 
 

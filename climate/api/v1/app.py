@@ -77,8 +77,8 @@ def make_app():
     LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)
     # TODO(sbauza) : Change this whole crap by removing hardcoded values and
     #   maybe using stevedore for achieving this
-    if cfg.CONF.manager.plugins \
-            and 'physical.host.plugin' in cfg.CONF.manager.plugins:
+    if (cfg.CONF.manager.plugins
+            and 'physical.host.plugin' in cfg.CONF.manager.plugins):
         app.register_blueprint(host_api_v1_0.rest, url_prefix='/v1/os-hosts')
 
     for code in werkzeug_exceptions.default_exceptions.iterkeys():

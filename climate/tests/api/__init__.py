@@ -14,11 +14,10 @@
 # limitations under the License.
 
 """Base classes for API tests."""
-import six
-
 from oslo.config import cfg
 import pecan
 import pecan.testing
+import six
 
 from climate.api import context as api_context
 from climate.api.v2 import app
@@ -31,8 +30,7 @@ PATH_PREFIX = '/v2'
 
 
 class APITest(tests.TestCase):
-    """Used for unittests tests of Pecan controllers.
-    """
+    """Used for unittests tests of Pecan controllers."""
 
     # SOURCE_DATA = {'test_source': {'somekey': '666'}}
 

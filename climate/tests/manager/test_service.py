@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import datetime
+
 import eventlet
 import mock
 from oslo.config import cfg
@@ -110,8 +111,6 @@ class ServiceTestCase(tests.TestCase):
                       'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                       'end_date': datetime.datetime(2013, 12, 20, 15, 00),
                       'trust_id': 'exxee111qwwwwe'}
-                      #'start_date': 'now',
-                      #'end_date': '2026-12-13 13:13'}
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
                                                     '%Y-%m-%d %H:%M')
 
@@ -127,10 +126,10 @@ class ServiceTestCase(tests.TestCase):
         self.reservation_update = self.patch(self.db_api, 'reservation_update')
         self.event_update = self.patch(self.db_api, 'event_update')
         self.manager.plugins = {'virtual:instance': self.fake_plugin}
-        self.manager.resource_actions = \
+        self.manager.resource_actions = (
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
-              'on_end': self.fake_plugin.on_end}}
+              'on_end': self.fake_plugin.on_end}})
         self.patch(
             self.base_utils, 'url_for').return_value = 'http://www.foo.fake'
 
@@ -142,8 +141,8 @@ class ServiceTestCase(tests.TestCase):
         super(ServiceTestCase, self).tearDown()
 
     def test_start(self):
-        #NOTE(starodubcevna): it's useless to test start() now, but may be in
-        #future it become useful
+        # NOTE(starodubcevna): it's useless to test start() now, but may be in
+        # future it become useful
         pass
 
     def test_multiple_plugins_same_resource_type(self):
@@ -237,8 +236,8 @@ class ServiceTestCase(tests.TestCase):
 
     @testtools.skip('incorrect decorator')
     def test_list_leases(self):
-        #NOTE(starodubcevna): This func works incorrect, and we need to skip
-        #it. It'll be fix in coming soon patches
+        # NOTE(starodubcevna): This func works incorrect, and we need to skip
+        # it. It'll be fix in coming soon patches
         self.manager.list_leases()
 
         self.lease_list.assert_called_once_with()
@@ -564,8 +563,8 @@ class ServiceTestCase(tests.TestCase):
             'start_date': '2015-12-01 20:00',
             'end_date': '2015-12-01 22:00'
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -614,8 +613,8 @@ class ServiceTestCase(tests.TestCase):
             'name': 'renamed',
             'end_date': '2013-12-20 16:00'
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -665,8 +664,8 @@ class ServiceTestCase(tests.TestCase):
             'name': 'renamed',
             'end_date': '2013-12-20 16:00'
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -731,8 +730,8 @@ class ServiceTestCase(tests.TestCase):
             'end_date': '2013-12-20 16:00',
             'before_end_notification': before_end_notification
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -802,8 +801,8 @@ class ServiceTestCase(tests.TestCase):
             'end_date': '2013-12-20 16:00',
             'before_end_notification': before_end_notification
         }
-        reservation_get_all =\
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -842,8 +841,8 @@ class ServiceTestCase(tests.TestCase):
             'end_date': '2013-12-20 16:00',
             'before_end_notification': before_end_notification
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -881,8 +880,8 @@ class ServiceTestCase(tests.TestCase):
             'end_date': '2013-12-20 16:00',
             'before_end_notification': wrong_before_end_notification
         }
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
@@ -986,8 +985,8 @@ class ServiceTestCase(tests.TestCase):
         events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
         events.side_effect = fake_event_get
         event_update = self.patch(self.db_api, 'event_update')
-        reservation_get_all = \
-            self.patch(self.db_api, 'reservation_get_all_by_lease_id')
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = []
 
         lease_values = {
@@ -1008,8 +1007,8 @@ class ServiceTestCase(tests.TestCase):
             {'time': datetime.datetime(2013, 12, 20, 13, 0)})
 
     def test_delete_lease_before_starting_date(self):
-        self.patch(self.manager, 'get_lease').\
-            return_value = self.lease
+        fake_get_lease = self.patch(self.manager, 'get_lease')
+        fake_get_lease.return_value = self.lease
 
         target = datetime.datetime(2013, 12, 20, 12, 00)
         with mock.patch.object(datetime,
@@ -1022,8 +1021,8 @@ class ServiceTestCase(tests.TestCase):
         self.lease_destroy.assert_called_once_with(self.lease_id)
 
     def test_delete_lease_after_ending_date(self):
-        self.patch(self.manager, 'get_lease').\
-            return_value = self.lease
+        fake_get_lease = self.patch(self.manager, 'get_lease')
+        fake_get_lease.return_value = self.lease
 
         target = datetime.datetime(2013, 12, 20, 16, 00)
         with mock.patch.object(datetime,
@@ -1040,8 +1039,8 @@ class ServiceTestCase(tests.TestCase):
             'lease.delete')
 
     def test_delete_lease_after_starting_date(self):
-        self.patch(self.manager, 'get_lease').\
-            return_value = self.lease
+        fake_get_lease = self.patch(self.manager, 'get_lease')
+        fake_get_lease.return_value = self.lease
 
         target = datetime.datetime(2013, 12, 20, 13, 30)
         with mock.patch.object(datetime,
@@ -1096,10 +1095,10 @@ class ServiceTestCase(tests.TestCase):
         def raiseClimateException(resource_id):
             raise exceptions.ClimateException(resource_id)
 
-        self.manager.resource_actions = \
+        self.manager.resource_actions = (
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
-              'on_end': raiseClimateException}}
+              'on_end': raiseClimateException}})
 
         self.patch(self.manager, 'get_lease').return_value = self.lease
 
@@ -1108,8 +1107,8 @@ class ServiceTestCase(tests.TestCase):
         self.event_update.assert_called_once_with('1', {'status': 'DONE'})
 
     def test_getattr_with_correct_plugin_and_method(self):
-        self.fake_list_computehosts = \
-            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts = (
+            self.patch(self.fake_phys_plugin, 'list_computehosts'))
         self.fake_list_computehosts.return_value = 'foo'
 
         self.manager.plugins = {'physical:host': self.fake_phys_plugin}
@@ -1117,8 +1116,8 @@ class ServiceTestCase(tests.TestCase):
                                         'physical:host:list_computehosts')())
 
     def test_getattr_with_incorrect_method_name(self):
-        self.fake_list_computehosts = \
-            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts = (
+            self.patch(self.fake_phys_plugin, 'list_computehosts'))
         self.fake_list_computehosts.return_value = 'foo'
 
         self.manager.plugins = {'physical:host': self.fake_phys_plugin}
@@ -1126,8 +1125,8 @@ class ServiceTestCase(tests.TestCase):
                           'simplefakecallwithValueError')
 
     def test_getattr_with_missing_plugin(self):
-        self.fake_list_computehosts = \
-            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts = (
+            self.patch(self.fake_phys_plugin, 'list_computehosts'))
         self.fake_list_computehosts.return_value = 'foo'
 
         self.manager.plugins = {'physical:host': self.fake_phys_plugin}
@@ -1135,8 +1134,8 @@ class ServiceTestCase(tests.TestCase):
                           self.manager, 'plugin:not_present:list_computehosts')
 
     def test_getattr_with_missing_method_in_plugin(self):
-        self.fake_list_computehosts = \
-            self.patch(self.fake_phys_plugin, 'list_computehosts')
+        self.fake_list_computehosts = (
+            self.patch(self.fake_phys_plugin, 'list_computehosts'))
         self.fake_list_computehosts.return_value = 'foo'
 
         self.manager.plugins = {'physical:host': None}

@@ -25,7 +25,7 @@ rest = api_utils.Rest('v1_0', __name__)
 _api = utils.LazyProxy(service.API)
 
 
-## Leases operations
+# Leases operations
 
 @rest.get('/leases')
 def leases_list():
@@ -61,7 +61,7 @@ def leases_delete(lease_id):
     return api_utils.render()
 
 
-## Plugins operations
+# Plugins operations
 
 @rest.get('/plugins')
 def plugins_list():

@@ -16,6 +16,7 @@
 import sys
 
 import eventlet
+from novaclient import exceptions as nova_exceptions
 import testtools
 
 from climate import exceptions as climate_exceptions
@@ -23,8 +24,6 @@ from climate.openstack.common import log as logging
 from climate.plugins.instances import vm_plugin
 from climate import tests
 from climate.utils.openstack import nova
-
-from novaclient import exceptions as nova_exceptions
 
 
 class VMPluginTestCase(tests.TestCase):
@@ -58,25 +57,22 @@ class VMPluginTestCase(tests.TestCase):
         self.plugin.on_start(self.fake_id)
 
     def test_on_end_create_image_ok(self):
-        self.patch(self.plugin, '_split_actions').return_value =\
-            ['create_image']
-        self.patch(self.plugin, '_check_active').return_value =\
-            True
+        self.patch(self.plugin, '_split_actions').return_value = (
+            ['create_image'])
+        self.patch(self.plugin, '_check_active').return_value = True
 
         self.plugin.on_end(self.fake_id)
 
         self.nova_wrapper.servers.create_image.assert_called_once_with('1')
 
     def test_on_end_suspend_ok(self):
-        self.patch(self.plugin, '_split_actions').return_value =\
-            ['suspend']
+        self.patch(self.plugin, '_split_actions').return_value = ['suspend']
 
         self.plugin.on_end(self.fake_id)
         self.nova_wrapper.servers.suspend.assert_called_once_with('1')
 
     def test_on_end_delete_ok(self):
-        self.patch(self.plugin, '_split_actions').return_value =\
-            ['delete']
+        self.patch(self.plugin, '_split_actions').return_value = ['delete']
 
         self.plugin.on_end(self.fake_id)
         self.nova_wrapper.servers.delete.assert_called_once_with('1')
@@ -101,8 +97,8 @@ class VMPluginTestCase(tests.TestCase):
 
     @testtools.skip('Will be released later')
     def test_on_end_timeout(self):
-        self.patch(self.plugin, '_split_actions').return_value =\
-            ['create_image']
+        self.patch(self.plugin, '_split_actions').return_value = (
+            ['create_image'])
         self.assertRaises(self.exc.Timeout,
                           self.plugin.on_end,
                           self.fake_id)

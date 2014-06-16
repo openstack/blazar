@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import climateclient.client
-
 from tempest import clients as manager
 from tempest import config_resource_reservation as config
 from tempest.openstack.common import log as logging
@@ -31,8 +30,8 @@ class ResourceReservationManager(manager.OfficialClientManager):
         self.interface = None
         # super cares for credentials validation
         super(ResourceReservationManager, self).__init__(credentials)
-        self.resource_reservation_client = \
-            self._get_resource_reservation_client()
+        self.resource_reservation_client = (
+            self._get_resource_reservation_client())
 
     def _get_resource_reservation_client(self):
         climate_url = self.identity_client.service_catalog.url_for(

@@ -20,14 +20,15 @@ from climate.api import context
 from climate.db import api as dbapi
 from climate.manager.oshosts import rpcapi as hosts_rpcapi
 from climate.manager import rpcapi
-
 from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 class ConfigHook(hooks.PecanHook):
-    """Attach the configuration object to the request
+    """ConfigHook
+
+    Attach the configuration object to the request
     so controllers can get to it.
     """
 

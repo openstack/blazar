@@ -25,10 +25,11 @@ Create Date: 2014-02-19 17:23:47.705197
 revision = '0_1'
 down_revision = None
 
+import uuid
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
-import uuid
 
 
 def _generate_unicode_uuid():

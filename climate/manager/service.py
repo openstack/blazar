@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import datetime
-import six
 
 import eventlet
 from oslo.config import cfg
+import six
 from stevedore import enabled
 
 from climate.db import api as db_api
@@ -88,9 +88,9 @@ class ManagerService(service_utils.RPCServer):
                                 ext.name, ext.plugin.resource_type, e))
             else:
                 if plugin_obj.resource_type in plugins:
-                    msg = "You have provided several plugins for " \
-                          "one resource type in configuration file. " \
-                          "Please set one plugin per resource type."
+                    msg = ("You have provided several plugins for "
+                           "one resource type in configuration file. "
+                           "Please set one plugin per resource type.")
                     raise exceptions.PluginConfigurationError(error=msg)
 
                 plugins[plugin_obj.resource_type] = plugin_obj
@@ -336,9 +336,9 @@ class ManagerService(service_utils.RPCServer):
                     LOG.error("Invalid before_end_date param. %s" % e.message)
                     raise e
 
-            #TODO(frossigneux) rollback if an exception is raised
-            for reservation in \
-                    db_api.reservation_get_all_by_lease_id(lease_id):
+            # TODO(frossigneux) rollback if an exception is raised
+            for reservation in (
+                    db_api.reservation_get_all_by_lease_id(lease_id)):
                 reservation['start_date'] = values['start_date']
                 reservation['end_date'] = values['end_date']
                 resource_type = reservation['resource_type']
@@ -390,9 +390,9 @@ class ManagerService(service_utils.RPCServer):
                 datetime.datetime.utcnow() > lease['end_date']):
             with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
                 for reservation in lease['reservations']:
+                    plugin = self.plugins[reservation['resource_type']]
                     try:
-                        self.plugins[reservation['resource_type']]\
-                            .on_end(reservation['resource_id'])
+                        plugin.on_end(reservation['resource_id'])
                     except (db_ex.ClimateDBException, RuntimeError):
                         LOG.exception("Failed to delete a reservation "
                                       "for a lease.")

@@ -66,7 +66,7 @@ def drop_db():
     return IMPL.drop_db()
 
 
-## Helpers for building constraints / equality checks
+# Helpers for building constraints / equality checks
 
 
 def constraint(**conditions):
@@ -107,7 +107,7 @@ def to_dict(func):
     return decorator
 
 
-#Reservation
+# Reservation
 
 def reservation_create(reservation_values):
     """Create a reservation from the values."""
@@ -142,7 +142,7 @@ def reservation_update(reservation_id, reservation_values):
     IMPL.reservation_update(reservation_id, reservation_values)
 
 
-#Lease
+# Lease
 
 def lease_create(lease_values):
     """Create a lease from values."""
@@ -189,7 +189,7 @@ def lease_update(lease_id, lease_values):
     IMPL.lease_update(lease_id, lease_values)
 
 
-#Events
+# Events
 
 @to_dict
 def event_create(event_values):
@@ -270,7 +270,7 @@ def host_reservation_update(host_reservation_id,
                                  host_reservation_values)
 
 
-#Allocation
+# Allocation
 
 def host_allocation_create(allocation_values):
     """Create an allocation from the values."""

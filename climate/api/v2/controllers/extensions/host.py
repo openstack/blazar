@@ -22,10 +22,10 @@ from climate.api.v2.controllers import extensions
 from climate.api.v2.controllers import types
 from climate import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
+from climate.openstack.common import log as logging
 from climate import policy
 from climate.utils import trusts
 
-from climate.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
@@ -100,8 +100,7 @@ class Host(base._Base):
 
 
 class HostsController(extensions.BaseController):
-    """Manages operations on hosts.
-    """
+    """Manages operations on hosts."""
 
     name = 'oshosts'
     extra_routes = {'os-hosts': 'oshosts',

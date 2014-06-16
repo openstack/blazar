@@ -22,7 +22,6 @@ from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
 
 from climate.db import exceptions as db_exc
-
 from climate.db.sqlalchemy import facade_wrapper
 from climate.db.sqlalchemy import models
 from climate.openstack.common.db import exception as common_db_exc
@@ -77,7 +76,7 @@ def drop_db():
     return True
 
 
-## Helpers for building constraints / equality checks
+# Helpers for building constraints / equality checks
 
 
 def constraint(**conditions):
@@ -119,7 +118,7 @@ class InequalityCondition(object):
         return [field != value for value in self.values]
 
 
-#Reservation
+# Reservation
 def _reservation_get(session, reservation_id):
     query = model_query(models.Reservation, session)
     return query.filter_by(id=reservation_id).first()
@@ -135,8 +134,8 @@ def reservation_get_all():
 
 
 def reservation_get_all_by_lease_id(lease_id):
-    reservations = model_query(models.Reservation, get_session()).\
-        filter_by(lease_id=lease_id)
+    reservations = (model_query(models.Reservation,
+                    get_session()).filter_by(lease_id=lease_id))
     return reservations.all()
 
 
@@ -192,7 +191,7 @@ def reservation_destroy(reservation_id):
         session.delete(reservation)
 
 
-#Lease
+# Lease
 def _lease_get(session, lease_id):
     query = model_query(models.Lease, session)
     return query.filter_by(id=lease_id).first()
@@ -286,7 +285,7 @@ def lease_destroy(lease_id):
         session.delete(lease)
 
 
-#Event
+# Event
 def _event_get(session, event_id):
     query = model_query(models.Event, session)
     return query.filter_by(id=event_id).first()
@@ -313,11 +312,11 @@ def _event_get_sorted_by_filters(sort_key, sort_dir, filters):
     events_query = _event_get_all(get_session())
 
     if 'status' in filters:
-        events_query = \
-            events_query.filter(models.Event.status == filters['status'])
+        events_query = (
+            events_query.filter(models.Event.status == filters['status']))
     if 'lease_id' in filters:
-        events_query = \
-            events_query.filter(models.Event.lease_id == filters['lease_id'])
+        events_query = (
+            events_query.filter(models.Event.lease_id == filters['lease_id']))
     if 'event_type' in filters:
         events_query = events_query.filter(models.Event.event_type ==
                                            filters['event_type'])
@@ -330,7 +329,9 @@ def _event_get_sorted_by_filters(sort_key, sort_dir, filters):
 
 
 def event_get_first_sorted_by_filters(sort_key, sort_dir, filters):
-    """Return the first result for all events matching the filters
+    """Return first result for events
+
+    Return the first result for all events matching the filters
     and sorted by name of the field.
     """
 
@@ -383,7 +384,7 @@ def event_destroy(event_id):
         session.delete(event)
 
 
-#ComputeHostReservation
+# ComputeHostReservation
 def _host_reservation_get(session, host_reservation_id):
     query = model_query(models.ComputeHostReservation, session)
     return query.filter_by(id=host_reservation_id).first()
@@ -452,7 +453,7 @@ def host_reservation_destroy(host_reservation_id):
         session.delete(host_reservation)
 
 
-#ComputeHostAllocation
+# ComputeHostAllocation
 def _host_allocation_get(session, host_allocation_id):
     query = model_query(models.ComputeHostAllocation, session)
     return query.filter_by(id=host_allocation_id).first()
@@ -521,7 +522,7 @@ def host_allocation_destroy(host_allocation_id):
         session.delete(host_allocation)
 
 
-#ComputeHost
+# ComputeHost
 def _host_get(session, host_id):
     query = model_query(models.ComputeHost, session)
     return query.filter_by(id=host_id).first()
@@ -546,8 +547,8 @@ def host_get_all_by_filters(filters):
     hosts_query = _host_get_all(get_session())
 
     if 'status' in filters:
-        hosts_query = hosts_query.\
-            filter(models.ComputeHost.status == filters['status'])
+        hosts_query = hosts_query.filter(
+            models.ComputeHost.status == filters['status'])
 
     return hosts_query.all()
 
@@ -599,7 +600,7 @@ def host_get_all_by_queries(queries):
 
             hosts_query = hosts_query.filter(filt)
         else:
-            #looking for extra capabilities matches
+            # looking for extra capabilities matches
             extra_filter = model_query(
                 models.ComputeHostExtraCapability, get_session()
             ).filter(models.ComputeHostExtraCapability.capability_name == key
@@ -658,7 +659,7 @@ def host_destroy(host_id):
         session.delete(host)
 
 
-#ComputeHostExtraCapability
+# ComputeHostExtraCapability
 def _host_extra_capability_get(session, host_extra_capability_id):
     query = model_query(models.ComputeHostExtraCapability, session)
     return query.filter_by(id=host_extra_capability_id).first()
@@ -701,9 +702,9 @@ def host_extra_capability_update(host_extra_capability_id, values):
     session = get_session()
 
     with session.begin():
-        host_extra_capability = \
+        host_extra_capability = (
             _host_extra_capability_get(session,
-                                       host_extra_capability_id)
+                                       host_extra_capability_id))
         host_extra_capability.update(values)
         host_extra_capability.save(session=session)
 
@@ -713,9 +714,9 @@ def host_extra_capability_update(host_extra_capability_id, values):
 def host_extra_capability_destroy(host_extra_capability_id):
     session = get_session()
     with session.begin():
-        host_extra_capability = \
+        host_extra_capability = (
             _host_extra_capability_get(session,
-                                       host_extra_capability_id)
+                                       host_extra_capability_id))
 
         if not host_extra_capability:
             # raise not found error

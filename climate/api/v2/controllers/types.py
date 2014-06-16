@@ -98,8 +98,8 @@ class TextOrInteger(wtypes.UserType):
     @staticmethod
     def validate(value):
         # NOTE(sbauza): We need to accept non-unicoded Python2 strings
-        if isinstance(value, six.text_type) or isinstance(value, str) \
-                or isinstance(value, int):
+        if (isinstance(value, six.text_type) or isinstance(value, str)
+                or isinstance(value, int)):
             return value
         else:
             raise exceptions.InvalidInput(cls=TextOrInteger.name, value=value)
@@ -111,7 +111,7 @@ class Datetime(wtypes.UserType):
     basetype = wtypes.text
     name = 'datetime'
 
-    #Format must be ISO8601 as default
+    # Format must be ISO8601 as default
     format = '%Y-%m-%dT%H:%M:%S.%f'
 
     def __init__(self, format=None):

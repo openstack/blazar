@@ -59,8 +59,7 @@ class Notifier(object):
     """
 
     def send_lease_notification(self, context, lease, notification):
-        """Sends lease notification
-        """
+        """Sends lease notification."""
         self._notify(context, 'info', notification, lease)
 
     def _notify(self, context, level, event_type, payload):

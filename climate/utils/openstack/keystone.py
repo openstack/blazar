@@ -41,7 +41,9 @@ CONF.register_opts(keystone_opts)
 
 class ClimateKeystoneClient(object):
     def __init__(self, **kwargs):
-        """Return Keystone client for defined in 'identity_service' conf.
+        """Description
+
+        Return Keystone client for defined in 'identity_service' conf.
         NOTE: We will use tenant_name until we start using keystone V3
         client for all our needs.
 
@@ -107,8 +109,8 @@ class ClimateKeystoneClient(object):
             kwargs.pop('tenant_name')
 
         try:
-            #NOTE(n.s.): we shall remove this try: except: clause when
-            #https://review.openstack.org/#/c/66494/ will be merged
+            # NOTE(n.s.): we shall remove this try: except: clause when
+            # https://review.openstack.org/#/c/66494/ will be merged
             self.keystone = keystone_client.Client(**kwargs)
             self.keystone.session.auth = self.keystone
             self.keystone.authenticate(auth_url=kwargs.get('auth_url', None))

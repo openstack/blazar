@@ -16,6 +16,7 @@
 """Actions and states for Climate objects."""
 
 import abc
+
 import six
 
 from climate.db import api as db_api

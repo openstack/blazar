@@ -23,7 +23,7 @@ rest = api_utils.Rest('host_v1_0', __name__)
 _api = utils.LazyProxy(service.API)
 
 
-## Computehosts operations
+# Computehosts operations
 
 @rest.get('')
 def computehosts_list():
@@ -47,8 +47,7 @@ def computehosts_get(host_id):
 @rest.put('/<host_id>')
 @validation.check_exists(_api.get_computehost, host_id='host_id')
 def computehosts_update(host_id, data):
-    """Update computehost. Only name changing may be proceeded.
-    """
+    """Update computehost. Only name changing may be proceeded."""
     if len(data) == 0:
         return api_utils.internal_error(status_code=400,
                                         descr="No data to update")

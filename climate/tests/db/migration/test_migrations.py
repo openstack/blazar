@@ -37,9 +37,8 @@ postgres=# create database openstack_citest with owner openstack_citest;
 
 """
 
-import sqlalchemy
-
 from oslo.config import cfg
+import sqlalchemy
 
 from climate.tests.db import migration
 

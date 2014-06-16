@@ -16,6 +16,7 @@
 import abc
 
 from oslo.config import cfg
+import six
 
 from climate.db import api as db_api
 from climate.openstack.common import log as logging
@@ -24,8 +25,8 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BasePlugin(object):
-    __metaclass__ = abc.ABCMeta
 
     resource_type = 'none'
     title = None

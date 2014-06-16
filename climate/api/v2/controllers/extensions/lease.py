@@ -88,8 +88,7 @@ class Lease(base._Base):
 
 
 class LeasesController(extensions.BaseController):
-    """Manages operations on leases.
-    """
+    """Manages operations on leases."""
 
     name = 'leases'
 
