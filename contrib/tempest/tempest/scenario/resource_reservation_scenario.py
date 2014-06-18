@@ -34,9 +34,8 @@ class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
         if not CONF.service_available.climate:
             raise cls.skipException("Resource reservation support is required")
 
-        username, password, tenant_name = cls.credentials()
-        cls.manager = clients.ResourceReservationManager(
-            username, password, tenant_name)
+        creds = cls.credentials()
+        cls.manager = clients.ResourceReservationManager(creds)
         cls.resource_reservation_client = (
             cls.manager.resource_reservation_client)
 
@@ -55,6 +54,9 @@ class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
         else:
             message = "Unable to find lease with name '%s'" % lease_name
             raise exceptions.NotFound(message)
+
+    def delete_lease(self, lease_id):
+        return self.resource_reservation_client.lease.delete(lease_id)
 
     def wait_for_lease_end(self, lease_id):
 

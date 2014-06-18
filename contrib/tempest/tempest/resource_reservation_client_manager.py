@@ -26,19 +26,15 @@ class ResourceReservationManager(manager.OfficialClientManager):
     """Manager that provides access to the python climate client."""
     CLIMATECLIENT_VERSION = '1'
 
-    def __init__(self, username, password, tenant_name):
+    def __init__(self, credentials):
         self.client_type = 'tempest'
         self.interface = None
         # super cares for credentials validation
-        super(ResourceReservationManager, self).__init__(
-            username=username, password=password, tenant_name=tenant_name)
+        super(ResourceReservationManager, self).__init__(credentials)
         self.resource_reservation_client = \
-            self._get_resource_reservation_client(username, password,
-                                                  tenant_name)
+            self._get_resource_reservation_client()
 
-    def _get_resource_reservation_client(self, username, password,
-                                         tenant_name):
-        self._validate_credentials(username, password, tenant_name)
+    def _get_resource_reservation_client(self):
         climate_url = self.identity_client.service_catalog.url_for(
             service_type='reservation')
         token = self.identity_client.auth_token
