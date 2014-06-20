@@ -88,5 +88,5 @@ class TestCKClient(tests.TestCase):
             endpoint='http://fake.com/')
 
     def test_getattr(self):
-        #TODO(n.s.): Will be done as soon as pypi package will be updated
+        # TODO(n.s.): Will be done as soon as pypi package will be updated
         pass

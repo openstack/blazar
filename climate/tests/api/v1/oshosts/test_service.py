@@ -25,11 +25,11 @@ class RPCApiTestCase(tests.TestCase):
         self.fake_list = []
         self.fake_computehost = {}
 
-        self.patch(self.s_api.API, "get_computehosts").\
-            return_value = self.fake_list
+        fake_get_computehosts = self.patch(self.s_api.API, "get_computehosts")
+        fake_get_computehosts.return_value = self.fake_list
         self.patch(self.s_api.API, "create_computehost").return_value = True
-        self.patch(self.s_api.API, "get_computehost").\
-            return_value = self.fake_computehost
+        fake_get_computehost = self.patch(self.s_api.API, "get_computehost")
+        fake_get_computehost.return_value = self.fake_computehost
         self.patch(self.s_api.API, "update_computehost").return_value = True
         self.patch(self.s_api.API, "delete_computehost").return_value = True
 

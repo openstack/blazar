@@ -16,10 +16,10 @@
 
 import datetime
 import json
-import six
 import uuid
 
 from oslo.config import cfg
+import six
 
 from climate.db import api as db_api
 from climate.db import exceptions as db_ex
@@ -129,9 +129,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                             ).__dict__['running_vms'] > 0):
                         raise manager_ex.NotEnoughHostsAvailable()
             if allocations:
-                host_reservation = \
+                host_reservation = (
                     db_api.host_reservation_get_by_reservation_id(
-                        reservation_id)
+                        reservation_id))
                 host_ids = self._matching_hosts(
                     host_reservation['hypervisor_properties'],
                     host_reservation['resource_properties'],
@@ -189,12 +189,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                         allocation['compute_host_id'])
                 ).__dict__['running_vms'] == 0:
                     pool.delete(reservation['resource_id'])
-                #TODO(frossigneux) Kill, migrate, or increase fees...
+                # TODO(frossigneux) Kill, migrate, or increase fees...
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
-        raw_extra_capabilities = \
-            db_api.host_extra_capability_get_all_per_host(host_id)
+        raw_extra_capabilities = (
+            db_api.host_extra_capability_get_all_per_host(host_id))
         for capability in raw_extra_capabilities:
             key = capability['capability_name']
             extra_capabilities[key] = capability['capability_value']
@@ -256,7 +256,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                     host_details.update({'trust_id': trust_id})
                 host = db_api.host_create(host_details)
             except db_ex.ClimateDBException:
-                #We need to rollback
+                # We need to rollback
                 # TODO(sbauza): Investigate use of Taskflow for atomic
                 # transactions
                 pool.remove_computehost(self.freepool_name,
@@ -375,9 +375,10 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             return []
 
     def _convert_requirements(self, requirements):
-        """Convert the requirements to an array of strings.
-        ["key op value", "key op value", ...]
+        """Convert the requirements to an array of strings
 
+        Convert the requirements to an array of strings.
+        ["key op value", "key op value", ...]
         """
         # TODO(frossigneux) Support the "or" operator
         # Convert text to json

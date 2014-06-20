@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import functools
+
 from oslo.config import cfg
 
 from climate import context
@@ -73,7 +74,9 @@ def create_ctx_from_trust(trust_id):
 
 
 def use_trust_auth():
-    """This decorator creates a keystone trust, and adds the trust_id to the
+    """Decorator creates a keystone trust
+
+    This decorator creates a keystone trust, and adds the trust_id to the
     parameter of the decorated method.
     """
     def decorator(func):

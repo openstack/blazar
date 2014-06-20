@@ -72,7 +72,7 @@ class ReservationPool(nova.NovaClientWrapper):
             except nova_exceptions.NotFound:
                 aggregate = None
         else:
-            #FIXME(scroiset): can't get an aggregate by name
+            # FIXME(scroiset): can't get an aggregate by name
             # so iter over all aggregate and check for the good one
             all_aggregates = self.nova.aggregates.list()
             for agg in all_aggregates:

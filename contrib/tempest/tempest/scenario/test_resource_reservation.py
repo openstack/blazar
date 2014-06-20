@@ -14,9 +14,9 @@
 #    under the License.
 
 import datetime
-import dateutil.parser
 import json
 
+import dateutil.parser
 from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log as logging
@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 # same as the one at climate/manager/service
 LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
 LEASE_MIN_DURATION = 2
-#TODO(cmart): LEASE_IMAGE_PREFIX should be extracted from CONF
+# TODO(cmart): LEASE_IMAGE_PREFIX should be extracted from CONF
 LEASE_IMAGE_PREFIX = 'reserved_'
 
 
@@ -94,7 +94,6 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # compare lease_data with data passed as parameter
         lease = self.get_lease_by_name(expected_lease_params['name'])
-        self.assertNotEmpty(lease)
 
         # check lease dates!! (Beware of date format)
         lease_start_date = dateutil.parser.parse(lease['start_date'])
@@ -105,7 +104,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.assertEqual(expected_lease_params['start'], lease_start_date)
         self.assertEqual(expected_lease_params['end'], lease_end_date)
 
-        #check lease events!
+        # check lease events!
         events = lease['events']
         self.assertTrue(len(events) >= 3)
 
@@ -130,8 +129,8 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             self.assertNotEmpty(
                 filter(lambda image: image.name == image_name, images_list))
         except Exception as e:
-            message = "Unable to find image with name '%s'. " \
-                      "Exception: %s" % (image_name, e.message)
+            message = ("Unable to find image with name '%s'. "
+                       "Exception: %s" % (image_name, e.message))
             raise exceptions.NotFound(message)
 
     def check_server_is_removed(self):
@@ -143,7 +142,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         server = self.compute_client.servers.get(server_id)
         self.assertEqual(expected_status, server.status)
 
-        #update server resource reference
+        # update server resource reference
         self.set_resource('server', server)
 
     def wait_for_server_status(self, status):
@@ -152,7 +151,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             self.get_resource('server').id, status)
         self.check_server_status(status)
 
-    #TODO(cmart): add climate to services after pushing this code into tempest
+    # TODO(cmart): add climate to services after pushing this code into tempest
     @test.attr(type='slow')
     @test.services('compute', 'network')
     def test_server_basic_resource_reservation_operation(self):
@@ -171,7 +170,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.boot_server_with_lease_data(lease_data, wait=False)
         self.check_server_status('SHELVED_OFFLOADED')
 
-        #now, wait until the server is active
+        # now, wait until the server is active
         self.wait_for_server_status('ACTIVE')
         self.check_lease_creation(lease_data)
 
@@ -183,9 +182,9 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.check_server_is_snapshoted()
         self.check_server_is_removed()
 
-        #remove created snapshot
+        # remove created snapshot
         image_name = LEASE_IMAGE_PREFIX + self.get_resource('server').name
         self.remove_image_snapshot(image_name)
 
-        #remove created lease
+        # remove created lease
         self.delete_lease(created_lease['id'])

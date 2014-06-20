@@ -36,8 +36,8 @@ def upgrade():
                             nullable=True))
 
     if op.get_bind().engine.name != 'sqlite':
-        #I need to do it in this way because Postgress fails
-        #if I use SQLAlchemy
+        # I need to do it in this way because Postgress fails
+        # if I use SQLAlchemy
         connection = op.get_bind()
         connection.execute("UPDATE computehosts SET trust_id = ''")
 

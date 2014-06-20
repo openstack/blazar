@@ -18,7 +18,9 @@ from climate.manager import exceptions
 
 def url_for(service_catalog, service_type, admin=False,
             endpoint_interface=None):
-    """Gets url of the service to communicate through.
+    """Description
+
+    Gets url of the service to communicate through.
     service_catalog - dict contains info about specific OpenStack service
     service_type - OpenStack service type specification
     """

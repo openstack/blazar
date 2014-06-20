@@ -14,12 +14,13 @@
 # limitations under the License.
 
 import datetime
-import mock
-import testtools
 import uuid
 
-from climate import context
+import mock
+from novaclient import client as nova_client
+import testtools
 
+from climate import context
 from climate.db import api as db_api
 from climate.db import exceptions as db_exceptions
 from climate.db import utils as db_utils
@@ -32,7 +33,6 @@ from climate.plugins.oshosts import reservation_pool as rp
 from climate import tests
 from climate.utils.openstack import base
 from climate.utils import trusts
-from novaclient import client as nova_client
 
 
 class AggregateFake(object):
@@ -232,8 +232,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         fake_request = fake_host.copy()
         self.get_extra_capabilities.return_value = {'foo': 'bar'}
         self.db_host_create.return_value = self.fake_host
-        self.db_host_extra_capability_create.side_effect = \
-            fake_db_host_extra_capability_create
+        fake = self.db_host_extra_capability_create
+        fake.side_effect = fake_db_host_extra_capability_create
         self.assertRaises(manager_exceptions.CantAddExtraCapability,
                           self.fake_phys_plugin.create_computehost,
                           fake_request)
@@ -262,8 +262,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
              'capability_value': 'bar'
              },
         ]
-        self.db_host_extra_capability_update.side_effect = \
-            fake_db_host_extra_capability_update
+        fake = self.db_host_extra_capability_update
+        fake.side_effect = fake_db_host_extra_capability_update
         self.assertRaises(manager_exceptions.CantAddExtraCapability,
                           self.fake_phys_plugin.update_computehost,
                           self.fake_host_id, host_values)

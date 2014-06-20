@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sqlalchemy as sa
 import uuid
 
-from climate.db.sqlalchemy import model_base as mb
-#FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-#from climate.openstack.common import log as logging
+import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
 
-#FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-#LOG = logging.getLogger(__name__)
+from climate.db.sqlalchemy import model_base as mb
+# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+# from climate.openstack.common import log as logging
 
-## Helpers
+# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+# LOG = logging.getLogger(__name__)
+
+# Helpers
 
 
 def _generate_unicode_uuid():
@@ -42,7 +43,7 @@ def _id_column():
                      default=_generate_unicode_uuid)
 
 
-## Main objects: Lease, Reservation, Event
+# Main objects: Lease, Reservation, Event
 
 class Lease(mb.ClimateBase):
     """Contains all info about lease."""
@@ -112,8 +113,9 @@ class Reservation(mb.ClimateBase):
                     minMax = res['count_range'].split('-', 1)
                     (d['min'], d['max']) = map(int, minMax)
                 except ValueError:
-                    #FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-                    #LOG.error("Invalid Range: {0}".format(res['count_range']))
+                    # FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+                    # LOG.error(
+                    # "Invalid Range: {0}".format(res['count_range']))
                     e = "Invalid count range: {0}".format(res['count_range'])
                     raise RuntimeError(e)
         return d
@@ -135,7 +137,9 @@ class Event(mb.ClimateBase):
 
 
 class ComputeHostReservation(mb.ClimateBase):
-    """Specifies resources asked by reservation from
+    """Description
+
+    Specifies resources asked by reservation from
     Compute Host Reservation API.
     """
 
@@ -153,8 +157,7 @@ class ComputeHostReservation(mb.ClimateBase):
 
 
 class ComputeHostAllocation(mb.ClimateBase):
-    """Mapping between ComputeHost, ComputeHostReservation and Reservation.
-    """
+    """Mapping between ComputeHost, ComputeHostReservation and Reservation."""
 
     __tablename__ = 'computehost_allocations'
 
@@ -169,7 +172,9 @@ class ComputeHostAllocation(mb.ClimateBase):
 
 
 class ComputeHost(mb.ClimateBase):
-    """Specifies resources asked by reservation from
+    """Description
+
+    Specifies resources asked by reservation from
     Compute Host Reservation API.
     """
 
@@ -196,7 +201,9 @@ class ComputeHost(mb.ClimateBase):
 
 
 class ComputeHostExtraCapability(mb.ClimateBase):
-    """Allows to define extra capabilities per administrator request for each
+    """Description
+
+    Allows to define extra capabilities per administrator request for each
     Compute Host added.
     """
 

@@ -17,6 +17,7 @@ import abc
 
 from oslo.config import cfg
 from pecan import rest
+import six
 
 from climate.openstack.common import log as logging
 
@@ -24,8 +25,8 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BaseController(rest.RestController):
-    __metaclass__ = abc.ABCMeta
 
     """Mandatory API method name."""
     name = None

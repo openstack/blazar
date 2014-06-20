@@ -27,9 +27,10 @@ LOG = logging.getLogger(__name__)
 
 
 class ParsableErrorMiddleware(object):
-    """Middleware to replace the plain text message body of an error
-    response with one formatted so the client can parse it.
+    """Middleware which prepared body to the client
 
+    Middleware to replace the plain text message body of an error
+    response with one formatted so the client can parse it.
     Based on pecan.middleware.errordocument
     """
 
@@ -43,8 +44,7 @@ class ParsableErrorMiddleware(object):
         faultstring = None
 
         def replacement_start_response(status, headers, exc_info=None):
-            """Overrides the default response to make errors parsable.
-            """
+            """Overrides the default response to make errors parsable."""
             try:
                 status_code = int(status.split(' ')[0])
             except (ValueError, TypeError):  # pragma: nocover
