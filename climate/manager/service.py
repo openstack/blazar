@@ -240,6 +240,8 @@ class ManagerService(service_utils.RPCServer):
                                                    lease_values)
 
             try:
+                if trust_id:
+                    lease_values.update({'trust_id': trust_id})
                 lease = db_api.lease_create(lease_values)
                 lease_id = lease['id']
             except db_ex.ClimateDBDuplicateEntry:
