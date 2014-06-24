@@ -1103,9 +1103,29 @@ class ServiceTestCase(tests.TestCase):
 
         self.patch(self.manager, 'get_lease').return_value = self.lease
 
+        self.manager._basic_action(self.lease_id, '1', 'on_end',
+                                   reservation_status='done')
+
+        self.reservation_update.assert_called_once_with(
+            '111', {'status': 'error'})
+        self.event_update.assert_called_once_with('1', {'status': 'ERROR'})
+
+    def test_basic_action_raise_exception_no_reservation_status(self):
+        def raiseClimateException(resource_id):
+            raise exceptions.ClimateException(resource_id)
+
+        self.manager.resource_actions = (
+            {'virtual:instance':
+             {'on_start': self.fake_plugin.on_start,
+              'on_end': raiseClimateException}})
+
+        self.patch(self.manager, 'get_lease').return_value = self.lease
+
         self.manager._basic_action(self.lease_id, '1', 'on_end')
 
-        self.event_update.assert_called_once_with('1', {'status': 'DONE'})
+        self.reservation_update.assert_called_once_with(
+            '111', {'status': 'error'})
+        self.event_update.assert_called_once_with('1', {'status': 'ERROR'})
 
     def test_getattr_with_correct_plugin_and_method(self):
         self.fake_list_computehosts = (

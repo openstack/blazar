@@ -423,6 +423,7 @@ class ManagerService(service_utils.RPCServer):
         """Commits basic lease actions such as starting and ending."""
         lease = self.get_lease(lease_id)
 
+        event_status = 'DONE'
         for reservation in lease['reservations']:
             resource_type = reservation['resource_type']
             try:
@@ -436,12 +437,15 @@ class ManagerService(service_utils.RPCServer):
                                   'action': action_time,
                                   'lease': lease_id,
                               })
-
-            if reservation_status is not None:
+                event_status = 'ERROR'
                 db_api.reservation_update(reservation['id'],
-                                          {'status': reservation_status})
+                                          {'status': 'error'})
+            else:
+                if reservation_status is not None:
+                    db_api.reservation_update(reservation['id'],
+                                              {'status': reservation_status})
 
-        db_api.event_update(event_id, {'status': 'DONE'})
+        db_api.event_update(event_id, {'status': event_status})
 
     def _send_notification(self, lease, ctx, events=[]):
         payload = notification_api.format_lease_payload(lease)
