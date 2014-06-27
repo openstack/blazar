@@ -1,14 +1,14 @@
 Introduction
 ============
 
-Idea of creating Climate originated with two different use cases:
+Idea of creating Blazar originated with two different use cases:
 
 * Compute host reservation (when user with admin privileges can reserve
   hardware resources that are dedicated to the sole use of a project)
 * Virtual machine (instance) reservation (when user may ask reservation service
   to provide him working VM not necessary now, but also in the future)
 
-Now these ideas have been transformed to more general view: with Climate user
+Now these ideas have been transformed to more general view: with Blazar user
 can request the resources of cloud environment to be provided (“leased”) to his
 project for specific amount on time, immediately or in future.
 
@@ -38,7 +38,7 @@ instances and volumes), but also complex ones - like Heat stacks and Savanna
 clusters. Reservation is characterized by status, resource type and identifier
 and lease it belongs to.
 
-**Lease** is a negotiation agreement between the provider (Climate, using OpenStack
+**Lease** is a negotiation agreement between the provider (Blazar, using OpenStack
 resources) and the consumer (user) where the former agrees to make some kind of
 resources (both virtual and physical) available to latter, based on a set of
 lease terms presented by the consumer. Here lease may be described as contract
@@ -54,7 +54,7 @@ might describe lease start and lease end. Also it might be notification to user
 Rationale
 ---------
 
-Climate is created to:
+Blazar is created to:
 
 * manage cloud resources not only right now, but also in the future;
 * have dedicated recourses on certain amount of time;
@@ -80,26 +80,26 @@ Lease types (concepts)
   scavenger hunt trying to find resources for reservations. For compute hosts
   reservation that makes much sense, because in case there are instances
   belonging to other project on eligible hosts, and without them there will be
-  possible to reserve these hosts, Climate may start instances migration.
+  possible to reserve these hosts, Blazar may start instances migration.
   This operation can be timely and fairly complex and so different strategies
   may be applied depending on heuristic factors such as the number, type and
-  state of the instances to be migrated. Also Climate should assert that there
+  state of the instances to be migrated. Also Blazar should assert that there
   are at least enough potential candidates for the migration prior to starting
-  the actual migration. If Climate decides to start migration, it returns
+  the actual migration. If Blazar decides to start migration, it returns
   **success** state and marks lease as **in_progress**, otherwise -
   **failure**. If this 'hunting' ends successfully before configurable
   timeout has passed, lease should be marked as **active**, otherwise its
   status is set to **timedout**.
 * **Delayed resource acquiring** or **scheduled reservation**. In this
-  reservation type lease is created successfully if Climate thinks there will
+  reservation type lease is created successfully if Blazar thinks there will
   be enough resources to process provisioning later (otherwise this request
   returns **failure** status). Lease is marked as **inactive** till all
   resources will be actually provisioned. That works pretty nice and
   predictable speaking about compute hosts reservation (because hosts as
   resources are got not from common cloud pool, but from admin defined pool).
-  So Climate is possible to predict these physical resources usage and use that
+  So Blazar is possible to predict these physical resources usage and use that
   information during lease creation. If we speak about virtual reservations,
   here situation is more complicated, because all resources are got from common
-  cloud resources pool, and Climate cannot guarantee there will be enough
+  cloud resources pool, and Blazar cannot guarantee there will be enough
   resources to provision them. In this failure case lease state will be marked
   as **error** with appropriate explanation.

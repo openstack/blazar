@@ -1,7 +1,7 @@
-Climate REST API docs
+Blazar REST API docs
 *********************
 
-This page includes documentation for Climate APIs.
+This page includes documentation for Blazar APIs.
 
 .. toctree::
    :maxdepth: 1

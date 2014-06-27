@@ -52,7 +52,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Climate'
+project = u'Blazar'
 copyright = u'2013, Mirantis Inc.;2014, Bull.'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -117,7 +117,7 @@ html_theme = '_theme'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Climate'
+html_title = 'Blazar'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -184,7 +184,7 @@ html_sidebars = {
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ClimateDoc'
+htmlhelp_basename = 'BlazarDoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -203,7 +203,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'climatedoc.tex', u'Climate',
+    ('index', 'blazardoc.tex', u'Blazar',
      u'Mirantis Inc.', 'manual'),
 ]
 
@@ -233,7 +233,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'climate', u'Climate',
+    ('index', 'blazar', u'Blazar',
      [u'Mirantis Inc.'], 1)
 ]
 
@@ -247,8 +247,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'Climate', u'Climate',
-     u'Mirantis Inc.', 'Climate', 'Climate',
+    ('index', 'Blazar', u'Blazar',
+     u'Mirantis Inc.', 'Blazar', 'Blazar',
      'Miscellaneous'),
 ]
 

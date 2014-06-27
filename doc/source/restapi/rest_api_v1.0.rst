@@ -1,13 +1,13 @@
-Climate REST API v1.0
+Blazar REST API v1.0
 *********************
 
 
 1 General API information
 =========================
 
-This section contains base information about the Climate REST API design,
-including operations with different Climate resource types and examples of
-possible requests and responses. Climate supports JSON data serialization
+This section contains base information about the Blazar REST API design,
+including operations with different Blazar resource types and examples of
+possible requests and responses. Blazar supports JSON data serialization
 format, which means that requests with non empty body have to contain
 "application/json" Content-Type header or it should be added ".json" extension
 to the resource name in the request.
@@ -31,7 +31,7 @@ or
 
 **Description**
 
-Lease is the main abstraction for the user in the Climate case. Lease means
+Lease is the main abstraction for the user in the Blazar case. Lease means
 some kind of contract where start time, end time and resources to be reserved
 are mentioned.
 
@@ -40,7 +40,7 @@ are mentioned.
 +--------+-----------------------+-------------------------------------------------------------------------------+
 | Verb   | URI                   | Description                                                                   |
 +========+=======================+===============================================================================+
-| GET    | /v1/leases            | Lists all leases registered in Climate.                                       |
+| GET    | /v1/leases            | Lists all leases registered in Blazar.                                       |
 +--------+-----------------------+-------------------------------------------------------------------------------+
 | POST   | /v1/leases            | Create new lease with passed parameters.                                      |
 +--------+-----------------------+-------------------------------------------------------------------------------+
@@ -376,10 +376,10 @@ are mentioned.
 **Description**
 
 Host is the main abstraction for a Nova Compute host. It is necessary to
-enroll compute hosts in Climate so that the host becomes dedicated to Climate,
+enroll compute hosts in Blazar so that the host becomes dedicated to Blazar,
 and won't accept other VM creation requests but the ones asked subsequently by
-leases requests for dedicated hosts within Climate. If no extra arguments but
-the name are passed when creating a host, Climate will take Nova
+leases requests for dedicated hosts within Blazar. If no extra arguments but
+the name are passed when creating a host, Blazar will take Nova
 specifications, like VCPUs, RAM or cpu_info. There is a possibility to add what
 we call arbitrary extra parameters (not provided within the Nova model) like
 number of GPUs, color of the server or anything that needs to be filtered for a
@@ -390,7 +390,7 @@ user query.
 +--------+------------------------+---------------------------------------------------------------------------------+
 | Verb   | URI                    | Description                                                                     |
 +========+========================+=================================================================================+
-| GET    | /v1/os-hosts           | Lists all hosts registered in Climate.                                          |
+| GET    | /v1/os-hosts           | Lists all hosts registered in Blazar.                                          |
 +--------+------------------------+---------------------------------------------------------------------------------+
 | POST   | /v1/os-hosts           | Create new host with possibly extra parameters.                                 |
 +--------+------------------------+---------------------------------------------------------------------------------+
@@ -651,4 +651,4 @@ not implemented, listed below examples are their possible view.
 
 **Plugin ops**
 
-**TBD** - https://blueprints.launchpad.net/climate/+spec/create-plugin-api-endpoint
+**TBD** - https://blueprints.launchpad.net/blazar/+spec/create-plugin-api-endpoint
