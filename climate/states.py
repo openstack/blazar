@@ -65,7 +65,7 @@ class ObjectState(object):
             self.save()
 
     @abc.abstractmethod
-    def save():
+    def save(self):
         pass
 
 

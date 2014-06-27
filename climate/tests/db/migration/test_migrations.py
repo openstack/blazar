@@ -146,6 +146,7 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
                          " \"topology\": {\"cores\": 1}}",
              'extra_capas': {'vgpus': 2}}]
         computehosts_table = self.get_table(engine, 'computehosts')
+        # pylint: disable=E1120
         engine.execute(computehosts_table.insert(), data)
         return data
 
@@ -175,6 +176,7 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
                 'trust_id': None}
 
         if engine.name != 'sqlite':
+            # pylint: disable=E1120
             self.assertRaises(sqlalchemy.exc.DBAPIError,
                               engine.execute,
                               computehosts_table.insert(),
