@@ -1,13 +1,13 @@
-Climate REST API v2
+Blazar REST API v2
 *********************
 
 
 1 General API information
 =========================
 
-This section contains base information about the Climate REST API design,
-including operations with different Climate resource types and examples of
-possible requests and responses. Climate supports JSON data serialization
+This section contains base information about the Blazar REST API design,
+including operations with different Blazar resource types and examples of
+possible requests and responses. Blazar supports JSON data serialization
 format, which means that requests with non empty body have to contain
 "application/json" Content-Type header or it should be added ".json" extension
 to the resource name in the request.
@@ -31,7 +31,7 @@ or
 
 **Description**
 
-Lease is the main abstraction for the user in the Climate case. Lease means
+Lease is the main abstraction for the user in the Blazar case. Lease means
 some kind of contract where start time, end time and resources to be reserved
 are mentioned.
 
@@ -47,7 +47,7 @@ are mentioned.
 
 **Description**
 
-Host is the abstraction for a computehost in the Climate case. Host means
+Host is the abstraction for a computehost in the Blazar case. Host means
 a specific type of resource to be allocated.
 
 .. rest-controller:: climate.api.v2.controllers.extensions.host:HostsController

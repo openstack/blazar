@@ -1,7 +1,7 @@
 Installation using Devstack
 ===========================
 
-This section includes instructions for Climate installation using Devstack.
+This section includes instructions for Blazar installation using Devstack.
 
 1. Download Devstack:
 
@@ -11,7 +11,7 @@ This section includes instructions for Climate installation using Devstack.
 
 ..
 
-2. Download Climate:
+2. Download Blazar:
 
 .. sourcecode:: console
 
@@ -19,7 +19,7 @@ This section includes instructions for Climate installation using Devstack.
 
 ..
 
-3. Add climate files to Devstack:
+3. Add blazar files to Devstack:
 
 .. sourcecode:: console
 
@@ -30,7 +30,7 @@ This section includes instructions for Climate installation using Devstack.
 
 ..
 
-4. Configure devstack to run climate by adding climate, climate api and climate
+4. Configure devstack to run blazar by adding blazar, blazar api and blazar
    manager to the localrc file:
 
 .. sourcecode:: console
@@ -53,15 +53,15 @@ This section includes instructions for Climate installation using Devstack.
 Installation without Devstack
 =============================
 
-This section includes instructions for Climate installation.
+This section includes instructions for Blazar installation.
 
-Download all Climate related repos:
+Download all Blazar related repos:
 
 .. sourcecode:: console
 
-   git clone https://github.com/stackforge/climate.git
-   git clone https://github.com/stackforge/climate-nova.git
-   git clone https://github.com/stackforge/python-climateclient.git
+   git clone https://github.com/stackforge/blazar.git
+   git clone https://github.com/stackforge/blazar-nova.git
+   git clone https://github.com/stackforge/python-blazarclient.git
 
 ..
 
@@ -81,7 +81,7 @@ or
 
 ..
 
-Next you need to configure Climate and Nova. Define */etc/climate/climate.conf*
+Next you need to configure Blazar and Nova. Define */etc/climate/climate.conf*
 file using the following example:
 
 .. sourcecode:: console
@@ -112,7 +112,7 @@ file using the following example:
 
 ..
 
-Here *os_admin_** flags refer to Climate service user. *climate_** ones - to
+Here *os_admin_** flags refer to Blazar service user. *climate_** ones - to
 admin user created specially to work with physical reservations. If you have no
 these users, create them via Keystone:
 
@@ -149,7 +149,7 @@ If you want to use physical reservations add these ones:
 
 Restart nova-api and nova-scheduler to use new configuration file.
 
-Climate uses Keystone trusts to commit actions on behalf of user created lease.
+Blazar uses Keystone trusts to commit actions on behalf of user created lease.
 That’s why we need to create identityv3 service with appropriate endpoints:
 
 .. sourcecode:: console
@@ -169,7 +169,7 @@ endpoints:
 
 ..
 
-To start Climate services use:
+To start Blazar services use:
 
 .. sourcecode:: console
 
@@ -178,5 +178,5 @@ To start Climate services use:
 
 ..
 
-Now you can use python-climateclient to communicate with Climate.
+Now you can use python-blazarclient to communicate with Blazar.
 

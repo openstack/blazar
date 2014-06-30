@@ -1,7 +1,7 @@
-Welcome to Climate!
+Welcome to Blazar!
 ===================
 
-Climate is an OpenStack service to provide resource reservations in the
+Blazar is an OpenStack service to provide resource reservations in the
 OpenStack cloud for different resource types - both virtual (instances,
 volumes, stacks) and physical (hosts).
 
@@ -13,7 +13,7 @@ Overview
 
     introduction
     architecture
-    Roadmap <https://wiki.openstack.org/wiki/Climate/Roadmap>
+    Roadmap <https://wiki.openstack.org/wiki/Blazar/Roadmap>
 
 User guide
 ----------

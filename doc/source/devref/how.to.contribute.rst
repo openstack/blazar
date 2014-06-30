@@ -4,7 +4,7 @@ How to contribute
 Getting started
 ---------------
 
-* Create `Github <https://github.com/stackforge/climate>`_ account if you don't
+* Create `Github <https://github.com/stackforge/blazar>`_ account if you don't
   have one
 * Make sure you have git options *user.name* and *user.email* set in git by
   typing:
@@ -15,7 +15,7 @@ Getting started
 
   ..
 
-* Create `Launchpad <https://launchpad.net/climate>`_ account if you don't have
+* Create `Launchpad <https://launchpad.net/blazar>`_ account if you don't have
   one
 * Create `OpenStack profile <https://www.openstack.org/profile/>`_
 * Login to `OpenStack Gerrit <https://review.openstack.org/>`_ using your
@@ -26,13 +26,13 @@ Getting started
   * Check that your email is listed in `Gerrit identities
     <https://review.openstack.org/#/settings/web-identities>`_
 
-* Subscribe to Climate-related projects on
+* Subscribe to Blazar-related projects on
   `OpenStack Gerrit <https://review.openstack.org/>`_. Go to your
-  settings and in the watched projects add *stackforge/climate*,
-  *stackforge/climate-nova* and *stackforge/python-climateclient*
+  settings and in the watched projects add *stackforge/blazar*,
+  *stackforge/blazar-nova* and *stackforge/python-blazarclient*
 
-As all bugs/blueprints are listed in `Climate Launchpad
-<https://launchpad.net/climate/>`_, you may keep track on them and choose some
+As all bugs/blueprints are listed in `Blazar Launchpad
+<https://launchpad.net/blazar/>`_, you may keep track on them and choose some
 to work on.
 
 How to keep in touch with community
@@ -42,17 +42,17 @@ How to keep in touch with community
   <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack>`_ or to
   `OpenStack development mailing list
   <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev>`_, do
-  that. Climate-related emails must be send with **[climate]** in its subject.
-* All questions may be asked on our IRC channel #openstack-climate on
+  that. Blazar-related emails must be send with **[blazar]** in its subject.
+* All questions may be asked on our IRC channel #openstack-blazar on
   `freenode <http://freenode.net>`_
 * We also have weekly meetings on #openstack-meeting
-  `freenode IRC channel <https://wiki.openstack.org/wiki/Meetings/Climate>`_
+  `freenode IRC channel <https://wiki.openstack.org/wiki/Meetings/Blazar>`_
 
-Your first commit to Climate
+Your first commit to Blazar
 ----------------------------
 
-* Checkout corresponding Climate repository from `Github
-  <https://github.com/stackforge/climate>`_
+* Checkout corresponding Blazar repository from `Github
+  <https://github.com/stackforge/blazar>`_
 * Take a look on how `Gerrit review process
   <https://wiki.openstack.org/wiki/Gerrit_Workflow>`_ goes on in OpenStack
   (read carefully `committing changes
