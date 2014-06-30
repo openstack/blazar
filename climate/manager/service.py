@@ -464,7 +464,8 @@ class ManagerService(service_utils.RPCServer):
         if event['time'] < lease['start_date']:
             LOG.warning("New start_date greater than before_end_date. "
                         "Setting before_end_date to %s for lease %s"
-                        % (lease['start_date'], lease['id']))
+                        % (lease['start_date'], lease.get('id',
+                           lease.get('name'))))
             event['time'] = lease['start_date']
 
     def _update_before_end_event(self, old_lease, new_lease,
