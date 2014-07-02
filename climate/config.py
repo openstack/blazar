@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import socket
 
 from oslo_config import cfg
 from oslo_log import log as logging
 
+
 cli_opts = [
-    cfg.StrOpt('host', default=socket.gethostname(),
+    cfg.StrOpt('host', default='0.0.0.0',
                help='Name of this node.  This can be an opaque identifier.  '
                'It is not necessarily a hostname, FQDN, or IP address. '
                'However, the node name must be valid within '
