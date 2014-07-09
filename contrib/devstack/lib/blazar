@@ -151,47 +151,29 @@ create_climate_aggregate_freepool() {
 # service              CLIMATE     admin        # if enabled
 #
 function create_climate_accounts() {
-    SERVICE_TENANT=$(keystone tenant-list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
 
-    CLIMATE_USER_ID=$(keystone user-create \
-        --name=$CLIMATE_USER_NAME \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
-        --email=climate@example.com \
-        | grep " id " | get_field 2)
-    keystone user-role-add \
-        --tenant_id $SERVICE_TENANT \
-        --user_id $CLIMATE_USER_ID \
-        --role_id $ADMIN_ROLE
+    CLIMATE_USER_ID=$(get_or_create_user $CLIMATE_USER_NAME \
+        "$SERVICE_PASSWORD" $SERVICE_TENANT "climate@example.com")
+    get_or_add_user_role $ADMIN_ROLE $CLIMATE_USER_ID $SERVICE_TENANT
+
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        CLIMATE_SERVICE=$(keystone service-create \
-            --name=climate \
-            --type=reservation \
-            --description="Climate Reservations Service" \
-            | grep " id " | get_field 2)
-        keystone endpoint-create \
-            --region RegionOne \
-            --service_id $CLIMATE_SERVICE \
-            --publicurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
-            --adminurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
-            --internalurl "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1"
+        CLIMATE_SERVICE=$(get_or_create_service "climate" \
+            "reservation" "Climate Reservations Service")
+        get_or_create_endpoint $CLIMATE_SERVICE \
+            "$REGION_NAME" \
+            "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
+            "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1" \
+            "$CLIMATE_SERVICE_PROTOCOL://$CLIMATE_SERVICE_HOST:$CLIMATE_SERVICE_PORT/v1"
 
-        KEYSTONEV3_SERVICE=$(keystone service-list \
-                             | grep keystonev3 | get_field 1)
-        if [[ -z "$KEYSTONEV3_SERVICE" ]]; then
-            KEYSTONEV3_SERVICE=$(keystone service-create \
-                --name=keystonev3 \
-                --type=identityv3 \
-                --description="Keystone Identity Service V3" \
-                | grep " id " | get_field 2)
-            keystone endpoint-create \
-                --region RegionOne \
-                --service_id $KEYSTONEV3_SERVICE \
-                --publicurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
-                --adminurl "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
-                --internalurl "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
-        fi
+        KEYSTONEV3_SERVICE=$(get_or_create_service "keystonev3" \
+            "identityv3" "Keystone Identity Service V3")
+        get_or_create_endpoint $KEYSTONEV3_SERVICE \
+            "$REGION_NAME" \
+            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
+            "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
+            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
     fi
 }
 
