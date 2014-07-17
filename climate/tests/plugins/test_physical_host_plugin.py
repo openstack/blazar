@@ -493,7 +493,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_computehosts = self.patch(self.rp.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name')
+        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=1)
         self.assertRaises(
@@ -586,7 +586,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_computehosts = self.patch(self.rp.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name')
+        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=0)
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
@@ -672,7 +672,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_allocation_destroy')
         delete = self.patch(self.rp.ReservationPool, 'delete')
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name')
+        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=1)
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
@@ -716,7 +716,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_allocation_destroy')
         delete = self.patch(self.rp.ReservationPool, 'delete')
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name')
+        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=0)
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')

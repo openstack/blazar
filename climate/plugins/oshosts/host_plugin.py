@@ -124,7 +124,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                     allocations.append(allocation)
                     if (hosts_in_pool and
                             self.nova.hypervisors.get(
-                                self._get_hypervisor_from_name(
+                                self._get_hypervisor_from_name_or_id(
                                     allocation['compute_host_id'])
                             ).__dict__['running_vms'] > 0):
                         raise manager_ex.NotEnoughHostsAvailable()
@@ -185,7 +185,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             for allocation in allocations:
                 db_api.host_allocation_destroy(allocation['id'])
                 if self.nova.hypervisors.get(
-                        self._get_hypervisor_from_name(
+                        self._get_hypervisor_from_name_or_id(
                         allocation['compute_host_id'])
                 ).__dict__['running_vms'] == 0:
                     pool.delete(reservation['resource_id'])
@@ -424,14 +424,15 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 requirements[0] == 'and' and
                 all(self._convert_requirements(x) for x in requirements[1:]))
 
-    def _get_hypervisor_from_name(self, hypervisor_name):
+    def _get_hypervisor_from_name_or_id(self, hypervisor_name_or_id):
         """Return an hypervisor by name or an id."""
         hypervisor = None
         all_hypervisors = self.nova.hypervisors.list()
         for hyp in all_hypervisors:
-            if hypervisor_name == hyp.hypervisor_hostname:
+            if (hypervisor_name_or_id == hyp.hypervisor_hostname or
+               hypervisor_name_or_id == str(hyp.id)):
                 hypervisor = hyp
         if hypervisor:
             return hypervisor
         else:
-            raise manager_ex.HypervisorNotFound(pool=hypervisor_name)
+            raise manager_ex.HypervisorNotFound(pool=hypervisor_name_or_id)
