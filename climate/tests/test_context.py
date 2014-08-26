@@ -45,7 +45,7 @@ class TestBaseContext(tests.TestCase):
         super(TestBaseContext, self).setUp()
         self.context = TestContext(first=1, second=2)
 
-    def test_get_defined(self):
+    def tearDown(self):
         super(TestBaseContext, self).tearDown()
         self.assertEqual(self.context.first, 1)
 
