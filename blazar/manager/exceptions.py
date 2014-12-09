@@ -145,3 +145,9 @@ class InvalidStateUpdate(InvalidState):
 
 class ProjectIdNotFound(exceptions.BlazarException):
     msg_fmt = _("No project_id found in current context")
+
+
+class InvalidRange(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _('Invalid values for min/max of hosts. '
+                'Max must be equal to or larger than min.')

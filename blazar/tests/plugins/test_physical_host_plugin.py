@@ -392,6 +392,22 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         ]
         host_allocation_create.assert_has_calls(calls)
 
+    def test_create_reservation_with_invalid_range(self):
+        values = {
+            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'min': u'2',
+            'max': u'1',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': '',
+            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
+            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
+            'resource_type': plugin.RESOURCE_TYPE,
+        }
+        self.assertRaises(
+            manager_exceptions.InvalidRange,
+            self.fake_phys_plugin.create_reservation,
+            values)
+
     def test_update_reservation_shorten(self):
         values = {
             'start_date': datetime.datetime(2013, 12, 19, 20, 30),

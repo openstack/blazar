@@ -41,7 +41,6 @@ plugin_opts = [
                help='Actions which we will use at the start of the lease'),
 ]
 
-
 CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
@@ -69,8 +68,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             'resource_type': values['resource_type'],
             'status': 'pending',
         }
+        min_hosts = values.get('min')
+        max_hosts = values.get('max')
+        if 0 <= min_hosts and min_hosts <= max_hosts:
+            count_range = str(min_hosts) + '-' + str(max_hosts)
+        else:
+            raise manager_ex.InvalidRange()
         reservation = db_api.reservation_create(reservation_values)
-        count_range = str(values['min']) + '-' + str(values['max'])
         host_values = {
             'reservation_id': reservation['id'],
             'resource_properties': values['resource_properties'],
