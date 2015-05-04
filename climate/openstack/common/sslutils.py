@@ -15,7 +15,7 @@
 import os
 import ssl
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate.openstack.common.gettextutils import _
 

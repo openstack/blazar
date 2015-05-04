@@ -57,4 +57,4 @@ class RESTApiTestCase(tests.TestCase):
 
     def test_computehosts_delete(self):
         self.api.computehosts_delete(host_id=self.fake_id)
-        self.render.assert_called_once()
+        self.render.assert_called_once_with()

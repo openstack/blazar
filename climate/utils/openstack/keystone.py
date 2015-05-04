@@ -15,7 +15,7 @@
 
 from keystoneclient import client as keystone_client
 from keystoneclient import exceptions as keystone_exception
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions

@@ -17,7 +17,7 @@ import fixtures
 import tempfile
 import testscenarios
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate import context
 from climate.db.sqlalchemy import api as db_api

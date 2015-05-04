@@ -17,8 +17,8 @@
 
 import functools
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging as messaging
 
 from climate import context
 from climate.openstack.common.gettextutils import _

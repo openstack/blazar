@@ -17,7 +17,7 @@ import datetime
 
 import eventlet
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 from stevedore import enabled
 import testtools
 

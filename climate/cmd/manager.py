@@ -18,7 +18,7 @@ import sys
 
 import eventlet
 eventlet.monkey_patch()
-from oslo.config import cfg
+from oslo_config import cfg
 
 gettext.install('climate', unicode=1)
 

@@ -18,7 +18,7 @@ import datetime
 import json
 import uuid
 
-from oslo.config import cfg
+from oslo_config import cfg
 import six
 
 from climate.db import api as db_api

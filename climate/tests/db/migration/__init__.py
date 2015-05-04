@@ -31,7 +31,7 @@ import urlparse
 from alembic import command
 from alembic import config as alembic_config
 from alembic import migration
-from oslo.config import cfg
+from oslo_config import cfg
 import sqlalchemy
 import sqlalchemy.exc
 

@@ -16,7 +16,7 @@
 import traceback
 
 import flask
-from oslo import messaging
+import oslo_messaging as messaging
 from werkzeug import datastructures
 
 from climate.api import context

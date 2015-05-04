@@ -53,4 +53,4 @@ class RESTApiTestCase(tests.TestCase):
 
     def test_leases_delete(self):
         self.api.leases_delete(lease_id=self.fake_id)
-        self.render.assert_called_once()
+        self.render.assert_called_once_with()

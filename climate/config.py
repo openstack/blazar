@@ -15,7 +15,7 @@
 
 import socket
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 cli_opts = [
     cfg.StrOpt('host', default=socket.gethostname(),

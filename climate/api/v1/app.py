@@ -16,7 +16,7 @@
 import eventlet
 import flask
 from keystoneclient.middleware import auth_token
-from oslo.config import cfg
+from oslo_config import cfg
 from werkzeug import exceptions as werkzeug_exceptions
 
 from climate.api.v1.oshosts import v1_0 as host_api_v1_0

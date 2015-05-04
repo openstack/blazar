@@ -27,7 +27,7 @@ import traceback
 import eventlet
 import eventlet.backdoor
 import greenlet
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate.openstack.common.gettextutils import _LI
 from climate.openstack.common import log as logging

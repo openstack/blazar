@@ -17,7 +17,7 @@
 
 import functools
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate import context
 from climate import exceptions

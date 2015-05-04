@@ -79,22 +79,24 @@ class UtilsTestCase(tests.TestCase):
 
     def test_request_data_data(self):
         self.request.parsed_data = "data"
-        self.utils.request_data()
-        self.request.assert_called_once()
+        self.assertEqual("data", self.utils.request_data())
 
     def test_request_data_file(self):
         self.request.file_upload = True
-        self.utils.request_data()
-        self.request.assert_called_once()
+        self.request.data = 'foo'
+        del self.request.parsed_data
+        flask.request.content_length = 1
+        self.assertEqual('foo', self.utils.request_data())
 
     def test_request_data_length(self):
+        del self.request.parsed_data
         self.request.content_length = 0
         self.utils.request_data()
-        self.request.assert_called_once()
+        self.assertEqual({}, self.utils.request_data())
 
     def test_get_request_args(self):
-        self.utils.get_request_args()
-        self.request.assert_called_once()
+        self.flask.request.args = 'foo'
+        self.assertEqual('foo', self.utils.get_request_args())
 
     def test_abort_and_log(self):
         self.utils.abort_and_log(400, "Funny error")

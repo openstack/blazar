@@ -16,7 +16,7 @@
 Tests for ACL. Checks whether certain kinds of requests
 are blocked or allowed to be processed.
 """
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate.api.v2 import app
 from climate import policy

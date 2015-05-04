@@ -15,7 +15,7 @@
 
 import eventlet
 from novaclient import exceptions as nova_exceptions
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate import exceptions as climate_exceptions
 from climate.openstack.common import log as logging

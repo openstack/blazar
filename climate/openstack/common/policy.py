@@ -79,7 +79,7 @@ import abc
 import ast
 import re
 
-from oslo.config import cfg
+from oslo_config import cfg
 import six
 import six.moves.urllib.parse as urlparse
 import six.moves.urllib.request as urlrequest

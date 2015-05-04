@@ -16,7 +16,7 @@
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exception
 from novaclient.v1_1 import servers
-from oslo.config import cfg
+from oslo_config import cfg
 
 from climate import context
 from climate.utils.openstack import base

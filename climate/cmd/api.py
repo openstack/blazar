@@ -19,7 +19,7 @@ import sys
 
 import eventlet
 from eventlet import wsgi
-from oslo.config import cfg
+from oslo_config import cfg
 
 gettext.install('climate', unicode=1)
 
