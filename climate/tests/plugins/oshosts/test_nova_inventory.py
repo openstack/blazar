@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from novaclient import exceptions as nova_exceptions
-from novaclient.v1_1 import hypervisors
+from novaclient.v2 import hypervisors
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions

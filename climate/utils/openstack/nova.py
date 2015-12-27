@@ -15,7 +15,7 @@
 
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exception
-from novaclient.v1_1 import servers
+from novaclient.v2 import servers
 from oslo_config import cfg
 
 from climate import context
