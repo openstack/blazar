@@ -4,7 +4,7 @@ How to contribute
 Getting started
 ---------------
 
-* Create `Github <https://github.com/stackforge/blazar>`_ account if you don't
+* Create `Github <https://github.com/openstack/blazar>`_ account if you don't
   have one
 * Make sure you have git options *user.name* and *user.email* set in git by
   typing:
@@ -28,8 +28,8 @@ Getting started
 
 * Subscribe to Blazar-related projects on
   `OpenStack Gerrit <https://review.openstack.org/>`_. Go to your
-  settings and in the watched projects add *stackforge/blazar*,
-  *stackforge/blazar-nova* and *stackforge/python-blazarclient*
+  settings and in the watched projects add *openstack/blazar*,
+  *openstack/blazar-nova* and *openstack/python-blazarclient*
 
 As all bugs/blueprints are listed in `Blazar Launchpad
 <https://launchpad.net/blazar/>`_, you may keep track on them and choose some
@@ -52,7 +52,7 @@ Your first commit to Blazar
 ----------------------------
 
 * Checkout corresponding Blazar repository from `Github
-  <https://github.com/stackforge/blazar>`_
+  <https://github.com/openstack/blazar>`_
 * Take a look on how `Gerrit review process
   <https://wiki.openstack.org/wiki/Gerrit_Workflow>`_ goes on in OpenStack
   (read carefully `committing changes

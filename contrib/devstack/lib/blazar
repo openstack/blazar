@@ -27,11 +27,11 @@ CLIMATE_VERBOSE=${CLIMATE_VERBOSE:-True}
 CLIMATE_USER_NAME=${CLIMATE_USER_NAME:-climate}
 
 # Set up default repos
-CLIMATE_REPO=${CLIMATE_REPO:-${GIT_BASE}/stackforge/blazar.git}
+CLIMATE_REPO=${CLIMATE_REPO:-${GIT_BASE}/openstack/blazar.git}
 CLIMATE_BRANCH=${CLIMATE_BRANCH:-master}
-CLIMATECLIENT_REPO=${CLIMATECLIENT_REPO:-${GIT_BASE}/stackforge/python-blazarclient.git}
+CLIMATECLIENT_REPO=${CLIMATECLIENT_REPO:-${GIT_BASE}/openstack/python-blazarclient.git}
 CLIMATECLIENT_BRANCH=${CLIMATECLIENT_BRANCH:-master}
-CLIMATENOVA_REPO=${CLIMATENOVA_REPO:-${GIT_BASE}/stackforge/blazar-nova.git}
+CLIMATENOVA_REPO=${CLIMATENOVA_REPO:-${GIT_BASE}/openstack/blazar-nova.git}
 CLIMATENOVA_BRANCH=${CLIMATENOVA_BRANCH:-master}
 
 # Set up default directories
