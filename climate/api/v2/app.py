@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from keystoneclient.middleware import auth_token
+from keystonemiddleware import auth_token
 from oslo_config import cfg
 import pecan
 
@@ -63,9 +63,7 @@ def setup_app(pecan_config=None, extra_hooks=None):
     # NOTE(sbauza): ACLs are always active unless for unittesting where
     #               enable_acl could be set to False
     if pecan_config.app.enable_acl:
-        CONF.register_opts(auth_token.opts, group=OPT_GROUP_NAME)
-        keystone_config = dict(CONF.get(OPT_GROUP_NAME))
-        app = auth_token.AuthProtocol(app, conf=keystone_config)
+        app = auth_token.AuthProtocol(app, {})
 
     return app
 

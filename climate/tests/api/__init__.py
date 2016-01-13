@@ -14,13 +14,15 @@
 # limitations under the License.
 
 """Base classes for API tests."""
-from oslo_config import cfg
+import uuid
+
+from keystonemiddleware import fixture
 import pecan
 import pecan.testing
 import six
 
+
 from climate.api import context as api_context
-from climate.api.v2 import app
 from climate import context
 from climate.manager.oshosts import rpcapi as hosts_rpcapi
 from climate.manager import rpcapi
@@ -31,6 +33,9 @@ PATH_PREFIX = '/v2'
 
 class APITest(tests.TestCase):
     """Used for unittests tests of Pecan controllers."""
+
+    ADMIN_TOKEN = uuid.uuid4().hex
+    MEMBER_TOKEN = uuid.uuid4().hex
 
     # SOURCE_DATA = {'test_source': {'somekey': '666'}}
 
@@ -51,7 +56,8 @@ class APITest(tests.TestCase):
             )
 
         super(APITest, self).setUp()
-        cfg.CONF.set_override("auth_version", "v2.0", group=app.OPT_GROUP_NAME)
+
+        self.keystone_middleware = None
         self.app = self._make_app()
 
         # NOTE(sbauza): Context is taken from Keystone auth middleware, we need
@@ -76,6 +82,22 @@ class APITest(tests.TestCase):
 
         # NOTE(sbauza): Keystone middleware auth can be deactivated using
         #               enable_acl set to False
+
+        if enable_acl:
+            self.keystone_middleware = self.useFixture(
+                fixture.AuthTokenFixture())
+
+            self.keystone_middleware.add_token_data(token_id=self.ADMIN_TOKEN,
+                                                    user_id='user_id1',
+                                                    user_name='user_name1',
+                                                    project_id='123i2910',
+                                                    role_list=['admin'])
+            self.keystone_middleware.add_token_data(token_id=self.MEMBER_TOKEN,
+                                                    user_id='user_id2',
+                                                    user_name='user-good',
+                                                    project_id='project-good',
+                                                    role_list=['Member'])
+
         self.config = {
             'app': {
                 'modules': ['climate.api.v2'],
