@@ -17,13 +17,13 @@ import traceback
 
 import flask
 import oslo_messaging as messaging
+from oslo_serialization import jsonutils
 from werkzeug import datastructures
 
 from climate.api import context
 from climate.db import exceptions as db_exceptions
 from climate import exceptions as ex
 from climate.manager import exceptions as manager_exceptions
-from climate.openstack.common.deprecated import wsgi
 from climate.openstack.common.gettextutils import _
 from climate.openstack.common import log as logging
 
@@ -154,13 +154,13 @@ def render(result=None, response_type=None, status=None, **kwargs):
     serializer = None
     if "application/json" in response_type:
         response_type = RT_JSON
-        serializer = wsgi.JSONDictSerializer()
+        serializer = jsonutils
     else:
         abort_and_log(400,
                       _("Content type '%s' isn't supported") % response_type)
         return
 
-    body = serializer.serialize(result)
+    body = serializer.dumps(result)
 
     response_type = str(response_type)
 
@@ -183,14 +183,14 @@ def request_data():
     deserializer = None
     content_type = flask.request.mimetype
     if not content_type or content_type in RT_JSON:
-        deserializer = wsgi.JSONDeserializer()
+        deserializer = jsonutils
     else:
         abort_and_log(400,
                       _("Content type '%s' isn't supported") % content_type)
         return
 
     # parsed request data to avoid unwanted re-parsings
-    parsed_data = deserializer.deserialize(flask.request.data)['body']
+    parsed_data = deserializer.loads(flask.request.data)
     flask.request.parsed_data = parsed_data
 
     return flask.request.parsed_data

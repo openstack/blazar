@@ -43,6 +43,8 @@ FLOATOPT = "FloatOpt"
 LISTOPT = "ListOpt"
 DICTOPT = "DictOpt"
 MULTISTROPT = "MultiStrOpt"
+PORTOPT = "PortOpt"
+OPT = "Opt"
 
 OPT_TYPES = {
     STROPT: 'string value',
@@ -52,11 +54,13 @@ OPT_TYPES = {
     LISTOPT: 'list value',
     DICTOPT: 'dict value',
     MULTISTROPT: 'multi valued',
+    PORTOPT: 'port value',
+    OPT: 'value',
 }
 
 OPTION_REGEX = re.compile(r"(%s)" % "|".join([STROPT, BOOLOPT, INTOPT,
                                               FLOATOPT, LISTOPT, DICTOPT,
-                                              MULTISTROPT]))
+                                              MULTISTROPT, PORTOPT, OPT]))
 
 PY_EXT = ".py"
 BASEDIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -268,7 +272,7 @@ def _print_opt(opt):
         elif opt_type == BOOLOPT:
             assert(isinstance(opt_default, bool))
             print('#%s=%s' % (opt_name, str(opt_default).lower()))
-        elif opt_type == INTOPT:
+        elif opt_type == INTOPT or opt_type == PORTOPT:
             assert(isinstance(opt_default, int) and
                    not isinstance(opt_default, bool))
             print('#%s=%s' % (opt_name, opt_default))
