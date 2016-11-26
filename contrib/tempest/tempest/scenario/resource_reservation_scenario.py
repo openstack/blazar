@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+from oslo_log import log
 from tempest import config_resource_reservation as config
 from tempest import exceptions
-from tempest.openstack.common import log
 from tempest import resource_reservation_client_manager as clients
 from tempest.scenario import manager as clientTest
 import tempest.test
