@@ -15,10 +15,12 @@
 
 
 from oslo_log import log
+from tempest.common import credentials_factory as credentials
 from tempest import config_resource_reservation as config
 from tempest import exceptions
+from tempest import manager as tempestmanager
 from tempest import resource_reservation_client_manager as clients
-from tempest.scenario import manager as clientTest
+from tempest.scenario import manager
 import tempest.test
 
 CONF = config.CONF
@@ -26,7 +28,7 @@ CONF = config.CONF
 LOG = log.getLogger(__name__)
 
 
-class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
+class ResourceReservationScenarioTest(manager.ScenarioTest):
     """Base class for resource reservation scenario tests."""
 
     @classmethod
@@ -35,14 +37,18 @@ class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
         if not CONF.service_available.climate:
             raise cls.skipException("Resource reservation support is required")
 
-        creds = cls.credentials()
-        cls.manager = clients.ResourceReservationManager(creds)
+        creds = credentials.get_configured_credentials('identity_admin')
+        auth_prov = tempestmanager.get_auth_provider(creds)
+        cls.manager.reservation_client = (
+            clients.ResourceReservationV1Client(auth_prov,
+                                                'reservation',
+                                                CONF.identity.region))
         cls.resource_reservation_client = (
             cls.manager.resource_reservation_client)
 
     def get_lease_by_name(self, lease_name):
         # the same as the climateclient does it: ask for the entire list
-        lease_list = self.resource_reservation_client.lease.list()
+        lease_list = self.resource_reservation_client.list_lease()
         named_lease = []
 
         # and then search by lease_name
@@ -50,20 +56,20 @@ class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
             filter(lambda lease: lease['name'] == lease_name, lease_list))
 
         if named_lease:
-            return self.resource_reservation_client.lease.get(
+            return self.resource_reservation_client.get_lease(
                 named_lease[0]['id'])
         else:
             message = "Unable to find lease with name '%s'" % lease_name
             raise exceptions.NotFound(message)
 
     def delete_lease(self, lease_id):
-        return self.resource_reservation_client.lease.delete(lease_id)
+        return self.resource_reservation_client.delete_lease(lease_id)
 
     def wait_for_lease_end(self, lease_id):
 
         def check_lease_end():
             try:
-                lease = self.resource_reservation_client.lease.get(lease_id)
+                lease = self.resource_reservation_client.get_lease(lease_id)
                 if lease:
                     events = lease['events']
                     return len(filter(lambda evt:
@@ -93,3 +99,8 @@ class ResourceReservationScenarioTest(clientTest.OfficialClientTest):
         except Exception as e:
             LOG.info("Unable to delete %s snapshot. Exception: %s"
                      % (image_name, e.message))
+
+    def is_flavor_enough(self, flavor_id, image_id):
+        image = self.compute_images_client.show_image(image_id)['image']
+        flavor = self.flavors_client.show_flavor(flavor_id)['flavor']
+        return image['minDisk'] <= flavor['disk']
