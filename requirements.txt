@@ -10,10 +10,10 @@ Flask>=0.10,<1.0
 iso8601>=0.1.9
 keystonemiddleware>=4.0.0,!=4.1.0  # Apache-2.0
 kombu>=3.0.7
+oslo.concurrency>=3.8.0 # Apache-2.0
 oslo.config>=2.3.0  # Apache-2.0
 oslo.messaging>=1.16.0,!=1.17.0,!=1.17.1 # Apache-2.0
 oslo.serialization>=1.10.0              # Apache-2.0
-posix_ipc
 python-novaclient>=2.26.0
 netaddr>=0.7.12,!=0.7.16
 python-keystoneclient>=1.6.0

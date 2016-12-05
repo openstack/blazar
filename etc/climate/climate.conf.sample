@@ -63,7 +63,7 @@
 
 # Use PUB/SUB pattern for fanout methods. PUB/SUB always uses
 # proxy. (boolean value)
-#use_pub_sub=true
+#use_pub_sub=false
 
 # Use ROUTER remote proxy. (boolean value)
 #use_router_proxy=true
@@ -258,17 +258,6 @@
 # of port numbers.  The chosen port is displayed in the
 # service's log file. (string value)
 #backdoor_port=<None>
-
-
-#
-# Options defined in climate.openstack.common.lockutils
-#
-
-# Whether to disable inter-process locks (boolean value)
-#disable_process_locking=false
-
-# Directory to use for lock files. (string value)
-#lock_path=<None>
 
 
 #
@@ -591,8 +580,9 @@
 # (string value)
 #region_name=<None>
 
-# Directory used to cache files related to PKI tokens. (string
-# value)
+# Directory used to cache files related to PKI tokens. This
+# option has been deprecated in the Ocata release and will be
+# removed in the P release. (string value)
 #signing_dir=<None>
 
 # Optionally specify a list of memcached server(s) to use for
@@ -611,7 +601,9 @@
 # is retrieved from the Identity service (in seconds). A high
 # number of revocation events combined with a low cache
 # duration may significantly reduce performance. Only valid
-# for PKI tokens. (integer value)
+# for PKI tokens. This option has been deprecated in the Ocata
+# release and will be removed in the P release. (integer
+# value)
 #revocation_cache_time=10
 
 # (Optional) If defined, indicate whether token data should be
@@ -736,7 +728,7 @@
 # Password for Redis server (optional). (string value)
 #password=
 
-# List of Redis Sentinel hosts (fault tolerance mode) e.g.
+# List of Redis Sentinel hosts (fault tolerance mode), e.g.,
 # [host:port, host1:port ... ] (list value)
 #sentinel_hosts=
 
@@ -751,7 +743,7 @@
 # (integer value)
 #check_timeout=20000
 
-# Timeout in ms on blocking socket operations (integer value)
+# Timeout in ms on blocking socket operations. (integer value)
 #socket_timeout=10000
 
 
@@ -763,6 +755,23 @@
 
 # Publisher ID for notifications (string value)
 #publisher_id=climate.lease
+
+
+[oslo_concurrency]
+
+#
+# Options defined in oslo.concurrency
+#
+
+# Enables or disables inter-process locks. (boolean value)
+#disable_process_locking=false
+
+# Directory to use for lock files.  For security, the
+# specified directory should only be writable by the user
+# running the processes that need locking. Defaults to
+# environment variable OSLO_LOCK_PATH. If external locks are
+# used, a lock path must be set. (string value)
+#lock_path=<None>
 
 
 [oslo_messaging_amqp]
@@ -1183,7 +1192,7 @@
 # Reconnecting retry count in case of connectivity problem
 # during sending RPC message, -1 means infinite retry. If
 # actual retry attempts in not 0 the rpc request could be
-# processed more then one time (integer value)
+# processed more than one time (integer value)
 #default_rpc_retry_attempts=-1
 
 # Reconnecting retry delay in case of connectivity problem
@@ -1245,7 +1254,7 @@
 
 # Use PUB/SUB pattern for fanout methods. PUB/SUB always uses
 # proxy. (boolean value)
-#use_pub_sub=true
+#use_pub_sub=false
 
 # Use ROUTER remote proxy. (boolean value)
 #use_router_proxy=true
