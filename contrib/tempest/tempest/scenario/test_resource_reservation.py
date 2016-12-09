@@ -18,6 +18,7 @@ import json
 
 import dateutil.parser
 from oslo_log import log as logging
+from tempest.common import waiters
 from tempest import config
 from tempest import exceptions
 from tempest.scenario import resource_reservation_scenario as rrs
@@ -65,7 +66,6 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             )
 
     def tearDown(self):
-        self.remove_resource('server')
         super(TestResourceReservationScenario, self).tearDown()
 
     def add_keypair(self):
@@ -76,17 +76,19 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # Create server with lease_data
         create_kwargs = {
-            'key_name': self.keypair.id,
+            'key_name': self.keypair['name'],
             'scheduler_hints': lease_data
         }
 
-        server = self.create_server(image=self.image_ref,
-                                    flavor=self.flavor_ref, wait=wait,
-                                    create_kwargs=create_kwargs)
-        self.set_resource('server', server)
+        server = self.create_server(image_id=self.image_ref,
+                                    flavor=self.flavor_ref,
+                                    wait_until=wait,
+                                    **create_kwargs)
+        self.server_id = server['id']
+        self.server_name = server['name']
 
     def check_lease_creation(self, expected_lease_data):
-        server = self.get_resource('server')
+        server = self.servers_client.show_server(self.server_id)['server']
         expected_lease_params = json.loads(expected_lease_data['lease_params'])
 
         # compare lease_data with data passed as parameter
@@ -115,14 +117,14 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         # compare the resource id from the lease with the server.id attribute!
         reservations = lease['reservations']
         self.assertTrue(len(reservations) == 1)
-        self.assertEqual(server.id, reservations[0]['resource_id'])
+        self.assertEqual(server['id'], reservations[0]['resource_id'])
         self.assertEqual("virtual:instance",
                          lease['reservations'][0]['resource_type'])
 
     def check_server_is_snapshoted(self):
-        image_name = LEASE_IMAGE_PREFIX + self.get_resource('server').name
+        image_name = LEASE_IMAGE_PREFIX + self.server_name
         try:
-            images_list = self.compute_client.images.list()
+            images_list = self.image_client.list()
             self.assertNotEmpty(
                 filter(lambda image: image.name == image_name, images_list))
         except Exception as e:
@@ -130,23 +132,9 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
                        "Exception: %s" % (image_name, e.message))
             raise exceptions.NotFound(message)
 
-    def check_server_is_removed(self):
-        server_id = self.get_resource('server').id
-        self.delete_timeout(self.compute_client.servers, server_id)
-
     def check_server_status(self, expected_status):
-        server_id = self.get_resource('server').id
-        server = self.compute_client.servers.get(server_id)
-        self.assertEqual(expected_status, server.status)
-
-        # update server resource reference
-        self.set_resource('server', server)
-
-    def wait_for_server_status(self, status):
-        self.status_timeout(
-            self.compute_client.servers,
-            self.get_resource('server').id, status)
-        self.check_server_status(status)
+        server = self.servers_client.show_server(self.server_id)['server']
+        self.assertEqual(expected_status, server['status'])
 
     # TODO(cmart): add climate to services after pushing this code into tempest
     @test.attr(type='slow')
@@ -168,7 +156,8 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.check_server_status('SHELVED_OFFLOADED')
 
         # now, wait until the server is active
-        self.wait_for_server_status('ACTIVE')
+        waiters.wait_for_server_status(self.servers_client,
+                                       self.server_id, 'ACTIVE')
         self.check_lease_creation(lease_data)
 
         # wait for lease end
@@ -177,10 +166,11 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # check server final status
         self.check_server_is_snapshoted()
-        self.check_server_is_removed()
+        waiters.wait_for_server_termination(self.servers_client,
+                                            self.server_id)
 
         # remove created snapshot
-        image_name = LEASE_IMAGE_PREFIX + self.get_resource('server').name
+        image_name = LEASE_IMAGE_PREFIX + self.server_name
         self.remove_image_snapshot(image_name)
 
         # remove created lease

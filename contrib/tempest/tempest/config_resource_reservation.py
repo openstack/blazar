@@ -54,7 +54,6 @@ class TempestConfigPrivateClimate(config.TempestConfigPrivate):
     """Climate's config wrap over standard config."""
 
     def __init__(self, parse_conf=True):
-        super(TempestConfigPrivateClimate, self).__init__()
         config.register_opt_group(cfg.CONF, service_available_group,
                                   ServiceAvailableGroup)
         config.register_opt_group(cfg.CONF, resource_reservation_group,

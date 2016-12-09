@@ -32,14 +32,14 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
     """Base class for resource reservation scenario tests."""
 
     @classmethod
-    def setUpClass(cls):
-        super(ResourceReservationScenarioTest, cls).setUpClass()
+    def setup_clients(cls):
+        super(ResourceReservationScenarioTest, cls).setup_clients()
         if not CONF.service_available.climate:
             raise cls.skipException("Resource reservation support is required")
 
-        creds = credentials.get_configured_credentials('identity_admin')
+        creds = credentials.get_configured_admin_credentials('admin')
         auth_prov = tempestmanager.get_auth_provider(creds)
-        cls.manager.reservation_client = (
+        cls.manager.resource_reservation_client = (
             clients.ResourceReservationV1Client(auth_prov,
                                                 'reservation',
                                                 CONF.identity.region))
@@ -93,9 +93,9 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
     def remove_image_snapshot(self, image_name):
         try:
             image = filter(lambda i:
-                           i.name == image_name,
-                           self.compute_client.images.list())
-            self.compute_client.images.delete(image)
+                           i['name'] == image_name,
+                           self.image_client.list())
+            self.image_client.delete(image)
         except Exception as e:
             LOG.info("Unable to delete %s snapshot. Exception: %s"
                      % (image_name, e.message))
