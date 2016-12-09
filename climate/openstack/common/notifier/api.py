@@ -17,11 +17,11 @@ import socket
 import uuid
 
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 
 from climate.openstack.common import context
 from climate.openstack.common.gettextutils import _, _LE
 from climate.openstack.common import importutils
-from climate.openstack.common import jsonutils
 from climate.openstack.common import log as logging
 from climate.openstack.common import timeutils
 

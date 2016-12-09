@@ -38,12 +38,12 @@ import sys
 import traceback
 
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 import six
 from six import moves
 
 from climate.openstack.common.gettextutils import _
 from climate.openstack.common import importutils
-from climate.openstack.common import jsonutils
 from climate.openstack.common import local
 
 
