@@ -17,9 +17,9 @@ import datetime
 import json
 
 import dateutil.parser
+from oslo_log import log as logging
 from tempest import config
 from tempest import exceptions
-from tempest.openstack.common import log as logging
 from tempest.scenario import resource_reservation_scenario as rrs
 from tempest.scenario import utils
 from tempest import test
