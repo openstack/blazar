@@ -33,17 +33,21 @@ is recommended for developers to execute them themselves to catch regressions
 early. Developers are also expected to keep the test suite up-to-date with any
 submitted code changes.
 
-Unit tests might be ran in `TOX <https://testrun.org/tox/latest/>`_ environment
-via commands:
+Unit tests might be run in `TOX <https://testrun.org/tox/latest/>`_ environments
+via the commands:
 
 .. sourcecode:: console
 
    tox -e py27
-   tox -e py26
+   tox -e py34
+   tox -e py35
 
 ..
 
-for Python 2.7 and Python 2.6 accordingly.
+for Python 2.7, Python 3.4, and Python 3.5 accordingly.
+
+Note that the Blazar code base is not yet compatible with Python 3, so tests
+will be failing.
 
 Documentation Guidelines
 ------------------------
