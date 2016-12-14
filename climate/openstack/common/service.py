@@ -18,7 +18,6 @@
 """Generic Node base class for all workers that run on hosts."""
 
 import errno
-import logging as std_logging
 import os
 import random
 import signal
@@ -36,11 +35,11 @@ except ImportError:
 import eventlet
 from eventlet import event
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from climate.openstack.common import eventlet_backdoor
 from climate.openstack.common.gettextutils import _LE, _LI, _LW
 from climate.openstack.common import importutils
-from climate.openstack.common import log as logging
 from climate.openstack.common import systemd
 from climate.openstack.common import threadgroup
 
@@ -165,7 +164,7 @@ class ServiceLauncher(Launcher):
         signo = 0
 
         LOG.debug('Full set of CONF:')
-        CONF.log_opt_values(LOG, std_logging.DEBUG)
+        CONF.log_opt_values(LOG, logging.DEBUG)
 
         try:
             if ready_callback:
@@ -383,7 +382,7 @@ class ProcessLauncher(object):
         """Loop waiting on children to die and respawning as necessary."""
 
         LOG.debug('Full set of CONF:')
-        CONF.log_opt_values(LOG, std_logging.DEBUG)
+        CONF.log_opt_values(LOG, logging.DEBUG)
 
         try:
             while True:

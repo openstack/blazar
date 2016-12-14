@@ -17,13 +17,13 @@
 """
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import pecan
 from pecan import rest
 from stevedore import enabled
 
 from climate import exceptions
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

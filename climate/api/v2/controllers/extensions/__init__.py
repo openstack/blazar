@@ -16,10 +16,10 @@
 import abc
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from pecan import rest
 import six
 
-from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF

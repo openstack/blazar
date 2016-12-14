@@ -17,6 +17,7 @@
 
 import sys
 
+from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
 from sqlalchemy.sql.expression import desc
@@ -28,7 +29,6 @@ from climate.openstack.common.db import exception as common_db_exc
 from climate.openstack.common.db import options as db_options
 from climate.openstack.common.db.sqlalchemy import session as db_session
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

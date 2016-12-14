@@ -17,11 +17,11 @@
 Exception related utilities.
 """
 
-import logging
 import sys
 import time
 import traceback
 
+from oslo_log import log as logging
 import six
 
 from climate.openstack.common.gettextutils import _LE

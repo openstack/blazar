@@ -279,10 +279,10 @@ Efficient use of soft deletes:
 """
 
 import functools
-import logging
 import re
 import time
 
+from oslo_log import log as logging
 import six
 from sqlalchemy import exc as sqla_exc
 from sqlalchemy.interfaces import PoolListener
@@ -583,16 +583,6 @@ def create_engine(sql_connection, sqlite_fk=False, mysql_sql_mode=None,
         "pool_recycle": idle_timeout,
         'convert_unicode': True,
     }
-
-    logger = logging.getLogger('sqlalchemy.engine')
-
-    # Map SQL debug level to Python log level
-    if connection_debug >= 100:
-        logger.setLevel(logging.DEBUG)
-    elif connection_debug >= 50:
-        logger.setLevel(logging.INFO)
-    else:
-        logger.setLevel(logging.WARNING)
 
     if "sqlite" in connection_dict.drivername:
         if sqlite_fk:

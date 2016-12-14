@@ -18,6 +18,7 @@ import tempfile
 import testscenarios
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from climate import context
 from climate.db.sqlalchemy import api as db_api
@@ -25,14 +26,13 @@ from climate.db.sqlalchemy import facade_wrapper
 from climate.openstack.common import fileutils
 from climate.openstack.common.fixture import config
 from climate.openstack.common.fixture import mockpatch
-from climate.openstack.common import log as logging
 from climate.openstack.common import policy as common_policy
 from climate.openstack.common import test
 from climate.tests import fake_policy
 
 cfg.CONF.set_override('use_stderr', False)
 
-logging.setup('climate')
+logging.setup(cfg.CONF, 'climate')
 _DB_CACHE = None
 
 

@@ -17,6 +17,7 @@ import datetime
 
 import eventlet
 from oslo_config import cfg
+from oslo_log import log as logging
 import six
 from stevedore import enabled
 
@@ -27,7 +28,6 @@ from climate import manager
 from climate.manager import exceptions
 from climate.notification import api as notification_api
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
 from climate.utils import trusts
 

@@ -14,9 +14,9 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging as messaging
 
-from climate.openstack.common import log
 
 notification_opts = [
     cfg.StrOpt('publisher_id',
@@ -24,7 +24,7 @@ notification_opts = [
                help='Publisher ID for notifications')
 ]
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 SERVICE = 'lease'
 CONF = cfg.CONF
 CONF.register_opts(notification_opts, 'notifications')

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import log as logging
 import pecan
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -22,7 +23,6 @@ from climate.api.v2.controllers import extensions
 from climate.api.v2.controllers import types
 from climate import exceptions
 from climate.openstack.common.gettextutils import _  # noqa
-from climate.openstack.common import log as logging
 from climate import policy
 from climate.utils import trusts
 

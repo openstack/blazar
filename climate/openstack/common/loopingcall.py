@@ -19,9 +19,9 @@ import sys
 
 from eventlet import event
 from eventlet import greenthread
+from oslo_log import log as logging
 
 from climate.openstack.common.gettextutils import _LE, _LW
-from climate.openstack.common import log as logging
 from climate.openstack.common import timeutils
 
 LOG = logging.getLogger(__name__)
