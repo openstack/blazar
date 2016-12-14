@@ -49,7 +49,7 @@ changes in the model definition. Alembic will execute these scripts in order to
 provide a linear migration path between revision. The climate-db-manage command
 can be used to generate migration template for you to complete. The operations
 in the template are those supported by the Alembic migration library.
-After you modified the Climate models acordingly, you can create the revision.
+After you modified the Climate models accordingly, you can create the revision.
 
 $ climate-db-manage --config-file /path/to/climate.conf revision \
 -m "description of revision" \
