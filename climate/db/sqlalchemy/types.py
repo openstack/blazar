@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_serialization import jsonutils
 import sqlalchemy as sa
-
-from climate.openstack.common import jsonutils
 
 
 class JsonEncoded(sa.TypeDecorator):
