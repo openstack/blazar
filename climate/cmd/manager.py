@@ -19,13 +19,13 @@ import sys
 import eventlet
 eventlet.monkey_patch()
 from oslo_config import cfg
+from oslo_service import service
 
 gettext.install('climate', unicode=1)
 
 from climate.db import api as db_api
 from climate.manager import service as manager_service
 from climate.notification import notifier
-from climate.openstack.common import service
 from climate.utils import service as service_utils
 
 
@@ -35,6 +35,7 @@ def main():
     db_api.setup_db()
     notifier.init()
     service.launch(
+        cfg.CONF,
         manager_service.ManagerService()
     ).wait()
 

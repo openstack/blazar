@@ -20,10 +20,10 @@ import functools
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
+from oslo_service import service
 
 from climate import context
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import service
 
 LOG = logging.getLogger(__name__)
 
