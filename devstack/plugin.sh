@@ -48,6 +48,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_username blazar
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_project_name $SERVICE_TENANT_NAME
+    iniset $BLAZAR_CONF_FILE DEFAULT identity_service $BLAZAR_IDENTITY_SERVICE_NAME
 
     # keystone authtoken
     iniset $BLAZAR_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
