@@ -23,7 +23,7 @@ from pecan import rest
 from stevedore import enabled
 
 from climate import exceptions
-from climate.openstack.common.gettextutils import _
+from climate.i18n import _
 
 LOG = logging.getLogger(__name__)
 

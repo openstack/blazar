@@ -86,8 +86,8 @@ import six
 import six.moves.urllib.parse as urlparse
 import six.moves.urllib.request as urlrequest
 
+from climate.i18n import _, _LE
 from climate.openstack.common import fileutils
-from climate.openstack.common.gettextutils import _, _LE
 
 
 policy_opts = [

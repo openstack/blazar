@@ -38,9 +38,9 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.types import NullType
 
+from climate.i18n import _, _LI, _LW
 from climate.openstack.common import context as request_context
 from climate.openstack.common.db.sqlalchemy import models
-from climate.openstack.common.gettextutils import _, _LI, _LW
 from climate.openstack.common import timeutils
 
 

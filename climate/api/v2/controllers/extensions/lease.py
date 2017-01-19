@@ -21,8 +21,8 @@ from climate.api.v2.controllers import base
 from climate.api.v2.controllers import extensions
 from climate.api.v2.controllers import types
 from climate import exceptions
+from climate.i18n import _
 from climate.manager import service
-from climate.openstack.common.gettextutils import _  # noqa
 from climate import policy
 from climate.utils import trusts
 

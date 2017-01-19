@@ -25,8 +25,8 @@ from six.moves.urllib import parse
 import sqlalchemy
 import sqlalchemy.exc
 
+from climate.i18n import _LE
 from climate.openstack.common.db.sqlalchemy import utils
-from climate.openstack.common.gettextutils import _LE
 from climate.openstack.common import test
 
 LOG = logging.getLogger(__name__)

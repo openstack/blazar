@@ -24,8 +24,8 @@ from werkzeug import datastructures
 from climate.api import context
 from climate.db import exceptions as db_exceptions
 from climate import exceptions as ex
+from climate.i18n import _
 from climate.manager import exceptions as manager_exceptions
-from climate.openstack.common.gettextutils import _
 
 LOG = logging.getLogger(__name__)
 

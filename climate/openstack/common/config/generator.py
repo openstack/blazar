@@ -31,10 +31,7 @@ from oslo_config import cfg
 import six
 import stevedore.named
 
-from climate.openstack.common import gettextutils
 from climate.openstack.common import importutils
-
-gettextutils.install('climate')
 
 STROPT = "StrOpt"
 BOOLOPT = "BoolOpt"
