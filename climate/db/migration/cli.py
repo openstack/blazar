@@ -98,13 +98,14 @@ def add_command_parsers(subparsers):
     parser.set_defaults(func=do_revision)
 
 
-command_opt = cfg.SubCommandOpt('command',
-                                title='Command',
-                                help='Available commands',
-                                handler=add_command_parsers)
+command_opts = [
+    cfg.SubCommandOpt('command',
+                      title='Command',
+                      help='Available commands',
+                      handler=add_command_parsers)
+]
 
-
-CONF.register_cli_opt(command_opt)
+CONF.register_cli_opts(command_opts)
 
 
 def main():
