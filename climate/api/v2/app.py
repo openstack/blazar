@@ -15,11 +15,11 @@
 
 from keystonemiddleware import auth_token
 from oslo_config import cfg
+from oslo_middleware import debug
 import pecan
 
 from climate.api.v2 import hooks
 from climate.api.v2 import middleware
-from climate.openstack.common.middleware import debug
 
 
 auth_opts = [
