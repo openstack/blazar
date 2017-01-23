@@ -104,7 +104,7 @@ function configure_blazar {
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
 function create_blazar_aggregate_freepool {
-    nova aggregate-create $BLAZAR_FREEPOOL_NAME
+    openstack aggregate create $BLAZAR_FREEPOOL_NAME
 }
 
 # create_blazar_accounts() - Set up common required BLAZAR accounts
@@ -188,6 +188,8 @@ if is_service_enabled blazar blazar-m blazar-a; then
         configure_blazar
         create_blazar_accounts
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
+        echo_summary "Creating Nova aggregate used as freepool for Blazar Host Reservation"
+        create_blazar_aggregate_freepool
         # Start the services
         start_blazar
     fi
