@@ -89,12 +89,6 @@ function configure_blazar {
     fi
     iniadd $NOVA_CONF DEFAULT scheduler_available_filters "blazarnova.scheduler.filters.blazar_filter.ClimateFilter"
 
-    ACTUAL_OSAPI_COMPUTE_EXTENSIONS=$(iniget_multiline $NOVA_CONF DEFAULT osapi_compute_extension)
-    if [[ -z "$ACTUAL_OSAPI_COMPUTE_EXTENSIONS" ]]; then
-        iniset $NOVA_CONF DEFAULT osapi_compute_extension "nova.api.openstack.compute.contrib.standard_extensions"
-    fi
-    iniadd $NOVA_CONF DEFAULT osapi_compute_extension "blazarnova.api.extensions.reservation.Reservation"
-
     # Database
     recreate_database blazar utf8
 
