@@ -13,9 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from climate.openstack.common.db import options as db_options
-from climate.openstack.common.db.sqlalchemy import session as db_session
+from oslo_config import cfg
+from oslo_db.sqlalchemy import session as db_session
 
+
+CONF = cfg.CONF
 
 _engine_facade = None
 
@@ -36,7 +38,6 @@ def _clear_engine():
 def _get_facade():
     global _engine_facade
     if not _engine_facade:
-        _engine_facade = db_session.EngineFacade(
-            db_options.CONF.database.connection)
+        _engine_facade = db_session.EngineFacade.from_config(CONF)
 
     return _engine_facade

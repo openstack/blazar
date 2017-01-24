@@ -22,7 +22,6 @@ import climate.db.migration.cli
 import climate.manager
 import climate.manager.service
 import climate.notification.notifier
-import climate.openstack.common.db.options
 import climate.plugins.instances.vm_plugin
 import climate.plugins.oshosts.host_plugin
 import climate.plugins.oshosts.reservation_pool
@@ -48,7 +47,6 @@ def list_opts():
         ('manager', itertools.chain(climate.manager.opts,
                                     climate.manager.service.manager_opts)),
         ('notifications', climate.notification.notifier.notification_opts),
-        ('database', climate.openstack.common.db.options.database_opts),
         (climate.plugins.instances.RESOURCE_TYPE,
          climate.plugins.instances.vm_plugin.plugin_opts),
         (climate.plugins.oshosts.RESOURCE_TYPE, itertools.chain(

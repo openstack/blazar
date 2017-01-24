@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_db.sqlalchemy import models
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
 
-from climate.openstack.common.db.sqlalchemy import models as oslo_models
 
-
-class _ClimateBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
+class _ClimateBase(models.ModelBase, models.TimestampMixin):
     """Base class for all Climate SQLAlchemy DB Models."""
 
     def to_dict(self):

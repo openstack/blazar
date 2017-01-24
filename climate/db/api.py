@@ -31,17 +31,18 @@ interface.
 
 """
 
+from oslo_config import cfg
+from oslo_db import api as db_api
+from oslo_db import options as db_options
 from oslo_log import log as logging
-
-from climate.openstack.common.db import api as db_api
-from climate.openstack.common.db import options as db_options
 
 
 _BACKEND_MAPPING = {
     'sqlalchemy': 'climate.db.sqlalchemy.api',
 }
 
-IMPL = db_api.DBAPI(db_options.CONF.database.backend,
+db_options.set_defaults(cfg.CONF)
+IMPL = db_api.DBAPI(cfg.CONF.database.backend,
                     backend_mapping=_BACKEND_MAPPING)
 LOG = logging.getLogger(__name__)
 

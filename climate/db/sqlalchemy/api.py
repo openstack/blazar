@@ -17,6 +17,9 @@
 
 import sys
 
+from oslo_config import cfg
+from oslo_db import exception as common_db_exc
+from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import asc
@@ -26,9 +29,6 @@ from climate.db import exceptions as db_exc
 from climate.db.sqlalchemy import facade_wrapper
 from climate.db.sqlalchemy import models
 from climate.i18n import _
-from climate.openstack.common.db import exception as common_db_exc
-from climate.openstack.common.db import options as db_options
-from climate.openstack.common.db.sqlalchemy import session as db_session
 
 
 LOG = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def model_query(model, session=None):
 
 def setup_db():
     try:
-        engine = db_session.EngineFacade(db_options.CONF.database.connection,
+        engine = db_session.EngineFacade(cfg.CONF.database.connection,
                                          sqlite_fk=True).get_engine()
         models.Lease.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
@@ -67,7 +67,7 @@ def setup_db():
 
 def drop_db():
     try:
-        engine = db_session.EngineFacade(db_options.CONF.database.connection,
+        engine = db_session.EngineFacade(cfg.CONF.database.connection,
                                          sqlite_fk=True).get_engine()
         models.Lease.metadata.drop_all(engine)
     except Exception as e:

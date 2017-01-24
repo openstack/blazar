@@ -23,8 +23,8 @@ from alembic import command as alembic_command
 from alembic import config as alembic_config
 from alembic import util as alembic_util
 from oslo_config import cfg
+from oslo_db import options as db_options
 
-from climate.openstack.common.db import options as db_options
 gettext.install('climate', unicode=1)
 from climate.i18n import _
 
@@ -115,7 +115,8 @@ def main():
     config.climate_config = CONF
 
     CONF()
-    if not db_options.CONF.database.connection:
+    db_options.set_defaults(CONF)
+    if not CONF.database.connection:
         raise SystemExit(
             _("Provide a configuration file with DB connection information"))
 
