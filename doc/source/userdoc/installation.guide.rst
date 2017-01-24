@@ -11,42 +11,29 @@ This section includes instructions for Blazar installation using Devstack.
 
 ..
 
-2. Download Blazar:
+2. Configure DevStack to install Blazar by adding the Blazar plugin to your
+   local.conf file:
 
 .. sourcecode:: console
 
-    git clone https://github.com/stackforge/blazar.git
+    cd devstack
+    echo "enable_plugin blazar https://git.openstack.org/openstack/blazar" >> local.conf
 
 ..
 
-3. Add blazar files to Devstack:
-
-.. sourcecode:: console
-
-    cd blazar/contrib/devstack
-    DEVSTACK_DIR=../../../devstack
-    cp lib/blazar ${DEVSTACK_DIR}/lib
-    cp extras.d/70-blazar.sh ${DEVSTACK_DIR}/extras.d
-
-..
-
-4. Configure devstack to run blazar by adding blazar, blazar api and blazar
-   manager to the localrc file:
-
-.. sourcecode:: console
-
-    cd ${DEVSTACK_DIR}
-    echo "enable_service blazar" >> localrc
-    echo "enable_service blazar-a" >> localrc
-    echo "enable_service blazar-m" >> localrc
-
-..
-
-5. Run Devstack:
+3. Run Devstack:
 
 .. sourcecode:: console
 
     ./stack.sh
+
+..
+
+4. Now you can add hosts to Blazar:
+
+.. sourcecode:: console
+
+    climate host-create hostname
 
 ..
 
@@ -126,18 +113,8 @@ these users, create them via Keystone:
 And the same procedure for special admin user to work with physical
 reservations.
 
-Next you need to configure Nova. If you want to use virtual reservations,
+Next you need to configure Nova. If you want to use physical reservations,
 please add the following lines to nova.conf file:
-
-.. sourcecode:: console
-
-    osapi_compute_extension = nova.api.openstack.compute.contrib.standard_extensions
-    osapi_compute_extension = climatenova.api.extensions.default_reservation.Default_reservation
-    osapi_compute_extension = climatenova.api.extensions.reservation.Reservation
-
-..
-
-If you want to use physical reservations add these ones:
 
 .. sourcecode:: console
 
