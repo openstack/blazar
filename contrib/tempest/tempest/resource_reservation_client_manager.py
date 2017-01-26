@@ -58,3 +58,25 @@ class ResourceReservationV1Client(rest_client.RestClient):
     def delete_lease(self, lease):
         resp, body = self.delete(self.lease_path % lease)
         return self._response_helper(resp, body)
+
+    def list_host(self):
+        resp, body = self.get(self.host)
+        return self._response_helper(resp, body)
+
+    def get_host(self, host):
+        resp, body = self.get(self.host_path % host)
+        return self._response_helper(resp, body)
+
+    def create_host(self, body):
+        body = json.dumps(body)
+        resp, body = self.post(self.host, body=body)
+        return self._response_helper(resp, body)
+
+    def update_host(self, host, body):
+        body = json.dumps(body)
+        resp, body = self.post(self.host_path % host, body=body)
+        return self._response_helper(resp, body)
+
+    def delete_host(self, host):
+        resp, body = self.delete(self.host_path % host)
+        return self._response_helper(resp, body)
