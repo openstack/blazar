@@ -115,23 +115,21 @@ function create_blazar_accounts {
         "$SERVICE_PASSWORD" "default" "blazar@example.com")
     get_or_add_user_project_role $ADMIN_ROLE $BLAZAR_USER_ID $SERVICE_TENANT
 
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        BLAZAR_SERVICE=$(get_or_create_service "blazar" \
-            "reservation" "Blazar Reservations Service")
-        get_or_create_endpoint $BLAZAR_SERVICE \
-            "$REGION_NAME" \
-            "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
-            "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
-            "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1"
+    BLAZAR_SERVICE=$(get_or_create_service "blazar" \
+        "reservation" "Blazar Reservations Service")
+    get_or_create_endpoint $BLAZAR_SERVICE \
+        "$REGION_NAME" \
+        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
+        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
+        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1"
 
-        KEYSTONEV3_SERVICE=$(get_or_create_service "keystonev3" \
-            "identityv3" "Keystone Identity Service V3")
-        get_or_create_endpoint $KEYSTONEV3_SERVICE \
-            "$REGION_NAME" \
-            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
-            "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
-            "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
-    fi
+    KEYSTONEV3_SERVICE=$(get_or_create_service "keystonev3" \
+        "identityv3" "Keystone Identity Service V3")
+    get_or_create_endpoint $KEYSTONEV3_SERVICE \
+        "$REGION_NAME" \
+        "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
+        "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
+        "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
 }
 
 
