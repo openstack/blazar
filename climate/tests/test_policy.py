@@ -25,59 +25,6 @@ from climate import tests
 CONF = cfg.CONF
 
 
-class DefaultPolicyTestCase(tests.TestCase):
-
-    def setUp(self):
-        super(DefaultPolicyTestCase, self).setUp()
-
-        self.rules = """
-        {
-            "default": "",
-            "example:exist": "!",
-            "example:allowed": "@",
-            "example:my_file": "role:admin or \
-                               project_id:%(project_id)s"
-        }
-        """
-
-        self.default_rule = None
-        policy.reset()
-        self.read_cached_file.return_value = (True, self.rules)
-        self.context = context.ClimateContext(user_id='fake',
-                                              project_id='fake',
-                                              roles=['member'])
-
-    def _set_rules(self, default_rule):
-        self.default_rule = default_rule
-        policy.set_rules(self.rules, default_rule)
-
-    def test_policy_called(self):
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, "example:exist", {})
-
-    def test_not_found_policy_calls_default(self):
-        result = policy.enforce(self.context, "example:noexist", {}, False)
-        self.assertEqual(result, True)
-
-    def test_default_not_found(self):
-        self._set_rules("default_noexist")
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, "example:noexist", {})
-
-    def test_enforce_good_action(self):
-        action = "example:allowed"
-        result = policy.enforce(self.context, action, {}, False)
-        self.assertEqual(result, True)
-
-    def test_templatized_enforcement(self):
-        target_mine = {'project_id': 'fake'}
-        target_not_mine = {'project_id': 'another'}
-        action = "example:my_file"
-        policy.enforce(self.context, action, target_mine)
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, action, target_not_mine)
-
-
 class ClimatePolicyTestCase(tests.TestCase):
 
     def setUp(self):

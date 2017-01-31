@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import fixtures
 import tempfile
 import testscenarios
@@ -23,11 +25,9 @@ from oslo_log import log as logging
 from climate import context
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import facade_wrapper
-from climate.openstack.common import fileutils
-from climate.openstack.common.fixture import config
 from climate.openstack.common.fixture import mockpatch
-from climate.openstack.common import policy as common_policy
 from climate.openstack.common import test
+from climate import policy
 from climate.tests import fake_policy
 
 cfg.CONF.set_override('use_stderr', False)
@@ -53,6 +53,22 @@ class Database(fixtures.Fixture):
         self.addCleanup(db_api.drop_db)
 
 
+class PolicyFixture(fixtures.Fixture):
+
+    def setUp(self):
+        super(PolicyFixture, self).setUp()
+        self.policy_dir = self.useFixture(fixtures.TempDir())
+        self.policy_file_name = os.path.join(self.policy_dir.path,
+                                             'policy.json')
+        with open(self.policy_file_name, 'w') as policy_file:
+            policy_file.write(fake_policy.policy_data)
+        cfg.CONF.set_override('policy_file', self.policy_file_name,
+                              group='oslo_policy')
+        policy.reset()
+        policy.init()
+        self.addCleanup(policy.reset)
+
+
 class TestCase(testscenarios.WithScenarios, test.BaseTestCase):
     """Test case base class for all unit tests.
 
@@ -63,15 +79,9 @@ class TestCase(testscenarios.WithScenarios, test.BaseTestCase):
     def setUp(self):
         """Run before each test method to initialize test environment."""
         super(TestCase, self).setUp()
-        self.useFixture(config.Config())
         self.context_mock = None
-
-        self.fileutils = fileutils
-        self.read_cached_file = self.patch(self.fileutils, 'read_cached_file')
-        self.read_cached_file.return_value = (True, fake_policy.policy_data)
-        self.common_policy = common_policy
-        self.patch(self.common_policy.Enforcer, '_get_policy_path')
-        cfg.CONF.set_override('policy_file', 'fake')
+        cfg.CONF(args=[], project='climate')
+        self.policy = self.useFixture(PolicyFixture())
 
     def patch(self, obj, attr):
         """Returns a Mocked object on the patched attribute."""

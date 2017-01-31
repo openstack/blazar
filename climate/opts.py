@@ -23,7 +23,6 @@ import climate.manager
 import climate.manager.service
 import climate.notification.notifier
 import climate.openstack.common.db.options
-import climate.openstack.common.policy
 import climate.plugins.instances.vm_plugin
 import climate.plugins.oshosts.host_plugin
 import climate.plugins.oshosts.reservation_pool
@@ -42,7 +41,6 @@ def list_opts():
              climate.config.os_opts,
              climate.db.base.db_driver_opts,
              climate.db.migration.cli.command_opts,
-             climate.openstack.common.policy.policy_opts,
              climate.utils.openstack.keystone.opts,
              climate.utils.openstack.keystone.keystone_opts,
              climate.utils.openstack.nova.nova_opts)),
