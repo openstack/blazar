@@ -20,6 +20,7 @@ import subprocess
 
 import lockfile
 from oslo_log import log as logging
+from oslotest import base as test
 from six import moves
 from six.moves.urllib import parse
 import sqlalchemy
@@ -27,7 +28,6 @@ import sqlalchemy.exc
 
 from climate.i18n import _LE
 from climate.openstack.common.db.sqlalchemy import utils
-from climate.openstack.common import test
 
 LOG = logging.getLogger(__name__)
 

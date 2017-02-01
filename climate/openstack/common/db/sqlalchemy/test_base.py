@@ -18,11 +18,11 @@ import functools
 import os
 
 import fixtures
+from oslotest import base as test
 import six
 
 from climate.openstack.common.db.sqlalchemy import session
 from climate.openstack.common.db.sqlalchemy import utils
-from climate.openstack.common import test
 
 
 class DbFixture(fixtures.Fixture):
