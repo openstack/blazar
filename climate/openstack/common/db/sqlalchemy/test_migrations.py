@@ -15,11 +15,11 @@
 #    under the License.
 
 import functools
-import logging
 import os
 import subprocess
 
 import lockfile
+from oslo_log import log as logging
 from six import moves
 from six.moves.urllib import parse
 import sqlalchemy

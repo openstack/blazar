@@ -33,11 +33,11 @@ from alembic import config as alembic_config
 from alembic import migration
 from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_log import log as logging
 import sqlalchemy
 import sqlalchemy.exc
 
 import climate.db.migration
-from climate.openstack.common import log as logging
 from climate import tests
 
 LOG = logging.getLogger(__name__)

@@ -17,10 +17,10 @@ import sys
 
 import eventlet
 from novaclient import exceptions as nova_exceptions
+from oslo_log import log as logging
 import testtools
 
 from climate import exceptions as climate_exceptions
-from climate.openstack.common import log as logging
 from climate.plugins.instances import vm_plugin
 from climate import tests
 from climate.utils.openstack import nova

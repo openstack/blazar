@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import log as logging
+
 from climate import context
 from climate import exceptions
 from climate.manager import rpcapi as manager_rpcapi
-from climate.openstack.common import log as logging
 from climate import policy
 from climate.utils import trusts
 

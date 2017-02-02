@@ -31,9 +31,10 @@ interface.
 
 """
 
+from oslo_log import log as logging
+
 from climate.openstack.common.db import api as db_api
 from climate.openstack.common.db import options as db_options
-from climate.openstack.common import log as logging
 
 
 _BACKEND_MAPPING = {

@@ -26,11 +26,11 @@
 
 """Common utilities used in testing"""
 
-import logging
 import os
 import tempfile
 
 import fixtures
+from oslo_log import log as logging
 import testtools
 
 _TRUE_VALUES = ('True', 'true', '1', 'yes')
@@ -71,17 +71,8 @@ class BaseTestCase(testtools.TestCase):
             level = logging.DEBUG
         else:
             level = logging.INFO
-        capture_logs = os.environ.get('OS_LOG_CAPTURE') in _TRUE_VALUES
-        if capture_logs:
-            self.useFixture(
-                fixtures.FakeLogger(
-                    format=_LOG_FORMAT,
-                    level=level,
-                    nuke_handlers=capture_logs,
-                )
-            )
-        else:
-            logging.basicConfig(format=_LOG_FORMAT, level=level)
+        self.useFixture(fixtures.FakeLogger(format=_LOG_FORMAT,
+                                            level=level))
 
     def create_tempfiles(self, files, ext='.conf'):
         tempfiles = []

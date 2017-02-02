@@ -18,10 +18,10 @@
 import functools
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from climate import context
 from climate import exceptions
-from climate.openstack.common import log as logging
 from climate.openstack.common import policy
 
 CONF = cfg.CONF

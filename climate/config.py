@@ -16,6 +16,7 @@
 import socket
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 cli_opts = [
     cfg.StrOpt('host', default=socket.gethostname(),
@@ -59,3 +60,4 @@ os_opts = [
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 CONF.register_opts(os_opts)
+logging.register_options(cfg.CONF)

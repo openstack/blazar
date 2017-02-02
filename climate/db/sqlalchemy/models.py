@@ -15,14 +15,13 @@
 
 import uuid
 
+# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
+# from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
 
 from climate.db.sqlalchemy import model_base as mb
-# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-# from climate.openstack.common import log as logging
-
 # FIXME: https://bugs.launchpad.net/climate/+bug/1300132
 # LOG = logging.getLogger(__name__)
 

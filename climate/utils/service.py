@@ -18,11 +18,11 @@
 import functools
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging as messaging
 
 from climate import context
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import log as logging
 from climate.openstack.common import service
 
 LOG = logging.getLogger(__name__)
@@ -93,11 +93,4 @@ def with_empty_context(func):
 
 
 def prepare_service(argv=[]):
-    cfg.set_defaults(logging.log_opts,
-                     default_log_levels=['amqplib=WARN',
-                                         'qpid.messaging=INFO',
-                                         'stevedore=INFO',
-                                         'eventlet.wsgi.server=WARN'
-                                         ])
-    cfg.CONF(argv[1:], project='climate')
-    logging.setup('climate')
+    logging.setup(cfg.CONF, 'climate')

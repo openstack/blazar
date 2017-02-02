@@ -18,10 +18,10 @@ import uuid as uuidgen
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from climate import context
 from climate.manager import exceptions as manager_exceptions
-from climate.openstack.common import log as logging
 from climate.plugins import oshosts as plugin
 from climate.utils.openstack import nova
 

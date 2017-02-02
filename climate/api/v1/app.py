@@ -17,16 +17,16 @@ import eventlet
 import flask
 from keystonemiddleware import auth_token
 from oslo_config import cfg
+from oslo_log import log as logging
 from werkzeug import exceptions as werkzeug_exceptions
 
 from climate.api.v1.oshosts import v1_0 as host_api_v1_0
 from climate.api.v1 import utils as api_utils
 from climate.api.v1 import v1_0 as api_v1_0
-from climate.openstack.common import log
 from climate.openstack.common.middleware import debug
 
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 

@@ -20,12 +20,12 @@ import sys
 import eventlet
 from eventlet import wsgi
 from oslo_config import cfg
+from oslo_log import log as logging
 
 gettext.install('climate', unicode=1)
 
 from climate.api.v1 import app as v1_app
 from climate.api.v2 import app as v2_app
-from climate.openstack.common import log as logging
 from climate.utils import service as service_utils
 
 
@@ -93,7 +93,6 @@ def main():
     """Entry point to start Climate API wsgi server."""
     cfg.CONF(sys.argv[1:], project='climate', prog='climate-api')
     service_utils.prepare_service(sys.argv)
-    logging.setup("climate")
     if not CONF.enable_v1_api:
         app = v2_app.make_app()
     else:

@@ -16,10 +16,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import re
 
 from migrate.changeset import UniqueConstraint
+from oslo_log import log as logging
 import sqlalchemy
 from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint

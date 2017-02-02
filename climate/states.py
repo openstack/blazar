@@ -17,12 +17,12 @@
 
 import abc
 
+from oslo_log import log as logging
 import six
 
 from climate.db import api as db_api
 from climate.db import exceptions as db_exc
 from climate.manager import exceptions as mgr_exc
-from climate.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

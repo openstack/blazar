@@ -21,9 +21,10 @@ API methods.
 """
 
 import functools
-import logging
 import threading
 import time
+
+from oslo_log import log as logging
 
 from climate.openstack.common.db import exception
 from climate.openstack.common.gettextutils import _LE

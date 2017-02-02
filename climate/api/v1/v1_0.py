@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import log as logging
+
 from climate.api.v1 import service
 from climate.api.v1 import utils as api_utils
 from climate.api.v1 import validation
-from climate.openstack.common import log as logging
 from climate import utils
 
 LOG = logging.getLogger(__name__)

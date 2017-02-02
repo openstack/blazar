@@ -18,10 +18,10 @@ Helpers for comparing version strings.
 """
 
 import functools
+from oslo_log import log as logging
 import pkg_resources
 
 from climate.openstack.common.gettextutils import _
-from climate.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
