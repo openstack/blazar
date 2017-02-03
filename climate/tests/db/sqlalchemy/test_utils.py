@@ -17,9 +17,10 @@
 import datetime
 import uuid
 
+from oslo_context import context
+
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import utils as db_utils
-from climate.openstack.common import context
 from climate import tests
 
 
