@@ -16,8 +16,8 @@
 """Base class for classes that need modular database access."""
 
 from oslo_config import cfg
+from oslo_utils import importutils
 
-from climate.openstack.common import importutils
 
 db_driver_opts = [
     cfg.StrOpt('db_driver', default='climate.db',
