@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from keystoneauth1 import session
+from keystoneauth1 import token_endpoint
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exception
 from novaclient.v2 import servers
@@ -50,55 +52,37 @@ class ClimateNovaClient(object):
         :param version: service client version which we will use
         :type version: str
 
-        :param username: username
-        :type username: str
-
-        :param api_key: password
-        :type api_key: str
-
         :param auth_token: keystone auth token
         :type auth_token: str
 
-        :param project_id: project_id
-        :type api_key: str
-
-        :param auth_url: auth_url
-        :type auth_url: str
-
-        :param mgmt_url: management url
-        :type mgmt_url: str
+        :param endpoint_override: endpoint url which we will use
+        :type endpoint_override: str
         """
 
         ctx = kwargs.pop('ctx', None)
         auth_token = kwargs.pop('auth_token', None)
-        mgmt_url = kwargs.pop('mgmt_url', None)
+        endpoint_override = kwargs.pop('endpoint_override', None)
+        version = kwargs.pop('version', cfg.CONF.nova_client_version)
 
         if ctx is None:
             try:
                 ctx = context.current()
             except RuntimeError:
                 pass
-        kwargs.setdefault('version', cfg.CONF.nova_client_version)
         if ctx is not None:
-            kwargs.setdefault('username', ctx.user_name)
-            kwargs.setdefault('api_key', None)
-            kwargs.setdefault('project_id', ctx.project_id)
-            kwargs.setdefault('auth_url', base.url_for(
-                ctx.service_catalog, CONF.identity_service))
-
             auth_token = auth_token or ctx.auth_token
-            mgmt_url = mgmt_url or base.url_for(ctx.service_catalog,
-                                                CONF.compute_service)
-        if not kwargs.get('auth_url', None):
-            # NOTE(scroiset): novaclient v2.17.0 support only Identity API v2.0
-            auth_url = "%s://%s:%s/v2.0" % (CONF.os_auth_protocol,
-                                            CONF.os_auth_host,
-                                            CONF.os_auth_port)
-            kwargs['auth_url'] = auth_url
+            endpoint_override = endpoint_override or \
+                base.url_for(ctx.service_catalog,
+                             CONF.compute_service)
 
+        auth = token_endpoint.Token(endpoint_override,
+                                    auth_token)
+        sess = session.Session(auth=auth)
+
+        kwargs.setdefault('endpoint_override', endpoint_override)
+        kwargs.setdefault('session', sess)
+        kwargs.setdefault('version', version)
         self.nova = nova_client.Client(**kwargs)
-        self.nova.client.auth_token = auth_token
-        self.nova.client.management_url = mgmt_url
 
         self.nova.servers = ServerManager(self.nova)
 
@@ -136,8 +120,5 @@ class NovaClientWrapper(object):
     @property
     def nova(self):
         ctx = context.current()
-        nova = ClimateNovaClient(username=ctx.user_name,
-                                 api_key=None,
-                                 project_id=ctx.project_id,
-                                 ctx=ctx)
+        nova = ClimateNovaClient(ctx=ctx)
         return nova
