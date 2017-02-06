@@ -24,7 +24,7 @@ import traceback
 from oslo_log import log as logging
 import six
 
-from climate.openstack.common.gettextutils import _LE
+from climate.i18n import _LE
 
 
 class save_and_reraise_exception(object):

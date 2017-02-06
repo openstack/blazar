@@ -290,8 +290,8 @@ import sqlalchemy.orm
 from sqlalchemy.pool import NullPool, StaticPool
 from sqlalchemy.sql.expression import literal_column
 
+from climate.i18n import _LE, _LW, _LI
 from climate.openstack.common.db import exception
-from climate.openstack.common.gettextutils import _LE, _LW, _LI
 from climate.openstack.common import timeutils
 
 

@@ -23,7 +23,7 @@ import oslo_messaging as messaging
 from oslo_service import service
 
 from climate import context
-from climate.openstack.common.gettextutils import _
+from climate.i18n import _
 
 LOG = logging.getLogger(__name__)
 

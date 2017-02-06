@@ -18,7 +18,7 @@
 
 import six
 
-from climate.openstack.common.gettextutils import _
+from climate.i18n import _
 
 
 class DBError(Exception):

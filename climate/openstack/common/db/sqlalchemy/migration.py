@@ -50,8 +50,8 @@ from migrate.versioning.repository import Repository
 import sqlalchemy
 from sqlalchemy.schema import UniqueConstraint
 
+from climate.i18n import _
 from climate.openstack.common.db import exception
-from climate.openstack.common.gettextutils import _
 
 
 def _get_unique_constraints(self, table):

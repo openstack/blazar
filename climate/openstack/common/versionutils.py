@@ -21,7 +21,7 @@ import functools
 from oslo_log import log as logging
 import pkg_resources
 
-from climate.openstack.common.gettextutils import _
+from climate.i18n import _
 
 
 LOG = logging.getLogger(__name__)

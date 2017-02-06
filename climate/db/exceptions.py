@@ -16,7 +16,7 @@
 from oslo_log import log as logging
 
 from climate import exceptions
-from climate.openstack.common.gettextutils import _  # noqa
+from climate.i18n import _
 
 
 LOG = logging.getLogger(__name__)

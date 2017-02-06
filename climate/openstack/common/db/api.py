@@ -26,8 +26,8 @@ import time
 
 from oslo_log import log as logging
 
+from climate.i18n import _LE
 from climate.openstack.common.db import exception
-from climate.openstack.common.gettextutils import _LE
 from climate.openstack.common import importutils
 
 

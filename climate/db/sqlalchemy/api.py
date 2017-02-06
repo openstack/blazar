@@ -25,10 +25,10 @@ from sqlalchemy.sql.expression import desc
 from climate.db import exceptions as db_exc
 from climate.db.sqlalchemy import facade_wrapper
 from climate.db.sqlalchemy import models
+from climate.i18n import _
 from climate.openstack.common.db import exception as common_db_exc
 from climate.openstack.common.db import options as db_options
 from climate.openstack.common.db.sqlalchemy import session as db_session
-from climate.openstack.common.gettextutils import _
 
 
 LOG = logging.getLogger(__name__)

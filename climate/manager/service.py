@@ -24,10 +24,10 @@ from stevedore import enabled
 from climate.db import api as db_api
 from climate.db import exceptions as db_ex
 from climate import exceptions as common_ex
+from climate.i18n import _
 from climate import manager
 from climate.manager import exceptions
 from climate.notification import api as notification_api
-from climate.openstack.common.gettextutils import _
 from climate.utils import service as service_utils
 from climate.utils import trusts
 
