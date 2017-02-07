@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from keystoneauth1 import session
+from keystoneauth1 import token_endpoint
 from novaclient import client as nova_client
 
 from climate import context
@@ -32,44 +34,41 @@ class TestCNClient(tests.TestCase):
 
         self.ctx = self.patch(self.context, 'current')
         self.client = self.patch(self.n_client, 'Client')
-        self.patch(self.base, 'url_for').return_value = 'http://fake.com/'
+        self.auth = self.patch(token_endpoint, 'Token')
+        self.session = self.patch(session, 'Session')
+        self.url = 'http://fake.com/'
+        self.patch(self.base, 'url_for').return_value = self.url
 
         self.version = '2'
-        self.username = 'fake_user'
-        self.api_key = self.ctx().auth_token
-        self.project_id = self.ctx().project_id
-        self.auth_url = 'fake_auth'
-        self.mgmt_url = 'fake_mgmt'
 
     def test_client_from_kwargs(self):
         self.ctx.side_effect = RuntimeError
+        self.auth_token = 'fake_token'
+        self.endpoint = 'fake_endpoint'
 
         kwargs = {'version': self.version,
-                  'username': self.username,
-                  'api_key': self.api_key,
-                  'project_id': self.project_id,
-                  'auth_url': self.auth_url,
-                  'mgmt_url': self.mgmt_url}
+                  'endpoint_override': self.endpoint,
+                  'auth_token': self.auth_token}
 
         self.nova.ClimateNovaClient(**kwargs)
 
+        self.auth.assert_called_once_with(self.endpoint, self.auth_token)
+        self.session.assert_called_once_with(auth=self.auth.return_value)
         self.client.assert_called_once_with(version=self.version,
-                                            username=self.username,
-                                            api_key=self.api_key,
-                                            project_id=self.project_id,
-                                            auth_url=self.auth_url)
+                                            endpoint_override=self.endpoint,
+                                            session=self.session.return_value)
 
     def test_client_from_ctx(self):
-
         kwargs = {'version': self.version}
 
         self.nova.ClimateNovaClient(**kwargs)
 
+        self.auth.assert_called_once_with(self.url,
+                                          self.ctx().auth_token)
+        self.session.assert_called_once_with(auth=self.auth.return_value)
         self.client.assert_called_once_with(version=self.version,
-                                            username=self.ctx().user_name,
-                                            api_key=None,
-                                            project_id=self.ctx().project_id,
-                                            auth_url='http://fake.com/')
+                                            endpoint_override=self.url,
+                                            session=self.session.return_value)
 
     def test_getattr(self):
         # TODO(n.s.): Will be done as soon as pypi package will be updated
