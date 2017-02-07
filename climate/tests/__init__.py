@@ -21,12 +21,12 @@ import testscenarios
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslotest import base
+from oslotest import mockpatch
 
 from climate import context
 from climate.db.sqlalchemy import api as db_api
 from climate.db.sqlalchemy import facade_wrapper
-from climate.openstack.common.fixture import mockpatch
-from climate.openstack.common import test
 from climate import policy
 from climate.tests import fake_policy
 
@@ -69,7 +69,7 @@ class PolicyFixture(fixtures.Fixture):
         self.addCleanup(policy.reset)
 
 
-class TestCase(testscenarios.WithScenarios, test.BaseTestCase):
+class TestCase(testscenarios.WithScenarios, base.BaseTestCase):
     """Test case base class for all unit tests.
 
     Due to the slowness of DB access, this class is not supporting DB tests.
