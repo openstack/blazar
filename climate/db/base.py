@@ -19,12 +19,13 @@ from oslo_config import cfg
 
 from climate.openstack.common import importutils
 
-db_driver_opt = cfg.StrOpt('db_driver',
-                           default='climate.db',
-                           help='Driver to use for database access')
+db_driver_opts = [
+    cfg.StrOpt('db_driver', default='climate.db',
+               help='Driver to use for database access')
+]
 
 CONF = cfg.CONF
-CONF.register_opt(db_driver_opt)
+CONF.register_opts(db_driver_opts)
 
 
 class Base(object):
