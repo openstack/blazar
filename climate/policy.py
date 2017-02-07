@@ -19,13 +19,14 @@ import functools
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_policy import opts
+from oslo_policy import policy
 
 from climate import context
 from climate import exceptions
-from climate.openstack.common import policy
 
 CONF = cfg.CONF
-
+opts.set_defaults(CONF)
 LOG = logging.getLogger(__name__)
 
 _ENFORCER = None
@@ -43,7 +44,7 @@ def init():
     global _ENFORCER
     if not _ENFORCER:
         LOG.debug("Enforcer not present, recreating at init stage.")
-        _ENFORCER = policy.Enforcer()
+        _ENFORCER = policy.Enforcer(CONF)
 
 
 def set_rules(data, default_rule=None):
@@ -53,7 +54,7 @@ def set_rules(data, default_rule=None):
         init()
     if default_rule:
         _ENFORCER.default_rule = default_rule
-    _ENFORCER.set_rules(policy.Rules.load_json(data, default_rule))
+    _ENFORCER.set_rules(policy.Rules.load(data, default_rule))
 
 
 def enforce(context, action, target, do_raise=True):
