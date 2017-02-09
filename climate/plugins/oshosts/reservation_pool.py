@@ -100,11 +100,11 @@ class ReservationPool(nova.NovaClientWrapper):
         if az:
             az_name = "%s%s" % (self.config.climate_az_prefix,
                                 name)
-            LOG.debug('Creating pool aggregate: %s'
+            LOG.debug('Creating pool aggregate: %s '
                       'with Availability Zone %s' % (name, az_name))
             agg = self.nova.aggregates.create(name, az_name)
         else:
-            LOG.debug('Creating pool aggregate: %s'
+            LOG.debug('Creating pool aggregate: %s '
                       'without Availability Zone' % name)
             agg = self.nova.aggregates.create(name, None)
 
