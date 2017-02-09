@@ -18,10 +18,10 @@ from oslo_log import log
 from tempest.common import credentials_factory as credentials
 from tempest import config_resource_reservation as config
 from tempest import exceptions
+from tempest.lib.common.utils import test_utils
 from tempest import manager as tempestmanager
 from tempest import resource_reservation_client_manager as clients
 from tempest.scenario import manager
-import tempest.test
 
 CONF = config.CONF
 
@@ -83,7 +83,7 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
                          % (lease_id, e.message))
             return True
 
-        if not tempest.test.call_until_true(
+        if not test_utils.call_until_true(
             check_lease_end,
             CONF.resource_reservation.lease_end_timeout,
                 CONF.resource_reservation.lease_interval):
