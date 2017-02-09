@@ -49,6 +49,9 @@ for Python 2.7, Python 3.4, and Python 3.5 accordingly.
 Note that the Blazar code base is not yet compatible with Python 3, so tests
 will be failing.
 
+Note that some tests might use databases, the script
+``tools/test-setup.sh`` sets up databases for the unit tests.
+
 Documentation Guidelines
 ------------------------
 
