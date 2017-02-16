@@ -14,7 +14,7 @@ To run all the blazar tests, add the following to the tox.ini file located at TE
 [testenv:blazar]
 sitepackages = True
 commands =
-   bash tools/pretty_tox.sh '(^tempest\.(api|scenario|thirdparty|cli)\.test_resource_reservation) {posargs}'
+   bash tools/pretty_tox.sh '(^tempest\.(api|scenario|thirdparty|cli)\.test_.*reservation) {posargs}'
 
 Then, inside the TEMPEST_DIR, run:
 $ tox -eblazar
