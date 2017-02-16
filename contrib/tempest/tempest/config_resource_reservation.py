@@ -50,8 +50,8 @@ ResourceReservationGroup = [
 ]
 
 
-class TempestConfigPrivateClimate(config.TempestConfigPrivate):
-    """Climate's config wrap over standard config."""
+class TempestConfigPrivateBlazar(config.TempestConfigPrivate):
+    """Blazar's config wrap over standard config."""
 
     def __init__(self, parse_conf=True):
         config.register_opt_group(cfg.CONF, service_available_group,
@@ -61,14 +61,14 @@ class TempestConfigPrivateClimate(config.TempestConfigPrivate):
         self.resource_reservation = cfg.CONF.resource_reservation
 
 
-class TempestClimateLazyConfig(object):
+class TempestBlazarLazyConfig(object):
     _config = None
 
     def __getattr__(self, attr):
         if not self._config:
-            self._config = TempestConfigPrivateClimate()
+            self._config = TempestConfigPrivateBlazar()
 
         return getattr(self._config, attr)
 
 
-CONF = TempestClimateLazyConfig()
+CONF = TempestBlazarLazyConfig()

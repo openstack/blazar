@@ -29,7 +29,7 @@ CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
-# same as the one at climate/manager/service
+# same as the one at blazar/manager/service
 LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
 LEASE_MIN_DURATION = 2
 # TODO(cmart): LEASE_IMAGE_PREFIX should be extracted from CONF
@@ -44,7 +44,7 @@ class TestInstanceReservationScenario(rrs.ResourceReservationScenarioTest):
     1) Create an instance with the hint parameters
     2) check vm was shelved
     3) check vm became active
-    4) check that a new lease is created on climate
+    4) check that a new lease is created on blazar
     5) check its param
     6) wait lease end
     7) make sure VM was snapshoted and removed
@@ -137,7 +137,7 @@ class TestInstanceReservationScenario(rrs.ResourceReservationScenarioTest):
         server = self.servers_client.show_server(self.server_id)['server']
         self.assertEqual(expected_status, server['status'])
 
-    # TODO(cmart): add climate to services after pushing this code into tempest
+    # TODO(cmart): add blazar to services after pushing this code into tempest
     @decorators.skip_because('Instance reservation is not supported yet.',
                              bug='1659200')
     @test.attr(type='slow')

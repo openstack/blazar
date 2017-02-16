@@ -3,7 +3,7 @@ include README.rst
 include ChangeLog
 include LICENSE
 
-recursive-include climate/locale *
+recursive-include blazar/locale *
 
 exclude .gitignore
 exclude .gitreview

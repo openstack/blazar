@@ -1,0 +1,3 @@
+This directory contains the migration scripts for the Blazar project. Please
+see the README in blazar/db/migration on how to use and generate new
+migrations.

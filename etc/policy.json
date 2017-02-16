@@ -6,15 +6,15 @@
     "default": "!",
     "admin_api": "rule:admin",
 
-    "climate:leases:get": "rule:admin_or_owner",
-    "climate:leases:create": "rule:admin_or_owner",
-    "climate:leases:delete": "rule:admin_or_owner",
-    "climate:leases:update": "rule:admin_or_owner",
+    "blazar:leases:get": "rule:admin_or_owner",
+    "blazar:leases:create": "rule:admin_or_owner",
+    "blazar:leases:delete": "rule:admin_or_owner",
+    "blazar:leases:update": "rule:admin_or_owner",
 
-    "climate:plugins:get": "@",
+    "blazar:plugins:get": "@",
 
-    "climate:oshosts:get": "rule:admin_or_owner",
-    "climate:oshosts:create": "rule:admin_api",
-    "climate:oshosts:delete": "rule:admin_api",
-    "climate:oshosts:update": "rule:admin_api"
+    "blazar:oshosts:get": "rule:admin_or_owner",
+    "blazar:oshosts:create": "rule:admin_api",
+    "blazar:oshosts:delete": "rule:admin_api",
+    "blazar:oshosts:update": "rule:admin_api"
 }

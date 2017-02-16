@@ -13,33 +13,33 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.cli import climateclient
+from tempest.cli import blazarclient
 from tempest import config_resource_reservation as config
 
 
 CONF = config.CONF
 
 
-class SimpleReadOnlyClimateClientTest(climateclient.ClientTestBase):
-    """Basic, read-only tests for Climate CLI client.
+class SimpleReadOnlyBlazarClientTest(blazarclient.ClientTestBase):
+    """Basic, read-only tests for Blazar CLI client.
 
-    Basic smoke test for the Climate CLI commands which do not require
+    Basic smoke test for the Blazar CLI commands which do not require
     creating or modifying leases.
     """
 
     @classmethod
     def setUpClass(cls):
-        if (not CONF.service_available.climate):
-            msg = ("Skipping all Climate cli tests because it is "
+        if (not CONF.service_available.blazar):
+            msg = ("Skipping all Blazar cli tests because it is "
                    "not available")
             raise cls.skipException(msg)
-        super(SimpleReadOnlyClimateClientTest, cls).setUpClass()
+        super(SimpleReadOnlyBlazarClientTest, cls).setUpClass()
 
-    def test_climate_lease_list(self):
-        self.climate('lease-list')
+    def test_blazar_lease_list(self):
+        self.blazar('lease-list')
 
-    def test_climate_host_list(self):
-        self.climate('host-list')
+    def test_blazar_host_list(self):
+        self.blazar('host-list')
 
-    def test_climate_version(self):
-        self.climate('', flags='--version')
+    def test_blazar_version(self):
+        self.blazar('', flags='--version')
