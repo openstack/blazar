@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from tempest.common import waiters
 from tempest import config
 from tempest import exceptions
+from tempest.lib import decorators
 from tempest.scenario import resource_reservation_scenario as rrs
 from tempest import test
 
@@ -35,9 +36,9 @@ LEASE_MIN_DURATION = 2
 LEASE_IMAGE_PREFIX = 'reserved_'
 
 
-class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
+class TestInstanceReservationScenario(rrs.ResourceReservationScenarioTest):
 
-    """Test that checks the resource reservation scenario.
+    """Test that checks the instance reservation scenario.
 
     The following is the scenario outline:
     1) Create an instance with the hint parameters
@@ -51,7 +52,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
     """
 
     def setUp(self):
-        super(TestResourceReservationScenario, self).setUp()
+        super(TestInstanceReservationScenario, self).setUp()
         # Setup image and flavor the test instance
         # Support both configured and injected values
         if not hasattr(self, 'image_ref'):
@@ -66,7 +67,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             )
 
     def tearDown(self):
-        super(TestResourceReservationScenario, self).tearDown()
+        super(TestInstanceReservationScenario, self).tearDown()
 
     def add_keypair(self):
         self.keypair = self.create_keypair()
@@ -137,6 +138,8 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
         self.assertEqual(expected_status, server['status'])
 
     # TODO(cmart): add climate to services after pushing this code into tempest
+    @decorators.skip_because('Instance reservation is not supported yet.',
+                             bug='1659200')
     @test.attr(type='slow')
     @test.services('compute', 'network')
     def test_server_basic_resource_reservation_operation(self):
