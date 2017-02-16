@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013 Mirantis Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +14,14 @@
 # limitations under the License.
 
 import sys
-
 import os
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('./'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -33,13 +37,11 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinxcontrib.httpdomain',
               'sphinxcontrib.pecanwsme.rest',
+              'oslosphinx',
               'wsmeext.sphinxext',
               ]
 
 wsme_protocols = ['restjson', 'restxml']
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -52,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Blazar'
-copyright = u'2013, Mirantis Inc.;2014, Bull.'
+copyright = u'2013-present, OpenStack Foundation'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -103,8 +105,8 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme_path = ['.']
-html_theme = '_theme'
+# html_theme_path = ["."]
+# html_theme = '_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -133,7 +135,7 @@ html_title = 'Blazar'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -146,11 +148,7 @@ html_last_updated_fmt = os.popen(git_cmd).read()
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    'index':    ['sidebarlinks.html', 'localtoc.html', 'searchbox.html', 'sourcelink.html'],
-    '**':       ['localtoc.html', 'relations.html',
-                 'searchbox.html', 'sourcelink.html']
-}
+#html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -203,7 +201,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
     ('index', 'blazardoc.tex', u'Blazar',
-     u'Mirantis Inc.', 'manual'),
+     u'OpenStack Foundation', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -233,7 +231,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'blazar', u'Blazar',
-     [u'Mirantis Inc.'], 1)
+     [u'OpenStack Foundation'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -247,7 +245,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'Blazar', u'Blazar',
-     u'Mirantis Inc.', 'Blazar', 'Blazar',
+     u'OpenStack Foundation', 'Blazar', 'Blazar',
      'Miscellaneous'),
 ]
 
