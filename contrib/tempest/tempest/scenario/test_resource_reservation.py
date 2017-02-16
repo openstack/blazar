@@ -21,7 +21,6 @@ from oslo_log import log as logging
 from tempest import config
 from tempest import exceptions
 from tempest.scenario import resource_reservation_scenario as rrs
-from tempest.scenario import utils
 from tempest import test
 
 CONF = config.CONF
@@ -58,9 +57,7 @@ class TestResourceReservationScenario(rrs.ResourceReservationScenarioTest):
             self.image_ref = CONF.compute.image_ref
         if not hasattr(self, 'flavor_ref'):
             self.flavor_ref = CONF.compute.flavor_ref
-        self.image_utils = utils.ImageUtils()
-        if not self.image_utils.is_flavor_enough(self.flavor_ref,
-                                                 self.image_ref):
+        if not self.is_flavor_enough(self.flavor_ref, self.image_ref):
             raise self.skipException(
                 '{image} does not fit in {flavor}'.format(
                     image=self.image_ref, flavor=self.flavor_ref

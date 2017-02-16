@@ -13,30 +13,48 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import climateclient.client
+import json
+
 from oslo_log import log as logging
-from tempest import clients as manager
 from tempest import config_resource_reservation as config
+from tempest.lib.common import rest_client
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
-class ResourceReservationManager(manager.OfficialClientManager):
-    """Manager that provides access to the python climate client."""
+class ResourceReservationV1Client(rest_client.RestClient):
+    """Client class for accessing the resource reservation API."""
     CLIMATECLIENT_VERSION = '1'
 
-    def __init__(self, credentials):
-        self.client_type = 'tempest'
-        self.interface = None
-        # super cares for credentials validation
-        super(ResourceReservationManager, self).__init__(credentials)
-        self.resource_reservation_client = (
-            self._get_resource_reservation_client())
+    lease = '/leases'
+    lease_path = '/leases/%s'
+    host = '/os-hosts'
+    host_path = '/os-hosts/%s'
 
-    def _get_resource_reservation_client(self):
-        climate_url = self.identity_client.service_catalog.url_for(
-            service_type='reservation')
-        token = self.identity_client.auth_token
-        return climateclient.client.Client(self.CLIMATECLIENT_VERSION,
-                                           climate_url, token)
+    def _response_helper(self, resp, body=None):
+        if body:
+            body = json.loads(body)
+        return rest_client.ResponseBody(resp, body)
+
+    def list_lease(self):
+        resp, body = self.get(self.lease)
+        return self._response_helper(resp, body)
+
+    def get_lease(self, lease):
+        resp, body = self.get(self.lease_path % lease)
+        return self._response_helper(resp, body)
+
+    def create_lease(self, body):
+        body = json.dumps(body)
+        resp, body = self.post(self.lease, body=body)
+        return self._response_helper(resp, body)
+
+    def update_lease(self, lease, body):
+        body = json.dumps(body)
+        resp, body = self.post(self.lease_path % lease, body=body)
+        return self._response_helper(resp, body)
+
+    def delete_lease(self, lease):
+        resp, body = self.delete(self.lease_path % lease)
+        return self._response_helper(resp, body)
