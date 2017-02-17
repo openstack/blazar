@@ -1,27 +1,36 @@
-Installation using Devstack
+Installation using DevStack
 ===========================
 
-This section includes instructions for Blazar installation using Devstack.
+This section includes instructions for Blazar installation using DevStack.
 
-1. Download Devstack:
-
-.. sourcecode:: console
-
-    git clone https://github.com/openstack-dev/devstack.git
-
-..
-
-2. Configure DevStack to install Blazar by adding the Blazar plugin to your
-   local.conf file:
+1. Download DevStack:
 
 .. sourcecode:: console
 
-    cd devstack
-    echo "enable_plugin blazar https://git.openstack.org/openstack/blazar" >> local.conf
+    git clone https://git.openstack.org/openstack-dev/devstack.git
 
 ..
 
-3. Run Devstack:
+2. Create a local.conf file in the devstack directory. You can use the
+   following sample local.conf:
+
+.. sourcecode:: console
+
+    [[local|localrc]]
+    ADMIN_PASSWORD=password
+    DATABASE_PASSWORD=$ADMIN_PASSWORD
+    RABBIT_PASSWORD=$ADMIN_PASSWORD
+    SERVICE_PASSWORD=$ADMIN_PASSWORD
+    DEST=/opt/stack/
+    LOGFILE=$DEST/logs/stack.sh.log
+    HOST_IP=127.0.0.1
+    GIT_BASE=https://git.openstack.org/
+    RECLONE=yes
+    enable_plugin blazar https://git.openstack.org/openstack/blazar
+
+..
+
+3. Run DevStack as the stack user:
 
 .. sourcecode:: console
 
@@ -29,7 +38,15 @@ This section includes instructions for Blazar installation using Devstack.
 
 ..
 
-4. Now you can add hosts to Blazar:
+4. Source the admin credentials:
+
+.. sourcecode:: console
+
+    . openrc admin admin
+
+..
+
+5. Now you can add hosts to Blazar:
 
 .. sourcecode:: console
 
@@ -37,7 +54,7 @@ This section includes instructions for Blazar installation using Devstack.
 
 ..
 
-Installation without Devstack
+Installation without DevStack
 =============================
 
 This section includes instructions for Blazar installation.
