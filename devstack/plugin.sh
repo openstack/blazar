@@ -79,16 +79,16 @@ function configure_blazar {
 
     ACTUAL_FILTERS=$(iniget $NOVA_CONF filter_scheduler enabled_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
-        iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, ClimateFilter"
+        iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, BlazarFilter"
     else
-        iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,ClimateFilter"
+        iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,BlazarFilter"
     fi
 
     ACTUAL_AVAILABLE_FILTERS=$(iniget $NOVA_CONF filter_scheduler available_filters)
     if [[ -z "$ACTUAL_AVAILABLE_FILTERS" ]]; then
         iniset $NOVA_CONF filter_scheduler available_filters "nova.scheduler.filters.all_filters"
     fi
-    iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.ClimateFilter"
+    iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.BlazarFilter"
 
     # Database
     recreate_database blazar utf8
