@@ -63,9 +63,9 @@ Download all Blazar related repos:
 
 .. sourcecode:: console
 
-   git clone https://github.com/stackforge/blazar.git
-   git clone https://github.com/stackforge/blazar-nova.git
-   git clone https://github.com/stackforge/python-blazarclient.git
+   git clone https://git.openstack.org/openstack/blazar
+   git clone https://git.openstack.org/openstack/blazar-nova
+   git clone https://git.openstack.org/openstack/python-blazarclient
 
 ..
 
@@ -85,45 +85,64 @@ or
 
 ..
 
-Next you need to configure Blazar and Nova. Define */etc/blazar/blazar.conf*
-file using the following example:
+Next you need to create a Blazar policy file:
+
+.. sourcecode:: console
+
+    cp /path/to/blazar/etc/policy.json /etc/blazar/
+
+..
+
+Next you need to configure Blazar and Nova. First, generate a blazar.conf sample:
+
+.. sourcecode:: console
+
+    cd /path/to/blazar
+    tox -e genconfig
+    mv etc/blazar/blazar.conf.sample /etc/blazar/blazar.conf
+
+..
+
+Then edit */etc/blazar/blazar.conf* using the following example:
 
 .. sourcecode:: console
 
     [DEFAULT]
     host=<blazar_host>
-
+    port=<blazar_port>
     os_auth_host=<auth_host>
     os_auth_port=<auth_port>
     os_auth_protocol=<http, for example>
+    os_auth_version=v3
     os_admin_username=<username>
     os_admin_password=<password>
     os_admin_project_name=<project_name>
+    identity_service=identityv3
 
     [manager]
-    plugins=basic.vm.plugin,physical.host.plugin
+    plugins=physical.host.plugin
 
-    [virtual:instance]
-    on_start=on_start
-    on_end=create_image, delete
+    [keystone_authtoken]
+    auth_uri=<auth_uri>
 
     [physical:host]
     on_start=on_start
     on_end=on_end
-    blazar_username=<username>
-    blazar_password=<password>
-    blazar_project_name=<project_name>
+    aggregate_freepool_name=freepool
+    project_id_key=blazar:project
+    blazar_owner=blazar:owner
+    blazar_az_prefix=blazar:
 
 ..
 
-Here *os_admin_** flags refer to Blazar service user. *blazar_** ones - to
-admin user created specially to work with physical reservations. If you have no
-these users, create them via Keystone:
+Here *os_admin_** flags refer to the Blazar service user. *blazar_** ones - to
+an admin user created specially to work with physical reservations. If you do
+not have these users, create them:
 
 .. sourcecode:: console
 
-    keystone user-create --name=blazar --pass=<service_password> --tenant_id=<service_tenant_id> --email=blazar@example.com
-    keystone user-role-add --tenant-id <service_tenant_id> --user-id <blazar_user> --role-id <admin_role>
+    openstack user create --password <password> --project <project_name> --email <email-address> <username>
+    openstack role add --project <project_name> --user <username> <admin_role>
 
 ..
 
@@ -136,30 +155,60 @@ please add the following lines to nova.conf file:
 .. sourcecode:: console
 
     scheduler_available_filters = nova.scheduler.filters.all_filters
-    scheduler_available_filters = climatenova.scheduler.filters.climate_filter.ClimateFilter
-    scheduler_default_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ClimateFilter
+    scheduler_available_filters = blazarnova.scheduler.filters.blazar_filter.BlazarFilter
+    scheduler_default_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,BlazarFilter
 
 ..
 
-Restart nova-api and nova-scheduler to use new configuration file.
+Restart nova-scheduler to use the new configuration file.
 
-Blazar uses Keystone trusts to commit actions on behalf of user created lease.
-That’s why we need to create identityv3 service with appropriate endpoints:
+Next you need to create a Nova aggregate to use as a free pool for host
+reservation:
 
 .. sourcecode:: console
 
-    keystone service-create --name keystonev3 --type identityv3 --description "Keystone Identity Service v3"
-    keystone endpoint-create --region <region> --service keystonev3 --publicurl "<auth_protocol>://<auth_host>:5000/v3" --adminurl "<auth_protocol>://<auth_host>:35357/v3" --internalurl "<auth_protocol>://<auth_host>:5000/v3"
+    openstack aggregate create freepool
 
 ..
 
-And, finally, we need to create reservation service in Keystone with its
-endpoints:
+Blazar uses Keystone trusts to commit actions on behalf of user-created leases.
+That's why we need to create identityv3 service with appropriate endpoints:
 
 .. sourcecode:: console
 
-    keystone service-create --name blazar --type reservation --description “OpenStack reservation service.”
-    keystone endpoint-create --region <region> --service blazar --publicurl "<auth_protocol>://<blazar_host>:1234/v1" --adminurl "<auth_protocol>://<blazar_host>:1234/v1"
+    openstack service create --name keystonev3 --description "Keystone Identity Service v3" identityv3
+    openstack endpoint create --region <region> keystonev3 public "<auth_protocol>://<auth_host>:<auth_port>/v3"
+    openstack endpoint create --region <region> keystonev3 admin "<auth_protocol>://<auth_host>:<auth_port>/v3"
+    openstack endpoint create --region <region> keystonev3 internal "<auth_protocol>://<auth_host>:<auth_port>/v3"
+
+..
+
+And we need to create the reservation service in Keystone with its endpoints:
+
+.. sourcecode:: console
+
+    openstack service create --name blazar --description “OpenStack Reservation Service” reservation
+    openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
+    openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
+    openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
+
+..
+
+And, finally, we need to create a database for Blazar:
+
+.. sourcecode:: console
+
+    mysql -u<user> -p<password> -h<host> -e "DROP DATABASE IF EXISTS blazar;"
+    mysql -u<user> -p<password> -h<host> -e "CREATE DATABASE blazar CHARACTER SET utf8;"
+
+..
+
+Then edit the database section of */etc/blazar/blazar.conf*:
+
+.. sourcecode:: console
+
+    [database]
+    connection=mysql+pymysql://<user>:<password>@<host>/blazar?charset=utf8
 
 ..
 
@@ -167,8 +216,8 @@ To start Blazar services use:
 
 .. sourcecode:: console
 
-    blazar-api
-    blazar-manager
+    blazar-api --config-file /etc/blazar/blazar.conf
+    blazar-manager --config-file /etc/blazar/blazar.conf
 
 ..
 
