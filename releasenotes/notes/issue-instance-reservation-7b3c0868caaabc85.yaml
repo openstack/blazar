@@ -1,0 +1,11 @@
+---
+issues:
+  - |
+    The instance reservation feature is not available in this release because
+    it depends on Nova API extensions. Support for these extensions was
+    completely removed from Nova in Newton
+    (see `Remove support for API extensions`_).
+    Expect the instance reservation feature to be implemented differently in a
+    future release.
+
+    .. _Remove support for API extensions: https://specs.openstack.org/openstack/nova-specs/specs/newton/implemented/api-no-more-extensions.html
