@@ -4,20 +4,8 @@ How to contribute
 Getting started
 ---------------
 
-* Create `Github <https://github.com/openstack/blazar>`_ account if you don't
-  have one
-* Make sure you have git options *user.name* and *user.email* set in git by
-  typing:
-
-  .. sourcecode:: console
-
-      git config --list. If not, configure them.
-
-  ..
-
-* Create `Launchpad <https://launchpad.net/blazar>`_ account if you don't have
-  one
-* Create `OpenStack profile <https://www.openstack.org/profile/>`_
+* Read the `OpenStack Developer's Guide
+  <https://docs.openstack.org/infra/manual/developers.html#developer-s-guide>`_
 * Login to `OpenStack Gerrit <https://review.openstack.org/>`_ using your
   Launchpad ID
 
@@ -42,24 +30,22 @@ How to keep in touch with community
   <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack>`_ or to
   `OpenStack development mailing list
   <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev>`_, do
-  that. Blazar-related emails must be send with **[blazar]** in its subject.
+  that. Blazar-related emails must be send with **[blazar]** in its subject
 * All questions may be asked on our IRC channel #openstack-blazar on
   `freenode <http://freenode.net>`_
-* We also have weekly meetings on #openstack-meeting
-  `freenode IRC channel <https://wiki.openstack.org/wiki/Meetings/Blazar>`_
+* We also have weekly meetings on #openstack-meeting-alt. Please check
+  `meeting details <https://wiki.openstack.org/wiki/Meetings/Blazar>`_
 
 Your first commit to Blazar
 ----------------------------
 
-* Checkout corresponding Blazar repository from `Github
-  <https://github.com/openstack/blazar>`_
-* Take a look on how `Gerrit review process
-  <https://wiki.openstack.org/wiki/Gerrit_Workflow>`_ goes on in OpenStack
-  (read carefully `committing changes
-  <https://wiki.openstack.org/wiki/Gerrit_Workflow#Committing_Changes>`_ part)
+* Read the `OpenStack development workflow documentation
+  <https://docs.openstack.org/infra/manual/developers.html#development-workflow>`_
+* Checkout corresponding Blazar repository:
+  `blazar <https://git.openstack.org/openstack/blazar>`_,
+  `blazar-nova <https://git.openstack.org/openstack/blazar-nova>`_,
+  `client <https://git.openstack.org/openstack/python-blazarclient>`_
 * Apply and commit your changes
-* Make sure all code checkings and tests have passed. See
-  `development guidelines <development.guidelines.html>`_ to learn more
-* Send your patch to the review (you may use `git-review
-  <https://github.com/openstack-infra/git-review>`_ utility for that)
+* Make sure all code checkings and tests have passed
+* Send your patch to the review
 * Monitor status of your change on https://review.openstack.org/#/
