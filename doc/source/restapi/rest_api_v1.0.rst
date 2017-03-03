@@ -483,7 +483,7 @@ user query.
 3.1 List all hosts
 ------------------
 
-.. http:get:: /v1/hosts
+.. http:get:: /v1/os-hosts
 
 * Normal Response Code: 200 (OK)
 * Returns the list of all hosts.
@@ -559,7 +559,7 @@ user query.
 3.2 Create host
 ---------------
 
-.. http:post:: /v1/hosts
+.. http:post:: /v1/os-hosts
 
 * Normal Response Code: 202 (ACCEPTED)
 * Returns the information about created host, including extra parameters if
@@ -618,7 +618,7 @@ user query.
 3.3 Show info about host
 ------------------------
 
-.. http:get:: /v1/hosts/{host_id}
+.. http:get:: /v1/os-hosts/{host_id}
 
 * Normal Response Code: 200 (OK)
 * Returns the information about specified host, including extra parameters if
@@ -671,7 +671,7 @@ user query.
 3.4 Update existing host
 ------------------------
 
-.. http:put:: /v1/hosts/{host_id}
+.. http:put:: /v1/os-hosts/{host_id}
 
 * Normal Response Code: 202 (ACCEPTED)
 * Returns the updated information about host.
@@ -727,7 +727,7 @@ user query.
 3.5 Delete existing host
 ------------------------
 
-.. http:delete:: /v1/hosts/{host_id}
+.. http:delete:: /v1/os-hosts/{host_id}
 
 * Normal Response Code: 204 (NO CONTENT)
 * Does not require a request body.
