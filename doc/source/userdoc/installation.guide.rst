@@ -50,7 +50,7 @@ This section includes instructions for Blazar installation using DevStack.
 
 .. sourcecode:: console
 
-    climate host-create hostname
+    blazar host-create hostname
 
 ..
 
@@ -85,13 +85,13 @@ or
 
 ..
 
-Next you need to configure Blazar and Nova. Define */etc/climate/climate.conf*
+Next you need to configure Blazar and Nova. Define */etc/blazar/blazar.conf*
 file using the following example:
 
 .. sourcecode:: console
 
     [DEFAULT]
-    host=<climate_host>
+    host=<blazar_host>
 
     os_auth_host=<auth_host>
     os_auth_port=<auth_port>
@@ -110,20 +110,20 @@ file using the following example:
     [physical:host]
     on_start=on_start
     on_end=on_end
-    climate_username=<username>
-    climate_password=<password>
-    climate_project_name=<project_name>
+    blazar_username=<username>
+    blazar_password=<password>
+    blazar_project_name=<project_name>
 
 ..
 
-Here *os_admin_** flags refer to Blazar service user. *climate_** ones - to
+Here *os_admin_** flags refer to Blazar service user. *blazar_** ones - to
 admin user created specially to work with physical reservations. If you have no
 these users, create them via Keystone:
 
 .. sourcecode:: console
 
-    keystone user-create --name=climate --pass=<service_password> --tenant_id=<service_tenant_id> --email=climate@example.com
-    keystone user-role-add --tenant-id <service_tenant_id> --user-id <climate_user> --role-id <admin_role>
+    keystone user-create --name=blazar --pass=<service_password> --tenant_id=<service_tenant_id> --email=blazar@example.com
+    keystone user-role-add --tenant-id <service_tenant_id> --user-id <blazar_user> --role-id <admin_role>
 
 ..
 
@@ -158,8 +158,8 @@ endpoints:
 
 .. sourcecode:: console
 
-    keystone service-create --name climate --type reservation --description “OpenStack reservation service.”
-    keystone endpoint-create --region <region> --service climate --publicurl "<auth_protocol>://<climate_host>:1234/v1" --adminurl "<auth_protocol>://<climate_host>:1234/v1"
+    keystone service-create --name blazar --type reservation --description “OpenStack reservation service.”
+    keystone endpoint-create --region <region> --service blazar --publicurl "<auth_protocol>://<blazar_host>:1234/v1" --adminurl "<auth_protocol>://<blazar_host>:1234/v1"
 
 ..
 
@@ -167,8 +167,8 @@ To start Blazar services use:
 
 .. sourcecode:: console
 
-    climate-api
-    climate-manager
+    blazar-api
+    blazar-manager
 
 ..
 

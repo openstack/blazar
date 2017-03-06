@@ -35,7 +35,8 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
     @classmethod
     def setup_clients(cls):
         super(ResourceReservationScenarioTest, cls).setup_clients()
-        if not CONF.service_available.climate:
+        if not (CONF.service_available.climate or
+                CONF.service_available.blazar):
             raise cls.skipException("Resource reservation support is required")
 
         cred_provider = cls._get_credentials_provider()
@@ -49,7 +50,7 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
             cls.admin_manager.resource_reservation_client)
 
     def get_lease_by_name(self, lease_name):
-        # the same as the climateclient does it: ask for the entire list
+        # the same as the blazarclient does it: ask for the entire list
         lease_list = self.reservation_client.list_lease()
         named_lease = []
 

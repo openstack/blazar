@@ -94,7 +94,7 @@ function configure_blazar {
     recreate_database blazar utf8
 
     # Run Blazar db migrations
-    $BLAZAR_BIN_DIR/climate-db-manage --config-file $BLAZAR_CONF_FILE upgrade head
+    $BLAZAR_BIN_DIR/blazar-db-manage --config-file $BLAZAR_CONF_FILE upgrade head
 }
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
@@ -149,8 +149,8 @@ function install_blazar {
 
 # start_blazar() - Start running processes, including screen
 function start_blazar {
-    screen_it blazar-a "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/climate-api --debug --config-file $BLAZAR_CONF_FILE"
-    screen_it blazar-m "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/climate-manager --debug --config-file $BLAZAR_CONF_FILE"
+    screen_it blazar-a "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
+    screen_it blazar-m "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/blazar-manager --debug --config-file $BLAZAR_CONF_FILE"
 }
 
 
@@ -162,7 +162,7 @@ function stop_blazar {
     done
 
     # Hack to be sure that the manager is really stop
-    BLAZAR_MANGER_PID=$(ps aux | grep climate-manager | grep -v grep \
+    BLAZAR_MANGER_PID=$(ps aux | grep blazar-manager | grep -v grep \
                          | awk '{print $2}')
     [ ! -z "$BLAZAR_MANGER_PID" ] && sudo kill -9 $BLAZAR_MANGER_PID
 }

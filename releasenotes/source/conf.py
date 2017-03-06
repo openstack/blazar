@@ -60,7 +60,7 @@ copyright = u'2017, Blazar developers'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-from climate.version import version_info as blazar_version
+from blazar.version import version_info as blazar_version
 # The short X.Y version.
 version = blazar_version.canonical_version_string()
 # The full version, including alpha/beta/rc tags.

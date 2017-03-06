@@ -22,7 +22,7 @@ BLAZARNOVA_BRANCH=${BLAZARNOVA_BRANCH:-master}
 # Set up default directories
 BLAZAR_DIR=$DEST/blazar
 BLAZAR_CONF_DIR=${BLAZAR_CONF_DIR:-/etc/blazar}
-BLAZAR_CONF_FILE=$BLAZAR_CONF_DIR/climate.conf
+BLAZAR_CONF_FILE=$BLAZAR_CONF_DIR/blazar.conf
 BLAZARCLIENT_DIR=$DEST/python-blazarclient
 BLAZARNOVA_DIR=$DEST/blazar-nova
 
