@@ -13,7 +13,6 @@ Overview
 
     introduction
     architecture
-    Roadmap <https://wiki.openstack.org/wiki/Blazar/Roadmap>
 
 User guide
 ----------
@@ -40,3 +39,8 @@ Development guide
 
    devref/how.to.contribute
    devref/development.guidelines
+
+Release note
+------------
+
+   `Release note <https://wiki.openstack.org/wiki/Blazar/Release_Notes>`_

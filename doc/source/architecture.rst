@@ -21,8 +21,7 @@ structure of connected leases, reservations (both physical and virtual) and
 events. blazar-manager service is responsible for running events created for
 lease and process all actions that should be done this moment. Manager uses
 resource-plugins to work with concrete resources (instances, volumes, compute
-hosts). blazar-manager uses Keystone trusts to commit actions on behalf of
-user who has created lease before.
+hosts).
 
 **resource-plugin** - responsible for exact actions to do with reserved
 resources (VMs, volumes, etc.) When working knows only about resource ID and
@@ -30,6 +29,10 @@ token to use. All resource plugins work in the same process as blazar-manager.
 
 Virtual instance reservation
 ----------------------------
+
+**Note** virtual instance reservation feature is not available in current
+release. Expected to be available in the future (`bug tracker`_).
+.. _bug tracker: https://blueprints.launchpad.net/blazar/+spec/new-instance-reservation
 
 Virtual instance reservation mostly looks like usual instance booting for user
 - he/she only passes special hints to Nova containing information about future
