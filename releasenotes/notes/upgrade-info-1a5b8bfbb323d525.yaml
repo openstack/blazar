@@ -1,0 +1,13 @@
+---
+upgrade:
+  - |
+    All entities in the 'climate' namespace, such as those used in policy.json
+    and some configuration values, have moved to the 'blazar' namespace in the
+    Ocata release. When upgrading Blazar, please replace all configuration
+    values including the 'climate' string by their 'blazar' equivalent.
+deprecations:
+  - |
+    Commands which have 'climate' in their name are deprecated in Ocata. They
+    will be completely removed in the Pike release. Instead of commands
+    starting with 'climate', the Blazar project supports commands starting with
+    'blazar' from Ocata.
