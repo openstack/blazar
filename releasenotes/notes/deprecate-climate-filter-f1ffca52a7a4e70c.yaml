@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    The Blazar-specific Nova scheduler filter named *ClimateFilter* is now
+    deprecated and will be removed in the next release. Please use
+    *BlazarFilter* instead. This change is part of the transition from Climate
+    (the old name of this project) to Blazar.
