@@ -40,7 +40,13 @@ Development guide
    devref/how.to.contribute
    devref/development.guidelines
 
+.. toctree::
+   :maxdepth: 2
+
+   devref/spec
+
 Release note
 ------------
 
    `Release note <https://wiki.openstack.org/wiki/Blazar/Release_Notes>`_
+
