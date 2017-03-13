@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    The physical-host plugin has been changed to force-delete all instances on
+    leased hosts at the end of a lease for preventing failures of other
+    following leases.
+deprecations:
+  - |
+    The *on_start* and the *on_end* configs for the physical-host plugin have
+    been removed.

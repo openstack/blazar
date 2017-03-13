@@ -35,10 +35,14 @@ from blazar.utils import trusts
 plugin_opts = [
     cfg.StrOpt('on_end',
                default='on_end',
+               deprecated_for_removal=True,
+               deprecated_since='0.3.0',
                help='Actions which we will use in the end of the lease'),
     cfg.StrOpt('on_start',
                default='on_start',
-               help='Actions which we will use at the start of the lease'),
+               deprecated_for_removal=True,
+               deprecated_since='0.3.0',
+               help='Actions which we will use at the start of the lease')
 ]
 
 CONF = cfg.CONF
@@ -185,15 +189,17 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                                            {'status': 'completed'})
             allocations = db_api.host_allocation_get_all_by_values(
                 reservation_id=reservation['id'])
-            pool = rp.ReservationPool()
             for allocation in allocations:
                 db_api.host_allocation_destroy(allocation['id'])
-                if self.nova.hypervisors.get(
-                        self._get_hypervisor_from_name_or_id(
-                        allocation['compute_host_id'])
-                ).__dict__['running_vms'] == 0:
-                    pool.delete(reservation['resource_id'])
-                # TODO(frossigneux) Kill, migrate, or increase fees...
+            pool = rp.ReservationPool()
+            for host in pool.get_computehosts(reservation['resource_id']):
+                for server in self.nova.servers.list(
+                        search_opts={"host": host}):
+                    self.nova.servers.delete(server=server)
+            try:
+                pool.delete(reservation['resource_id'])
+            except manager_ex.AggregateNotFound:
+                pass
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
