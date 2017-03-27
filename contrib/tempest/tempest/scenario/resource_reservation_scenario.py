@@ -20,7 +20,7 @@ from tempest import config_resource_reservation as config
 from tempest import exceptions
 from tempest.lib.common.utils import test_utils
 from tempest import resource_reservation_client_manager as clients
-from tempest.scenario import manager
+from tempest.scenario import manager_freeze as manager
 
 CONF = config.CONF
 
