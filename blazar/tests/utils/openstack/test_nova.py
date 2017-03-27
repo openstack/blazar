@@ -16,11 +16,14 @@
 from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
 from novaclient import client as nova_client
+from oslo_config import cfg
 
 from blazar import context
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import nova
+
+CONF = cfg.CONF
 
 
 class TestCNClient(tests.TestCase):
@@ -43,20 +46,34 @@ class TestCNClient(tests.TestCase):
 
     def test_client_from_kwargs(self):
         self.ctx.side_effect = RuntimeError
-        self.auth_token = 'fake_token'
-        self.endpoint = 'fake_endpoint'
+        endpoint = 'fake_endpoint'
+        username = 'blazar_admin'
+        password = 'blazar_password'
+        user_domain = 'User_Domain'
+        project_name = 'admin'
+        project_domain = 'Project_Domain'
+        auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
+                                      CONF.os_auth_host,
+                                      CONF.os_auth_port)
 
         kwargs = {'version': self.version,
-                  'endpoint_override': self.endpoint,
-                  'auth_token': self.auth_token}
+                  'endpoint_override': endpoint,
+                  'username': username,
+                  'password': password,
+                  'user_domain_name': user_domain,
+                  'project_name': project_name,
+                  'project_domain_name': project_domain}
 
         self.nova.BlazarNovaClient(**kwargs)
 
-        self.auth.assert_called_once_with(self.endpoint, self.auth_token)
-        self.session.assert_called_once_with(auth=self.auth.return_value)
         self.client.assert_called_once_with(version=self.version,
-                                            endpoint_override=self.endpoint,
-                                            session=self.session.return_value)
+                                            username=username,
+                                            password=password,
+                                            user_domain_name=user_domain,
+                                            project_name=project_name,
+                                            project_domain_name=project_domain,
+                                            auth_url=auth_url,
+                                            endpoint_override=endpoint)
 
     def test_client_from_ctx(self):
         kwargs = {'version': self.version}

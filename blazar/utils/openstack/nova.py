@@ -45,24 +45,49 @@ class BlazarNovaClient(object):
     def __init__(self, **kwargs):
         """Description
 
-        We suppose that in future we may want to use CNC in some places
-        where context will be available, so we create 2 different ways of
-        creating client from context(future) and kwargs(we use it now).
+        BlazarNovaClient can be used in two ways: from context or kwargs.
 
         :param version: service client version which we will use
         :type version: str
+
+        :param ctx: request context
+        :type ctx: context object
 
         :param auth_token: keystone auth token
         :type auth_token: str
 
         :param endpoint_override: endpoint url which we will use
         :type endpoint_override: str
+
+        :param username: username to use with nova client
+        :type username: str
+
+        :param password: password to use with nova client
+        :type password: str
+
+        :param user_domain_name: domain name of the user
+        :type user_domain_name: str
+
+        :param project_name: project name to use with nova client
+        :type project_name: str
+
+        :param project_domain_name: domain name of the project
+        :type project_domain_name: str
+
+        :param auth_url: keystone url to authenticate against
+        :type auth_url: str
         """
 
         ctx = kwargs.pop('ctx', None)
         auth_token = kwargs.pop('auth_token', None)
         endpoint_override = kwargs.pop('endpoint_override', None)
         version = kwargs.pop('version', cfg.CONF.nova_client_version)
+        username = kwargs.pop('username', None)
+        password = kwargs.pop('password', None)
+        user_domain_name = kwargs.pop('user_domain_name', None)
+        project_name = kwargs.pop('project_name', None)
+        project_domain_name = kwargs.pop('project_domain_name', None)
+        auth_url = kwargs.pop('auth_url', None)
 
         if ctx is None:
             try:
@@ -74,13 +99,29 @@ class BlazarNovaClient(object):
             endpoint_override = endpoint_override or \
                 base.url_for(ctx.service_catalog,
                              CONF.compute_service)
+            auth_url = base.url_for(ctx.service_catalog, CONF.identity_service)
 
-        auth = token_endpoint.Token(endpoint_override,
-                                    auth_token)
-        sess = session.Session(auth=auth)
+        if auth_url is None:
+            auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
+                                          CONF.os_auth_host,
+                                          CONF.os_auth_port)
+
+        if username:
+            kwargs.setdefault('username', username)
+            kwargs.setdefault('password', password)
+            kwargs.setdefault('project_name', project_name)
+            kwargs.setdefault('auth_url', auth_url)
+
+            if "v2.0" not in auth_url:
+                kwargs.setdefault('project_domain_name', project_domain_name)
+                kwargs.setdefault('user_domain_name', user_domain_name)
+        else:
+            auth = token_endpoint.Token(endpoint_override,
+                                        auth_token)
+            sess = session.Session(auth=auth)
+            kwargs.setdefault('session', sess)
 
         kwargs.setdefault('endpoint_override', endpoint_override)
-        kwargs.setdefault('session', sess)
         kwargs.setdefault('version', version)
         self.nova = nova_client.Client(**kwargs)
 
@@ -117,8 +158,21 @@ class ServerManager(servers.ServerManager):
 
 
 class NovaClientWrapper(object):
+    def __init__(self, username=None, password=None, user_domain_name=None,
+                 project_name=None, project_domain_name=None):
+        self.username = username
+        self.password = password
+        self.user_domain_name = user_domain_name
+        self.project_name = project_name
+        self.project_domain_name = project_domain_name
+
     @property
     def nova(self):
         ctx = context.current()
-        nova = BlazarNovaClient(ctx=ctx)
+        nova = BlazarNovaClient(ctx=ctx,
+                                username=self.username,
+                                password=self.password,
+                                user_domain_name=self.user_domain_name,
+                                project_name=self.project_name,
+                                project_domain_name=self.project_domain_name)
         return nova

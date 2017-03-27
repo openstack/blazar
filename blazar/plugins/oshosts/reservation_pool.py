@@ -52,7 +52,12 @@ CONF.register_opts(OPTS, group=plugin.RESOURCE_TYPE)
 
 class ReservationPool(nova.NovaClientWrapper):
     def __init__(self):
-        super(ReservationPool, self).__init__()
+        super(ReservationPool, self).__init__(
+            username=CONF.os_admin_username,
+            password=CONF.os_admin_password,
+            user_domain_name=CONF.os_admin_user_domain_name,
+            project_name=CONF.os_admin_project_name,
+            project_domain_name=CONF.os_admin_user_domain_name)
         self.config = CONF[plugin.RESOURCE_TYPE]
         self.freepool_name = self.config.aggregate_freepool_name
 

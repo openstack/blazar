@@ -54,9 +54,6 @@ function configure_blazar {
     # keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
 
-    iniset $BLAZAR_CONF_FILE physical:host blazar_username $BLAZAR_USER_NAME
-    iniset $BLAZAR_CONF_FILE physical:host blazar_password $SERVICE_PASSWORD
-    iniset $BLAZAR_CONF_FILE physical:host blazar_project_name $SERVICE_TENANT_NAME
     iniset $BLAZAR_CONF_FILE physical:host aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
 
     iniset $BLAZAR_CONF_FILE DEFAULT host $HOST_IP

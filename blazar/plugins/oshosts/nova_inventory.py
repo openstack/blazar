@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from novaclient import exceptions as nova_exceptions
+from oslo_config import cfg
 
 from blazar.manager import exceptions as manager_exceptions
 from blazar.utils.openstack import nova
@@ -21,7 +22,12 @@ from blazar.utils.openstack import nova
 
 class NovaInventory(nova.NovaClientWrapper):
     def __init__(self):
-        super(NovaInventory, self).__init__()
+        super(NovaInventory, self).__init__(
+            username=cfg.CONF.os_admin_username,
+            password=cfg.CONF.os_admin_password,
+            user_domain_name=cfg.CONF.os_admin_user_domain_name,
+            project_name=cfg.CONF.os_admin_project_name,
+            project_domain_name=cfg.CONF.os_admin_user_domain_name)
 
     def get_host_details(self, host):
         """Get Nova capabilities of a single host
