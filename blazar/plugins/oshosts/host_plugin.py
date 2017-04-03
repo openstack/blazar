@@ -86,7 +86,6 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             'count_range': count_range,
             'status': 'pending',
         }
-        db_api.host_reservation_create(host_values)
         host_ids = self._matching_hosts(
             values['hypervisor_properties'],
             values['resource_properties'],
@@ -95,7 +94,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             values['end_date'],
         )
         if not host_ids:
+            pool.delete(pool_instance.id)
+            db_api.reservation_destroy(reservation['id'])
             raise manager_ex.NotEnoughHostsAvailable()
+
+        db_api.host_reservation_create(host_values)
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
                                           'reservation_id': reservation['id']})
