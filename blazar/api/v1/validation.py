@@ -15,8 +15,6 @@
 
 import functools
 
-import six
-
 from blazar.api.v1 import utils as api_utils
 from blazar import exceptions
 
@@ -41,7 +39,7 @@ def check_exists(get_function, object_id=None, **get_args):
             """Decorator handler."""
 
             get_kwargs = {}
-            for k, v in six.iteritems(get_args):
+            for k, v in get_args.items():
                 get_kwargs[k] = kwargs[v]
 
             try:

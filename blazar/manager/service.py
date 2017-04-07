@@ -18,7 +18,6 @@ import datetime
 import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
 from stevedore import enabled
 
 from blazar.db import api as db_api
@@ -106,7 +105,7 @@ class ManagerService(service_utils.RPCServer):
         """
         actions = {}
 
-        for resource_type, plugin in six.iteritems(self.plugins):
+        for resource_type, plugin in self.plugins.items():
             plugin = self.plugins[resource_type]
             CONF.register_opts(plugin.get_plugin_opts(), group=resource_type)
 
