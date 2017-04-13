@@ -32,6 +32,7 @@ Virtual instance reservation
 
 **Note** virtual instance reservation feature is not available in current
 release. Expected to be available in the future (`bug tracker`_).
+
 .. _bug tracker: https://blueprints.launchpad.net/blazar/+spec/new-instance-reservation
 
 Virtual instance reservation mostly looks like usual instance booting for user
