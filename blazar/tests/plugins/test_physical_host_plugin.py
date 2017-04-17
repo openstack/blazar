@@ -32,6 +32,7 @@ from blazar.plugins.oshosts import nova_inventory
 from blazar.plugins.oshosts import reservation_pool as rp
 from blazar import tests
 from blazar.utils.openstack import base
+from blazar.utils.openstack.nova import ServerManager
 from blazar.utils import trusts
 
 
@@ -160,6 +161,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.trusts = trusts
         self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
         self.trust_create = self.patch(self.trusts, 'create_trust')
+
+        self.ServerManager = ServerManager
 
     def test_get_host(self):
         host = self.fake_phys_plugin.get_computehost(self.fake_host_id)
@@ -687,10 +690,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_destroy = self.patch(
             self.db_api,
             'host_allocation_destroy')
-        delete = self.patch(self.rp.ReservationPool, 'delete')
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova.hypervisors, 'get')
-        get_hypervisors.return_value = mock.MagicMock(running_vms=1)
+        get_computehosts = self.patch(self.rp.ReservationPool,
+                                      'get_computehosts')
+        get_computehosts.return_value = ['host']
+        list_servers = self.patch(self.ServerManager, 'list')
+        list_servers.return_value = ['server1', 'server2']
+        delete_server = self.patch(self.ServerManager, 'delete')
+        delete_pool = self.patch(self.rp.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         reservation_update.assert_called_with(
             u'593e7028-c0d1-4d76-8642-2ffd890b324c', {'status': 'completed'})
@@ -698,7 +704,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             u'35fc4e6a-ba57-4a36-be30-6012377a0387', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
-        assert not delete.called
+        delete_server.assert_any_call(server='server1')
+        delete_server.assert_any_call(server='server2')
+        delete_pool.assert_called_with(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
     def test_on_end_without_instances(self):
         reservation_get_all_by_values = self.patch(
@@ -731,10 +739,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_destroy = self.patch(
             self.db_api,
             'host_allocation_destroy')
-        delete = self.patch(self.rp.ReservationPool, 'delete')
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova.hypervisors, 'get')
-        get_hypervisors.return_value = mock.MagicMock(running_vms=0)
+        get_computehosts = self.patch(self.rp.ReservationPool,
+                                      'get_computehosts')
+        get_computehosts.return_value = ['host']
+        list_servers = self.patch(self.ServerManager, 'list')
+        list_servers.return_value = []
+        delete_server = self.patch(self.ServerManager, 'delete')
+        delete_pool = self.patch(self.rp.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         reservation_update.assert_called_with(
             u'593e7028-c0d1-4d76-8642-2ffd890b324c', {'status': 'completed'})
@@ -742,7 +753,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             u'35fc4e6a-ba57-4a36-be30-6012377a0387', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
-        delete.assert_called_with(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        delete_server.assert_not_called()
+        delete_pool.assert_called_with(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
     def test_matching_hosts_not_allocated_hosts(self):
         def host_allocation_get_all_by_values(**kwargs):

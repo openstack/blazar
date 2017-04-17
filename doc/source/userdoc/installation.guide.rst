@@ -126,8 +126,6 @@ Then edit */etc/blazar/blazar.conf* using the following example:
     auth_uri=<auth_uri>
 
     [physical:host]
-    on_start=on_start
-    on_end=on_end
     aggregate_freepool_name=freepool
     project_id_key=blazar:project
     blazar_owner=blazar:owner
