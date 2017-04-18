@@ -22,7 +22,7 @@ from eventlet import wsgi
 from oslo_config import cfg
 from oslo_log import log as logging
 
-gettext.install('blazar', unicode=1)
+gettext.install('blazar')
 
 from blazar.api.v1 import app as v1_app
 from blazar.api.v2 import app as v2_app
