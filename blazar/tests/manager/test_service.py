@@ -1059,19 +1059,28 @@ class ServiceTestCase(tests.TestCase):
             'lease.delete')
 
     def test_delete_lease_after_starting_date(self):
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': 'fake', 'status': 'DONE'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': 'fake', 'status': 'UNDONE'}
+            else:
+                return None
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
         fake_get_lease = self.patch(self.manager, 'get_lease')
         fake_get_lease.return_value = self.lease
-
         target = datetime.datetime(2013, 12, 20, 13, 30)
         with mock.patch.object(datetime,
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
+            self.manager.delete_lease(self.lease_id)
 
-            self.assertRaises(
-                exceptions.NotAuthorized,
-                self.manager.delete_lease,
-                self.lease_id)
+        self.event_update.assert_called_once_with('fake',
+                                                  {'status': 'IN_PROGRESS'})
+        self.fake_plugin.on_end.assert_called_with('111')
+        self.lease_destroy.assert_called_once_with(self.lease_id)
 
     def test_start_lease(self):
         basic_action = self.patch(self.manager, '_basic_action')
