@@ -18,9 +18,9 @@ import time
 from oslo_log import log as logging
 from tempest.common import waiters
 from tempest import config
+from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest.scenario import resource_reservation_scenario as rrs
-from tempest import test
 
 CONF = config.CONF
 
@@ -78,7 +78,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
             raise exceptions.NotFound(err_msg)
         return aggr
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     def test_host_reservation(self):
 
         def wait_until_aggregated(aggregate_name, host_name):

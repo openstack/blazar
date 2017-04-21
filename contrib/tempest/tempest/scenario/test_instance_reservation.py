@@ -140,7 +140,7 @@ class TestInstanceReservationScenario(rrs.ResourceReservationScenarioTest):
     # TODO(cmart): add blazar to services after pushing this code into tempest
     @decorators.skip_because('Instance reservation is not supported yet.',
                              bug='1659200')
-    @test.attr(type='slow')
+    @decorators.attr(type='slow')
     @test.services('compute', 'network')
     def test_server_basic_resource_reservation_operation(self):
         start_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
