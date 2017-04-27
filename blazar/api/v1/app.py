@@ -30,13 +30,6 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
-CONF.import_opt('os_auth_host', 'blazar.config')
-CONF.import_opt('os_auth_port', 'blazar.config')
-CONF.import_opt('os_auth_protocol', 'blazar.config')
-CONF.import_opt('os_admin_username', 'blazar.config')
-CONF.import_opt('os_admin_password', 'blazar.config')
-CONF.import_opt('os_admin_project_name', 'blazar.config')
-CONF.import_opt('os_auth_version', 'blazar.config')
 CONF.import_opt('log_exchange', 'blazar.config')
 
 
@@ -96,15 +89,6 @@ def make_app():
     if cfg.CONF.log_exchange:
         app.wsgi_app = debug.Debug.factory(app.config)(app.wsgi_app)
 
-    app.wsgi_app = auth_token.filter_factory(
-        app.config,
-        auth_host=cfg.CONF.os_auth_host,
-        auth_port=cfg.CONF.os_auth_port,
-        auth_protocol=cfg.CONF.os_auth_protocol,
-        admin_user=cfg.CONF.os_admin_username,
-        admin_password=cfg.CONF.os_admin_password,
-        admin_tenant_name=cfg.CONF.os_admin_project_name,
-        auth_version=cfg.CONF.os_auth_version,
-    )(app.wsgi_app)
+    app.wsgi_app = auth_token.filter_factory(app.config)(app.wsgi_app)
 
     return app

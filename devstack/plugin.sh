@@ -44,18 +44,15 @@ function configure_blazar {
     touch $BLAZAR_CONF_FILE
 
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_version v3
-    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_port $KEYSTONE_SERVICE_PORT
+    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_port 80
+    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_prefix identity
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_username blazar
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_project_name $SERVICE_TENANT_NAME
     iniset $BLAZAR_CONF_FILE DEFAULT identity_service $BLAZAR_IDENTITY_SERVICE_NAME
 
     # keystone authtoken
-    iniset $BLAZAR_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $BLAZAR_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $BLAZAR_CONF_FILE keystone_authtoken admin_user blazar
-    iniset $BLAZAR_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $BLAZAR_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
+    _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
 
     iniset $BLAZAR_CONF_FILE physical:host blazar_username $BLAZAR_USER_NAME
     iniset $BLAZAR_CONF_FILE physical:host blazar_password $SERVICE_PASSWORD
@@ -95,6 +92,29 @@ function configure_blazar {
 
     # Run Blazar db migrations
     $BLAZAR_BIN_DIR/blazar-db-manage --config-file $BLAZAR_CONF_FILE upgrade head
+}
+
+# Configures keystone integration for blazar service
+function _blazar_setup_keystone {
+    local conf_file=$1
+    local section=$2
+    local use_auth_url=$3
+
+    if [[ -z $skip_auth_cache ]]; then
+        iniset $conf_file $section signing_dir $BLAZAR_AUTH_CACHE_DIR
+        # Create cache dir
+        create_blazar_cache_dir
+    fi
+
+    configure_auth_token_middleware $conf_file $BLAZAR_USER_NAME $BLAZAR_AUTH_CACHE_DIR $section
+}
+
+# create_blazar_cache_dir() - Part of the _blazar_setup_keystone process
+function create_blazar_cache_dir {
+    # Create cache dir
+    sudo mkdir -m 700 -p $BLAZAR_AUTH_CACHE_DIR
+    sudo chown $STACK_USER $BLAZAR_AUTH_CACHE_DIR
+    rm -f $BLAZAR_AUTH_CACHE_DIR/*
 }
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)

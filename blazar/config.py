@@ -33,28 +33,31 @@ cli_opts = [
 os_opts = [
     cfg.StrOpt('os_auth_protocol',
                default='http',
-               help='Protocol used to access OpenStack Identity service'),
+               help='Protocol used to access OpenStack Identity service.'),
     cfg.StrOpt('os_auth_host',
                default='127.0.0.1',
                help='IP or hostname of machine on which OpenStack Identity '
-                    'service is located'),
+                    'service is located.'),
     cfg.StrOpt('os_auth_port',
                default='35357',
-               help='Port of OpenStack Identity service'),
+               help='Port of OpenStack Identity service.'),
+    cfg.StrOpt('os_auth_prefix',
+               default='',
+               help='Prefix of URL to access OpenStack Identity service.'),
     cfg.StrOpt('os_admin_username',
                default='admin',
-               help='This OpenStack user is used to verify provided tokens. '
+               help='This OpenStack user is used to treat trusts. '
                     'The user must have admin role in <os_admin_project_name> '
-                    'project'),
+                    'project.'),
     cfg.StrOpt('os_admin_password',
                default='blazar',
-               help='Password of the admin user'),
+               help='Password of the admin user to treat trusts.'),
     cfg.StrOpt('os_admin_project_name',
                default='admin',
-               help='Name of project where the user is admin'),
+               help='Name of project where the user is admin.'),
     cfg.StrOpt('os_auth_version',
                default='v2.0',
-               help='We use API v3 to allow trusts using.'),
+               help='Blazar uses API v3 to allow trusts using.'),
 ]
 
 CONF = cfg.CONF

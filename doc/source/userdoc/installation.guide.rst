@@ -117,13 +117,19 @@ Then edit */etc/blazar/blazar.conf* using the following example:
     os_admin_username=<username>
     os_admin_password=<password>
     os_admin_project_name=<project_name>
-    identity_service=identityv3
+    identity_service=<identity_service_name>
 
     [manager]
     plugins=physical.host.plugin
 
     [keystone_authtoken]
-    auth_uri=<auth_uri>
+    auth_type=<password, for example>
+    project_domain_name=<project_domain_name>
+    project_name=<project_name>
+    user_domain_name=<user_domain_name>
+    username=<username>
+    password=<password>
+    auth_url=<identity_service_url>
 
     [physical:host]
     aggregate_freepool_name=freepool
@@ -166,18 +172,6 @@ reservation:
 .. sourcecode:: console
 
     openstack aggregate create freepool
-
-..
-
-Blazar uses Keystone trusts to commit actions on behalf of user-created leases.
-That's why we need to create identityv3 service with appropriate endpoints:
-
-.. sourcecode:: console
-
-    openstack service create --name keystonev3 --description "Keystone Identity Service v3" identityv3
-    openstack endpoint create --region <region> keystonev3 public "<auth_protocol>://<auth_host>:<auth_port>/v3"
-    openstack endpoint create --region <region> keystonev3 admin "<auth_protocol>://<auth_host>:<auth_port>/v3"
-    openstack endpoint create --region <region> keystonev3 internal "<auth_protocol>://<auth_host>:<auth_port>/v3"
 
 ..
 

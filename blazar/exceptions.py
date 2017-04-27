@@ -94,3 +94,8 @@ class Timeout(BlazarException):
 class InvalidInput(BlazarException):
     code = 400
     msg_fmt = _("Expected a %(cls)s type but received %(value)s.")
+
+
+class UnsupportedAPIVersion(BlazarException):
+    msg_fmt = _('API version %(version)s is not supported. Blazar only '
+                'supports Keystone v3 API.')

@@ -13,18 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+
 from keystoneclient import client as keystone_client
 from keystoneclient import exceptions as keystone_exception
 from oslo_config import cfg
 
 from blazar import context
+from blazar import exceptions
 from blazar.manager import exceptions as manager_exceptions
 from blazar.utils.openstack import base
 
 
 opts = [
     cfg.StrOpt('identity_service',
-               default='identityv3',
+               default='identity',
                help='Identity service to use.')
 ]
 
@@ -113,11 +116,45 @@ class BlazarKeystoneClient(object):
             # https://review.openstack.org/#/c/66494/ will be merged
             self.keystone = keystone_client.Client(**kwargs)
             self.keystone.session.auth = self.keystone
-            self.keystone.authenticate(auth_url=kwargs.get('auth_url', None))
+            auth_url = self.complement_auth_url(kwargs.get('auth_url', None),
+                                                kwargs.get('version', None))
+            self.keystone.authenticate(auth_url=auth_url)
         except AttributeError:
             raise manager_exceptions.WrongClientVersion()
 
         self.exceptions = keystone_exception
+
+    def complement_auth_url(self, auth_url, version):
+        """Return auth_url with api version.
+
+        This method checks whether auth_url contains api version info.
+        If api version info is not contained in auth_url, this method
+        complements version info to auth_url. This method only support
+        complementing auth_url to v3 api url since we use keystone v3
+        api to treat trusts.
+        """
+
+        # Create api version from major number of keystoneclient version.
+        # keystoneclient version can take forms of "3", "v3" or "3.0" and
+        # so this method convert them to form of "v3" for keystone api
+        # version.
+        api_version = version
+        if isinstance(api_version, str):
+            api_version = api_version.lstrip('v')
+
+        api_version = int(float(api_version))
+
+        if api_version != 3:
+            raise exceptions.UnsupportedAPIVersion(version=api_version)
+
+        if re.search(r'/v2.0/{,1}$', auth_url) is not None:
+            raise exceptions.UnsupportedAPIVersion(version='v2.0')
+        elif re.search(r'/v3/{,1}$', auth_url) is None:
+            complemented_url = auth_url.rstrip('/') + '/v' + str(api_version)
+        else:
+            return auth_url
+
+        return complemented_url
 
     def __getattr__(self, name):
         func = getattr(self.keystone, name)

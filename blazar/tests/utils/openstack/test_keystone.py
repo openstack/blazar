@@ -16,6 +16,7 @@
 from keystoneclient import client as keystone_client
 
 from blazar import context
+from blazar import exceptions
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import keystone
@@ -35,7 +36,7 @@ class TestCKClient(tests.TestCase):
         self.client = self.patch(self.k_client, 'Client')
         self.patch(self.base, 'url_for').return_value = 'http://fake.com/'
 
-        self.version = '1'
+        self.version = '3'
         self.username = 'fake_user'
         self.token = 'fake_token'
         self.password = 'fake_pass'
@@ -86,6 +87,37 @@ class TestCKClient(tests.TestCase):
             tenant_name=self.ctx().project_name,
             auth_url='http://fake.com/',
             endpoint='http://fake.com/')
+
+    def test_complement_auth_url_supported_api_version(self):
+        bkc = self.keystone.BlazarKeystoneClient()
+        expected_url = self.auth_url + '/v3'
+        returned_url = bkc.complement_auth_url(auth_url=self.auth_url,
+                                               version='v3')
+        self.assertEqual(expected_url, returned_url)
+
+    def test_complement_auth_url_unsupported_api_version(self):
+        bkc = self.keystone.BlazarKeystoneClient()
+        kwargs = {'auth_url': self.auth_url,
+                  'version': 2.0}
+        self.assertRaises(exceptions.UnsupportedAPIVersion,
+                          bkc.complement_auth_url,
+                          **kwargs)
+
+    def test_complement_auth_url_valid_url(self):
+        bkc = self.keystone.BlazarKeystoneClient()
+        auth_url = self.auth_url + '/v3'
+        returned_url = bkc.complement_auth_url(auth_url=auth_url,
+                                               version='v3')
+        self.assertEqual(auth_url, returned_url)
+
+    def test_complement_auth_url_invalid_url(self):
+        bkc = self.keystone.BlazarKeystoneClient()
+        auth_url = self.auth_url + '/v2.0'
+        kwargs = {'auth_url': auth_url,
+                  'version': 'v3'}
+        self.assertRaises(exceptions.UnsupportedAPIVersion,
+                          bkc.complement_auth_url,
+                          **kwargs)
 
     def test_getattr(self):
         # TODO(n.s.): Will be done as soon as pypi package will be updated

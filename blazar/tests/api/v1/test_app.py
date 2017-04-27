@@ -70,14 +70,7 @@ class AppTestCase(tests.TestCase):
     def test_make_app(self):
         fake_app = self.patch(self.flask, 'Flask')
         self.app.make_app()
-        self.fake_ff.assert_called_once_with(fake_app().config,
-                                             admin_user='admin',
-                                             admin_tenant_name='admin',
-                                             auth_port='35357',
-                                             auth_protocol='http',
-                                             auth_version='v2.0',
-                                             admin_password='blazar',
-                                             auth_host='127.0.0.1')
+        self.fake_ff.assert_called_once_with(fake_app().config)
 
 
 class AppTestCaseForHostsPlugin(tests.TestCase):

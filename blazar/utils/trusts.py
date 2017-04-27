@@ -54,9 +54,10 @@ def create_ctx_from_trust(trust_id):
         user_name=CONF.os_admin_username,
         project_name=CONF.os_admin_project_name,
     )
-    auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
+    auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
                                   CONF.os_auth_host,
-                                  CONF.os_auth_port)
+                                  CONF.os_auth_port,
+                                  CONF.os_auth_prefix)
     client = keystone.BlazarKeystoneClient(
         password=CONF.os_admin_password,
         trust_id=trust_id,
