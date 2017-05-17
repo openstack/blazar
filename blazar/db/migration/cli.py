@@ -25,7 +25,7 @@ from alembic import util as alembic_util
 from oslo_config import cfg
 from oslo_db import options as db_options
 
-gettext.install('blazar', unicode=1)
+gettext.install('blazar')
 from blazar.i18n import _
 
 
