@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import datetime
-import uuid
 
 import mock
 from novaclient import client as nova_client
@@ -312,32 +311,18 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': now + datetime.timedelta(hours=1),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        reservation_values = {
-            'id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'resource_id': '1',
-            'resource_type': plugin.RESOURCE_TYPE,
-            'status': 'pending',
-        }
-        uuid4 = self.patch(uuid, 'uuid4')
-        uuid4.return_value = uuid.UUID('441c1476-9f8f-4700-9f30-cd9b6fef3509')
-        self.rp_create.return_value = mock.MagicMock(id='1')
-        reservation_create = self.patch(self.db_api, 'reservation_create')
-        reservation_create.return_value = {
-            'id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
-        }
+        self.rp_create.return_value = mock.MagicMock(id=1)
+        host_reservation_create = self.patch(self.db_api,
+                                             'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = []
         pool_delete = self.patch(self.rp.ReservationPool, 'delete')
-        reservation_delete = self.patch(self.db_api, 'reservation_destroy')
-
         self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
-                          self.fake_phys_plugin.create_reservation, values)
-
-        reservation_create.assert_called_once_with(reservation_values)
-        pool_delete.assert_called_once_with('1')
-        reservation_delete.assert_called_once_with(
-            u'f9894fcf-e2ed-41e9-8a4c-92fac332608e')
+                          self.fake_phys_plugin.reserve_resource,
+                          u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
+                          values)
+        host_reservation_create.assert_not_called()
+        pool_delete.assert_called_once_with(1)
 
     def test_create_reservation_hosts_available(self):
         values = {
@@ -350,20 +335,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2013, 12, 19, 21, 00),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        reservation_values = {
-            'id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'resource_id': '1',
-            'resource_type': plugin.RESOURCE_TYPE,
-            'status': 'pending',
-        }
-        uuid4 = self.patch(uuid, 'uuid4')
-        uuid4.return_value = uuid.UUID('441c1476-9f8f-4700-9f30-cd9b6fef3509')
-        self.rp_create.return_value = mock.MagicMock(id='1')
-        reservation_create = self.patch(self.db_api, 'reservation_create')
-        reservation_create.return_value = {
-            'id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
-        }
+        self.rp_create.return_value = mock.MagicMock(id=1)
         host_reservation_create = self.patch(self.db_api,
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
@@ -371,24 +343,26 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_create = self.patch(
             self.db_api,
             'host_allocation_create')
-        self.fake_phys_plugin.create_reservation(values)
-        reservation_create.assert_called_once_with(reservation_values)
+        self.fake_phys_plugin.reserve_resource(
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
         host_values = {
-            'reservation_id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
+            'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            'aggregate_id': 1,
             'resource_properties': '',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'count_range': '1-1',
-            'status': 'pending',
+            'status': 'pending'
         }
         host_reservation_create.assert_called_once_with(host_values)
         calls = [
             mock.call(
                 {'compute_host_id': 'host1',
-                 'reservation_id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
+                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
             mock.call(
                 {'compute_host_id': 'host2',
-                 'reservation_id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
+                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
         ]
         host_allocation_create.assert_has_calls(calls)
@@ -406,7 +380,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         self.assertRaises(
             manager_exceptions.InvalidRange,
-            self.fake_phys_plugin.create_reservation,
+            self.fake_phys_plugin.reserve_resource,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_update_reservation_shorten(self):
@@ -424,12 +399,16 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
-        host_allocation_get_all = self.patch(
-            self.db_api,
-            'host_allocation_get_all_by_values')
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'aggregate_id': 1
+        }
         get_computehosts = self.patch(self.rp.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
+        host_allocation_get_all = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
@@ -450,9 +429,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
-        host_reservation_get_by_reservation_id = self.patch(
-            self.db_api,
-            'host_reservation_get_by_reservation_id')
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_allocation_get_all = self.patch(
             self.db_api,
             'host_allocation_get_all_by_values')
@@ -467,13 +444,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             (datetime.datetime(2013, 12, 19, 20, 00),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
-        get_computehosts = self.patch(self.rp.ReservationPool,
-                                      'get_computehosts')
-        get_computehosts.return_value = ['host1']
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get_by_reservation_id.assert_not_called()
+        host_reservation_get.assert_not_called()
 
     def test_update_reservation_move_failure(self):
         values = {
@@ -490,9 +464,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
-        host_reservation_get_by_reservation_id = self.patch(
+        host_reservation_get = self.patch(
             self.db_api,
-            'host_reservation_get_by_reservation_id')
+            'host_reservation_get')
+        host_reservation_get.return_value = {
+            'aggregate_id': 1,
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': ''
+        }
         host_allocation_get_all = self.patch(
             self.db_api,
             'host_allocation_get_all_by_values')
@@ -510,6 +489,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_computehosts = self.patch(self.rp.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = ['host2']
         self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
         get_hypervisors = self.patch(self.nova.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=1)
@@ -518,7 +499,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.fake_phys_plugin.update_reservation,
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get_by_reservation_id.assert_not_called()
+        host_reservation_get.assert_called()
 
     def test_update_reservation_move_overlap(self):
         values = {
@@ -577,9 +558,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         host_get = self.patch(self.db_api, 'host_get')
         host_get.return_value = {'service_name': 'host2'}
-        host_reservation_get_by_reservation_id = self.patch(
+        host_reservation_get = self.patch(
             self.db_api,
-            'host_reservation_get_by_reservation_id')
+            'host_reservation_get')
+        host_reservation_get.return_value = {
+            'aggregate_id': 1,
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': ''
+        }
         host_allocation_get_all = self.patch(
             self.db_api,
             'host_allocation_get_all_by_values')
@@ -611,8 +597,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get_by_reservation_id.assert_called_with(
-            '706eb3bc-07ed-4383-be93-b32845ece672')
+        host_reservation_get.assert_called_with(
+            u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
         host_allocation_destroy.assert_called_with(
             'dd305477-4df8-4547-87f6-69069ee546a6')
         host_allocation_create.assert_called_with(
@@ -622,27 +608,22 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             }
         )
         self.remove_compute_host.assert_called_with(
-            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            1,
             ['host1']
         )
         self.add_compute_host.assert_called_with(
-            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            1,
             'host2'
         )
 
     def test_on_start(self):
-        reservation_get_all_by_values = self.patch(
-            self.db_api, 'reservation_get_all_by_values')
-
-        reservation_get_all_by_values.return_value = [
-            {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
-            }
-        ]
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'aggregate_id': 1,
+        }
         host_allocation_get_all_by_values = self.patch(
             self.db_api, 'host_allocation_get_all_by_values')
-
         host_allocation_get_all_by_values.return_value = [
             {'compute_host_id': 'host1'},
         ]
@@ -654,25 +635,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.on_start(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
         add_computehost.assert_called_with(
-            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', 'host1_hostname')
+            1, 'host1_hostname')
 
     def test_on_end_with_instances(self):
-        reservation_get_all_by_values = self.patch(
-            self.db_api,
-            'reservation_get_all_by_values')
-
-        reservation_get_all_by_values.return_value = [
-            {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
-            }
-        ]
-        reservation_update = self.patch(self.db_api, 'reservation_update')
-        host_reservation_get_by_reservation_id = self.patch(
-            self.db_api,
-            'host_reservation_get_by_reservation_id')
-        host_reservation_get_by_reservation_id.return_value = {
-            'id': u'35fc4e6a-ba57-4a36-be30-6012377a0387',
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
+            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'aggregate_id': 1
         }
         host_reservation_update = self.patch(
             self.db_api,
@@ -696,32 +666,20 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         delete_server = self.patch(self.ServerManager, 'delete')
         delete_pool = self.patch(self.rp.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
-        reservation_update.assert_called_with(
-            u'593e7028-c0d1-4d76-8642-2ffd890b324c', {'status': 'completed'})
         host_reservation_update.assert_called_with(
-            u'35fc4e6a-ba57-4a36-be30-6012377a0387', {'status': 'completed'})
+            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
         delete_server.assert_any_call(server='server1')
         delete_server.assert_any_call(server='server2')
-        delete_pool.assert_called_with(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        delete_pool.assert_called_with(1)
 
     def test_on_end_without_instances(self):
-        reservation_get_all_by_values = self.patch(
-            self.db_api,
-            'reservation_get_all_by_values')
-        reservation_get_all_by_values.return_value = [
-            {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
-            },
-        ]
-        reservation_update = self.patch(self.db_api, 'reservation_update')
-        host_reservation_get_by_reservation_id = self.patch(
-            self.db_api,
-            'host_reservation_get_by_reservation_id')
-        host_reservation_get_by_reservation_id.return_value = {
-            'id': u'35fc4e6a-ba57-4a36-be30-6012377a0387',
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
+            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'aggregate_id': 1
         }
         host_reservation_update = self.patch(
             self.db_api,
@@ -745,14 +703,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         delete_server = self.patch(self.ServerManager, 'delete')
         delete_pool = self.patch(self.rp.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
-        reservation_update.assert_called_with(
-            u'593e7028-c0d1-4d76-8642-2ffd890b324c', {'status': 'completed'})
         host_reservation_update.assert_called_with(
-            u'35fc4e6a-ba57-4a36-be30-6012377a0387', {'status': 'completed'})
+            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
         delete_server.assert_not_called()
-        delete_pool.assert_called_with(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        delete_pool.assert_called_with(1)
 
     def test_matching_hosts_not_allocated_hosts(self):
         def host_allocation_get_all_by_values(**kwargs):

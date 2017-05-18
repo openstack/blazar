@@ -45,6 +45,9 @@ class VMPlugin(base.BasePlugin, nova.NovaClientWrapper):
     description = ("This is basic plugin for VM management. "
                    "It can start, snapshot and suspend VMs")
 
+    def reserve_resource(self, reservation_id, values):
+        return None
+
     def on_start(self, resource_id):
         try:
             self.nova.servers.unshelve(resource_id)
