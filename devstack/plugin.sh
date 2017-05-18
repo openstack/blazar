@@ -169,22 +169,16 @@ function install_blazar {
 
 # start_blazar() - Start running processes, including screen
 function start_blazar {
-    screen_it blazar-a "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
-    screen_it blazar-m "cd $BLAZAR_DIR && $BLAZAR_BIN_DIR/blazar-manager --debug --config-file $BLAZAR_CONF_FILE"
+    run_process blazar-a "$BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
+    run_process blazar-m "$BLAZAR_BIN_DIR/blazar-manager --debug --config-file $BLAZAR_CONF_FILE"
 }
 
 
 # stop_blazar() - Stop running processes
 function stop_blazar {
-    # Kill the blazar screen windows
     for serv in blazar-a blazar-m; do
-        screen_stop $serv
+        stop_process $serv
     done
-
-    # Hack to be sure that the manager is really stop
-    BLAZAR_MANGER_PID=$(ps aux | grep blazar-manager | grep -v grep \
-                         | awk '{print $2}')
-    [ ! -z "$BLAZAR_MANGER_PID" ] && sudo kill -9 $BLAZAR_MANGER_PID
 }
 
 
