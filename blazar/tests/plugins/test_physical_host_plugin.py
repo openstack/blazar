@@ -301,14 +301,15 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                           self.fake_host_id)
 
     def test_create_reservation_no_hosts_available(self):
+        now = datetime.datetime.utcnow()
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': u'1',
             'max': u'1',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
-            'start_date': datetime.datetime(2013, 12, 19, 20, 00),
-            'end_date': datetime.datetime(2013, 12, 19, 21, 00),
+            'start_date': now,
+            'end_date': now + datetime.timedelta(hours=1),
             'resource_type': plugin.RESOURCE_TYPE,
         }
         reservation_values = {
@@ -325,21 +326,18 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_create.return_value = {
             'id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
         }
-        host_reservation_create = self.patch(self.db_api,
-                                             'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = []
+        pool_delete = self.patch(self.rp.ReservationPool, 'delete')
+        reservation_delete = self.patch(self.db_api, 'reservation_destroy')
+
         self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
                           self.fake_phys_plugin.create_reservation, values)
+
         reservation_create.assert_called_once_with(reservation_values)
-        host_values = {
-            'reservation_id': u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
-            'resource_properties': '',
-            'hypervisor_properties': '["=", "$memory_mb", "256"]',
-            'count_range': '1-1',
-            'status': 'pending'
-        }
-        host_reservation_create.assert_called_once_with(host_values)
+        pool_delete.assert_called_once_with('1')
+        reservation_delete.assert_called_once_with(
+            u'f9894fcf-e2ed-41e9-8a4c-92fac332608e')
 
     def test_create_reservation_hosts_available(self):
         values = {
