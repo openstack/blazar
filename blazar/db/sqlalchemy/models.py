@@ -87,6 +87,11 @@ class Reservation(mb.BlazarBase):
     resource_id = sa.Column(sa.String(36))
     resource_type = sa.Column(sa.String(66))
     status = sa.Column(sa.String(13))
+    instance_reservations = relationship('InstanceReservations',
+                                         uselist=False,
+                                         cascade='all,delete',
+                                         backref='reservation',
+                                         lazy='joined')
     computehost_reservations = relationship('ComputeHostReservation',
                                             uselist=False,
                                             cascade="all,delete",
@@ -117,6 +122,10 @@ class Reservation(mb.BlazarBase):
                     # "Invalid Range: {0}".format(res['count_range']))
                     e = "Invalid count range: {0}".format(res['count_range'])
                     raise RuntimeError(e)
+
+        if self.instance_reservations:
+            d.update(self.instance_reservations.to_dict())
+
         return d
 
 
@@ -154,6 +163,23 @@ class ComputeHostReservation(mb.BlazarBase):
 
     def to_dict(self):
         return super(ComputeHostReservation, self).to_dict()
+
+
+class InstanceReservations(mb.BlazarBase):
+    """The definition of a flavor of the reservation."""
+
+    __tablename__ = 'instance_reservations'
+
+    id = _id_column()
+    reservation_id = sa.Column(sa.String(36), sa.ForeignKey('reservations.id'))
+    vcpus = sa.Column(sa.Integer, nullable=False)
+    memory_mb = sa.Column(sa.Integer, nullable=False)
+    disk_gb = sa.Column(sa.Integer, nullable=False)
+    amount = sa.Column(sa.Integer, nullable=False)
+    affinity = sa.Column(sa.Boolean, nullable=False)
+    flavor_id = sa.Column(sa.String(36), nullable=True)
+    aggregate_id = sa.Column(sa.Integer, nullable=True)
+    server_group_id = sa.Column(sa.String(36), nullable=True)
 
 
 class ComputeHostAllocation(mb.BlazarBase):
