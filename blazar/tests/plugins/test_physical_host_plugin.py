@@ -28,10 +28,9 @@ from blazar.manager import service
 from blazar.plugins import oshosts as plugin
 from blazar.plugins.oshosts import host_plugin
 from blazar.plugins.oshosts import nova_inventory
-from blazar.plugins.oshosts import reservation_pool as rp
 from blazar import tests
 from blazar.utils.openstack import base
-from blazar.utils.openstack.nova import ServerManager
+from blazar.utils.openstack import nova
 from blazar.utils import trusts
 
 
@@ -52,9 +51,9 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
         self.patch(base, 'url_for').return_value = 'http://foo.bar'
         self.host_plugin = host_plugin
         self.fake_phys_plugin = self.host_plugin.PhysicalHostPlugin()
-        self.rp = rp
+        self.nova = nova
         self.nova_inventory = nova_inventory
-        self.rp_create = self.patch(self.rp.ReservationPool, 'create')
+        self.rp_create = self.patch(self.nova.ReservationPool, 'create')
         self.db_api = db_api
         self.db_host_extra_capability_get_all_per_host = (
             self.patch(self.db_api, 'host_extra_capability_get_all_per_host'))
@@ -90,7 +89,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.patch(self.context, 'BlazarContext')
 
         self.nova_client = nova_client
-        self.nova = self.patch(self.nova_client, 'Client').return_value
+        self.nova_client = self.patch(self.nova_client, 'Client').return_value
 
         self.service = service
         self.manager = self.service.ManagerService()
@@ -134,13 +133,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_extra_capability_update = self.patch(
             self.db_api, 'host_extra_capability_update')
 
-        self.rp = rp
+        self.nova = nova
         self.nova_inventory = nova_inventory
-        self.rp_create = self.patch(self.rp.ReservationPool, 'create')
-        self.patch(self.rp.ReservationPool, 'get_aggregate_from_name_or_id')
-        self.add_compute_host = self.patch(self.rp.ReservationPool,
+        self.rp_create = self.patch(self.nova.ReservationPool, 'create')
+        self.patch(self.nova.ReservationPool, 'get_aggregate_from_name_or_id')
+        self.add_compute_host = self.patch(self.nova.ReservationPool,
                                            'add_computehost')
-        self.remove_compute_host = self.patch(self.rp.ReservationPool,
+        self.remove_compute_host = self.patch(self.nova.ReservationPool,
                                               'remove_computehost')
         self.get_host_details = self.patch(self.nova_inventory.NovaInventory,
                                            'get_host_details')
@@ -161,7 +160,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
         self.trust_create = self.patch(self.trusts, 'create_trust')
 
-        self.ServerManager = ServerManager
+        self.ServerManager = nova.ServerManager
 
     def test_get_host(self):
         host = self.fake_phys_plugin.get_computehost(self.fake_host_id)
@@ -316,7 +315,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = []
-        pool_delete = self.patch(self.rp.ReservationPool, 'delete')
+        pool_delete = self.patch(self.nova.ReservationPool, 'delete')
         self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
                           self.fake_phys_plugin.reserve_resource,
                           u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
@@ -403,7 +402,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_reservation_get.return_value = {
             'aggregate_id': 1
         }
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
         host_allocation_get_all = self.patch(
@@ -486,13 +485,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             (datetime.datetime(2013, 12, 20, 20, 30),
              datetime.datetime(2013, 12, 20, 21, 00))
         ]
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host2']
         self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova.hypervisors, 'get')
+        get_hypervisors = self.patch(self.nova_client.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=1)
         self.assertRaises(
             manager_exceptions.NotEnoughHostsAvailable,
@@ -533,7 +532,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             (datetime.datetime(2013, 12, 19, 20, 30),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = []
         self.fake_phys_plugin.update_reservation(
@@ -586,11 +585,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             (datetime.datetime(2013, 12, 20, 20, 30),
              datetime.datetime(2013, 12, 20, 21, 00))
         ]
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
         self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova.hypervisors, 'get')
+        get_hypervisors = self.patch(self.nova_client.hypervisors, 'get')
         get_hypervisors.return_value = mock.MagicMock(running_vms=0)
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host2']
@@ -630,7 +629,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_get = self.patch(self.db_api, 'host_get')
         host_get.return_value = {'service_name': 'host1_hostname'}
         add_computehost = self.patch(
-            self.rp.ReservationPool, 'add_computehost')
+            self.nova.ReservationPool, 'add_computehost')
 
         self.fake_phys_plugin.on_start(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
@@ -658,13 +657,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_destroy = self.patch(
             self.db_api,
             'host_allocation_destroy')
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host']
         list_servers = self.patch(self.ServerManager, 'list')
         list_servers.return_value = ['server1', 'server2']
         delete_server = self.patch(self.ServerManager, 'delete')
-        delete_pool = self.patch(self.rp.ReservationPool, 'delete')
+        delete_pool = self.patch(self.nova.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         host_reservation_update.assert_called_with(
             u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
@@ -695,13 +694,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_destroy = self.patch(
             self.db_api,
             'host_allocation_destroy')
-        get_computehosts = self.patch(self.rp.ReservationPool,
+        get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host']
         list_servers = self.patch(self.ServerManager, 'list')
         list_servers.return_value = []
         delete_server = self.patch(self.ServerManager, 'delete')
-        delete_pool = self.patch(self.rp.ReservationPool, 'delete')
+        delete_pool = self.patch(self.nova.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         host_reservation_update.assert_called_with(
             u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})

@@ -24,7 +24,6 @@ import blazar.manager.service
 import blazar.notification.notifier
 import blazar.plugins.instances.vm_plugin
 import blazar.plugins.oshosts.host_plugin
-import blazar.plugins.oshosts.reservation_pool
 import blazar.utils.openstack.keystone
 import blazar.utils.openstack.nova
 
@@ -49,8 +48,6 @@ def list_opts():
         ('nova', blazar.utils.openstack.nova.nova_opts),
         (blazar.plugins.instances.RESOURCE_TYPE,
          blazar.plugins.instances.vm_plugin.plugin_opts),
-        (blazar.plugins.oshosts.RESOURCE_TYPE, itertools.chain(
-            blazar.plugins.oshosts.host_plugin.plugin_opts,
-            blazar.plugins.oshosts.reservation_pool.OPTS)),
-
+        (blazar.plugins.oshosts.RESOURCE_TYPE,
+         blazar.plugins.oshosts.host_plugin.plugin_opts),
     ]
