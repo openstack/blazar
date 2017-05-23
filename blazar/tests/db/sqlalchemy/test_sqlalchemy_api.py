@@ -26,7 +26,7 @@ from blazar import tests
 
 
 def _get_fake_random_uuid():
-    return unicode(str(uuid.uuid4()))
+    return str(uuid.uuid4())
 
 
 def _get_fake_lease_uuid():
