@@ -42,12 +42,12 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
         cred_provider = cls._get_credentials_provider()
         creds = cred_provider.get_credentials('admin')
         auth_prov = tempestclients.get_auth_provider(creds._credentials)
-        cls.admin_manager.resource_reservation_client = (
+        cls.os_admin.resource_reservation_client = (
             clients.ResourceReservationV1Client(auth_prov,
                                                 'reservation',
                                                 CONF.identity.region))
         cls.reservation_client = (
-            cls.admin_manager.resource_reservation_client)
+            cls.os_admin.resource_reservation_client)
 
     def get_lease_by_name(self, lease_name):
         # the same as the blazarclient does it: ask for the entire list
