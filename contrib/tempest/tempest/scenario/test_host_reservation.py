@@ -130,6 +130,17 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         server = self.create_server(clients=self.admin_manager,
                                     wait_until=None,
                                     **create_kwargs)
-        waiters.wait_for_server_status(self.admin_manager.servers_client,
-                                       server['id'], 'ERROR',
-                                       raise_on_error=False)
+
+        # TODO(masahito) the try-except statement is a quick fix for nova's bug
+        # https://bugs.launchpad.net/nova/+bug/1693438. After fixing the bug
+        # remove the try-except. extra_timeout argument is added for ensuring
+        # the server remains in BUILD status longer than instance boots time.
+        try:
+            waiters.wait_for_server_status(self.admin_manager.servers_client,
+                                           server['id'], 'ERROR',
+                                           raise_on_error=False,
+                                           extra_timeout=100)
+        except exceptions.TimeoutException:
+            # check the server's status remains in BUILD status
+            waiters.wait_for_server_status(self.admin_manager.servers_client,
+                                           server['id'], 'BUILD')
