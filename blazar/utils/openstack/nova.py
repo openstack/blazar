@@ -421,3 +421,60 @@ class ReservationPool(NovaClientWrapper):
 
         metadata = {project_id: None}
         return self.nova.aggregates.set_metadata(agg.id, metadata)
+
+
+class NovaInventory(NovaClientWrapper):
+
+    def get_host_details(self, host):
+        """Get Nova capabilities of a single host
+
+        :param host: UUID or name of nova-compute host
+        :return: Dict of capabilities or raise HostNotFound
+        """
+        try:
+            hypervisor = self.nova.hypervisors.get(host)
+        except nova_exception.NotFound:
+            try:
+                hypervisors_list = self.nova.hypervisors.search(host)
+            except nova_exception.NotFound:
+                raise manager_exceptions.HostNotFound(host=host)
+            if len(hypervisors_list) > 1:
+                raise manager_exceptions.MultipleHostsFound(host)
+            else:
+                hypervisor_id = hypervisors_list[0].id
+                # NOTE(sbauza): No need to catch the exception as we're sure
+                #  that the hypervisor exists
+                hypervisor = self.nova.hypervisors.get(hypervisor_id)
+        try:
+            return {'id': hypervisor.id,
+                    'hypervisor_hostname': hypervisor.hypervisor_hostname,
+                    'service_name': hypervisor.service['host'],
+                    'vcpus': hypervisor.vcpus,
+                    'cpu_info': hypervisor.cpu_info,
+                    'hypervisor_type': hypervisor.hypervisor_type,
+                    'hypervisor_version': hypervisor.hypervisor_version,
+                    'memory_mb': hypervisor.memory_mb,
+                    'local_gb': hypervisor.local_gb}
+        except AttributeError:
+            raise manager_exceptions.InvalidHost(host=host)
+
+    def get_servers_per_host(self, host):
+        """List all servers of a nova-compute host
+
+        :param host: Name (not UUID) of nova-compute host
+        :return: Dict of servers or None
+        """
+        try:
+            hypervisors_list = self.nova.hypervisors.search(host, servers=True)
+        except nova_exception.NotFound:
+            raise manager_exceptions.HostNotFound(host=host)
+        if len(hypervisors_list) > 1:
+            raise manager_exceptions.MultipleHostsFound(host)
+        else:
+            try:
+                return hypervisors_list[0].servers
+            except AttributeError:
+                # NOTE(sbauza): nova.hypervisors.search(servers=True) returns
+                #  a list of hosts without 'servers' attribute if no servers
+                #  are running on that host
+                return None
