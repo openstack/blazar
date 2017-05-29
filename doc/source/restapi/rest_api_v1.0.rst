@@ -161,6 +161,7 @@ are mentioned.
             "name": "lease_foo",
             "start_date": "2017-2-21 20:00",
             "end_date": "2017-2-24 20:00",
+            "before_end_date": "2017-02-24 19:00",
             "reservations": [
                 {
                     "hypervisor_properties": "[\"==\", \"$hypervisor_hostname\", \"compute\"]",

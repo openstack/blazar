@@ -169,12 +169,11 @@ class ServerManager(servers.ServerManager):
         """Unshelve the server."""
         self._action('unshelve', server, None)
 
-    def create_image(self, server_id, image_name=None, metadata=None):
+    def create_image(self, server, image_name=None, metadata=None):
         """Snapshot a server."""
-        server_name = self.get(server_id).name
         if image_name is None:
-            image_name = CONF.nova.image_prefix + server_name
-        return super(ServerManager, self).create_image(server_id,
+            image_name = CONF.nova.image_prefix + server.name
+        return super(ServerManager, self).create_image(server,
                                                        image_name=image_name,
                                                        metadata=metadata)
 

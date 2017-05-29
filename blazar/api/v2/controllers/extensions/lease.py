@@ -56,8 +56,8 @@ class Lease(base._Base):
     events = wtypes.ArrayType(wtypes.DictType(wtypes.text, wtypes.text))
     "The list of events attached to the lease"
 
-    before_end_notification = types.Datetime(service.LEASE_DATE_FORMAT)
-    "Datetime when notifications will be sent before lease ending"
+    before_end_date = types.Datetime(service.LEASE_DATE_FORMAT)
+    "Datetime when some actions will be taken before lease ending"
 
     action = wtypes.text
     "The current action running"
@@ -80,7 +80,7 @@ class Lease(base._Base):
                    reservations=[{u'resource_id': u'1234',
                                   u'resource_type': u'physical:host'}],
                    events=[],
-                   before_end_notification=u'2014-02-01 10:37',
+                   before_end_date=u'2014-02-01 10:37',
                    action=u'START',
                    status=u'COMPLETE',
                    status_reason=u'Lease currently running',
@@ -140,8 +140,8 @@ class LeasesController(extensions.BaseController):
         new_name = sublease_dct.pop('name', None)
         end_date = sublease_dct.pop('end_date', None)
         start_date = sublease_dct.pop('start_date', None)
-        before_end_notification = sublease_dct.pop('before_end_notification',
-                                                   None)
+        before_end_date = sublease_dct.pop('before_end_date',
+                                           None)
 
         if sublease_dct != {}:
             raise exceptions.BlazarException('Only name changing, '
@@ -154,8 +154,8 @@ class LeasesController(extensions.BaseController):
             sublease_dct['end_date'] = end_date
         if start_date:
             sublease_dct['start_date'] = start_date
-        if before_end_notification:
-            sublease_dct['before_end_notification'] = before_end_notification
+        if before_end_date:
+            sublease_dct['before_end_date'] = before_end_date
 
         lease = pecan.request.rpcapi.update_lease(id, sublease_dct)
 

@@ -43,7 +43,11 @@ plugin_opts = [
     cfg.StrOpt('blazar_az_prefix',
                default='blazar_',
                deprecated_name='climate_az_prefix',
-               help='Prefix for Availability Zones created by Blazar')
+               help='Prefix for Availability Zones created by Blazar'),
+    cfg.StrOpt('before_end',
+               default='',
+               help='Actions which we will be taken before the end of '
+                    'the lease')
 ]
 
 CONF = cfg.CONF
@@ -172,6 +176,19 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             host = db_api.host_get(allocation['compute_host_id'])
             pool.add_computehost(host_reservation['aggregate_id'],
                                  host['service_name'])
+
+    def before_end(self, resource_id):
+        """Take an action before the end of a lease."""
+        action = CONF[plugin.RESOURCE_TYPE].before_end
+        if action == 'snapshot':
+            host_reservation = db_api.host_reservation_get(resource_id)
+            pool = nova.ReservationPool()
+            client = nova.BlazarNovaClient()
+            for host in pool.get_computehosts(
+                    host_reservation['aggregate_id']):
+                for server in client.servers.list(
+                        search_opts={"host": host, "all_tenants": 1}):
+                        client.servers.create_image(server=server)
 
     def on_end(self, resource_id):
         """Remove the hosts from the pool."""

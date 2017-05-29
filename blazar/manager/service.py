@@ -35,12 +35,11 @@ manager_opts = [
                 default=['dummy.vm.plugin'],
                 help='All plugins to use (one for every resource type to '
                      'support.)'),
-    cfg.IntOpt('notify_hours_before_lease_end',
-               default=48,
-               help='Number of hours prior to lease end in which a '
-                    'notification of lease close to expire will be sent. If '
-                    'this is set to 0, then this notification will '
-                    'not be sent.')
+    cfg.IntOpt('minutes_before_end_lease',
+               default=60,
+               help='Minutes prior to the end of a lease in which actions '
+                    'like notification and snapshot are taken. If this is '
+                    'set to 0, then these actions are not taken.')
 ]
 
 CONF = cfg.CONF
@@ -119,6 +118,7 @@ class ManagerService(service_utils.RPCServer):
             actions[resource_type] = {}
             actions[resource_type]['on_start'] = plugin.on_start
             actions[resource_type]['on_end'] = plugin.on_end
+            actions[resource_type]['before_end'] = plugin.before_end
             plugin.setup(None)
         return actions
 
@@ -220,7 +220,7 @@ class ManagerService(service_utils.RPCServer):
                            'time': end_date,
                            'status': 'UNDONE'})
 
-            before_end_date = lease_values.get('before_end_notification', None)
+            before_end_date = lease_values.get('before_end_date', None)
             if before_end_date:
                 # incoming param. Validation check
                 try:
@@ -231,9 +231,9 @@ class ManagerService(service_utils.RPCServer):
                 except common_ex.BlazarException as e:
                     LOG.error("Invalid before_end_date param. %s" % e.message)
                     raise e
-            elif CONF.manager.notify_hours_before_lease_end > 0:
+            elif CONF.manager.minutes_before_end_lease > 0:
                 delta = datetime.timedelta(
-                    hours=CONF.manager.notify_hours_before_lease_end)
+                    minutes=CONF.manager.minutes_before_end_lease)
                 before_end_date = lease_values['end_date'] - delta
 
             if before_end_date:
@@ -302,7 +302,7 @@ class ManagerService(service_utils.RPCServer):
         end_date = values.get(
             'end_date',
             datetime.datetime.strftime(lease['end_date'], LEASE_DATE_FORMAT))
-        before_end_date = values.get('before_end_notification', None)
+        before_end_date = values.get('before_end_date', None)
 
         now = datetime.datetime.utcnow()
         now = datetime.datetime(now.year,
@@ -453,7 +453,9 @@ class ManagerService(service_utils.RPCServer):
             self._basic_action(lease_id, event_id, 'on_end', 'deleted')
 
     def before_end_lease(self, lease_id, event_id):
-        db_api.event_update(event_id, {'status': 'DONE'})
+        lease = self.get_lease(lease_id)
+        with trusts.create_ctx_from_trust(lease['trust_id']):
+            self._basic_action(lease_id, event_id, 'before_end')
 
     def _basic_action(self, lease_id, event_id, action_time,
                       reservation_status=None):
@@ -516,7 +518,7 @@ class ManagerService(service_utils.RPCServer):
     def _update_before_end_event_date(self, event, before_end_date, lease):
         event['time'] = before_end_date
         if event['time'] < lease['start_date']:
-            LOG.warning("New start_date greater than before_end_date. "
+            LOG.warning("Start_date greater than before_end_date. "
                         "Setting before_end_date to %s for lease %s"
                         % (lease['start_date'], lease.get('id',
                            lease.get('name'))))

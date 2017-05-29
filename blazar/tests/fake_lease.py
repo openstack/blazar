@@ -23,7 +23,7 @@ lease_data = {'id': '1',
               'reservations': [{u'resource_id': u'1234',
                                 u'resource_type': u'virtual:instance'}],
               'events': [],
-              'before_end_notification': u'2014-02-01 10:37',
+              'before_end_date': u'2014-02-01 10:37',
               'action': None,
               'status': None,
               'status_reason': None}

@@ -80,3 +80,7 @@ class BasePlugin(object):
     def on_start(self, resource_id):
         """Wake up resource."""
         pass
+
+    def before_end(self, resource_id):
+        """Take actions before the end of a lease"""
+        pass

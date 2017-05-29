@@ -154,7 +154,7 @@ class ServiceTestCase(tests.TestCase):
             self.base_utils, 'url_for').return_value = 'http://www.foo.fake'
 
         self.addCleanup(self.cfg.CONF.clear_override,
-                        'notify_hours_before_lease_end',
+                        'minutes_before_end_lease',
                         group='manager')
 
     def tearDown(self):
@@ -196,7 +196,8 @@ class ServiceTestCase(tests.TestCase):
     def test_setup_actions(self):
         actions = {'virtual:instance':
                    {'on_start': self.fake_plugin.on_start,
-                    'on_end': self.fake_plugin.on_end}}
+                    'on_end': self.fake_plugin.on_end,
+                    'before_end': self.fake_plugin.before_end}}
         self.assertEqual(actions, self.manager._setup_actions())
 
     def test_no_events(self):
@@ -320,7 +321,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease['end_date'] = '2026-12-13 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
         self.lease['events'][1]['time'] = '2026-12-13 13:13:00'
-        self.lease['events'][2]['time'] = '2026-12-11 13:13:00'
+        self.lease['events'][2]['time'] = '2026-12-13 12:13:00'
 
         lease = self.manager.create_lease(lease_values)
 
@@ -344,8 +345,8 @@ class ServiceTestCase(tests.TestCase):
         event = lease['events'][2]
         self.assertEqual('before_end_lease', event['event_type'])
         delta = datetime.timedelta(
-            hours=self.cfg.CONF.manager.notify_hours_before_lease_end)
-        self.assertEqual(str(datetime.datetime(2026, 12, 13, 13, 13) - delta),
+            minutes=self.cfg.CONF.manager.minutes_before_end_lease)
+        self.assertEqual(str(lease_values['end_date'] - delta),
                          event['time'])
         self.assertEqual('UNDONE', event['status'])
 
@@ -357,7 +358,7 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
+            'end_date': '2026-11-13 14:13',
             'trust_id': 'exxee111qwwwwe'}
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-12-13 13:13:00'
@@ -365,7 +366,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease['events'][1]['time'] = '2026-12-13 13:13:00'
         self.lease['events'][2]['time'] = '2026-11-13 13:13:00'
 
-        self.cfg.CONF.set_override('notify_hours_before_lease_end', 36,
+        self.cfg.CONF.set_override('minutes_before_end_lease', 120,
                                    group='manager')
 
         lease = self.manager.create_lease(lease_values)
@@ -399,11 +400,11 @@ class ServiceTestCase(tests.TestCase):
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
             'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
+            'end_date': '2026-11-13 14:13',
             'trust_id': 'exxee111qwwwwe'}
         self.lease['start_date'] = '2026-11-13 13:13'
 
-        self.cfg.CONF.set_override('notify_hours_before_lease_end', 36,
+        self.cfg.CONF.set_override('minutes_before_end_lease', 120,
                                    group='manager')
 
         lease = self.manager.create_lease(lease_values)
@@ -413,7 +414,7 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(3, len(lease['events']))
 
     def test_create_lease_before_end_param_is_before_lease_start(self):
-        before_end_notification = '2026-11-11 13:13'
+        before_end_date = '2026-11-11 13:13'
         start_date = '2026-11-13 13:13'
         lease_values = {
             'id': self.lease_id,
@@ -424,14 +425,14 @@ class ServiceTestCase(tests.TestCase):
             'start_date': start_date,
             'end_date': '2026-11-14 13:13',
             'trust_id': 'exxee111qwwwwe',
-            'before_end_notification': before_end_notification}
+            'before_end_date': before_end_date}
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_create_lease_before_end_param_is_past_lease_ending(self):
-        before_end_notification = '2026-11-15 13:13'
+        before_end_date = '2026-11-15 13:13'
         lease_values = {
             'id': self.lease_id,
             'reservations': [{'id': '111',
@@ -441,7 +442,7 @@ class ServiceTestCase(tests.TestCase):
             'start_date': '2026-11-13 13:13',
             'end_date': '2026-11-14 13:13',
             'trust_id': 'exxee111qwwwwe',
-            'before_end_notification': before_end_notification}
+            'before_end_date': before_end_date}
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.assertRaises(
@@ -463,7 +464,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease['events'][1]['time'] = '2026-11-14 13:13:00'
         self.lease['events'].pop()
 
-        self.cfg.CONF.set_override('notify_hours_before_lease_end', 0,
+        self.cfg.CONF.set_override('minutes_before_end_lease', 0,
                                    group='manager')
 
         lease = self.manager.create_lease(lease_values)
@@ -484,8 +485,8 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(lease['end_date'], event['time'])
         self.assertEqual('UNDONE', event['status'])
 
-    def test_create_lease_with_before_end_notification_param(self):
-        before_end_notification = '2026-11-14 10:13'
+    def test_create_lease_with_before_end_date_param(self):
+        before_end_date = '2026-11-14 10:13'
         lease_values = {
             'id': self.lease_id,
             'reservations': [{'id': '111',
@@ -495,7 +496,7 @@ class ServiceTestCase(tests.TestCase):
             'start_date': '2026-11-13 13:13',
             'end_date': '2026-11-14 13:13',
             'trust_id': 'exxee111qwwwwe',
-            'before_end_notification': before_end_notification}
+            'before_end_date': before_end_date}
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-11-14 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
@@ -524,7 +525,7 @@ class ServiceTestCase(tests.TestCase):
         event = lease['events'][2]
         self.assertEqual('before_end_lease', event['event_type'])
         expected_before_end_time = datetime.datetime.strptime(
-            before_end_notification, service.LEASE_DATE_FORMAT)
+            before_end_date, service.LEASE_DATE_FORMAT)
         self.assertEqual(str(expected_before_end_time), event['time'])
         self.assertEqual('UNDONE', event['status'])
 
@@ -537,10 +538,10 @@ class ServiceTestCase(tests.TestCase):
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
 
     def test_create_lease_wrong_format_before_end_date(self):
-        before_end_notification = '2026-14 10:13'
+        before_end_date = '2026-14 10:13'
         lease_values = {'start_date': '2026-11-13 13:13',
                         'end_date': '2026-11-14 13:13',
-                        'before_end_notification': before_end_notification,
+                        'before_end_date': before_end_date,
                         'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
@@ -771,7 +772,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease_update.assert_called_once_with(self.lease_id, lease_values)
 
     def test_update_lease_started_modify_before_end_with_param(self):
-        before_end_notification = '2013-12-20 14:00'
+        before_end_date = '2013-12-20 14:00'
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
@@ -780,13 +781,13 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
-                        'time': before_end_notification,
+                        'time': before_end_date,
                         'status': 'DONE'}
 
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-20 16:00',
-            'before_end_notification': before_end_notification
+            'before_end_date': before_end_date
         }
         reservation_get_all = (
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
@@ -831,7 +832,7 @@ class ServiceTestCase(tests.TestCase):
                            {'time': datetime.datetime(2013, 12, 20, 16, 00)}),
                  mock.call('452bf850-e223-4035-9d13-eb0b0197228f',
                            {'time': datetime.datetime.strptime(
-                               before_end_notification,
+                               before_end_date,
                                service.LEASE_DATE_FORMAT),
                             'status': 'UNDONE'})
                  ]
@@ -840,7 +841,7 @@ class ServiceTestCase(tests.TestCase):
 
     def test_update_lease_started_before_end_lower_date_than_start(self):
         expected_start_date = datetime.datetime(2013, 12, 20, 13, 00)
-        before_end_notification = datetime.datetime.strftime(
+        before_end_date = datetime.datetime.strftime(
             (expected_start_date - datetime.timedelta(hours=1)),
             service.LEASE_DATE_FORMAT)
 
@@ -851,13 +852,13 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
-                        'time': before_end_notification,
+                        'time': before_end_date,
                         'status': 'DONE'}
 
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-20 16:00',
-            'before_end_notification': before_end_notification
+            'before_end_date': before_end_date
         }
         reservation_get_all = (
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
@@ -882,7 +883,7 @@ class ServiceTestCase(tests.TestCase):
 
     def test_update_lease_started_modify_before_end_with_invalid_date(self):
         # before_end_date is greater than current end_date
-        before_end_notification = '2013-12-21 14:00'
+        before_end_date = '2013-12-21 14:00'
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
@@ -891,13 +892,13 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
-                        'time': before_end_notification,
+                        'time': before_end_date,
                         'status': 'DONE'}
 
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-20 16:00',
-            'before_end_notification': before_end_notification
+            'before_end_date': before_end_date
         }
         reservation_get_all = (
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
@@ -921,7 +922,7 @@ class ServiceTestCase(tests.TestCase):
                 self.lease_id, lease_values)
 
     def test_update_lease_started_modify_before_end_with_wrong_format(self):
-        wrong_before_end_notification = '12-21 14:00'
+        wrong_before_end_date = '12-21 14:00'
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
@@ -930,13 +931,13 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
-                        'time': wrong_before_end_notification,
+                        'time': wrong_before_end_date,
                         'status': 'DONE'}
 
         lease_values = {
             'name': 'renamed',
             'end_date': '2013-12-20 16:00',
-            'before_end_notification': wrong_before_end_notification
+            'before_end_date': wrong_before_end_date
         }
         reservation_get_all = (
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
@@ -1143,8 +1144,9 @@ class ServiceTestCase(tests.TestCase):
                                              'deleted')
 
     def test_before_end_lease(self):
+        basic_action = self.patch(self.manager, '_basic_action')
         self.manager.before_end_lease(self.lease_id, '1')
-        self.event_update.assert_called_once_with('1', {'status': 'DONE'})
+        basic_action.assert_called_once_with(self.lease_id, '1', 'before_end')
 
     def test_basic_action_no_res_status(self):
         self.patch(self.manager, 'get_lease').return_value = self.lease

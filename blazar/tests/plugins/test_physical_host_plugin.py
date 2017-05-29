@@ -17,6 +17,7 @@ import datetime
 
 import mock
 from novaclient import client as nova_client
+from oslo_config import cfg
 import testtools
 
 from blazar import context
@@ -82,7 +83,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super(PhysicalHostPluginTestCase, self).setUp()
-
+        self.cfg = cfg
         self.context = context
         self.patch(self.context, 'BlazarContext')
 
@@ -660,6 +661,32 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         add_computehost.assert_called_with(
             1, 'host1_hostname')
+
+    def test_before_end_with_no_action(self):
+        self.cfg.CONF.set_override('before_end', '',
+                                   group='physical:host')
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        self.fake_phys_plugin.before_end(
+            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        host_reservation_get.assert_not_called()
+
+    def test_before_end_with_snapshot(self):
+        self.cfg.CONF.set_override('before_end', 'snapshot',
+                                   group='physical:host')
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'aggregate_id': 1
+        }
+        get_computehosts = self.patch(self.nova.ReservationPool,
+                                      'get_computehosts')
+        get_computehosts.return_value = ['host']
+        list_servers = self.patch(self.ServerManager, 'list')
+        list_servers.return_value = ['server1', 'server2']
+        create_image = self.patch(self.ServerManager, 'create_image')
+        self.fake_phys_plugin.before_end(
+            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        create_image.assert_any_call(server='server1')
+        create_image.assert_any_call(server='server2')
 
     def test_on_end_with_instances(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
