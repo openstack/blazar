@@ -22,7 +22,6 @@ import testscenarios
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base
-from oslotest import mockpatch
 
 from blazar import context
 from blazar.db.sqlalchemy import api as db_api
@@ -85,7 +84,7 @@ class TestCase(testscenarios.WithScenarios, base.BaseTestCase):
 
     def patch(self, obj, attr):
         """Returns a Mocked object on the patched attribute."""
-        mockfixture = self.useFixture(mockpatch.PatchObject(obj, attr))
+        mockfixture = self.useFixture(fixtures.MockPatchObject(obj, attr))
         return mockfixture.mock
 
     def set_context(self, ctx):
