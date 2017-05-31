@@ -69,25 +69,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
-        pool = nova.ReservationPool()
-        pool_name = reservation_id
-        az_name = "%s%s" % (CONF[self.resource_type].blazar_az_prefix,
-                            pool_name)
-        pool_instance = pool.create(name=pool_name, az=az_name)
         min_hosts = values.get('min')
         max_hosts = values.get('max')
         if 0 <= min_hosts and min_hosts <= max_hosts:
             count_range = str(min_hosts) + '-' + str(max_hosts)
         else:
             raise manager_ex.InvalidRange()
-        host_rsrv_values = {
-            'reservation_id': reservation_id,
-            'aggregate_id': pool_instance.id,
-            'resource_properties': values['resource_properties'],
-            'hypervisor_properties': values['hypervisor_properties'],
-            'count_range': count_range,
-            'status': 'pending',
-        }
         host_ids = self._matching_hosts(
             values['hypervisor_properties'],
             values['resource_properties'],
@@ -96,8 +83,20 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             values['end_date'],
         )
         if not host_ids:
-            pool.delete(pool_instance.id)
             raise manager_ex.NotEnoughHostsAvailable()
+        pool = nova.ReservationPool()
+        pool_name = reservation_id
+        az_name = "%s%s" % (CONF[self.resource_type].blazar_az_prefix,
+                            pool_name)
+        pool_instance = pool.create(name=pool_name, az=az_name)
+        host_rsrv_values = {
+            'reservation_id': reservation_id,
+            'aggregate_id': pool_instance.id,
+            'resource_properties': values['resource_properties'],
+            'hypervisor_properties': values['hypervisor_properties'],
+            'count_range': count_range,
+            'status': 'pending',
+        }
         host_reservation = db_api.host_reservation_create(host_rsrv_values)
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
