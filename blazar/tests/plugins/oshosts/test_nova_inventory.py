@@ -136,4 +136,4 @@ class NovaInventoryTestCase(tests.TestCase):
         # NOTE(sbauza): We need to simulate a host having zero servers
         del host_with_zero_servers.servers
         servers = self.inventory.get_servers_per_host('fake_name')
-        self.assertEqual(None, servers)
+        self.assertIsNone(servers)

@@ -344,7 +344,7 @@ class TestDeleteLease(api.APITest):
     def test_delete_one(self):
         response = self.delete(self.path)
         self.assertEqual(204, response.status_int)
-        self.assertEqual(None, response.content_type)
+        self.assertIsNone(response.content_type)
         self.assertEqual('', response.body)
 
     def test_delete_not_existing_lease(self):

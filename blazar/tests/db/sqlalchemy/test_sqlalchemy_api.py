@@ -571,7 +571,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
     def test_delete_host(self):
         db_api.host_create(_get_fake_host_values(id=1))
         db_api.host_destroy(1)
-        self.assertEqual(None, db_api.host_get(1))
+        self.assertIsNone(db_api.host_get(1))
         self.assertRaises(db_exceptions.BlazarDBNotFound,
                           db_api.host_destroy, 2)
 
@@ -612,7 +612,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(id='1'))
         db_api.host_extra_capability_destroy('1')
-        self.assertEqual(None, db_api.host_extra_capability_get('1'))
+        self.assertIsNone(db_api.host_extra_capability_get('1'))
         self.assertRaises(db_exceptions.BlazarDBNotFound,
                           db_api.host_extra_capability_destroy, '1')
 
