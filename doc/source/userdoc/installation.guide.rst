@@ -139,9 +139,8 @@ Then edit */etc/blazar/blazar.conf* using the following example:
 
 ..
 
-Here *os_admin_** flags refer to the Blazar service user. *blazar_** ones - to
-an admin user created specially to work with physical reservations. If you do
-not have these users, create them:
+*os_admin_** flags refer to the Blazar service user. If you do not have this
+user, create it:
 
 .. sourcecode:: console
 
@@ -149,9 +148,6 @@ not have these users, create them:
     openstack role add --project <project_name> --user <username> <admin_role>
 
 ..
-
-And the same procedure for special admin user to work with physical
-reservations.
 
 Next you need to configure Nova. If you want to use physical reservations,
 please add the following lines to nova.conf file:

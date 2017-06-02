@@ -58,6 +58,12 @@ os_opts = [
     cfg.StrOpt('os_auth_version',
                default='v2.0',
                help='Blazar uses API v3 to allow trusts using.'),
+    cfg.StrOpt('os_admin_user_domain_name',
+               default='Default',
+               help='A domain name the os_admin_username belongs to.'),
+    cfg.StrOpt('os_admin_project_domain_name',
+               default='Default',
+               help='A domain name the os_admin_project_name belongs to')
 ]
 
 CONF = cfg.CONF
