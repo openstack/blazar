@@ -303,7 +303,10 @@ class ManagerService(service_utils.RPCServer):
             start_date = now
         else:
             start_date = self._date_from_string(start_date)
-        end_date = self._date_from_string(end_date)
+        if end_date == 'now':
+            end_date = now
+        else:
+            end_date = self._date_from_string(end_date)
 
         values['start_date'] = start_date
         values['end_date'] = end_date
@@ -387,22 +390,43 @@ class ManagerService(service_utils.RPCServer):
 
     def delete_lease(self, lease_id):
         lease = self.get_lease(lease_id)
-        if (datetime.datetime.utcnow() < lease['start_date'] or
-                datetime.datetime.utcnow() > lease['end_date']):
-            with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
-                for reservation in lease['reservations']:
-                    plugin = self.plugins[reservation['resource_type']]
-                    try:
-                        plugin.on_end(reservation['resource_id'])
-                    except (db_ex.BlazarDBException, RuntimeError):
-                        LOG.exception("Failed to delete a reservation "
-                                      "for a lease.")
-                        raise
-                db_api.lease_destroy(lease_id)
-                self._send_notification(lease, ctx, events=['delete'])
-        else:
-            raise common_ex.NotAuthorized(
-                'Already started lease cannot be deleted')
+        if (datetime.datetime.utcnow() >= lease['start_date'] and
+                datetime.datetime.utcnow() <= lease['end_date']):
+            start_event = db_api.event_get_first_sorted_by_filters(
+                'lease_id',
+                'asc',
+                {
+                    'lease_id': lease_id,
+                    'event_type': 'start_lease',
+                    'status': 'DONE'
+                }
+            )
+            if not start_event:
+                raise common_ex.BlazarException('Invalid event status')
+            end_event = db_api.event_get_first_sorted_by_filters(
+                'lease_id',
+                'asc',
+                {
+                    'lease_id': lease_id,
+                    'event_type': 'end_lease',
+                    'status': 'UNDONE'
+                }
+            )
+            if not end_event:
+                raise common_ex.BlazarException('Invalid event status')
+            db_api.event_update(end_event['id'], {'status': 'IN_PROGRESS'})
+
+        with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+            for reservation in lease['reservations']:
+                plugin = self.plugins[reservation['resource_type']]
+                try:
+                    plugin.on_end(reservation['resource_id'])
+                except (db_ex.BlazarDBException, RuntimeError):
+                    LOG.exception("Failed to delete a reservation "
+                                  "for a lease.")
+                    raise
+            db_api.lease_destroy(lease_id)
+            self._send_notification(lease, ctx, events=['delete'])
 
     def start_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
