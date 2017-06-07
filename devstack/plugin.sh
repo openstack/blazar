@@ -84,6 +84,10 @@ function configure_blazar {
     fi
     iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.BlazarFilter"
 
+    # TODO(hiro-kobayashi): This line should be deleted after the patch
+    # https://review.openstack.org/#/c/471590/ is merged.
+    iniadd $NOVA_CONF blazar:physical:host blazar_az_prefix blazar_
+
     # Database
     recreate_database blazar utf8
 
