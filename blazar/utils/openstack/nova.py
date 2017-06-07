@@ -27,17 +27,20 @@ from blazar.utils.openstack import base
 nova_opts = [
     cfg.StrOpt('nova_client_version',
                default='2',
+               deprecated_group='DEFAULT',
                help='Novaclient version'),
     cfg.StrOpt('compute_service',
                default='compute',
+               deprecated_group='DEFAULT',
                help='Nova name in keystone'),
     cfg.StrOpt('image_prefix',
                default='reserved_',
+               deprecated_group='DEFAULT',
                help='Prefix for VM images if you want to create snapshots')
 ]
 
 CONF = cfg.CONF
-CONF.register_opts(nova_opts)
+CONF.register_opts(nova_opts, group='nova')
 CONF.import_opt('identity_service', 'blazar.utils.openstack.keystone')
 
 
@@ -81,7 +84,7 @@ class BlazarNovaClient(object):
         ctx = kwargs.pop('ctx', None)
         auth_token = kwargs.pop('auth_token', None)
         endpoint_override = kwargs.pop('endpoint_override', None)
-        version = kwargs.pop('version', cfg.CONF.nova_client_version)
+        version = kwargs.pop('version', CONF.nova.nova_client_version)
         username = kwargs.pop('username', None)
         password = kwargs.pop('password', None)
         user_domain_name = kwargs.pop('user_domain_name', None)
@@ -98,7 +101,7 @@ class BlazarNovaClient(object):
             auth_token = auth_token or ctx.auth_token
             endpoint_override = endpoint_override or \
                 base.url_for(ctx.service_catalog,
-                             CONF.compute_service)
+                             CONF.nova.compute_service)
             auth_url = base.url_for(ctx.service_catalog, CONF.identity_service)
 
         if auth_url is None:
@@ -151,7 +154,7 @@ class ServerManager(servers.ServerManager):
         """Snapshot a server."""
         server_name = self.get(server_id).name
         if image_name is None:
-            image_name = cfg.CONF.image_prefix + server_name
+            image_name = CONF.nova.image_prefix + server_name
         return super(ServerManager, self).create_image(server_id,
                                                        image_name=image_name,
                                                        metadata=metadata)
