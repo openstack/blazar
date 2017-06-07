@@ -52,6 +52,7 @@ class RPCServer(service.Service):
             target=target,
             transport=messaging.get_transport(cfg.CONF),
             endpoints=[ContextEndpointHandler(self, target)],
+            executor='eventlet',
         )
 
     def start(self):
