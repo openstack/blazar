@@ -22,7 +22,6 @@ import blazar.db.migration.cli
 import blazar.manager
 import blazar.manager.service
 import blazar.notification.notifier
-import blazar.plugins.instances.vm_plugin
 import blazar.plugins.oshosts.host_plugin
 import blazar.utils.openstack.keystone
 import blazar.utils.openstack.nova
@@ -46,8 +45,6 @@ def list_opts():
                                     blazar.manager.service.manager_opts)),
         ('notifications', blazar.notification.notifier.notification_opts),
         ('nova', blazar.utils.openstack.nova.nova_opts),
-        (blazar.plugins.instances.RESOURCE_TYPE,
-         blazar.plugins.instances.vm_plugin.plugin_opts),
         (blazar.plugins.oshosts.RESOURCE_TYPE,
          blazar.plugins.oshosts.host_plugin.plugin_opts),
     ]

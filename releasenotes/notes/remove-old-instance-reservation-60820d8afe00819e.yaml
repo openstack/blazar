@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    The previous instance reservation plugin, named 'basic.vm.plugin' in
+    blazar.conf, is completely removed from Blazar. Deployments including
+    this plugin in blazar.conf must be updated by removing it from the
+    plugins list. Otherwise, the blazar-manager service will fail to start
+    with an exception about invalid plugin names.

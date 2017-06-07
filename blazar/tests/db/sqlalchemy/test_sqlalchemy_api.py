@@ -20,7 +20,6 @@ import uuid
 from blazar.db import exceptions as db_exceptions
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import models
-from blazar.plugins import instances as vm_plugin
 from blazar.plugins import oshosts as host_plugin
 from blazar import tests
 
@@ -47,13 +46,6 @@ def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
             'trust_id': 'exxee111qwwwwe'}
 
 
-def _get_fake_virt_reservation_values(lease_id=_get_fake_lease_uuid(),
-                                      resource_id=None):
-    return {'lease_id': lease_id,
-            'resource_id': '5678' if not resource_id else resource_id,
-            'resource_type': vm_plugin.RESOURCE_TYPE}
-
-
 def _get_fake_event_values(id=_get_fake_random_uuid(),
                            lease_id=_get_fake_lease_uuid(),
                            event_type='fake_event_type',
@@ -68,25 +60,6 @@ def _get_fake_event_values(id=_get_fake_random_uuid(),
 
 def _get_datetime(value='2030-01-01 00:00'):
     return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M')
-
-
-def _get_fake_virt_lease_values(id=_get_fake_lease_uuid(),
-                                name='fake_virt_lease',
-                                start_date=_get_datetime('2030-01-01 00:00'),
-                                end_date=_get_datetime('2030-01-02 00:00'),
-                                resource_id=None):
-    return {'id': id,
-            'name': name,
-            'user_id': _get_fake_random_uuid(),
-            'project_id': _get_fake_random_uuid(),
-            'start_date': start_date,
-            'end_date': end_date,
-            'trust': 'trust',
-            'reservations': [_get_fake_virt_reservation_values(
-                lease_id=id,
-                resource_id=resource_id)],
-            'events': []
-            }
 
 
 def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
@@ -119,12 +92,6 @@ def _get_fake_host_allocation_values(
         values.update({'id': id})
 
     return values
-
-
-def _create_virtual_lease(values=_get_fake_virt_lease_values(),
-                          random=False):
-    """Creating fake lease having a single virtual resource."""
-    return db_api.lease_create(values)
 
 
 def _create_physical_lease(values=_get_fake_phys_lease_values(),
@@ -208,22 +175,9 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         super(SQLAlchemyDBApiTestCase, self).setUp()
 
     def test_model_query(self):
-        lease = db_api.lease_create(_get_fake_virt_lease_values())
+        lease = db_api.lease_create(_get_fake_phys_lease_values())
         query = db_api.model_query(models.Lease)
         self.assertEqual([lease.to_dict()], [l.to_dict() for l in query.all()])
-
-    def test_create_virt_lease(self):
-        """Check virtual lease create
-
-        Create a virtual lease and verify that all tables have been
-        populated.
-        """
-
-        result = db_api.lease_create(_get_fake_virt_lease_values())
-        self.assertEqual(result['name'],
-                         _get_fake_virt_lease_values()['name'])
-        self.assertEqual(0, len(db_api.event_get_all()))
-        self.assertEqual(1, len(db_api.reservation_get_all()))
 
     def test_create_phys_lease(self):
         """Check physical lease create
@@ -373,12 +327,14 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         Create two reservations and verify that we can find reservation per
         resource_id or resource_type.
         """
-        db_api.reservation_create(_get_fake_phys_reservation_values())
-        db_api.reservation_create(_get_fake_virt_reservation_values())
+        db_api.reservation_create(
+            _get_fake_phys_reservation_values(id='1', resource_id='1234'))
+        db_api.reservation_create(
+            _get_fake_phys_reservation_values(id='2', resource_id='5678'))
         self.assertEqual(2, len(db_api.reservation_get_all_by_values()))
         self.assertEqual(1, len(db_api.reservation_get_all_by_values(
             resource_id='5678')))
-        self.assertEqual(1, len(db_api.reservation_get_all_by_values(
+        self.assertEqual(2, len(db_api.reservation_get_all_by_values(
             resource_type=host_plugin.RESOURCE_TYPE)))
 
     def test_reservation_update(self):

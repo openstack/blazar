@@ -78,7 +78,7 @@ class Lease(base._Base):
                    project_id=u'bd9431c18d694ad3803a8d4a6b89fd36',
                    trust_id=u'35b17138b3644e6aa1318f3099c5be68',
                    reservations=[{u'resource_id': u'1234',
-                                  u'resource_type': u'virtual:instance'}],
+                                  u'resource_type': u'physical:host'}],
                    events=[],
                    before_end_notification=u'2014-02-01 10:37',
                    action=u'START',

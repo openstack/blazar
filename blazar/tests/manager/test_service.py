@@ -96,9 +96,13 @@ class ServiceTestCase(tests.TestCase):
                                            'PhysicalHostPlugin')
 
         self.ext_manager = self.patch(self.enabled, 'EnabledExtensionManager')
+        self.ext_manager.return_value.extensions = [
+            FakeExtension('dummy.vm.plugin', FakePlugin),
+            ]
         self.fake_notifier = self.patch(self.notifier_api,
                                         'send_lease_notification')
 
+        cfg.CONF.set_override('plugins', ['dummy.vm.plugin'], group='manager')
         self.manager = self.service.ManagerService()
 
         self.lease_id = '11-22-33'
@@ -150,8 +154,8 @@ class ServiceTestCase(tests.TestCase):
         pass
 
     def test_multiple_plugins_same_resource_type(self):
-        config = self.patch(cfg, "CONF")
-        config.manager.plugins = ['fake.plugin.1', 'fake.plugin.2']
+        config = self.patch(cfg.CONF, "manager")
+        config.plugins = ['fake.plugin.1', 'fake.plugin.2']
         self.ext_manager.return_value.extensions = [
             FakeExtension("fake.plugin.1", FakePlugin),
             FakeExtension("fake.plugin.2", FakePlugin)]
@@ -160,8 +164,8 @@ class ServiceTestCase(tests.TestCase):
                           self.manager._get_plugins)
 
     def test_plugins_that_fail_to_init(self):
-        config = self.patch(cfg, "CONF")
-        config.manager.plugins = ['fake.plugin.1', 'fake.plugin.2']
+        config = self.patch(cfg.CONF, "manager")
+        config.plugins = ['fake.plugin.1', 'fake.plugin.2']
         self.ext_manager.return_value.extensions = [
             FakeExtension("fake.plugin.1", FakePlugin),
             FakeExtension("fake.plugin.2", FakePluginRaisesException)]
@@ -171,10 +175,11 @@ class ServiceTestCase(tests.TestCase):
         self.assertNotIn("fake:plugin:raise", plugins)
 
     def test_get_bad_config_plugins(self):
-        config = self.patch(cfg, "CONF")
-        config.manager.plugins = ['foo.plugin']
+        config = self.patch(cfg.CONF, "manager")
+        config.plugins = ['foo.plugin']
 
-        self.assertEqual({}, self.manager._get_plugins())
+        self.assertRaises(exceptions.BlazarException,
+                          self.manager._get_plugins)
 
     def test_setup_actions(self):
         actions = {'virtual:instance':

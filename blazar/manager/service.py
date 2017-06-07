@@ -78,6 +78,13 @@ class ManagerService(service_utils.RPCServer):
             invoke_on_load=False
         )
 
+        invalid_plugins = (set(config_plugins) -
+                           set([ext.name for ext
+                                in extension_manager.extensions]))
+        if invalid_plugins:
+            raise common_ex.BlazarException('Invalid plugin names are '
+                                            'specified: %s' % invalid_plugins)
+
         for ext in extension_manager.extensions:
             try:
                 plugin_obj = ext.plugin()

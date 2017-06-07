@@ -60,7 +60,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
     iniset $BLAZAR_CONF_FILE DEFAULT verbose $BLAZAR_VERBOSE
 
-    iniset $BLAZAR_CONF_FILE manager plugins basic.vm.plugin,physical.host.plugin
+    iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin
 
     iniset $BLAZAR_CONF_FILE api api_v2_controllers oshosts,leases
 
