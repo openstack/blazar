@@ -31,6 +31,13 @@ User guide
 
    restapi/index
 
+**Using Blazar**
+
+.. toctree::
+   :maxdepth: 1
+
+   userdoc/using.blazar
+
 Development guide
 -----------------
 
