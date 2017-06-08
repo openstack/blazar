@@ -146,6 +146,7 @@ class ComputeHostReservation(mb.BlazarBase):
 
     id = _id_column()
     reservation_id = sa.Column(sa.String(36), sa.ForeignKey('reservations.id'))
+    aggregate_id = sa.Column(sa.Integer)
     resource_properties = sa.Column(MediumText())
     count_range = sa.Column(sa.String(36))
     hypervisor_properties = sa.Column(MediumText())

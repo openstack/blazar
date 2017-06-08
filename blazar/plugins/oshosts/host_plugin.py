@@ -16,7 +16,6 @@
 
 import datetime
 import json
-import uuid
 
 from oslo_config import cfg
 import six
@@ -65,27 +64,19 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             project_name=CONF.os_admin_project_name,
             project_domain_name=CONF.os_admin_user_domain_name)
 
-    def create_reservation(self, values):
+    def reserve_resource(self, reservation_id, values):
         """Create reservation."""
         pool = rp.ReservationPool()
-        pool_name = str(uuid.uuid4())
-        pool_instance = pool.create(name=pool_name)
-        reservation_values = {
-            'id': pool_name,
-            'lease_id': values['lease_id'],
-            'resource_id': pool_instance.id,
-            'resource_type': values['resource_type'],
-            'status': 'pending',
-        }
+        pool_instance = pool.create(name=reservation_id)
         min_hosts = values.get('min')
         max_hosts = values.get('max')
         if 0 <= min_hosts and min_hosts <= max_hosts:
             count_range = str(min_hosts) + '-' + str(max_hosts)
         else:
             raise manager_ex.InvalidRange()
-        reservation = db_api.reservation_create(reservation_values)
-        host_values = {
-            'reservation_id': reservation['id'],
+        host_rsrv_values = {
+            'reservation_id': reservation_id,
+            'aggregate_id': pool_instance.id,
             'resource_properties': values['resource_properties'],
             'hypervisor_properties': values['hypervisor_properties'],
             'count_range': count_range,
@@ -100,24 +91,22 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         )
         if not host_ids:
             pool.delete(pool_instance.id)
-            db_api.reservation_destroy(reservation['id'])
             raise manager_ex.NotEnoughHostsAvailable()
-
-        db_api.host_reservation_create(host_values)
+        host_reservation = db_api.host_reservation_create(host_rsrv_values)
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
-                                          'reservation_id': reservation['id']})
+                                          'reservation_id': reservation_id})
+        return host_reservation['id']
 
     def update_reservation(self, reservation_id, values):
         """Update reservation."""
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
-        pool = rp.ReservationPool()
-        hosts_in_pool = pool.get_computehosts(
-            reservation['resource_id'])
+        host_reservation = None
         if (values['start_date'] < lease['start_date'] or
                 values['end_date'] > lease['end_date']):
             allocations = []
+            hosts_in_pool = []
             for allocation in db_api.host_allocation_get_all_by_values(
                     reservation_id=reservation_id):
                 full_periods = db_utils.get_full_periods(
@@ -138,16 +127,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                          full_periods[0][0] == max_start and
                          full_periods[0][1] == min_end)):
                     allocations.append(allocation)
-                    if (hosts_in_pool and
-                            self.nova.hypervisors.get(
-                                self._get_hypervisor_from_name_or_id(
-                                    allocation['compute_host_id'])
-                            ).__dict__['running_vms'] > 0):
-                        raise manager_ex.NotEnoughHostsAvailable()
             if allocations:
-                host_reservation = (
-                    db_api.host_reservation_get_by_reservation_id(
-                        reservation_id))
+                host_reservation = db_api.host_reservation_get(
+                    reservation['resource_id'])
+                pool = rp.ReservationPool()
+                hosts_in_pool.extend(pool.get_computehosts(
+                    host_reservation['aggregate_id']))
                 host_ids = self._matching_hosts(
                     host_reservation['hypervisor_properties'],
                     host_reservation['resource_properties'],
@@ -159,7 +144,17 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 if hosts_in_pool:
                     old_hosts = [allocation['compute_host_id']
                                  for allocation in allocations]
-                    pool.remove_computehost(reservation['resource_id'],
+                    # TODO(hiro-kobayashi): This condition check is not enough
+                    # to prevent race conditions.  It should not be allowed to
+                    # reallocate a reservation to another hosts if the lease
+                    # has been already started.
+                    # Report: https://bugs.launchpad.net/blazar/+bug/1692805
+                    for host in old_hosts:
+                        if self.nova.hypervisors.get(
+                                self._get_hypervisor_from_name_or_id(host)
+                        ).__dict__['running_vms'] > 0:
+                            raise manager_ex.NotEnoughHostsAvailable()
+                    pool.remove_computehost(host_reservation['aggregate_id'],
                                             old_hosts)
                 for allocation in allocations:
                     db_api.host_allocation_destroy(allocation['id'])
@@ -169,45 +164,37 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                          'reservation_id': reservation_id})
                     if hosts_in_pool:
                         host = db_api.host_get(host_id)
-                        pool.add_computehost(reservation['resource_id'],
+                        pool.add_computehost(host_reservation['aggregate_id'],
                                              host['service_name'])
 
     def on_start(self, resource_id):
         """Add the hosts in the pool."""
-        reservations = db_api.reservation_get_all_by_values(
-            resource_id=resource_id)
-        for reservation in reservations:
-            pool = rp.ReservationPool()
-            for allocation in db_api.host_allocation_get_all_by_values(
-                    reservation_id=reservation['id']):
-                host = db_api.host_get(allocation['compute_host_id'])
-                pool.add_computehost(reservation['resource_id'],
-                                     host['service_name'])
+        host_reservation = db_api.host_reservation_get(resource_id)
+        pool = rp.ReservationPool()
+        for allocation in db_api.host_allocation_get_all_by_values(
+                reservation_id=host_reservation['reservation_id']):
+            host = db_api.host_get(allocation['compute_host_id'])
+            pool.add_computehost(host_reservation['aggregate_id'],
+                                 host['service_name'])
 
     def on_end(self, resource_id):
         """Remove the hosts from the pool."""
-        reservations = db_api.reservation_get_all_by_values(
-            resource_id=resource_id)
-        for reservation in reservations:
-            db_api.reservation_update(reservation['id'],
-                                      {'status': 'completed'})
-            host_reservation = db_api.host_reservation_get_by_reservation_id(
-                reservation['id'])
-            db_api.host_reservation_update(host_reservation['id'],
-                                           {'status': 'completed'})
-            allocations = db_api.host_allocation_get_all_by_values(
-                reservation_id=reservation['id'])
-            for allocation in allocations:
-                db_api.host_allocation_destroy(allocation['id'])
-            pool = rp.ReservationPool()
-            for host in pool.get_computehosts(reservation['resource_id']):
-                for server in self.nova.servers.list(
-                        search_opts={"host": host}):
-                    self.nova.servers.delete(server=server)
-            try:
-                pool.delete(reservation['resource_id'])
-            except manager_ex.AggregateNotFound:
-                pass
+        host_reservation = db_api.host_reservation_get(resource_id)
+        db_api.host_reservation_update(host_reservation['id'],
+                                       {'status': 'completed'})
+        allocations = db_api.host_allocation_get_all_by_values(
+            reservation_id=host_reservation['reservation_id'])
+        for allocation in allocations:
+            db_api.host_allocation_destroy(allocation['id'])
+        pool = rp.ReservationPool()
+        for host in pool.get_computehosts(host_reservation['aggregate_id']):
+            for server in self.nova.servers.list(
+                    search_opts={"host": host}):
+                self.nova.servers.delete(server=server)
+        try:
+            pool.delete(host_reservation['aggregate_id'])
+        except manager_ex.AggregateNotFound:
+            pass
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}

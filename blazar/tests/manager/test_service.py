@@ -47,6 +47,9 @@ class FakePlugin(base.BasePlugin):
     title = 'Fake Plugin'
     description = 'This plugin is fake.'
 
+    def reserve_resource(self, reservation_id, values):
+        return None
+
     def on_start(self, resource_id):
         return 'Resorce %s should be started this moment.' % resource_id
 
@@ -123,6 +126,7 @@ class ServiceTestCase(tests.TestCase):
         self.lease_create = self.patch(self.db_api, 'lease_create')
         self.lease_update = self.patch(self.db_api, 'lease_update')
         self.lease_destroy = self.patch(self.db_api, 'lease_destroy')
+        self.reservation_create = self.patch(self.db_api, 'reservation_create')
         self.reservation_update = self.patch(self.db_api, 'reservation_update')
         self.event_update = self.patch(self.db_api, 'event_update')
         self.manager.plugins = {'virtual:instance': self.fake_plugin}
@@ -1096,6 +1100,10 @@ class ServiceTestCase(tests.TestCase):
 
         self.manager.end_lease(self.lease_id, '1')
 
+        self.reservation_update.assert_called_with(
+            self.lease['reservations'][0]['id'],
+            {'status': 'completed'}
+        )
         self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         basic_action.assert_called_once_with(self.lease_id, '1', 'on_end',
                                              'deleted')

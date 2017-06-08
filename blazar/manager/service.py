@@ -256,13 +256,7 @@ class ManagerService(service_utils.RPCServer):
                         reservation['lease_id'] = lease['id']
                         reservation['start_date'] = lease['start_date']
                         reservation['end_date'] = lease['end_date']
-                        resource_type = reservation['resource_type']
-                        if resource_type in self.plugins:
-                            self.plugins[resource_type].create_reservation(
-                                reservation)
-                        else:
-                            raise exceptions.UnsupportedResourceType(
-                                resource_type)
+                        self._create_reservation(reservation)
                 except (exceptions.UnsupportedResourceType,
                         common_ex.BlazarException):
                     LOG.exception("Failed to create reservation for a lease. "
@@ -435,6 +429,9 @@ class ManagerService(service_utils.RPCServer):
 
     def end_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
+        for reservation in lease['reservations']:
+            db_api.reservation_update(reservation['id'],
+                                      {'status': 'completed'})
         with trusts.create_ctx_from_trust(lease['trust_id']):
             self._basic_action(lease_id, event_id, 'on_end', 'deleted')
 
@@ -469,6 +466,23 @@ class ManagerService(service_utils.RPCServer):
                                               {'status': reservation_status})
 
         db_api.event_update(event_id, {'status': event_status})
+
+    def _create_reservation(self, values):
+        resource_type = values['resource_type']
+        if resource_type not in self.plugins:
+            raise exceptions.UnsupportedResourceType(resource_type)
+        reservation_values = {
+            'lease_id': values['lease_id'],
+            'resource_type': resource_type,
+            'status': 'pending'
+        }
+        reservation = db_api.reservation_create(reservation_values)
+        resource_id = self.plugins[resource_type].reserve_resource(
+            reservation['id'],
+            values
+        )
+        db_api.reservation_update(reservation['id'],
+                                  {'resource_id': resource_id})
 
     def _send_notification(self, lease, ctx, events=[]):
         payload = notification_api.format_lease_payload(lease)

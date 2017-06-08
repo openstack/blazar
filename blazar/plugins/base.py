@@ -59,15 +59,10 @@ class BasePlugin(object):
             'description': self.description,
         }
 
-    def create_reservation(self, values):
-        """Create reservation."""
-        reservation_values = {
-            'lease_id': values['lease_id'],
-            'resource_id': values['resource_id'],
-            'resource_type': values['resource_type'],
-            'status': 'pending'
-        }
-        db_api.reservation_create(reservation_values)
+    @abc.abstractmethod
+    def reserve_resource(self, reservation_id, values):
+        """Reserve resource."""
+        pass
 
     def update_reservation(self, reservation_id, values):
         """Update reservation."""
