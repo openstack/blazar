@@ -131,6 +131,20 @@ def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
             'trust_id': 'exxee111qwwwwe'}
 
 
+def _get_fake_instance_values(id=_get_fake_random_uuid(),
+                              reservation_id=_get_fake_random_uuid()):
+    return {'id': id,
+            'reservation_id': reservation_id,
+            'vcpus': 1,
+            'memory_mb': 2024,
+            'disk_gb': 100,
+            'amount': 2,
+            'affinity': False,
+            'flavor_id': 'fake_flavor_id',
+            'aggregate_id': 29,
+            'server_group_id': 'server_group_id'}
+
+
 def _get_fake_cpu_info():
     return str({'vendor': 'Intel',
                 'model': 'Westmere',
@@ -580,6 +594,49 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual([],
                          db_api.host_extra_capability_get_all_per_name('1',
                                                                        'bad'))
+
+    # Instance reservation
+
+    def check_instance_reservation_values(self, expected, reservation_id):
+        inst_reservation = db_api.instance_reservation_get(reservation_id)
+        for k, v in expected.items():
+            self.assertEqual(v, inst_reservation[k])
+
+    def test_instance_reservation_create(self):
+        reservation_values = _get_fake_instance_values(id='1')
+        ret = db_api.instance_reservation_create(reservation_values)
+
+        self.assertEqual('1', ret['id'])
+        self.check_instance_reservation_values(reservation_values, '1')
+
+    def test_create_duplicated_instance_reservation(self):
+        reservation_values = _get_fake_instance_values(id='1')
+        db_api.instance_reservation_create(reservation_values)
+        self.assertRaises(db_exceptions.BlazarDBDuplicateEntry,
+                          db_api.instance_reservation_create,
+                          reservation_values)
+
+    def test_instance_reservation_get(self):
+        reservation1_values = _get_fake_instance_values(id='1')
+        db_api.instance_reservation_create(reservation1_values)
+        reservation2_values = _get_fake_instance_values(id='2')
+        db_api.instance_reservation_create(reservation2_values)
+
+        self.check_instance_reservation_values(reservation1_values, '1')
+        self.check_instance_reservation_values(reservation2_values, '2')
+
+    def test_instance_reservation_destroy(self):
+        reservation_values = _get_fake_instance_values(id='1')
+        db_api.instance_reservation_create(reservation_values)
+
+        self.check_instance_reservation_values(reservation_values, '1')
+
+        db_api.instance_reservation_destroy('1')
+        self.assertIsNone(db_api.instance_reservation_get('1'))
+
+    def test_destroy_non_existing_instance_reservation(self):
+        self.assertRaises(db_exceptions.BlazarDBNotFound,
+                          db_api.instance_reservation_destroy, 'non-exists')
 
     # Host allocations
 

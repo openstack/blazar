@@ -272,6 +272,23 @@ def host_reservation_update(host_reservation_id,
                                  host_reservation_values)
 
 
+# Instance reservation
+
+def instance_reservation_create(instance_reservation_values):
+    """Create a instance reservation from the values."""
+    return IMPL.instance_reservation_create(instance_reservation_values)
+
+
+def instance_reservation_get(instance_reservation_id):
+    """Return specific instance reservation."""
+    return IMPL.instance_reservation_get(instance_reservation_id)
+
+
+def instance_reservation_destroy(instance_reservation_id):
+    """Delete specific instance reservation."""
+    return IMPL.instance_reservation_destroy(instance_reservation_id)
+
+
 # Allocation
 
 def host_allocation_create(allocation_values):

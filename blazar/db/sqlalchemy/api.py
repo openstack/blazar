@@ -453,6 +453,42 @@ def host_reservation_destroy(host_reservation_id):
         session.delete(host_reservation)
 
 
+# InstanceReservation
+def instance_reservation_create(values):
+    value = values.copy()
+    instance_reservation = models.InstanceReservations()
+    instance_reservation.update(value)
+
+    session = get_session()
+    with session.begin():
+        try:
+            instance_reservation.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.BlazarDBDuplicateEntry(
+                model=instance_reservation.__class__.__name__,
+                columns=e.columns)
+
+    return instance_reservation_get(instance_reservation.id)
+
+
+def instance_reservation_get(instance_reservation_id):
+    session = get_session()
+    query = model_query(models.InstanceReservations, session)
+    return query.filter_by(id=instance_reservation_id).first()
+
+
+def instance_reservation_destroy(instance_reservation_id):
+    session = get_session()
+    with session.begin():
+        instance = instance_reservation_get(instance_reservation_id)
+
+        if not instance:
+            raise db_exc.BlazarDBNotFound(
+                id=instance_reservation_id, model='InstanceReservations')
+        session.delete(instance)
+
+
 # ComputeHostAllocation
 def _host_allocation_get(session, host_allocation_id):
     query = model_query(models.ComputeHostAllocation, session)
