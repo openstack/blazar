@@ -194,7 +194,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         pool = nova.ReservationPool()
         for host in pool.get_computehosts(host_reservation['aggregate_id']):
             for server in self.nova.servers.list(
-                    search_opts={"host": host}):
+                    search_opts={"host": host, "all_tenants": 1}):
                 self.nova.servers.delete(server=server)
         try:
             pool.delete(host_reservation['aggregate_id'])

@@ -666,6 +666,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
+        list_servers.assert_called_with(search_opts={'host': 'host',
+                                                     'all_tenants': 1})
         delete_server.assert_any_call(server='server1')
         delete_server.assert_any_call(server='server2')
         delete_pool.assert_called_with(1)

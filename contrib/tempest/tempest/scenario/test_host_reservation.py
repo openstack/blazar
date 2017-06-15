@@ -122,6 +122,11 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         # ensure server is located on the requested host
         self.assertEqual(host['host'], server['OS-EXT-SRV-ATTR:host'])
 
+        # delete the lease, which should trigger termination of the instance
+        self.reservation_client.delete_lease(lease['id'])
+        waiters.wait_for_server_termination(self.admin_manager.servers_client,
+                                            server['id'])
+
         # create an instance without reservation id, which is expected to fail
         create_kwargs = {
             'image_id': CONF.compute.image_ref,
