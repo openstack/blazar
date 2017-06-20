@@ -27,7 +27,6 @@ from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
 from blazar.plugins.oshosts import nova_inventory
-from blazar.plugins.oshosts import reservation_pool as rp
 from blazar.utils.openstack import nova
 from blazar.utils import trusts
 
@@ -41,7 +40,12 @@ plugin_opts = [
                default='on_start',
                deprecated_for_removal=True,
                deprecated_since='0.3.0',
-               help='Actions which we will use at the start of the lease')
+               help='Actions which we will use at the start of the lease'),
+    cfg.StrOpt('blazar_az_prefix',
+               default='blazar:',
+               deprecated_name='climate_az_prefix',
+               help='Prefix for Availability Zones created by Blazar'),
+
 ]
 
 CONF = cfg.CONF
@@ -53,7 +57,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     resource_type = plugin.RESOURCE_TYPE
     title = 'Physical Host Plugin'
     description = 'This plugin starts and shutdowns the hosts.'
-    freepool_name = CONF[resource_type].aggregate_freepool_name
+    freepool_name = CONF.nova.aggregate_freepool_name
     pool = None
 
     def __init__(self):
@@ -66,8 +70,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
-        pool = rp.ReservationPool()
-        pool_instance = pool.create(name=reservation_id)
+        pool = nova.ReservationPool()
+        pool_name = reservation_id
+        az_name = "%s%s" % (CONF[self.resource_type].blazar_az_prefix,
+                            pool_name)
+        pool_instance = pool.create(name=pool_name, az=az_name)
         min_hosts = values.get('min')
         max_hosts = values.get('max')
         if 0 <= min_hosts and min_hosts <= max_hosts:
@@ -102,7 +109,6 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         """Update reservation."""
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
-        host_reservation = None
         if (values['start_date'] < lease['start_date'] or
                 values['end_date'] > lease['end_date']):
             allocations = []
@@ -130,7 +136,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             if allocations:
                 host_reservation = db_api.host_reservation_get(
                     reservation['resource_id'])
-                pool = rp.ReservationPool()
+                pool = nova.ReservationPool()
                 hosts_in_pool.extend(pool.get_computehosts(
                     host_reservation['aggregate_id']))
                 host_ids = self._matching_hosts(
@@ -170,7 +176,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     def on_start(self, resource_id):
         """Add the hosts in the pool."""
         host_reservation = db_api.host_reservation_get(resource_id)
-        pool = rp.ReservationPool()
+        pool = nova.ReservationPool()
         for allocation in db_api.host_allocation_get_all_by_values(
                 reservation_id=host_reservation['reservation_id']):
             host = db_api.host_get(allocation['compute_host_id'])
@@ -186,7 +192,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             reservation_id=host_reservation['reservation_id'])
         for allocation in allocations:
             db_api.host_allocation_destroy(allocation['id'])
-        pool = rp.ReservationPool()
+        pool = nova.ReservationPool()
         for host in pool.get_computehosts(host_reservation['aggregate_id']):
             for server in self.nova.servers.list(
                     search_opts={"host": host}):
@@ -250,7 +256,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             extra_capabilities = dict(
                 (key, host_values[key]) for key in extra_capabilities_keys
             )
-            pool = rp.ReservationPool()
+            pool = nova.ReservationPool()
             pool.add_computehost(self.freepool_name,
                                  host_details['service_name'])
 
@@ -328,7 +334,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                     host=host['hypervisor_hostname'], servers=servers)
 
             try:
-                pool = rp.ReservationPool()
+                pool = nova.ReservationPool()
                 pool.remove_computehost(self.freepool_name,
                                         host['service_name'])
                 # NOTE(sbauza): Extracapabilities will be destroyed thanks to
