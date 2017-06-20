@@ -27,7 +27,6 @@ from blazar.manager import exceptions as manager_exceptions
 from blazar.manager import service
 from blazar.plugins import oshosts as plugin
 from blazar.plugins.oshosts import host_plugin
-from blazar.plugins.oshosts import nova_inventory
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import nova
@@ -52,7 +51,6 @@ class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
         self.host_plugin = host_plugin
         self.fake_phys_plugin = self.host_plugin.PhysicalHostPlugin()
         self.nova = nova
-        self.nova_inventory = nova_inventory
         self.rp_create = self.patch(self.nova.ReservationPool, 'create')
         self.db_api = db_api
         self.db_host_extra_capability_get_all_per_host = (
@@ -134,18 +132,17 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api, 'host_extra_capability_update')
 
         self.nova = nova
-        self.nova_inventory = nova_inventory
         self.rp_create = self.patch(self.nova.ReservationPool, 'create')
         self.patch(self.nova.ReservationPool, 'get_aggregate_from_name_or_id')
         self.add_compute_host = self.patch(self.nova.ReservationPool,
                                            'add_computehost')
         self.remove_compute_host = self.patch(self.nova.ReservationPool,
                                               'remove_computehost')
-        self.get_host_details = self.patch(self.nova_inventory.NovaInventory,
+        self.get_host_details = self.patch(self.nova.NovaInventory,
                                            'get_host_details')
         self.get_host_details.return_value = self.fake_host
         self.get_servers_per_host = self.patch(
-            self.nova_inventory.NovaInventory, 'get_servers_per_host')
+            self.nova.NovaInventory, 'get_servers_per_host')
         self.get_servers_per_host.return_value = None
         self.get_extra_capabilities = self.patch(
             self.fake_phys_plugin, '_get_extra_capabilities')

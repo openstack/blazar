@@ -26,7 +26,6 @@ from blazar.db import utils as db_utils
 from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
-from blazar.plugins.oshosts import nova_inventory
 from blazar.utils.openstack import nova
 from blazar.utils import trusts
 
@@ -243,7 +242,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise manager_ex.InvalidHost(host=host_values)
 
         with trusts.create_ctx_from_trust(trust_id):
-            inventory = nova_inventory.NovaInventory()
+            inventory = nova.NovaInventory()
             servers = inventory.get_servers_per_host(host_ref)
             if servers:
                 raise manager_ex.HostHavingServers(host=host_ref,
@@ -326,7 +325,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         with trusts.create_ctx_from_trust(host['trust_id']):
             # TODO(sbauza):
             #  - Check if no leases having this host scheduled
-            inventory = nova_inventory.NovaInventory()
+            inventory = nova.NovaInventory()
             servers = inventory.get_servers_per_host(
                 host['hypervisor_hostname'])
             if servers:
