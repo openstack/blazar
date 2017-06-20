@@ -39,7 +39,6 @@ via the commands:
 .. sourcecode:: console
 
    tox -e py27
-   tox -e py34
    tox -e py35
 
 ..
