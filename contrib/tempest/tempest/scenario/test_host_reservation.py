@@ -35,14 +35,14 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
     def setUp(self):
         super(TestHostReservationScenario, self).setUp()
-        self.aggr_client = self.admin_manager.aggregates_client
+        self.aggr_client = self.os_admin.aggregates_client
 
     def tearDown(self):
         super(TestHostReservationScenario, self).tearDown()
 
     def fetch_one_compute_host(self):
         """Returns a first host listed in nova-compute services."""
-        compute = next(iter(self.admin_manager.services_client.
+        compute = next(iter(self.os_admin.services_client.
                             list_services(binary='nova-compute')['services']))
         return compute
 
@@ -117,7 +117,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
             'image_id': CONF.compute.image_ref,
             'flavor': CONF.compute.flavor_ref,
             }
-        server = self.create_server(clients=self.admin_manager,
+        server = self.create_server(clients=self.os_admin,
                                     **create_kwargs)
         # ensure server is located on the requested host
         self.assertEqual(host['host'], server['OS-EXT-SRV-ATTR:host'])
@@ -127,9 +127,9 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
             'image_id': CONF.compute.image_ref,
             'flavor': CONF.compute.flavor_ref,
             }
-        server = self.create_server(clients=self.admin_manager,
+        server = self.create_server(clients=self.os_admin,
                                     wait_until=None,
                                     **create_kwargs)
-        waiters.wait_for_server_status(self.admin_manager.servers_client,
+        waiters.wait_for_server_status(self.os_admin.servers_client,
                                        server['id'], 'ERROR',
                                        raise_on_error=False)
