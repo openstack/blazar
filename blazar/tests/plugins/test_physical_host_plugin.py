@@ -453,7 +453,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
             'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b'
+            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'active'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
@@ -487,15 +488,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_computehosts.return_value = ['host1']
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host2']
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova_client.hypervisors, 'get')
-        get_hypervisors.return_value = mock.MagicMock(running_vms=1)
         self.assertRaises(
             manager_exceptions.NotEnoughHostsAvailable,
             self.fake_phys_plugin.update_reservation,
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get.assert_called()
+        reservation_get.assert_called()
+        host_reservation_get.assert_not_called()
 
     def test_update_reservation_move_overlap(self):
         values = {
@@ -545,7 +544,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
             'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b'
+            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
@@ -585,9 +585,6 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
-        self.patch(self.fake_phys_plugin, '_get_hypervisor_from_name_or_id')
-        get_hypervisors = self.patch(self.nova_client.hypervisors, 'get')
-        get_hypervisors.return_value = mock.MagicMock(running_vms=0)
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host2']
         self.fake_phys_plugin.update_reservation(
