@@ -71,7 +71,7 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     for reservation in db_api.reservation_get_all_by_lease_id(lease['id']):
         allocation_values = {
             'id': _get_fake_random_uuid(),
-            'compute_host_id': values['reservations'][0]['resource_id'],
+            'compute_host_id': reservation['resource_id'],
             'reservation_id': reservation['id']
         }
         db_api.host_allocation_create(allocation_values)
@@ -108,6 +108,15 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         _create_physical_lease(values=r1)
         _create_physical_lease(values=r2)
         _create_physical_lease(values=r3)
+
+    def check_reservation(self, expect, host_id, start, end):
+        expect.sort(key=lambda x: x['lease_id'])
+        ret = db_utils.get_reservations_by_host_id(host_id, start, end)
+
+        for i, res in enumerate(sorted(ret, key=lambda x: x['lease_id'])):
+            self.assertEqual(expect[i]['lease_id'], res['lease_id'])
+            self.assertEqual(expect[i]['resource_id'], res['resource_id'])
+            self.assertEqual(expect[i]['resource_type'], res['resource_type'])
 
     def test_get_free_periods(self):
         """Find the free periods."""
@@ -327,6 +336,45 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
                 start_date=_get_datetime('2030-01-01 10:15'),
                 end_date=_get_datetime('2030-01-01 13:00')),
             'lease1')
+
+    def test_get_reservations_by_host_id(self):
+        self._setup_leases()
+
+        self.check_reservation([], 'r1',
+                               '2030-01-01 07:00', '2030-01-01 08:59')
+
+        ret = db_api.reservation_get_all_by_lease_id('lease1')
+        self.check_reservation(ret, 'r1',
+                               '2030-01-01 08:00', '2030-01-01 10:00')
+
+        ret = db_api.reservation_get_all_by_lease_id('lease1')
+        ret.extend(db_api.reservation_get_all_by_lease_id('lease3'))
+        self.check_reservation(ret, 'r1',
+                               '2030-01-01 08:00', '2030-01-01 15:30')
+
+        self.check_reservation([], 'r4',
+                               '2030-01-01 07:00', '2030-01-01 15:00')
+
+    def test_get_reservations_by_host_id_with_multi_reservation(self):
+        self._setup_leases()
+
+        fake_lease = _get_fake_phys_lease_values(
+            id='lease-4',
+            name='fake_phys_lease_r4',
+            start_date=_get_datetime('2030-01-01 15:00'),
+            end_date=_get_datetime('2030-01-01 16:00'),
+            resource_id='r4-1')
+
+        fake_lease['reservations'].append(
+            _get_fake_phys_reservation_values(lease_id='lease-4',
+                                              resource_id='r1'))
+        _create_physical_lease(values=fake_lease)
+
+        expected = db_api.reservation_get_all_by_values(
+            **{'resource_id': 'r1'})
+        self.assertEqual(3, len(expected))
+        self.check_reservation(expected, 'r1',
+                               '2030-01-01 08:00', '2030-01-01 17:00')
 
 # TODO(frossigneux) longest_availability
 # TODO(frossigneux) shortest_availability

@@ -57,6 +57,19 @@ def _get_leases_from_host_id(host_id, start_date, end_date):
         yield lease
 
 
+def get_reservations_by_host_id(host_id, start_date, end_date):
+    session = get_session()
+    border0 = sa.and_(models.Lease.start_date < start_date,
+                      models.Lease.end_date < start_date)
+    border1 = sa.and_(models.Lease.start_date > end_date,
+                      models.Lease.end_date > end_date)
+    query = (session.query(models.Reservation).join(models.Lease)
+             .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.compute_host_id == host_id)
+             .filter(~sa.or_(border0, border1)))
+    return query.all()
+
+
 def get_free_periods(resource_id, start_date, end_date, duration):
     """Returns a list of free periods."""
     full_periods = get_full_periods(resource_id,
