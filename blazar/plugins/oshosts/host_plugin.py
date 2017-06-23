@@ -15,10 +15,8 @@
 # under the License.
 
 import datetime
-import json
 
 from oslo_config import cfg
-import six
 
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
@@ -27,6 +25,7 @@ from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
 from blazar.utils.openstack import nova
+from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
 
 plugin_opts = [
@@ -348,10 +347,10 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         filter_array = []
         # TODO(frossigneux) support "or" operator
         if hypervisor_properties:
-            filter_array = self._convert_requirements(
+            filter_array = plugins_utils.convert_requirements(
                 hypervisor_properties)
         if resource_properties:
-            filter_array += self._convert_requirements(
+            filter_array += plugins_utils.convert_requirements(
                 resource_properties)
         for host in db_api.host_get_all_by_queries(filter_array):
             if not db_api.host_allocation_get_all_by_values(
@@ -373,53 +372,3 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             return all_host_ids[:int(max_host)]
         else:
             return []
-
-    def _convert_requirements(self, requirements):
-        """Convert the requirements to an array of strings
-
-        Convert the requirements to an array of strings.
-        ["key op value", "key op value", ...]
-        """
-        # TODO(frossigneux) Support the "or" operator
-        # Convert text to json
-        if isinstance(requirements, six.string_types):
-            try:
-                requirements = json.loads(requirements)
-            except ValueError:
-                raise manager_ex.MalformedRequirements(rqrms=requirements)
-
-        # Requirement list looks like ['<', '$ram', '1024']
-        if self._requirements_with_three_elements(requirements):
-            result = []
-            if requirements[0] == '=':
-                requirements[0] = '=='
-            string = (requirements[1][1:] + " " + requirements[0] + " " +
-                      requirements[2])
-            result.append(string)
-            return result
-        # Remove the 'and' element at the head of the requirement list
-        elif self._requirements_with_and_keyword(requirements):
-            return [self._convert_requirements(x)[0]
-                    for x in requirements[1:]]
-        # Empty requirement list0
-        elif isinstance(requirements, list) and not requirements:
-            return requirements
-        else:
-            raise manager_ex.MalformedRequirements(rqrms=requirements)
-
-    def _requirements_with_three_elements(self, requirements):
-        """Return true if requirement list looks like ['<', '$ram', '1024']."""
-        return (isinstance(requirements, list) and
-                len(requirements) == 3 and
-                isinstance(requirements[0], six.string_types) and
-                isinstance(requirements[1], six.string_types) and
-                isinstance(requirements[2], six.string_types) and
-                requirements[0] in ['==', '=', '!=', '>=', '<=', '>', '<'] and
-                len(requirements[1]) > 1 and requirements[1][0] == '$' and
-                len(requirements[2]) > 0)
-
-    def _requirements_with_and_keyword(self, requirements):
-        return (len(requirements) > 1 and
-                isinstance(requirements[0], six.string_types) and
-                requirements[0] == 'and' and
-                all(self._convert_requirements(x) for x in requirements[1:]))
