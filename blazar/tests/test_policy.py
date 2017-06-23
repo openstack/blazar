@@ -40,10 +40,10 @@ class BlazarPolicyTestCase(tests.TestCase):
         target_wrong = {'user_id': self.context.user_id,
                         'project_id': 'bad_project'}
         action = "blazar:leases"
-        self.assertEqual(True, policy.enforce(self.context, action,
-                                              target_good))
-        self.assertEqual(False, policy.enforce(self.context, action,
-                                               target_wrong, False))
+        self.assertTrue(policy.enforce(self.context, action,
+                                       target_good))
+        self.assertFalse(policy.enforce(self.context, action,
+                                        target_wrong, False))
 
     def test_adminpolicy(self):
         target = {'user_id': self.context.user_id,
@@ -59,8 +59,7 @@ class BlazarPolicyTestCase(tests.TestCase):
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
         elevated_context = self.context.elevated()
-        self.assertEqual(True,
-                         policy.enforce(elevated_context, action, target))
+        self.assertTrue(policy.enforce(elevated_context, action, target))
 
     def test_authorize(self):
 
@@ -76,8 +75,8 @@ class BlazarPolicyTestCase(tests.TestCase):
         def adminonly_method(self):
             return True
 
-        self.assertEqual(True, user_method(self))
-        self.assertEqual(True, user_method_with_action(self))
+        self.assertTrue(user_method(self))
+        self.assertTrue(user_method_with_action(self))
         try:
             adminonly_method(self)
             self.assertTrue(False)
