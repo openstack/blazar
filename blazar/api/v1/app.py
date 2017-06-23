@@ -14,6 +14,9 @@
 # limitations under the License.
 
 import eventlet
+eventlet.monkey_patch(
+    os=True, select=True, socket=True, thread=True, time=True)
+
 import flask
 from keystonemiddleware import auth_token
 from oslo_config import cfg
@@ -31,10 +34,6 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 CONF.import_opt('log_exchange', 'blazar.config')
-
-
-eventlet.monkey_patch(
-    os=True, select=True, socket=True, thread=True, time=True)
 
 
 def make_json_error(ex):

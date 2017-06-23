@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import eventlet
+eventlet.monkey_patch(
+    os=True, select=True, socket=True, thread=True, time=True)
+
 import gettext
 import json
 import sys
 
-import eventlet
 from eventlet import wsgi
 from oslo_config import cfg
 from oslo_log import log as logging
