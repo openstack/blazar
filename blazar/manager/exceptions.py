@@ -129,9 +129,19 @@ class NotEnoughHostsAvailable(exceptions.BlazarException):
     msg_fmt = _("Not enough hosts available")
 
 
+class MalformedParameter(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _("Malformed parameter %(param)s")
+
+
 class MalformedRequirements(exceptions.BlazarException):
     code = 400
     msg_fmt = _("Malformed requirements %(rqrms)s")
+
+
+class MissingParameter(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _("Missing parameter %(param)s")
 
 
 class InvalidState(exceptions.BlazarException):
