@@ -307,18 +307,16 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': now + datetime.timedelta(hours=1),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        self.rp_create.return_value = mock.MagicMock(id=1)
         host_reservation_create = self.patch(self.db_api,
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = []
-        pool_delete = self.patch(self.nova.ReservationPool, 'delete')
         self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
                           self.fake_phys_plugin.reserve_resource,
                           u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
                           values)
+        self.rp_create.assert_not_called()
         host_reservation_create.assert_not_called()
-        pool_delete.assert_called_once_with(1)
 
     def test_create_reservation_hosts_available(self):
         values = {
