@@ -132,6 +132,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                          full_periods[0][1] == min_end)):
                     allocations.append(allocation)
             if allocations:
+                if reservation['status'] == 'active':
+                    raise manager_ex.NotEnoughHostsAvailable()
                 host_reservation = db_api.host_reservation_get(
                     reservation['resource_id'])
                 pool = nova.ReservationPool()
@@ -148,16 +150,6 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 if hosts_in_pool:
                     old_hosts = [allocation['compute_host_id']
                                  for allocation in allocations]
-                    # TODO(hiro-kobayashi): This condition check is not enough
-                    # to prevent race conditions.  It should not be allowed to
-                    # reallocate a reservation to another hosts if the lease
-                    # has been already started.
-                    # Report: https://bugs.launchpad.net/blazar/+bug/1692805
-                    for host in old_hosts:
-                        if self.nova.hypervisors.get(
-                                self._get_hypervisor_from_name_or_id(host)
-                        ).__dict__['running_vms'] > 0:
-                            raise manager_ex.NotEnoughHostsAvailable()
                     pool.remove_computehost(host_reservation['aggregate_id'],
                                             old_hosts)
                 for allocation in allocations:
@@ -432,16 +424,3 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 isinstance(requirements[0], six.string_types) and
                 requirements[0] == 'and' and
                 all(self._convert_requirements(x) for x in requirements[1:]))
-
-    def _get_hypervisor_from_name_or_id(self, hypervisor_name_or_id):
-        """Return an hypervisor by name or an id."""
-        hypervisor = None
-        all_hypervisors = self.nova.hypervisors.list()
-        for hyp in all_hypervisors:
-            if (hypervisor_name_or_id == hyp.hypervisor_hostname or
-               hypervisor_name_or_id == str(hyp.id)):
-                hypervisor = hyp
-        if hypervisor:
-            return hypervisor
-        else:
-            raise manager_ex.HypervisorNotFound(pool=hypervisor_name_or_id)
