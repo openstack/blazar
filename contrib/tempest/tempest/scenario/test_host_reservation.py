@@ -124,7 +124,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # delete the lease, which should trigger termination of the instance
         self.reservation_client.delete_lease(lease['id'])
-        waiters.wait_for_server_termination(self.admin_manager.servers_client,
+        waiters.wait_for_server_termination(self.os_admin.servers_client,
                                             server['id'])
 
         # create an instance without reservation id, which is expected to fail
