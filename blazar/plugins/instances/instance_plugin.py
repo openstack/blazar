@@ -57,9 +57,39 @@ class VirtualInstancePlugin(base.BasePlugin):
         return free, non_free
 
     def max_usages(self, host, reservations):
-        # TODO(masahito): needs to check the max usage of the host in the
-        # time window
-        return 0, 0, 0
+        def resource_usage_by_event(event, resource_type):
+            return event['reservation']['instance_reservations'][resource_type]
+
+        events_list = []
+        for r in reservations:
+            fetched_events = db_api.event_get_all_sorted_by_filters(
+                sort_key='time', sort_dir='asc',
+                filters={'lease_id': r['lease_id']})
+            events_list.extend([{'event': e, 'reservation': r}
+                                for e in fetched_events])
+
+        events_list.sort(key=lambda x: x['event']['time'])
+
+        max_vcpus = max_memory = max_disk = 0
+        current_vcpus = current_memory = current_disk = 0
+
+        for event in events_list:
+            if event['event']['event_type'] == 'start_lease':
+                current_vcpus += resource_usage_by_event(event, 'vcpus')
+                current_memory += resource_usage_by_event(event, 'memory_mb')
+                current_disk += resource_usage_by_event(event, 'disk_gb')
+                if max_vcpus < current_vcpus:
+                    max_vcpus = current_vcpus
+                if max_memory < current_memory:
+                    max_memory = current_memory
+                if max_disk < current_disk:
+                    max_disk = current_disk
+            elif event['event']['event_type'] == 'end_lease':
+                current_vcpus -= resource_usage_by_event(event, 'vcpus')
+                current_memory -= resource_usage_by_event(event, 'memory_mb')
+                current_disk -= resource_usage_by_event(event, 'disk_gb')
+
+        return max_vcpus, max_memory, max_disk
 
     def pickup_hosts(self, cpus, memory, disk, amount, start_date, end_date):
         """Checks whether Blazar can accommodate the request.
