@@ -72,7 +72,7 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
 
         def check_lease_end():
             try:
-                lease = self.reservation_client.get_lease(lease_id)
+                lease = self.reservation_client.get_lease(lease_id)['lease']
                 if lease:
                     events = lease['events']
                     return len(filter(lambda evt:
