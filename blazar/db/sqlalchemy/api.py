@@ -472,10 +472,28 @@ def instance_reservation_create(values):
     return instance_reservation_get(instance_reservation.id)
 
 
-def instance_reservation_get(instance_reservation_id):
-    session = get_session()
+def instance_reservation_get(instance_reservation_id, session=None):
+    if not session:
+        session = get_session()
     query = model_query(models.InstanceReservations, session)
     return query.filter_by(id=instance_reservation_id).first()
+
+
+def instance_reservation_update(instance_reservation_id, values):
+    session = get_session()
+
+    with session.begin():
+        instance_reservation = instance_reservation_get(
+            instance_reservation_id, session)
+
+        if not instance_reservation:
+            raise db_exc.BlazarDBNotFound(
+                id=instance_reservation_id, model='InstanceReservations')
+
+        instance_reservation.update(values)
+        instance_reservation.save(session=session)
+
+    return instance_reservation_get(instance_reservation_id)
 
 
 def instance_reservation_destroy(instance_reservation_id):

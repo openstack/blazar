@@ -284,6 +284,13 @@ def instance_reservation_get(instance_reservation_id):
     return IMPL.instance_reservation_get(instance_reservation_id)
 
 
+def instance_reservation_update(instance_reservation_id,
+                                instance_reservation_values):
+    """Update instance reservation."""
+    return IMPL.instance_reservation_update(instance_reservation_id,
+                                            instance_reservation_values)
+
+
 def instance_reservation_destroy(instance_reservation_id):
     """Delete specific instance reservation."""
     return IMPL.instance_reservation_destroy(instance_reservation_id)

@@ -12,32 +12,43 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils.strutils import bool_from_string
 
+from blazar import context
 from blazar.db import api as db_api
 from blazar.db import utils as db_utils
 from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
 from blazar.plugins import base
 from blazar.plugins import oshosts
+from blazar.utils.openstack import nova
 from blazar.utils import plugins as plugins_utils
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 RESOURCE_TYPE = u'virtual:instance'
+RESERVATION_PREFIX = 'reservation'
+FLAVOR_EXTRA_SPEC = "aggregate_instance_extra_specs:" + RESERVATION_PREFIX
 
 
-class VirtualInstancePlugin(base.BasePlugin):
+class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for virtual instance resources."""
 
     resource_type = RESOURCE_TYPE
     title = 'Virtual Instance Plugin'
 
     def __init__(self):
-        super(VirtualInstancePlugin, self).__init__()
+        super(VirtualInstancePlugin, self).__init__(
+            username=CONF.os_admin_username,
+            password=CONF.os_admin_password,
+            user_domain_name=CONF.os_admin_user_domain_name,
+            project_name=CONF.os_admin_project_name,
+            project_domain_name=CONF.os_admin_user_domain_name)
+
         self.freepool_name = CONF.nova.aggregate_freepool_name
 
     def filter_hosts_by_reservation(self, hosts, start_date, end_date):
@@ -141,6 +152,56 @@ class VirtualInstancePlugin(base.BasePlugin):
                                               "accommodate because of less "
                                               "capacity.")
 
+    def _create_resources(self, instance_reservation):
+        reservation_id = instance_reservation['reservation_id']
+
+        ctx = context.current()
+        user_client = nova.NovaClientWrapper()
+
+        reserved_group = user_client.nova.server_groups.create(
+            RESERVATION_PREFIX + ':' + reservation_id,
+            'affinity' if instance_reservation['affinity'] else 'anti-affinity'
+            )
+
+        flavor_details = {
+            'flavorid': reservation_id,
+            'name': RESERVATION_PREFIX + ":" + reservation_id,
+            'vcpus': instance_reservation['vcpus'],
+            'ram': instance_reservation['memory_mb'],
+            'disk': instance_reservation['disk_gb'],
+            'is_public': False
+            }
+        reserved_flavor = self.nova.nova.flavors.create(**flavor_details)
+        extra_specs = {
+            FLAVOR_EXTRA_SPEC: reservation_id,
+            "affinity_id": reserved_group.id
+            }
+        reserved_flavor.set_keys(extra_specs)
+
+        pool = nova.ReservationPool()
+        pool_metadata = {
+            RESERVATION_PREFIX: reservation_id,
+            'filter_tenant_id': ctx.project_id,
+            'affinity_id': reserved_group.id
+            }
+        agg = pool.create(name=reservation_id, metadata=pool_metadata)
+
+        return reserved_flavor, reserved_group, agg
+
+    def cleanup_resources(self, instance_reservation):
+        def check_and_delete_resource(client, id):
+            try:
+                client.delete(id)
+            except nova_exceptions.NotFound:
+                pass
+
+        reservation_id = instance_reservation['reservation_id']
+
+        check_and_delete_resource(self.nova.nova.server_groups,
+                                  instance_reservation['server_group_id'])
+        check_and_delete_resource(self.nova.nova.flavors, reservation_id)
+        check_and_delete_resource(nova.ReservationPool(), reservation_id)
+
     def validate_reservation_param(self, values):
         marshall_attributes = set(['vcpus', 'memory_mb', 'disk_gb',
                                    'amount', 'affinity'])
@@ -175,6 +236,19 @@ class VirtualInstancePlugin(base.BasePlugin):
         for host_id in host_ids:
             db_api.host_allocation_create({'compute_host_id': host_id,
                                           'reservation_id': reservation_id})
+
+        try:
+            flavor, group, pool = self._create_resources(instance_reservation)
+        except nova_exceptions.ClientException:
+            LOG.exception("Failed to create Nova resources "
+                          "for reservation %s" % reservation_id)
+            self.cleanup_resources(instance_reservation)
+            raise mgr_exceptions.NovaClientError()
+
+        db_api.instance_reservation_update(instance_reservation['id'],
+                                           {'flavor_id': flavor.id,
+                                            'server_group_id': group.id,
+                                            'aggregate_id': pool.id})
 
         return instance_reservation['id']
 

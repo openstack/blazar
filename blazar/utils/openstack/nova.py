@@ -244,7 +244,7 @@ class ReservationPool(NovaClientWrapper):
     def _generate_aggregate_name():
         return str(uuidgen.uuid4())
 
-    def create(self, name=None, az=None):
+    def create(self, name=None, az=None, metadata=None):
         """Create a Pool (an Aggregate) with or without Availability Zone.
 
         By default expose to user the aggregate with an Availability Zone.
@@ -266,8 +266,11 @@ class ReservationPool(NovaClientWrapper):
             LOG.error(e.message)
             raise e
 
-        meta = {self.config.blazar_owner: project_id}
-        self.nova.aggregates.set_metadata(agg, meta)
+        if metadata:
+            metadata[self.config.blazar_owner] = project_id
+        else:
+            metadata = {self.config.blazar_owner: project_id}
+        self.nova.aggregates.set_metadata(agg, metadata)
 
         return agg
 
@@ -296,7 +299,7 @@ class ReservationPool(NovaClientWrapper):
                       "'%s')" % (host, agg.id))
             self.nova.aggregates.remove_host(agg.id, host)
 
-            if freepool_agg.id != agg.id:
+            if freepool_agg.id != agg.id and host not in freepool_agg.hosts:
                 self.nova.aggregates.add_host(freepool_agg.id, host)
 
         self.nova.aggregates.delete(agg.id)

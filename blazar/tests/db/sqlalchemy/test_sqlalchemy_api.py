@@ -630,6 +630,25 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.check_instance_reservation_values(reservation1_values, '1')
         self.check_instance_reservation_values(reservation2_values, '2')
 
+    def test_instance_reservation_update(self):
+        reservation_values = _get_fake_instance_values(id='1')
+        db_api.instance_reservation_create(reservation_values)
+
+        self.check_instance_reservation_values(reservation_values, '1')
+
+        updated_values = {
+            'flavor_id': 'updated-flavor-id',
+            'aggregate_id': 30,
+            'server_group_id': 'updated-server-group-id'
+            }
+        db_api.instance_reservation_update('1', updated_values)
+        reservation_values.update(updated_values)
+        self.check_instance_reservation_values(reservation_values, '1')
+
+    def test_update_non_existing_instance_reservation(self):
+        self.assertRaises(db_exceptions.BlazarDBNotFound,
+                          db_api.instance_reservation_destroy, 'non-exists')
+
     def test_instance_reservation_destroy(self):
         reservation_values = _get_fake_instance_values(id='1')
         db_api.instance_reservation_create(reservation_values)
