@@ -272,3 +272,64 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         lease = self.reservation_client.get_lease(lease_id)['lease']
         self.assertTrue('deleted' in
                         next(iter(lease['reservations']))['status'])
+
+    @decorators.attr(type='smoke')
+    def test_update_host_reservation(self):
+
+        # create the host if it doesn't exist
+        host = self._add_host_once()
+
+        # create new lease and start reservation immediately
+        body = self.get_lease_body('scenario-3-update', host['host'])
+        lease = self.reservation_client.create_lease(body)['lease']
+        lease_id = lease['id']
+
+        # check host added to the reservation
+        reservation_id = next(iter(lease['reservations']))['id']
+        self.wait_until_aggregated(reservation_id, host['host'])
+
+        # check the host aggregate for blazar
+        self.fetch_aggregate_by_name(reservation_id)
+
+        # create an instance with reservation id
+        create_kwargs = {
+            'scheduler_hints': {
+                'reservation': reservation_id,
+                },
+            'image_id': CONF.compute.image_ref,
+            'flavor': CONF.compute.flavor_ref,
+            }
+        server = self.create_server(clients=self.os_admin,
+                                    wait_until=None,
+                                    **create_kwargs)
+        waiters.wait_for_server_status(self.os_admin.servers_client,
+                                       server['id'], 'ACTIVE')
+
+        # wait enough time for the update API to succeed
+        time.sleep(75)
+
+        # update the lease end_time
+        end_time = datetime.datetime.utcnow()
+        body = {
+            'end_date': end_time.strftime('%Y-%m-%d %H:%M')
+            }
+        self.reservation_client.update_lease(lease_id,
+                                             body)['lease']
+
+        # check if the lease has been correctly terminated and
+        # the instance is removed
+        waiters.wait_for_server_termination(self.os_admin.servers_client,
+                                            server['id'])
+
+        # check that the host aggregate was deleted
+        self.assertRaises(exceptions.NotFound,
+                          self.fetch_aggregate_by_name, reservation_id)
+
+        # check that the host is back in the freepool
+        freepool = self.fetch_aggregate_by_name('freepool')
+        self.assertTrue(host['host'] in freepool['hosts'])
+
+        # check the reservation status
+        lease = self.reservation_client.get_lease(lease_id)['lease']
+        self.assertTrue('deleted'in
+                        next(iter(lease['reservations']))['status'])
