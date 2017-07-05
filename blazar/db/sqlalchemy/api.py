@@ -28,7 +28,6 @@ from sqlalchemy.sql.expression import desc
 from blazar.db import exceptions as db_exc
 from blazar.db.sqlalchemy import facade_wrapper
 from blazar.db.sqlalchemy import models
-from blazar.i18n import _
 
 
 LOG = logging.getLogger(__name__)
@@ -60,7 +59,7 @@ def setup_db():
                                          sqlite_fk=True).get_engine()
         models.Lease.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
-        LOG.error(_("Database registration exception: %s"), e)
+        LOG.error("Database registration exception: %s", e)
         return False
     return True
 
@@ -71,7 +70,7 @@ def drop_db():
                                          sqlite_fk=True).get_engine()
         models.Lease.metadata.drop_all(engine)
     except Exception as e:
-        LOG.error(_("Database shutdown exception: %s"), e)
+        LOG.error("Database shutdown exception: %s", e)
         return False
     return True
 

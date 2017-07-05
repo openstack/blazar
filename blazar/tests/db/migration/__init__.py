@@ -213,7 +213,7 @@ class BaseMigrationTestCase(tests.TestCase):
     def _load_config(self):
         # Load test databases from the config file. Only do this
         # once. No need to re-run this on each test...
-        LOG.debug('config_path is %s' % self.CONFIG_FILE_PATH)
+        LOG.debug('config_path is %s', self.CONFIG_FILE_PATH)
         if os.path.exists(self.CONFIG_FILE_PATH):
             cp = configparser.RawConfigParser()
             try:
@@ -373,7 +373,7 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
     def _load_config(self):
         # Load test databases from the config file. Only do this
         # once. No need to re-run this on each test...
-        LOG.debug('config_path is %s' % self.CONFIG_FILE_PATH)
+        LOG.debug('config_path is %s', self.CONFIG_FILE_PATH)
         if os.path.exists(self.CONFIG_FILE_PATH):
             cp = configparser.RawConfigParser()
             try:
@@ -468,7 +468,8 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
         CONF.set_override('connection', str(engine.url), group='database')
         getattr(command, alembic_command)(*args, **kwargs)
         res = buf.getvalue().strip()
-        LOG.debug('Alembic command `%s` returns: %s' % (alembic_command, res))
+        LOG.debug('Alembic command `%(command)s` returns: %(res)s',
+                  {'command': alembic_command, 'res': res})
         return res
 
     def _get_alembic_versions(self, engine):
@@ -600,6 +601,6 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
                 if check:
                     check(engine, data)
         except Exception:
-            LOG.error("Failed to migrate to version %s on engine %s" %
-                      (version, engine))
+            LOG.error("Failed to migrate to version %(version)s on engine "
+                      "%(engine)s", {'version': version, 'engine': engine})
             raise

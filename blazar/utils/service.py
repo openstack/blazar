@@ -23,7 +23,6 @@ import oslo_messaging as messaging
 from oslo_service import service
 
 from blazar import context
-from blazar.i18n import _
 
 LOG = logging.getLogger(__name__)
 
@@ -79,8 +78,8 @@ class ContextEndpointHandler(object):
 
             return run_method
         except AttributeError:
-            LOG.error(_("No %(method)s method found implemented in "
-                        "%(class)s class"),
+            LOG.error("No %(method)s method found implemented in "
+                      "%(class)s class",
                       {'method': name, 'class': self.__endpoint})
 
 

@@ -202,8 +202,8 @@ def get_request_args():
 
 def abort_and_log(status_code, descr, exc=None):
     """Process occurred errors."""
-    LOG.error(_("Request aborted with status code %(code)s and "
-                "message '%(msg)s'"), {'code': status_code, 'msg': descr})
+    LOG.error("Request aborted with status code %(code)s and "
+              "message '%(msg)s'", {'code': status_code, 'msg': descr})
 
     if exc is not None:
         LOG.error(traceback.format_exc())
@@ -227,8 +227,8 @@ def render_error_message(error_code, error_message, error_name):
 
 def internal_error(status_code, descr, exc=None):
     """Called if internal error occurred."""
-    LOG.error(_("Request aborted with status code %(code)s "
-                "and message '%(msg)s'"), {'code': status_code, 'msg': descr})
+    LOG.error("Request aborted with status code %(code)s "
+              "and message '%(msg)s'", {'code': status_code, 'msg': descr})
 
     if exc is not None:
         LOG.error(traceback.format_exc())
