@@ -483,9 +483,13 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def test_search_for_hosts_by_extra_capability(self):
         """Create one host and test extra capability queries."""
+        # We create a first host, with extra capabilities
         db_api.host_create(_get_fake_host_values(id=1))
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(computehost_id=1))
+        # We create a second host, without any extra capabilities
+        db_api.host_create(_get_fake_host_values(id=2))
+
         self.assertEqual(1, len(
             db_api.host_get_all_by_queries(['vgpu == 2'])))
         self.assertEqual(0, len(
