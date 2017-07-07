@@ -362,12 +362,43 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         ]
         host_allocation_create.assert_has_calls(calls)
 
-    def test_create_reservation_with_missing_param(self):
+    def test_create_reservation_with_missing_param_min(self):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'max': u'2',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
+            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
+            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
+            'resource_type': plugin.RESOURCE_TYPE,
+        }
+        self.assertRaises(
+            manager_exceptions.MissingParameter,
+            self.fake_phys_plugin.reserve_resource,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
+
+    def test_create_reservation_with_missing_param_max(self):
+        values = {
+            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'min': u'2',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': '',
+            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
+            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
+            'resource_type': plugin.RESOURCE_TYPE,
+        }
+        self.assertRaises(
+            manager_exceptions.MissingParameter,
+            self.fake_phys_plugin.reserve_resource,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
+
+    def test_create_reservation_with_missing_param_properties(self):
+        values = {
+            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'min': u'1',
+            'max': u'2',
             'start_date': datetime.datetime(2017, 3, 1, 20, 00),
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
             'resource_type': plugin.RESOURCE_TYPE,

@@ -72,17 +72,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
-        min_hosts = self._convert_int_param(values.get('min'), 'min')
-        max_hosts = self._convert_int_param(values.get('max'), 'max')
+        self._check_params(values)
 
-        if 0 <= min_hosts and min_hosts <= max_hosts:
-            count_range = str(min_hosts) + '-' + str(max_hosts)
-        else:
-            raise manager_ex.InvalidRange()
         host_ids = self._matching_hosts(
             values['hypervisor_properties'],
             values['resource_properties'],
-            count_range,
+            values['count_range'],
             values['start_date'],
             values['end_date'],
         )
@@ -98,7 +93,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             'aggregate_id': pool_instance.id,
             'resource_properties': values['resource_properties'],
             'hypervisor_properties': values['hypervisor_properties'],
-            'count_range': count_range,
+            'count_range': values['count_range'],
             'status': 'pending',
         }
         host_reservation = db_api.host_reservation_create(host_rsrv_values)
@@ -401,3 +396,17 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         else:
             raise manager_ex.MalformedParameter(param=name)
         return param
+
+    def _check_params(self, values):
+        min_hosts = self._convert_int_param(values.get('min'), 'min')
+        max_hosts = self._convert_int_param(values.get('max'), 'max')
+
+        if 0 <= min_hosts and min_hosts <= max_hosts:
+            values['count_range'] = str(min_hosts) + '-' + str(max_hosts)
+        else:
+            raise manager_ex.InvalidRange()
+
+        if 'hypervisor_properties' not in values:
+            raise manager_ex.MissingParameter(param='hypervisor_properties')
+        if 'resource_properties' not in values:
+            raise manager_ex.MissingParameter(param='resource_properties')
