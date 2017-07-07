@@ -257,7 +257,43 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                   "support updates of reservation.")
 
     def on_start(self, resource_id):
-        pass
+        ctx = context.current()
+        instance_reservation = db_api.instance_reservation_get(resource_id)
+        reservation_id = instance_reservation['reservation_id']
+
+        try:
+            self.nova.flavor_access.add_tenant_access(reservation_id,
+                                                      ctx.project_id)
+        except nova_exceptions.ClientException:
+            LOG.info('Failed to associate flavor %s to project %s' %
+                     (reservation_id, ctx.project_id))
+            raise mgr_exceptions.EventError()
+
+        pool = nova.ReservationPool()
+        for allocation in db_api.host_allocation_get_all_by_values(
+                reservation_id=reservation_id):
+            host = db_api.host_get(allocation['compute_host_id'])
+            pool.add_computehost(instance_reservation['aggregate_id'],
+                                 host['service_name'], stay_in=True)
 
     def on_end(self, resource_id):
-        pass
+        instance_reservation = db_api.instance_reservation_get(resource_id)
+        ctx = context.current()
+
+        try:
+            self.nova.flavor_access.remove_tenant_access(
+                instance_reservation['reservation_id'], ctx.project_id)
+        except nova_exceptions.NotFound:
+            pass
+
+        allocations = db_api.host_allocation_get_all_by_values(
+            reservation_id=instance_reservation['reservation_id'])
+        for allocation in allocations:
+            db_api.host_allocation_destroy(allocation['id'])
+
+        for server in self.nova.servers.list(search_opts={
+                'flavor': instance_reservation['reservation_id'],
+                'all_tenants': 1}, detailed=False):
+            server.delete()
+
+        self.cleanup_resources(instance_reservation)

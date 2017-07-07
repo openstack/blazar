@@ -444,3 +444,75 @@ class TestVirtualInstancePlugin(tests.TestCase):
             metadata={'reservation': 'reservation-id1',
                       'filter_tenant_id': 'fake-project',
                       'affinity_id': 'server_group_id1'})
+
+    def test_on_start(self):
+        def fake_host_get(host_id):
+            return {'service_name': 'host' + host_id[-1]}
+
+        self.set_context(context.BlazarContext(project_id='fake-project'))
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        mock_inst_get = self.patch(db_api, 'instance_reservation_get')
+        mock_inst_get.return_value = {'reservation_id': 'reservation-id1',
+                                      'aggregate_id': 'aggregate-id1'}
+
+        mock_nova = mock.MagicMock()
+        type(plugin).nova = mock_nova
+
+        fake_pool = mock.MagicMock()
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = fake_pool
+
+        mock_alloc_get = self.patch(db_api,
+                                    'host_allocation_get_all_by_values')
+        mock_alloc_get.return_value = [
+            {'compute_host_id': 'host-id1'}, {'compute_host_id': 'host-id2'},
+            {'compute_host_id': 'host-id3'}]
+
+        mock_host_get = self.patch(db_api, 'host_get')
+        mock_host_get.side_effect = fake_host_get
+
+        plugin.on_start('resource-id1')
+
+        mock_nova.flavor_access.add_tenant_access.assert_called_once_with(
+            'reservation-id1', 'fake-project')
+        for i in range(3):
+            fake_pool.add_computehost.assert_any_call('aggregate-id1',
+                                                      'host' + str(i + 1),
+                                                      stay_in=True)
+
+    def test_on_end(self):
+        self.set_context(context.BlazarContext(project_id='fake-project-id'))
+
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        fake_instance_reservation = {'reservation_id': 'reservation-id1'}
+        mock_inst_get = self.patch(db_api, 'instance_reservation_get')
+        mock_inst_get.return_value = fake_instance_reservation
+
+        mock_alloc_get = self.patch(db_api,
+                                    'host_allocation_get_all_by_values')
+        mock_alloc_get.return_value = [{'id': 'host-alloc-id1'},
+                                       {'id': 'host-alloc-id2'}]
+
+        self.patch(db_api, 'host_allocation_destroy')
+
+        fake_servers = [mock.MagicMock(method='delete') for i in range(5)]
+        mock_nova = mock.MagicMock()
+        type(plugin).nova = mock_nova
+        mock_nova.servers.list.return_value = fake_servers
+
+        mock_cleanup_resources = self.patch(plugin, 'cleanup_resources')
+
+        plugin.on_end('resource-id1')
+
+        mock_nova.flavor_access.remove_tenant_access.assert_called_once_with(
+            'reservation-id1', 'fake-project-id')
+
+        mock_nova.servers.list.assert_called_once_with(
+            search_opts={'flavor': 'reservation-id1', 'all_tenants': 1},
+            detailed=False)
+        for fake in fake_servers:
+            fake.delete.assert_called_once()
+        mock_cleanup_resources.assert_called_once_with(
+            fake_instance_reservation)

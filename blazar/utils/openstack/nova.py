@@ -323,7 +323,7 @@ class ReservationPool(NovaClientWrapper):
         except manager_exceptions.AggregateNotFound:
             return []
 
-    def add_computehost(self, pool, host):
+    def add_computehost(self, pool, host, stay_in=False):
         """Add a compute host to an aggregate.
 
         The `host` must exist otherwise raise an error
@@ -344,7 +344,7 @@ class ReservationPool(NovaClientWrapper):
         except manager_exceptions.AggregateNotFound:
             raise manager_exceptions.NoFreePool()
 
-        if freepool_agg.id != agg.id:
+        if freepool_agg.id != agg.id and not stay_in:
             if host not in freepool_agg.hosts:
                 raise manager_exceptions.HostNotInFreePool(
                     host=host, freepool_name=freepool_agg.name)
