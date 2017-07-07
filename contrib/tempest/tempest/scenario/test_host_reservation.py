@@ -68,6 +68,49 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
         return body
 
+    def get_lease_body_missing_param(self, lease_name, host_name):
+        current_time = datetime.datetime.utcnow()
+        end_time = current_time + datetime.timedelta(hours=1)
+        body = {
+            "start_date": current_time.strftime('%Y-%m-%d %H:%M'),
+            "end_date": end_time.strftime('%Y-%m-%d %H:%M'),
+            "name": lease_name,
+            "events": [],
+            }
+        body["reservations"] = [
+            {
+                "hypervisor_properties": ('["==", "$hypervisor_hostname", "'
+                                          '%s"]' % host_name),
+                "min": '1',
+                "resource_type": 'physical:host',
+                "resource_properties": ''
+                }
+            ]
+
+        return body
+
+    def get_invalid_lease_body(self, lease_name, host_name):
+        current_time = datetime.datetime.utcnow()
+        end_time = current_time + datetime.timedelta(hours=1)
+        body = {
+            "start_date": current_time.strftime('%Y-%m-%d %H:%M'),
+            "end_date": end_time.strftime('%Y-%m-%d %H:%M'),
+            "name": lease_name,
+            "events": [],
+            }
+        body["reservations"] = [
+            {
+                "hypervisor_properties": ('["==", "$hypervisor_hostname", "'
+                                          '%s"]' % host_name),
+                "max": 'foo',
+                "min": 'bar',
+                "resource_type": 'physical:host',
+                "resource_properties": ''
+                }
+            ]
+
+        return body
+
     def fetch_aggregate_by_name(self, name):
         aggregates = self.aggr_client.list_aggregates()['aggregates']
         try:
@@ -100,6 +143,17 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         # check the host is in freepool
         freepool = self.fetch_aggregate_by_name('freepool')
         self.assertTrue(host['host'] in freepool['hosts'])
+
+        # try creating a new lease with a missing parameter
+        body = self.get_lease_body_missing_param('scenario-1-missing-param',
+                                                 host['host'])
+        self.assertRaises(exceptions.BadRequest,
+                          self.reservation_client.create_lease, body)
+
+        # try creating a new lease with an invalid request
+        body = self.get_invalid_lease_body('scenario-1-invalid', host['host'])
+        self.assertRaises(exceptions.BadRequest,
+                          self.reservation_client.create_lease, body)
 
         # create new lease and start reservation immediatly
         body = self.get_lease_body('scenario-1', host['host'])

@@ -17,6 +17,7 @@
 import datetime
 
 from oslo_config import cfg
+from oslo_utils import strutils
 
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
@@ -67,8 +68,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
-        min_hosts = values.get('min')
-        max_hosts = values.get('max')
+        min_hosts = self._convert_int_param(values.get('min'), 'min')
+        max_hosts = self._convert_int_param(values.get('max'), 'max')
+
         if 0 <= min_hosts and min_hosts <= max_hosts:
             count_range = str(min_hosts) + '-' + str(max_hosts)
         else:
@@ -372,3 +374,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             return all_host_ids[:int(max_host)]
         else:
             return []
+
+    def _convert_int_param(self, param, name):
+        """Checks that the parameter is present and can be converted to int."""
+        if param is None:
+            raise manager_ex.MissingParameter(param=name)
+        if strutils.is_int_like(param):
+            param = int(param)
+        else:
+            raise manager_ex.MalformedParameter(param=name)
+        return param
