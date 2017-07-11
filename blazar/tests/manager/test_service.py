@@ -628,8 +628,6 @@ class ServiceTestCase(tests.TestCase):
             {
                 'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
-                'start_date': datetime.datetime(2013, 12, 20, 20, 00),
-                'end_date': datetime.datetime(2013, 12, 20, 21, 00)
             }
         ]
         event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
@@ -643,8 +641,6 @@ class ServiceTestCase(tests.TestCase):
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
-                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2015, 12, 1, 20, 00),
                 'end_date': datetime.datetime(2015, 12, 1, 22, 00)
             }
@@ -658,6 +654,116 @@ class ServiceTestCase(tests.TestCase):
                  ]
         self.event_update.assert_has_calls(calls)
         self.lease_update.assert_called_once_with(self.lease_id, lease_values)
+
+    def test_update_modify_reservations(self):
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+            elif filters['event_type'] == 'before_end_lease':
+                delta = datetime.timedelta(hours=1)
+                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                        'time': self.lease['end_date'] - delta,
+                        'status': 'UNDONE'}
+
+        lease_values = {
+            'reservations': [
+                {
+                    'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                    'min': 3,
+                    'max': 3
+                }
+            ]
+        }
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+            }
+        ]
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.manager.update_lease(self.lease_id, lease_values)
+        self.fake_plugin.update_reservation.assert_called_with(
+            '593e7028-c0d1-4d76-8642-2ffd890b324c',
+            {
+                'start_date': datetime.datetime(2013, 12, 20, 13, 00),
+                'end_date': datetime.datetime(2013, 12, 20, 15, 00),
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'min': 3,
+                'max': 3
+            }
+        )
+        calls = [mock.call('2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+                           {'time': datetime.datetime(2013, 12, 20, 13, 00)}),
+                 mock.call('7085381b-45e0-4e5d-b24a-f965f5e6e5d7',
+                           {'time': datetime.datetime(2013, 12, 20, 15, 00)}),
+                 mock.call('452bf850-e223-4035-9d13-eb0b0197228f',
+                           {'time': datetime.datetime(2013, 12, 20, 14, 00)})
+                 ]
+        self.event_update.assert_has_calls(calls)
+        self.lease_update.assert_called_once_with(self.lease_id, lease_values)
+
+    def test_update_modify_reservations_with_invalid_param(self):
+        lease_values = {
+            'reservations': [
+                {
+                    'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                    'resource_type': 'invalid',
+                    'min': 3,
+                    'max': 3
+                }
+            ]
+        }
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+            }
+        ]
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                manager_ex.CantUpdateParameter, self.manager.update_lease,
+                self.lease_id, lease_values)
+
+    def test_update_modify_reservations_without_reservation_id(self):
+        lease_values = {
+            'reservations': [
+                {
+                    'max': 3
+                }
+            ]
+        }
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+            }
+        ]
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                manager_ex.MissingParameter, self.manager.update_lease,
+                self.lease_id, lease_values)
 
     def test_update_lease_started_modify_end_date_without_before_end(self):
         def fake_event_get(sort_key, sort_dir, filters):
@@ -693,8 +799,6 @@ class ServiceTestCase(tests.TestCase):
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
-                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 16, 00)
             }
@@ -744,8 +848,6 @@ class ServiceTestCase(tests.TestCase):
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
-                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 16, 00)
             }
@@ -810,8 +912,6 @@ class ServiceTestCase(tests.TestCase):
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
-                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
-                'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 16, 00)
             }

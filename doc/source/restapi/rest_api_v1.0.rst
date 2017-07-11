@@ -358,6 +358,12 @@ are mentioned.
         {
             "name": "lease_new_foo",
             "end_date": "2017-3-12 12:00",
+            "reservations": [
+                {
+                    "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
+                    "max": 3
+                }
+            ]
         }
 
     **response**
@@ -381,7 +387,7 @@ are mentioned.
                         "status": "pending",
                         "lease_id": "6ee55c78-ac52-41a6-99af-2d2d73bcc466",
                         "min": 1,
-                        "max": 1,
+                        "max": 3,
                         "resource_id": "5",
                         "created_at": "2017-02-21 14:50:38",
                         "updated_at": null,

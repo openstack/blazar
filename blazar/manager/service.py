@@ -353,14 +353,26 @@ class ManagerService(service_utils.RPCServer):
                     raise e
 
             # TODO(frossigneux) rollback if an exception is raised
+            reservations = values.get('reservations', [])
             for reservation in (
                     db_api.reservation_get_all_by_lease_id(lease_id)):
-                reservation['start_date'] = values['start_date']
-                reservation['end_date'] = values['end_date']
-                resource_type = reservation['resource_type']
+                v = {}
+                v['start_date'] = values['start_date']
+                v['end_date'] = values['end_date']
+                try:
+                    v.update(filter(lambda x: x['id'] == reservation['id'],
+                                    reservations).pop())
+                except KeyError:
+                    raise exceptions.MissingParameter(param='reservation ID')
+                except IndexError:
+                    pass
+                resource_type = v.get('resource_type',
+                                      reservation['resource_type'])
+                if resource_type != reservation['resource_type']:
+                    raise exceptions.CantUpdateParameter(
+                        param='resource_type')
                 self.plugins[resource_type].update_reservation(
-                    reservation['id'],
-                    reservation)
+                    reservation['id'], v)
 
         event = db_api.event_get_first_sorted_by_filters(
             'lease_id',
@@ -392,6 +404,10 @@ class ManagerService(service_utils.RPCServer):
         self._update_before_end_event(lease, values, notifications,
                                       before_end_date)
 
+        try:
+            del values['reservations']
+        except KeyError:
+            pass
         db_api.lease_update(lease_id, values)
 
         lease = db_api.lease_get(lease_id)

@@ -482,7 +482,6 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
             'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
@@ -490,19 +489,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
-        host_reservation_get.return_value = {
-            'aggregate_id': 1
-        }
-        get_computehosts = self.patch(self.nova.ReservationPool,
-                                      'get_computehosts')
-        get_computehosts.return_value = ['host1']
-        host_allocation_get_all = self.patch(
-            self.db_api,
-            'host_allocation_get_all_by_values')
+
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_allocation_get_all.assert_not_called()
+        host_reservation_get.assert_not_called()
 
     def test_update_reservation_extend(self):
         values = {
@@ -512,7 +503,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
             'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b'
+            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
@@ -520,6 +512,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'count_range': '1-1',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': ''
+        }
         host_allocation_get_all = self.patch(
             self.db_api,
             'host_allocation_get_all_by_values')
@@ -529,15 +526,26 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'compute_host_id': 'host1'
             }
         ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [{'id': 'host1'}]
         get_full_periods = self.patch(self.db_utils, 'get_full_periods')
         get_full_periods.return_value = [
             (datetime.datetime(2013, 12, 19, 20, 00),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
+        host_allocation_create = self.patch(
+            self.db_api,
+            'host_allocation_create')
+        host_allocation_destroy = self.patch(
+            self.db_api,
+            'host_allocation_destroy')
+
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get.assert_not_called()
+        host_allocation_create.assert_not_called()
+        host_allocation_destroy.assert_not_called()
 
     def test_update_reservation_move_failure(self):
         values = {
@@ -559,7 +567,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_reservation_get')
         host_reservation_get.return_value = {
-            'aggregate_id': 1,
+            'count_range': '1-1',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': ''
         }
@@ -572,6 +580,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'compute_host_id': 'host1'
             }
         ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [{'id': 'host1'}]
         get_full_periods = self.patch(self.db_utils, 'get_full_periods')
         get_full_periods.return_value = [
             (datetime.datetime(2013, 12, 20, 20, 30),
@@ -581,14 +592,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                                       'get_computehosts')
         get_computehosts.return_value = ['host1']
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
-        matching_hosts.return_value = ['host2']
+        matching_hosts.return_value = []
         self.assertRaises(
             manager_exceptions.NotEnoughHostsAvailable,
             self.fake_phys_plugin.update_reservation,
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
         reservation_get.assert_called()
-        host_reservation_get.assert_not_called()
 
     def test_update_reservation_move_overlap(self):
         values = {
@@ -598,16 +608,22 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
             'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b'
+            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
-        host_reservation_get_by_reservation_id = self.patch(
+        host_reservation_get = self.patch(
             self.db_api,
-            'host_reservation_get_by_reservation_id')
+            'host_reservation_get')
+        host_reservation_get.return_value = {
+            'count_range': '1-1',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': ''
+        }
         host_allocation_get_all = self.patch(
             self.db_api,
             'host_allocation_get_all_by_values')
@@ -617,18 +633,26 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'compute_host_id': 'host1'
             }
         ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [{'id': 'host1'}]
         get_full_periods = self.patch(self.db_utils, 'get_full_periods')
         get_full_periods.return_value = [
             (datetime.datetime(2013, 12, 19, 20, 30),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
-        get_computehosts = self.patch(self.nova.ReservationPool,
-                                      'get_computehosts')
-        get_computehosts.return_value = []
+        host_allocation_create = self.patch(
+            self.db_api,
+            'host_allocation_create')
+        host_allocation_destroy = self.patch(
+            self.db_api,
+            'host_allocation_destroy')
+
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
-        host_reservation_get_by_reservation_id.assert_not_called()
+        host_allocation_create.assert_not_called()
+        host_allocation_destroy.assert_not_called()
 
     def test_update_reservation_move_realloc(self):
         values = {
@@ -646,14 +670,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
-        host_get = self.patch(self.db_api, 'host_get')
-        host_get.side_effect = ({'service_name': 'host1'},
-                                {'service_name': 'host2'})
         host_reservation_get = self.patch(
             self.db_api,
             'host_reservation_get')
         host_reservation_get.return_value = {
             'aggregate_id': 1,
+            'count_range': '1-1',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': ''
         }
@@ -666,6 +688,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'compute_host_id': 'host1'
             }
         ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [{'id': 'host1'},
+                                                {'id': 'host2'}]
         host_allocation_create = self.patch(
             self.db_api,
             'host_allocation_create')
@@ -677,9 +703,6 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             (datetime.datetime(2013, 12, 20, 20, 30),
              datetime.datetime(2013, 12, 20, 21, 00))
         ]
-        get_computehosts = self.patch(self.nova.ReservationPool,
-                                      'get_computehosts')
-        get_computehosts.return_value = ['host1']
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host2']
         self.fake_phys_plugin.update_reservation(
@@ -695,14 +718,514 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672'
             }
         )
-        self.remove_compute_host.assert_called_with(
-            1,
-            ['host1']
+
+    def test_update_reservation_min_increase_success(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'min': 3
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '2-3',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'},
+            {'id': 'host3'}
+        ]
+        host_allocation_destroy = self.patch(self.db_api,
+                                             'host_allocation_destroy')
+        host_allocation_create = self.patch(self.db_api,
+                                            'host_allocation_create')
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = ['host3']
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        host_reservation_get.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+        matching_hosts.assert_called_with(
+            '["=", "$memory_mb", "16384"]',
+            '',
+            '1-1',
+            datetime.datetime(2017, 7, 12, 20, 00),
+            datetime.datetime(2017, 7, 12, 21, 00)
         )
-        self.add_compute_host.assert_called_with(
-            1,
-            'host2'
+        host_allocation_destroy.assert_not_called()
+        host_allocation_create.assert_called_with(
+            {
+                'compute_host_id': 'host3',
+                'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672'
+            }
         )
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'count_range': '3-3'}
+        )
+
+    def test_update_reservation_min_increase_fail(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'min': 3
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '2-3',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'}
+        ]
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = []
+
+        self.assertRaises(
+            manager_exceptions.NotEnoughHostsAvailable,
+            self.fake_phys_plugin.update_reservation,
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        matching_hosts.assert_called_with(
+            '["=", "$memory_mb", "16384"]',
+            '',
+            '1-1',
+            datetime.datetime(2017, 7, 12, 20, 00),
+            datetime.datetime(2017, 7, 12, 21, 00)
+        )
+
+    def test_update_reservation_min_decrease(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'min': 1
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '2-2',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'}
+        ]
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        host_allocation_destroy = self.patch(self.db_api,
+                                             'host_allocation_destroy')
+        host_allocation_create = self.patch(self.db_api,
+                                            'host_allocation_create')
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        matching_hosts.assert_not_called()
+        host_allocation_destroy.assert_not_called()
+        host_allocation_create.assert_not_called()
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'count_range': '1-2'}
+        )
+
+    def test_update_reservation_max_increase_alloc(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'max': 3
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '1-2',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'},
+            {'id': 'host3'}
+        ]
+        host_allocation_destroy = self.patch(self.db_api,
+                                             'host_allocation_destroy')
+        host_allocation_create = self.patch(self.db_api,
+                                            'host_allocation_create')
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = ['host3']
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        host_reservation_get.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+        matching_hosts.assert_called_with(
+            '["=", "$memory_mb", "16384"]',
+            '',
+            '0-1',
+            datetime.datetime(2017, 7, 12, 20, 00),
+            datetime.datetime(2017, 7, 12, 21, 00)
+        )
+        host_allocation_destroy.assert_not_called()
+        host_allocation_create.assert_called_with(
+            {
+                'compute_host_id': 'host3',
+                'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672'
+            }
+        )
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'count_range': '1-3'}
+        )
+
+    def test_update_reservation_max_increase_noalloc(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'max': 3
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '1-2',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'}
+        ]
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = []
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        host_reservation_get.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+        matching_hosts.assert_called_with(
+            '["=", "$memory_mb", "16384"]',
+            '',
+            '0-1',
+            datetime.datetime(2017, 7, 12, 20, 00),
+            datetime.datetime(2017, 7, 12, 21, 00)
+        )
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'count_range': '1-3'}
+        )
+
+    def test_update_reservation_max_decrease(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'max': 1
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '1-2',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            },
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a7',
+                'compute_host_id': 'host2'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'}
+        ]
+        host_allocation_destroy = self.patch(self.db_api,
+                                             'host_allocation_destroy')
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        host_reservation_get.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+        host_allocation_destroy.assert_called_with(
+            'dd305477-4df8-4547-87f6-69069ee546a6')
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'count_range': '1-1'}
+        )
+
+    def test_update_reservation_realloc_with_properties_change(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'hypervisor_properties': '["=", "$memory_mb", "32768"]',
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '1-1',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = [{'id': 'host2'}]
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = ['host2']
+        host_allocation_create = self.patch(self.db_api,
+                                            'host_allocation_create')
+        host_allocation_destroy = self.patch(self.db_api,
+                                             'host_allocation_destroy')
+        host_reservation_update = self.patch(self.db_api,
+                                             'host_reservation_update')
+
+        self.fake_phys_plugin.update_reservation(
+            '706eb3bc-07ed-4383-be93-b32845ece672',
+            values)
+        host_reservation_get.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+        matching_hosts.assert_called_with(
+            '["=", "$memory_mb", "32768"]',
+            '',
+            '1-1',
+            datetime.datetime(2017, 7, 12, 20, 00),
+            datetime.datetime(2017, 7, 12, 21, 00)
+        )
+        host_allocation_create.assert_called_with(
+            {
+                'compute_host_id': 'host2',
+                'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672'
+            }
+        )
+        host_allocation_destroy.assert_called_with(
+            'dd305477-4df8-4547-87f6-69069ee546a6'
+        )
+        host_reservation_update.assert_called_with(
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            {'hypervisor_properties': '["=", "$memory_mb", "32768"]'}
+        )
+
+    def test_update_reservation_no_requested_hosts_available(self):
+        values = {
+            'start_date': datetime.datetime(2017, 7, 12, 20, 00),
+            'end_date': datetime.datetime(2017, 7, 12, 21, 00),
+            'resource_properties': '[">=", "$vcpus", "32768"]'
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'start_date': datetime.datetime(2013, 12, 19, 20, 00),
+            'end_date': datetime.datetime(2013, 12, 19, 21, 00)
+        }
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'count_range': '1-1',
+            'hypervisor_properties': '["=", "$memory_mb", "16384"]',
+            'resource_properties': ''
+        }
+        host_allocation_get_all = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': 'host1'
+            }
+        ]
+        host_get_all_by_queries = self.patch(self.db_api,
+                                             'host_get_all_by_queries')
+        host_get_all_by_queries.return_value = []
+        matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
+        matching_hosts.return_value = []
+
+        self.assertRaises(
+            manager_exceptions.NotEnoughHostsAvailable,
+            self.fake_phys_plugin.update_reservation,
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
 
     def test_on_start(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')

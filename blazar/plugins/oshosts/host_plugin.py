@@ -110,63 +110,40 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         """Update reservation."""
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
-        if (values['start_date'] < lease['start_date'] or
-                values['end_date'] > lease['end_date']):
-            allocations = []
-            hosts_in_pool = []
-            for allocation in db_api.host_allocation_get_all_by_values(
-                    reservation_id=reservation_id):
-                full_periods = db_utils.get_full_periods(
-                    allocation['compute_host_id'],
-                    values['start_date'],
-                    values['end_date'],
-                    datetime.timedelta(seconds=1))
-                if lease['start_date'] < values['start_date']:
-                    max_start = values['start_date']
-                else:
-                    max_start = lease['start_date']
-                if lease['end_date'] < values['end_date']:
-                    min_end = lease['end_date']
-                else:
-                    min_end = values['end_date']
-                if not (len(full_periods) == 0 or
-                        (len(full_periods) == 1 and
-                         full_periods[0][0] == max_start and
-                         full_periods[0][1] == min_end)):
-                    allocations.append(allocation)
-            if allocations:
-                if reservation['status'] == 'active':
-                    raise manager_ex.NotEnoughHostsAvailable()
-                host_reservation = db_api.host_reservation_get(
-                    reservation['resource_id'])
-                pool = nova.ReservationPool()
-                hosts_in_pool.extend(pool.get_computehosts(
-                    host_reservation['aggregate_id']))
-                host_ids = self._matching_hosts(
-                    host_reservation['hypervisor_properties'],
-                    host_reservation['resource_properties'],
-                    str(len(allocations)) + '-' + str(len(allocations)),
-                    values['start_date'],
-                    values['end_date'])
-                if not host_ids:
-                    raise manager_ex.NotEnoughHostsAvailable()
-                if hosts_in_pool:
-                    old_hosts = [db_api.host_get(allocation['compute_host_id'])
-                                 for allocation in allocations]
-                    old_hostnames = [old_host['service_name']
-                                     for old_host in old_hosts]
-                    pool.remove_computehost(host_reservation['aggregate_id'],
-                                            old_hostnames)
-                for allocation in allocations:
-                    db_api.host_allocation_destroy(allocation['id'])
-                for host_id in host_ids:
-                    db_api.host_allocation_create(
-                        {'compute_host_id': host_id,
-                         'reservation_id': reservation_id})
-                    if hosts_in_pool:
-                        host = db_api.host_get(host_id)
-                        pool.add_computehost(host_reservation['aggregate_id'],
-                                             host['service_name'])
+
+        if (not filter(lambda x: x in ['min', 'max', 'hypervisor_properties',
+                                       'resource_properties'], values.keys())
+                and values['start_date'] >= lease['start_date']
+                and values['end_date'] <= lease['end_date']):
+            # Nothing to update
+            return
+
+        dates_before = {'start_date': lease['start_date'],
+                        'end_date': lease['end_date']}
+        dates_after = {'start_date': values['start_date'],
+                       'end_date': values['end_date']}
+        host_reservation = db_api.host_reservation_get(
+            reservation['resource_id'])
+        self._update_allocations(dates_before, dates_after, reservation_id,
+                                 reservation['status'], host_reservation,
+                                 values)
+
+        updates = {}
+        if 'min' in values or 'max' in values:
+            count_range = str(values.get(
+                'min', host_reservation['count_range'].split('-')[0])
+            ) + '-' + str(values.get(
+                'max', host_reservation['count_range'].split('-')[1])
+            )
+            updates['count_range'] = count_range
+        if 'hypervisor_properties' in values:
+            updates['hypervisor_properties'] = values.get(
+                'hypervisor_properties')
+        if 'resource_properties' in values:
+            updates['resource_properties'] = values.get(
+                'resource_properties')
+        if updates:
+            db_api.host_reservation_update(host_reservation['id'], updates)
 
     def on_start(self, resource_id):
         """Add the hosts in the pool."""
@@ -433,3 +410,101 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             values['before_end'] = 'default'
         if values['before_end'] not in before_end_options:
             raise manager_ex.MalformedParameter(param='before_end')
+
+    def _update_allocations(self, dates_before, dates_after, reservation_id,
+                            reservation_status, host_reservation, values):
+        min_hosts = self._convert_int_param(values.get(
+            'min', host_reservation['count_range'].split('-')[0]), 'min')
+        max_hosts = self._convert_int_param(values.get(
+            'max', host_reservation['count_range'].split('-')[1]), 'max')
+        if min_hosts < 0 or max_hosts < min_hosts:
+            raise manager_ex.InvalidRange()
+        hypervisor_properties = values.get(
+            'hypervisor_properties',
+            host_reservation['hypervisor_properties'])
+        resource_properties = values.get(
+            'resource_properties',
+            host_reservation['resource_properties'])
+        allocs = db_api.host_allocation_get_all_by_values(
+            reservation_id=reservation_id)
+
+        allocs_to_remove = self._allocations_to_remove(
+            dates_before, dates_after, max_hosts, hypervisor_properties,
+            resource_properties, allocs)
+
+        if allocs_to_remove and reservation_status == 'active':
+            raise manager_ex.NotEnoughHostsAvailable()
+
+        kept_hosts = len(allocs) - len(allocs_to_remove)
+        if kept_hosts < max_hosts:
+            min_hosts = min_hosts - kept_hosts \
+                if (min_hosts - kept_hosts) > 0 else 0
+            max_hosts = max_hosts - kept_hosts
+            host_ids = self._matching_hosts(
+                hypervisor_properties, resource_properties,
+                str(min_hosts) + '-' + str(max_hosts),
+                dates_after['start_date'], dates_after['end_date'])
+            if len(host_ids) >= min_hosts:
+                for host_id in host_ids:
+                    db_api.host_allocation_create(
+                        {'compute_host_id': host_id,
+                         'reservation_id': reservation_id})
+            else:
+                raise manager_ex.NotEnoughHostsAvailable()
+
+        for allocation in allocs_to_remove:
+            db_api.host_allocation_destroy(allocation['id'])
+
+    def _allocations_to_remove(self, dates_before, dates_after, max_hosts,
+                               hypervisor_properties, resource_properties,
+                               allocs):
+        allocs_to_remove = []
+        requested_host_ids = [host['id'] for host in
+                              self._filter_hosts_by_properties(
+                                  hypervisor_properties, resource_properties)]
+
+        for alloc in allocs:
+            if alloc['compute_host_id'] not in requested_host_ids:
+                allocs_to_remove.append(alloc)
+                continue
+            if (dates_before['start_date'] > dates_after['start_date'] or
+                    dates_before['end_date'] < dates_after['end_date']):
+                full_periods = db_utils.get_full_periods(
+                    alloc['compute_host_id'],
+                    dates_after['start_date'],
+                    dates_after['end_date'],
+                    datetime.timedelta(seconds=1))
+
+                max_start = max(dates_before['start_date'],
+                                dates_after['start_date'])
+                min_end = min(dates_before['end_date'],
+                              dates_after['end_date'])
+
+                if not (len(full_periods) == 0 or
+                        (len(full_periods) == 1 and
+                         full_periods[0][0] == max_start and
+                         full_periods[0][1] == min_end)):
+                    allocs_to_remove.append(alloc)
+                    continue
+
+        kept_hosts = len(allocs) - len(allocs_to_remove)
+        if kept_hosts > max_hosts:
+            allocs_to_remove.extend(
+                [allocation for allocation in allocs
+                 if allocation not in allocs_to_remove
+                 ][:(kept_hosts - max_hosts)]
+            )
+
+        return allocs_to_remove
+
+    def _filter_hosts_by_properties(self, hypervisor_properties,
+                                    resource_properties):
+        filter = []
+        if hypervisor_properties:
+            filter += plugins_utils.convert_requirements(hypervisor_properties)
+        if resource_properties:
+            filter += plugins_utils.convert_requirements(resource_properties)
+        if filter:
+            return db_api.host_get_all_by_queries(filter)
+        else:
+            return db_api.host_list()

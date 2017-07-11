@@ -50,7 +50,7 @@ def leases_get(lease_id):
 @rest.put('/leases/<lease_id>')
 @validation.check_exists(_api.get_lease, lease_id='lease_id')
 def leases_update(lease_id, data):
-    """Update lease. Only name changing and prolonging may be proceeded."""
+    """Update lease."""
     return api_utils.render(lease=_api.update_lease(lease_id, data))
 
 

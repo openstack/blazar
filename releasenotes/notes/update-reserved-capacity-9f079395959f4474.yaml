@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    The lease-update API supports update of reservation properties. e.g. min,
+    max, hypervisor_properties and resource_properties for host reservation.

@@ -165,3 +165,8 @@ class InvalidRange(exceptions.BlazarException):
     code = 400
     msg_fmt = _('Invalid values for min/max of hosts. '
                 'Max must be equal to or larger than min.')
+
+
+class CantUpdateParameter(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("%(param)s cannot be updated")

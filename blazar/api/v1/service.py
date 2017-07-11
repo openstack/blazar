@@ -16,7 +16,6 @@
 from oslo_log import log as logging
 
 from blazar import context
-from blazar import exceptions
 from blazar.manager import rpcapi as manager_rpcapi
 from blazar import policy
 from blazar.utils import trusts
@@ -67,28 +66,13 @@ class API(object):
 
     @policy.authorize('leases', 'update')
     def update_lease(self, lease_id, data):
-        """Update lease. Only name changing and prolonging may be proceeded.
+        """Update lease.
 
         :param lease_id: ID of the lease in Blazar DB.
         :type lease_id: str
         :param data: New lease characteristics.
         :type data: dict
         """
-        new_name = data.pop('name', None)
-        end_date = data.pop('end_date', None)
-        start_date = data.pop('start_date', None)
-
-        if data:
-            raise exceptions.BlazarException('Only name changing and '
-                                             'dates changing may be '
-                                             'proceeded.')
-        data = {}
-        if new_name:
-            data['name'] = new_name
-        if end_date:
-            data['end_date'] = end_date
-        if start_date:
-            data['start_date'] = start_date
         return self.manager_rpcapi.update_lease(lease_id, data)
 
     @policy.authorize('leases', 'delete')
