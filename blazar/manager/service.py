@@ -183,7 +183,8 @@ class ManagerService(service_utils.RPCServer):
         except KeyError:
             raise exceptions.MissingTrustId()
 
-        # Remove and keep reservation values
+        # Remove and keep event and reservation values
+        events = lease_values.pop("events", [])
         reservations = lease_values.pop("reservations", [])
 
         # Create the lease without the reservations
@@ -212,15 +213,12 @@ class ManagerService(service_utils.RPCServer):
             lease_values['start_date'] = start_date
             lease_values['end_date'] = end_date
 
-            if not lease_values.get('events'):
-                lease_values['events'] = []
-
-            lease_values['events'].append({'event_type': 'start_lease',
-                                           'time': start_date,
-                                           'status': 'UNDONE'})
-            lease_values['events'].append({'event_type': 'end_lease',
-                                           'time': end_date,
-                                           'status': 'UNDONE'})
+            events.append({'event_type': 'start_lease',
+                           'time': start_date,
+                           'status': 'UNDONE'})
+            events.append({'event_type': 'end_lease',
+                           'time': end_date,
+                           'status': 'UNDONE'})
 
             before_end_date = lease_values.get('before_end_notification', None)
             if before_end_date:
@@ -241,7 +239,7 @@ class ManagerService(service_utils.RPCServer):
             if before_end_date:
                 event = {'event_type': 'before_end_lease',
                          'status': 'UNDONE'}
-                lease_values['events'].append(event)
+                events.append(event)
                 self._update_before_end_event_date(event, before_end_date,
                                                    lease_values)
 
@@ -267,6 +265,18 @@ class ManagerService(service_utils.RPCServer):
                 except (exceptions.UnsupportedResourceType,
                         common_ex.BlazarException):
                     LOG.exception("Failed to create reservation for a lease. "
+                                  "Rollback the lease and associated "
+                                  "reservations")
+                    db_api.lease_destroy(lease_id)
+                    raise
+
+                try:
+                    for event in events:
+                        event['lease_id'] = lease['id']
+                        db_api.event_create(event)
+                except (exceptions.UnsupportedResourceType,
+                        common_ex.BlazarException):
+                    LOG.exception("Failed to create event for a lease. "
                                   "Rollback the lease and associated "
                                   "reservations")
                     db_api.lease_destroy(lease_id)
