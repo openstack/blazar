@@ -124,7 +124,9 @@ class Reservation(mb.BlazarBase):
                     raise RuntimeError(e)
 
         if self.instance_reservations:
-            d.update(self.instance_reservations.to_dict())
+            ir_keys = ['vcpus', 'memory_mb', 'disk_gb', 'amount', 'affinity',
+                       'flavor_id', 'aggregate_id', 'server_group_id']
+            d.update(self.instance_reservations.to_dict(include=ir_keys))
 
         return d
 
