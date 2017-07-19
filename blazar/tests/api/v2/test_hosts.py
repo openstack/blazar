@@ -15,8 +15,7 @@
 """
 Tests for API /os-hosts/ methods
 """
-import uuid
-
+from oslo_utils import uuidutils
 import six
 
 
@@ -206,7 +205,7 @@ class TestCreateHost(api.APITest):
     def setUp(self):
         super(TestCreateHost, self).setUp()
 
-        self.id1 = six.text_type(uuid.uuid4())
+        self.id1 = six.text_type(uuidutils.generate_uuid())
         self.fake_computehost = fake_computehost(id=self.id1)
         self.fake_computehost_body = fake_computehost_request_body(id=self.id1)
         self.path = '/os-hosts'

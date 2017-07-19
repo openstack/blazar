@@ -15,8 +15,7 @@
 """
 Tests for API /leases/ methods
 """
-import uuid
-
+from oslo_utils import uuidutils
 import six
 
 
@@ -108,8 +107,8 @@ class TestListLeases(api.APITest):
         self.assertEqual([self.fake_lease], response)
 
     def test_multiple(self):
-        id1 = six.text_type(uuid.uuid4())
-        id2 = six.text_type(uuid.uuid4())
+        id1 = six.text_type(uuidutils.generate_uuid())
+        id2 = six.text_type(uuidutils.generate_uuid())
         self.patch(
             self.rpcapi, 'list_leases').return_value = [
                 fake_lease(id=id1),
@@ -139,7 +138,7 @@ class TestShowLease(api.APITest):
     def setUp(self):
         super(TestShowLease, self).setUp()
 
-        self.id1 = six.text_type(uuid.uuid4())
+        self.id1 = six.text_type(uuidutils.generate_uuid())
         self.fake_lease = fake_lease(id=self.id1)
         self.path = '/leases/{0}'.format(self.id1)
         self.patch(self.rpcapi, 'get_lease').return_value = self.fake_lease
@@ -182,7 +181,7 @@ class TestCreateLease(api.APITest):
     def setUp(self):
         super(TestCreateLease, self).setUp()
 
-        self.id1 = six.text_type(uuid.uuid4())
+        self.id1 = six.text_type(uuidutils.generate_uuid())
         self.fake_lease = fake_lease(id=self.id1)
         self.fake_lease_body = fake_lease_request_body(id=self.id1)
         self.path = '/leases'
@@ -259,7 +258,7 @@ class TestUpdateLease(api.APITest):
     def setUp(self):
         super(TestUpdateLease, self).setUp()
 
-        self.id1 = six.text_type(uuid.uuid4())
+        self.id1 = six.text_type(uuidutils.generate_uuid())
         self.fake_lease = fake_lease(id=self.id1, name='updated')
         self.fake_lease_body = fake_lease_request_body(
             exclude=['reservations', 'events'],
@@ -337,7 +336,7 @@ class TestDeleteLease(api.APITest):
     def setUp(self):
         super(TestDeleteLease, self).setUp()
 
-        self.id1 = six.text_type(uuid.uuid4())
+        self.id1 = six.text_type(uuidutils.generate_uuid())
         self.path = '/leases/{0}'.format(self.id1)
         self.patch(self.rpcapi, 'delete_lease')
 
