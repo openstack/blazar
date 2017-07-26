@@ -54,6 +54,9 @@ CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 
 
+before_end_options = ['', 'snapshot', 'default']
+
+
 class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for physical host resource."""
     resource_type = plugin.RESOURCE_TYPE
@@ -95,6 +98,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             'hypervisor_properties': values['hypervisor_properties'],
             'count_range': values['count_range'],
             'status': 'pending',
+            'before_end': values['before_end']
         }
         host_reservation = db_api.host_reservation_create(host_rsrv_values)
         for host_id in host_ids:
@@ -176,9 +180,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""
-        action = CONF[plugin.RESOURCE_TYPE].before_end
+        host_reservation = db_api.host_reservation_get(resource_id)
+        action = host_reservation['before_end']
+        if action == 'default':
+            action = CONF[plugin.RESOURCE_TYPE].before_end
         if action == 'snapshot':
-            host_reservation = db_api.host_reservation_get(resource_id)
             pool = nova.ReservationPool()
             client = nova.BlazarNovaClient()
             for host in pool.get_computehosts(
@@ -412,3 +418,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise manager_ex.MissingParameter(param='hypervisor_properties')
         if 'resource_properties' not in values:
             raise manager_ex.MissingParameter(param='resource_properties')
+
+        if 'before_end' not in values:
+            values['before_end'] = 'default'
+        if values['before_end'] not in before_end_options:
+            raise manager_ex.MalformedParameter(param='before_end')

@@ -111,6 +111,7 @@ class Reservation(mb.BlazarBase):
             res = self.computehost_reservations.to_dict()
             d['hypervisor_properties'] = res['hypervisor_properties']
             d['resource_properties'] = res['resource_properties']
+            d['before_end'] = res['before_end']
 
             if res['count_range']:
                 try:
@@ -162,6 +163,7 @@ class ComputeHostReservation(mb.BlazarBase):
     count_range = sa.Column(sa.String(36))
     hypervisor_properties = sa.Column(MediumText())
     status = sa.Column(sa.String(13))
+    before_end = sa.Column(sa.String(36))
 
     def to_dict(self):
         return super(ComputeHostReservation, self).to_dict()

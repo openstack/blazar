@@ -347,7 +347,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_properties': '',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'count_range': '1-1',
-            'status': 'pending'
+            'status': 'pending',
+            'before_end': 'default'
         }
         host_reservation_create.assert_called_once_with(host_values)
         calls = [
@@ -409,13 +410,31 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
-    def test_create_reservation_with_invalid_param(self):
+    def test_create_reservation_with_invalid_param_max(self):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': u'2',
             'max': u'three',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
+            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
+            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
+            'resource_type': plugin.RESOURCE_TYPE,
+        }
+        self.assertRaises(
+            manager_exceptions.MalformedParameter,
+            self.fake_phys_plugin.reserve_resource,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
+
+    def test_create_reservation_with_invalid_param_before_end(self):
+        values = {
+            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'min': u'1',
+            'max': u'2',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': '',
+            'before_end': 'invalid',
             'start_date': datetime.datetime(2017, 3, 1, 20, 00),
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
             'resource_type': plugin.RESOURCE_TYPE,
@@ -695,19 +714,18 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             1, 'host1_hostname')
 
     def test_before_end_with_no_action(self):
-        self.cfg.CONF.set_override('before_end', '',
-                                   group='physical:host')
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {'before_end': ''}
+        reservationpool = self.patch(self.nova, 'ReservationPool')
         self.fake_phys_plugin.before_end(
             u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
-        host_reservation_get.assert_not_called()
+        reservationpool.assert_not_called()
 
     def test_before_end_with_snapshot(self):
-        self.cfg.CONF.set_override('before_end', 'snapshot',
-                                   group='physical:host')
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_reservation_get.return_value = {
-            'aggregate_id': 1
+            'aggregate_id': 1,
+            'before_end': 'snapshot'
         }
         get_computehosts = self.patch(self.nova.ReservationPool,
                                       'get_computehosts')
@@ -863,3 +881,38 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             datetime.datetime(2013, 12, 19, 20, 00),
             datetime.datetime(2013, 12, 19, 21, 00))
         self.assertEqual([], result)
+
+    def test_check_params_with_valid_before_end(self):
+        values = {
+            'min': 1,
+            'max': 2,
+            'resource_properties': '',
+            'hypervisor_properties': '',
+            'before_end': 'snapshot'
+        }
+        self.fake_phys_plugin._check_params(values)
+        self.assertEqual(values['before_end'], 'snapshot')
+
+    def test_check_params_with_invalid_before_end(self):
+        values = {
+            'min': 1,
+            'max': 2,
+            'resource_properties': '',
+            'hypervisor_properties': '',
+            'before_end': 'invalid'
+        }
+        self.assertRaises(manager_exceptions.MalformedParameter,
+                          self.fake_phys_plugin._check_params,
+                          values)
+
+    def test_check_params_without_before_end(self):
+        self.cfg.CONF.set_override('before_end', '',
+                                   group='physical:host')
+        values = {
+            'min': 1,
+            'max': 2,
+            'resource_properties': '',
+            'hypervisor_properties': ''
+        }
+        self.fake_phys_plugin._check_params(values)
+        self.assertEqual(values['before_end'], 'default')

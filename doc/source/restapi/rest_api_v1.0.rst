@@ -95,7 +95,8 @@ are mentioned.
                             "hypervisor_properties": "[\"==\", \"$hypervisor_hostname\", \"compute\"]",
                             "resource_properties": "",
                             "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
-                            "resource_type": "physical:host"
+                            "resource_type": "physical:host",
+                            "before_end": "default"
                         }
                     ],
                     "created_at": "2017-02-21 14:50:38",
@@ -168,7 +169,8 @@ are mentioned.
                     "max": 1,
                     "min": 1,
                     "resource_type": "physical:host",
-                    "resource_properties": ""
+                    "resource_properties": "",
+                    "before_end": "default"
                 }
             ],
             "events": []
@@ -202,7 +204,8 @@ are mentioned.
                         "created_at": "2017-02-21 14:50:38",
                         "updated_at": null,
                         "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
-                        "resource_type": "physical:host"
+                        "resource_type": "physical:host",
+                        "before_end": "default"
                     }
                 ],
                 "created_at": "2017-02-21 14:50:38",
@@ -290,7 +293,8 @@ are mentioned.
                         "hypervisor_properties": "[\"==\", \"$hypervisor_hostname\", \"compute\"]",
                         "resource_properties": "",
                         "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
-                        "resource_type": "physical:host"
+                        "resource_type": "physical:host",
+                        "before_end": "default"
                     }
                 ],
                 "created_at": "2017-02-21 14:50:38",
@@ -384,7 +388,8 @@ are mentioned.
                         "hypervisor_properties": "[\"==\", \"$hypervisor_hostname\", \"compute\"]",
                         "resource_properties": "",
                         "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
-                        "resource_type": "physical:host"
+                        "resource_type": "physical:host",
+                        "before_end": "default"
                     }
                 ],
                 "created_at": "2017-02-21 14:50:38",

@@ -1,13 +1,17 @@
 ---
 features:
-  - Blazar gets to support before_end actions. Actions like notification and
-    snapshot can be taken at a specific time prior to the end of a lease.
+  - Blazar gets to support before_end actions. Actions like snapshot can be
+    taken at a specific time prior to the end of a lease.
     The time which triggers actions can be specified by the API parameter
     *before_end_date* and the default interval can be configured by a new
     configuration option *minutes_before_end_lease* in the [manager] section.
-    An action *snapshot* is currently supported by the physical host plugin.
-    The action can be configured by the new configuration option *before_end*
-    in the [physical:host] section.
+    The system default action for physical host plugin can be configured by a
+    new configuration option *before_end* in the [physical:host] section.
+    It can be also specified by a new API parameter *before_end* in a
+    reservation. The value of this parameter can be *snapshot*, *default*, or
+    blank. A system default action will be taken if *default* is specified or
+    no *before_end* parameter included. If blank ("") is explicitly specified,
+    no action will be taken.
 upgrade:
   - The API parameter *before_end_notification* has been renamed
     *before_end_date* which is used for setting the time for triggering actions
