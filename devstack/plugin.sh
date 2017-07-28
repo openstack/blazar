@@ -60,7 +60,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
     iniset $BLAZAR_CONF_FILE DEFAULT verbose $BLAZAR_VERBOSE
 
-    iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin
+    iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin,virtual.instance.plugin
 
     iniset $BLAZAR_CONF_FILE api api_v2_controllers oshosts,leases
 
@@ -73,9 +73,21 @@ function configure_blazar {
 
     ACTUAL_FILTERS=$(iniget $NOVA_CONF filter_scheduler enabled_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
-        iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, BlazarFilter"
+        iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, AggregateInstanceExtraSpecsFilter, AggregateMultiTenancyIsolation, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, BlazarFilter"
     else
-        iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,BlazarFilter"
+        if [[ $ACTUAL_FILTERS != *AggregateInstanceExtraSpecsFilter* ]];  then
+            iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,AggregateInstanceExtraSpecsFilter"
+        fi
+        if [[ $ACTUAL_FILTERS != *AggregateMultiTenancyIsolation* ]];  then
+            iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,AggregateMultiTenancyIsolation"
+        fi
+        if [[ $ACTUAL_FILTERS != *ServerGroupAntiAffinityFilter* ]];  then
+            iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,ServerGroupAntiAffinityFilter"
+        fi
+        if [[ $ACTUAL_FILTERS != *BlazarFilter* ]];  then
+            iniset $NOVA_CONF filter_scheduler enabled_filters "$ACTUAL_FILTERS,BlazarFilter"
+        fi
+
     fi
 
     ACTUAL_AVAILABLE_FILTERS=$(iniget $NOVA_CONF filter_scheduler available_filters)
