@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    The new instance reservation feature is available from the Pike release.
+    This feature enables a user to reserve instance slots on hypervisors for
+    future usage. A user creates a lease for an instance reservation prior to
+    creating the instance(s), then a confirmed reservation ensures he/she
+    can create their instances within the reservation period. For detailed
+    usage instructions, please read the Blazar documentation. Known limitation:
+    in the Pike release this feature does not yet support reservations with
+    affinity=True. Use the host reservation feature instead.
