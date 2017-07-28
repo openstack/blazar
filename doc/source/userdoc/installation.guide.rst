@@ -2,6 +2,7 @@ Installation using DevStack
 ===========================
 
 This section includes instructions for Blazar installation using DevStack.
+DevStack configures both the host reservation and the instance reservation.
 
 1. Download DevStack:
 
@@ -58,6 +59,8 @@ Installation without DevStack
 =============================
 
 This section includes instructions for Blazar installation.
+You can use the host reservation and the instance reservation once
+you finish the install guide.
 
 Download all Blazar related repos:
 
@@ -120,7 +123,7 @@ Then edit */etc/blazar/blazar.conf* using the following example:
     identity_service=<identity_service_name>
 
     [manager]
-    plugins=physical.host.plugin
+    plugins=physical.host.plugin,virtual.instance.plugin
 
     [keystone_authtoken]
     auth_type=<password, for example>
@@ -149,14 +152,13 @@ user, create it:
 
 ..
 
-Next you need to configure Nova. If you want to use physical reservations,
-please add the following lines to nova.conf file:
+Next you need to configure Nova. Please add the following lines to nova.conf file:
 
 .. sourcecode:: console
 
     scheduler_available_filters = nova.scheduler.filters.all_filters
     scheduler_available_filters = blazarnova.scheduler.filters.blazar_filter.BlazarFilter
-    scheduler_default_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,BlazarFilter
+    scheduler_default_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,AggregateInstanceExtraSpecsFilter,AggregateMultiTenancyIsolation,ServerGroupAntiAffinityFilter,BlazarFilter
 
 ..
 

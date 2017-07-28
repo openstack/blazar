@@ -36,7 +36,8 @@ User guide
 .. toctree::
    :maxdepth: 1
 
-   userdoc/using.blazar
+   userdoc/using.host-reservation
+   userdoc/using.instance-reservation
 
 Development guide
 -----------------
