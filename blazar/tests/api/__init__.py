@@ -14,13 +14,11 @@
 # limitations under the License.
 
 """Base classes for API tests."""
-import uuid
-
 from keystonemiddleware import fixture
+from oslo_utils import uuidutils
 import pecan
 import pecan.testing
 import six
-
 
 from blazar.api import context as api_context
 from blazar import context
@@ -34,8 +32,8 @@ PATH_PREFIX = '/v2'
 class APITest(tests.TestCase):
     """Used for unittests tests of Pecan controllers."""
 
-    ADMIN_TOKEN = uuid.uuid4().hex
-    MEMBER_TOKEN = uuid.uuid4().hex
+    ADMIN_TOKEN = uuidutils.generate_uuid(dashed=False)
+    MEMBER_TOKEN = uuidutils.generate_uuid(dashed=False)
 
     # SOURCE_DATA = {'test_source': {'somekey': '666'}}
 

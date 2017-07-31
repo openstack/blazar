@@ -15,7 +15,8 @@
 
 import datetime
 import operator
-import uuid
+
+from oslo_utils import uuidutils
 
 from blazar.db import exceptions as db_exceptions
 from blazar.db.sqlalchemy import api as db_api
@@ -25,7 +26,7 @@ from blazar import tests
 
 
 def _get_fake_random_uuid():
-    return str(uuid.uuid4())
+    return uuidutils.generate_uuid()
 
 
 def _get_fake_lease_uuid():

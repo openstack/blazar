@@ -15,9 +15,9 @@
 # under the License.
 
 import datetime
-import uuid
 
 from oslo_context import context
+from oslo_utils import uuidutils
 
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import utils as db_utils
@@ -25,7 +25,7 @@ from blazar import tests
 
 
 def _get_fake_random_uuid():
-    return unicode(str(uuid.uuid4()))
+    return unicode(uuidutils.generate_uuid())
 
 
 def _get_fake_lease_uuid():
