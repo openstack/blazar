@@ -176,8 +176,8 @@ And we need to create the reservation service in Keystone with its endpoints:
 .. sourcecode:: console
 
     openstack service create --name blazar --description “OpenStack Reservation Service” reservation
-    openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
-    openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
+    openstack endpoint create --region <region> blazar admin "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
+    openstack endpoint create --region <region> blazar internal "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
     openstack endpoint create --region <region> blazar public "<auth_protocol>://<blazar_host>:<blazar_port>/v1"
 
 ..
