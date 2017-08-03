@@ -262,8 +262,7 @@ class ManagerService(service_utils.RPCServer):
                         reservation['start_date'] = lease['start_date']
                         reservation['end_date'] = lease['end_date']
                         self._create_reservation(reservation)
-                except (exceptions.UnsupportedResourceType,
-                        common_ex.BlazarException):
+                except Exception:
                     LOG.exception("Failed to create reservation for a lease. "
                                   "Rollback the lease and associated "
                                   "reservations")
