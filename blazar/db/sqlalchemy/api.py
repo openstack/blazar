@@ -652,6 +652,12 @@ def host_get_all_by_queries(queries):
                     msg = 'Operator %s for extra capabilities not implemented'
                     raise NotImplementedError(msg % op)
 
+            # We must also avoid selecting any host which doesn't have the
+            # extra capability present.
+            all_hosts = [h.id for h in hosts_query.all()]
+            extra_filter_hosts = [h.computehost_id for h in extra_filter]
+            hosts += [h for h in all_hosts if h not in extra_filter_hosts]
+
     return hosts_query.filter(~models.ComputeHost.id.in_(hosts)).all()
 
 
