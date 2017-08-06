@@ -428,13 +428,14 @@ class ManagerService(service_utils.RPCServer):
 
         with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
             for reservation in lease['reservations']:
-                plugin = self.plugins[reservation['resource_type']]
-                try:
-                    plugin.on_end(reservation['resource_id'])
-                except (db_ex.BlazarDBException, RuntimeError):
-                    LOG.exception("Failed to delete a reservation "
-                                  "for a lease.")
-                    raise
+                if reservation['status'] != 'deleted':
+                    plugin = self.plugins[reservation['resource_type']]
+                    try:
+                        plugin.on_end(reservation['resource_id'])
+                    except (db_ex.BlazarDBException, RuntimeError):
+                        LOG.exception("Failed to delete a reservation "
+                                      "for a lease.")
+                        raise
             db_api.lease_destroy(lease_id)
             self._send_notification(lease, ctx, events=['delete'])
 

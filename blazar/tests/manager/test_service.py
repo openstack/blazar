@@ -1078,8 +1078,10 @@ class ServiceTestCase(tests.TestCase):
 
         self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         self.lease_destroy.assert_called_once_with(self.lease_id)
+        self.fake_plugin.on_end.assert_called_with('111')
 
     def test_delete_lease_after_ending_date(self):
+        self.lease['reservations'][0]['status'] = 'deleted'
         fake_get_lease = self.patch(self.manager, 'get_lease')
         fake_get_lease.return_value = self.lease
 
@@ -1096,6 +1098,7 @@ class ServiceTestCase(tests.TestCase):
             expected_context.__enter__.return_value,
             self.notifier_api.format_lease_payload(self.lease),
             'lease.delete')
+        self.fake_plugin.on_end.assert_not_called()
 
     def test_delete_lease_after_starting_date(self):
         def fake_event_get(sort_key, sort_dir, filters):
