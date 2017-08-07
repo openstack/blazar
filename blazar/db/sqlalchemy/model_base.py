@@ -21,7 +21,7 @@ from sqlalchemy.orm import attributes
 class _BlazarBase(models.ModelBase, models.TimestampMixin):
     """Base class for all Blazar SQLAlchemy DB Models."""
 
-    def to_dict(self):
+    def to_dict(self, include=None):
         """sqlalchemy based automatic to_dict method."""
         d = {}
 
@@ -30,7 +30,11 @@ class _BlazarBase(models.ModelBase, models.TimestampMixin):
         # here and thereby cause it to load...
         unloaded = attributes.instance_state(self).unloaded
 
-        for col in self.__table__.columns:
+        columns = self.__table__.columns
+        if include:
+            columns = [col for col in columns if col.name in include]
+
+        for col in columns:
             if col.name not in unloaded:
                 d[col.name] = getattr(self, col.name)
 
