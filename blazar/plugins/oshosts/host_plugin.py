@@ -147,10 +147,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 if not host_ids:
                     raise manager_ex.NotEnoughHostsAvailable()
                 if hosts_in_pool:
-                    old_hosts = [allocation['compute_host_id']
+                    old_hosts = [db_api.host_get(allocation['compute_host_id'])
                                  for allocation in allocations]
+                    old_hostnames = [old_host['service_name']
+                                     for old_host in old_hosts]
                     pool.remove_computehost(host_reservation['aggregate_id'],
-                                            old_hosts)
+                                            old_hostnames)
                 for allocation in allocations:
                     db_api.host_allocation_destroy(allocation['id'])
                 for host_id in host_ids:

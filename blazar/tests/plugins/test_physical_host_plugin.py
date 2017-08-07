@@ -616,7 +616,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2013, 12, 19, 21, 00)
         }
         host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'host2'}
+        host_get.side_effect = ({'service_name': 'host1'},
+                                {'service_name': 'host2'})
         host_reservation_get = self.patch(
             self.db_api,
             'host_reservation_get')
