@@ -267,6 +267,18 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                           self.fake_phys_plugin.update_computehost,
                           self.fake_host_id, host_values)
 
+    def test_update_host_with_new_extra_capability(self):
+        host_values = {'buzz': 'word'}
+
+        self.db_host_extra_capability_get_all_per_name.return_value = []
+        self.fake_phys_plugin.update_computehost(self.fake_host_id,
+                                                 host_values)
+        self.db_host_extra_capability_create.assert_called_once_with({
+            'computehost_id': '1',
+            'capability_name': 'buzz',
+            'capability_value': 'word'
+        })
+
     def test_delete_host(self):
         self.fake_phys_plugin.delete_computehost(self.fake_host_id)
 
