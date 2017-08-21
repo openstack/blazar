@@ -49,10 +49,6 @@ class Lease(mb.BlazarBase):
 
     __tablename__ = 'leases'
 
-    __table_args__ = (
-        sa.UniqueConstraint('name'),
-    )
-
     id = _id_column()
     name = sa.Column(sa.String(80), nullable=False)
     user_id = sa.Column(sa.String(255), nullable=True)
