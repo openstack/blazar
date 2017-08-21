@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The update host API now allows new extra capabilities to be created on
+    existing hosts, in addition to allowing values of existing keys to be
+    modified. However, extra capabilities cannot yet be removed due to lack of
+    API support. As a workaround, operators can delete hosts and recreate them.
