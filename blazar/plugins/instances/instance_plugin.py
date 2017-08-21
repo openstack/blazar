@@ -205,9 +205,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     def validate_reservation_param(self, values):
         marshall_attributes = set(['vcpus', 'memory_mb', 'disk_gb',
                                    'amount', 'affinity'])
-        missing_params = marshall_attributes - set(values.keys())
-        if missing_params:
-            mgr_exceptions.MissingParameter(param=','.join(missing_params))
+        missing_attr = marshall_attributes - set(values.keys())
+        if missing_attr:
+            raise mgr_exceptions.MissingParameter(param=','.join(missing_attr))
 
     def reserve_resource(self, reservation_id, values):
         self.validate_reservation_param(values)
