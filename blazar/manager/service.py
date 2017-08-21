@@ -208,7 +208,9 @@ class ManagerService(service_utils.RPCServer):
                 'Start date must later than current date')
 
         with trusts.create_ctx_from_trust(trust_id) as ctx:
-            lease_values['user_id'] = ctx.user_id
+            # NOTE(priteau): We should not get user_id from ctx, because we are
+            # in the context of the trustee (blazar user).
+            # lease_values['user_id'] is set in blazar/api/v1/service.py
             lease_values['project_id'] = ctx.project_id
             lease_values['start_date'] = start_date
             lease_values['end_date'] = end_date

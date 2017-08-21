@@ -49,6 +49,11 @@ class API(object):
         :param data: New lease characteristics.
         :type data: dict
         """
+        # TODO(priteau): If possible, extend the context object used in the
+        # manager to keep track of the trustor, instead of using the following
+        # two lines
+        ctx = context.current()
+        data['user_id'] = ctx.user_id
         return self.manager_rpcapi.create_lease(data)
 
     @policy.authorize('leases', 'get')
