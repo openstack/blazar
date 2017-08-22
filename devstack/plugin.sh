@@ -11,14 +11,14 @@ else
     BLAZAR_BIN_DIR=$(get_python_exec_prefix)
 fi
 
-# Test if any Ceilometer services are enabled
-# is_ceilometer_enabled
+# Test if any Blazar services are enabled
+# is_blazar_enabled
 function is_blazar_enabled {
     [[ ,${ENABLED_SERVICES} =~ ,"blazar-" ]] && return 0
     return 1
 }
 
-# Oslo.Messaging RPC iniupdate cofiguration
+# Oslo.Messaging RPC iniupdate configuration
 function iniupdate_rpc_backend {
     local file=$1
     local section=$2
@@ -51,7 +51,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_project_name $SERVICE_TENANT_NAME
     iniset $BLAZAR_CONF_FILE DEFAULT identity_service $BLAZAR_IDENTITY_SERVICE_NAME
 
-    # keystone authtoken
+    # Keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
 
     iniset $BLAZAR_CONF_FILE physical:host aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
@@ -96,10 +96,6 @@ function configure_blazar {
     fi
     iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.BlazarFilter"
 
-    # TODO(hiro-kobayashi): This line should be deleted after the patch
-    # https://review.openstack.org/#/c/471590/ is merged.
-    iniadd $NOVA_CONF blazar:physical:host blazar_az_prefix blazar_
-
     # Database
     recreate_database blazar utf8
 
@@ -107,7 +103,7 @@ function configure_blazar {
     $BLAZAR_BIN_DIR/blazar-db-manage --config-file $BLAZAR_CONF_FILE upgrade head
 }
 
-# Configures keystone integration for blazar service
+# Configures Keystone integration for the Blazar service
 function _blazar_setup_keystone {
     local conf_file=$1
     local section=$2
@@ -135,11 +131,11 @@ function create_blazar_aggregate_freepool {
     openstack aggregate create $BLAZAR_FREEPOOL_NAME
 }
 
-# create_blazar_accounts() - Set up common required BLAZAR accounts
+# create_blazar_accounts() - Set up common required Blazar accounts
 #
 # Tenant               User       Roles
 # ------------------------------------------------------------------
-# service              BLAZAR     admin        # if enabled
+# service              blazar     admin        # if enabled
 #
 function create_blazar_accounts {
     SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
@@ -150,7 +146,7 @@ function create_blazar_accounts {
     get_or_add_user_project_role $ADMIN_ROLE $BLAZAR_USER_ID $SERVICE_TENANT
 
     BLAZAR_SERVICE=$(get_or_create_service "blazar" \
-        "reservation" "Blazar Reservations Service")
+        "reservation" "Blazar Reservation Service")
     get_or_create_endpoint $BLAZAR_SERVICE \
         "$REGION_NAME" \
         "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
@@ -201,7 +197,7 @@ if is_service_enabled blazar blazar-m blazar-a; then
         iniupdate_rpc_backend
     elif [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing Blazar"
-        # Use stack_install_service here to account for vitualenv
+        # Use stack_install_service here to account for virtualenv
         stack_install_service blazar
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring Blazar"
