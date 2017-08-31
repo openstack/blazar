@@ -425,11 +425,11 @@ class ManagerService(service_utils.RPCServer):
                 'asc',
                 {
                     'lease_id': lease_id,
-                    'event_type': 'start_lease',
-                    'status': 'DONE'
+                    'event_type': 'start_lease'
                 }
             )
-            if not start_event:
+            if not start_event or start_event['status'] not in ['DONE',
+                                                                'ERROR']:
                 raise common_ex.BlazarException('Invalid event status')
             end_event = db_api.event_get_first_sorted_by_filters(
                 'lease_id',
