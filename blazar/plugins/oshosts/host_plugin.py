@@ -469,7 +469,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 continue
             if (dates_before['start_date'] > dates_after['start_date'] or
                     dates_before['end_date'] < dates_after['end_date']):
-                full_periods = db_utils.get_full_periods(
+                reserved_periods = db_utils.get_reserved_periods(
                     alloc['compute_host_id'],
                     dates_after['start_date'],
                     dates_after['end_date'],
@@ -480,10 +480,10 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 min_end = min(dates_before['end_date'],
                               dates_after['end_date'])
 
-                if not (len(full_periods) == 0 or
-                        (len(full_periods) == 1 and
-                         full_periods[0][0] == max_start and
-                         full_periods[0][1] == min_end)):
+                if not (len(reserved_periods) == 0 or
+                        (len(reserved_periods) == 1 and
+                         reserved_periods[0][0] == max_start and
+                         reserved_periods[0][1] == min_end)):
                     allocs_to_remove.append(alloc)
                     continue
 

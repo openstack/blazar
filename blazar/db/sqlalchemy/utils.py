@@ -72,14 +72,14 @@ def get_reservations_by_host_id(host_id, start_date, end_date):
 
 def get_free_periods(resource_id, start_date, end_date, duration):
     """Returns a list of free periods."""
-    full_periods = get_full_periods(resource_id,
-                                    start_date,
-                                    end_date,
-                                    duration)
+    reserved_periods = get_reserved_periods(resource_id,
+                                            start_date,
+                                            end_date,
+                                            duration)
     free_periods = []
     previous = (start_date, start_date)
-    if len(full_periods) >= 1:
-        for period in full_periods:
+    if len(reserved_periods) >= 1:
+        for period in reserved_periods:
             free_periods.append((previous[1], period[0]))
             previous = period
         free_periods.append((previous[1], end_date))
@@ -115,56 +115,70 @@ def _get_events(host_id, start_date, end_date):
     return events
 
 
-def _find_full_periods(events, quantity, capacity):
-    """Find the full periods."""
-    full_periods = []
+def _find_reserved_periods(events, quantity, capacity):
+    """Find the reserved periods."""
+    reserved_periods = []
     used = 0
-    full_start = None
+    reserved_start = None
     for event_date in sorted(events):
         used += events[event_date]['quantity']
-        if not full_start and used + quantity > capacity:
-            full_start = event_date
-        elif full_start and used + quantity <= capacity:
-            full_periods.append((full_start, event_date))
-            full_start = None
-    return full_periods
+        if not reserved_start and used + quantity > capacity:
+            reserved_start = event_date
+        elif reserved_start and used + quantity <= capacity:
+            reserved_periods.append((reserved_start, event_date))
+            reserved_start = None
+    return reserved_periods
 
 
-def _merge_periods(full_periods, start_date, end_date, duration):
+def _merge_periods(reserved_periods, start_date, end_date, duration):
     """Merge periods if the interval is too narrow."""
-    full_start = None
-    full_end = None
+    reserved_start = None
+    reserved_end = None
     previous = None
-    merged_full_periods = []
-    for period in full_periods:
-        if not full_start:
-            full_start = period[0]
-        # Enough time between the two full periods
+    merged_reserved_periods = []
+    for period in reserved_periods:
+        if not reserved_start:
+            reserved_start = period[0]
+        # Enough time between the two reserved periods
         if previous and period[0] - previous[1] >= duration:
-            full_end = previous[1]
-            merged_full_periods.append((full_start, full_end))
-            full_start = period[0]
-        full_end = period[1]
+            reserved_end = previous[1]
+            merged_reserved_periods.append((reserved_start, reserved_end))
+            reserved_start = period[0]
+        reserved_end = period[1]
         previous = period
     if previous and end_date - previous[1] < duration:
-        merged_full_periods.append((full_start, end_date))
+        merged_reserved_periods.append((reserved_start, end_date))
     elif previous:
-        merged_full_periods.append((full_start, previous[1]))
-    if (len(merged_full_periods) >= 1 and
-            merged_full_periods[0][0] - start_date < duration):
-        merged_full_periods[0] = (start_date, merged_full_periods[0][1])
-    return merged_full_periods
+        merged_reserved_periods.append((reserved_start, previous[1]))
+    if (len(merged_reserved_periods) >= 1 and
+            merged_reserved_periods[0][0] - start_date < duration):
+        merged_reserved_periods[0] = (start_date,
+                                      merged_reserved_periods[0][1])
+    return merged_reserved_periods
 
 
-def get_full_periods(host_id, start_date, end_date, duration):
-    """Returns a list of full periods."""
-    capacity = 1  # The resource status is binary (empty or full)
+def get_reserved_periods(host_id, start_date, end_date, duration):
+    """Returns a list of reserved periods for a host.
+
+    The get_reserved_periods function returns a list of periods during which
+    the host passed as parameter is reserved. The duration parameter allows to
+    choose the minimum length of time for a period to be considered free.
+
+    :param host_id: the host to consider
+    :param start_date: start datetime of the entire period to consider
+    :param end_date: end datetime of the entire period to consider
+    :param duration: minimum length of time for a period to be considered free
+    :returns: the list of reserved periods for the host, expressed as a list of
+              two-element tuples, where the first element is the start datetime
+              of the reserved period and the second is the end datetime
+    """
+    capacity = 1  # The resource status is binary (free or reserved)
     quantity = 1  # One reservation per host at the same time
     if end_date - start_date < duration:
         return [(start_date, end_date)]
     events = _get_events(host_id, start_date, end_date)
-    full_periods = _find_full_periods(events, quantity, capacity)
-    return _merge_periods(full_periods, start_date, end_date, duration)
+    reserved_periods = _find_reserved_periods(events, quantity, capacity)
+    return _merge_periods(reserved_periods, start_date, end_date, duration)
 
 
 def reservation_ratio(host_id, start_date, end_date):

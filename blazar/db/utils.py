@@ -112,9 +112,10 @@ def get_free_periods(resource_id, start_date, end_date, duration):
     return IMPL.get_free_periods(resource_id, start_date, end_date, duration)
 
 
-def get_full_periods(resource_id, start_date, end_date, duration):
-    """Returns a list of full periods."""
-    return IMPL.get_full_periods(resource_id, start_date, end_date, duration)
+def get_reserved_periods(resource_id, start_date, end_date, duration):
+    """Returns a list of reserved periods."""
+    return IMPL.get_reserved_periods(resource_id, start_date, end_date,
+                                     duration)
 
 
 def reservation_ratio(resource_id, start_date, end_date):

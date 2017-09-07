@@ -158,36 +158,36 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         self.assertEqual(free_periods[1][1].strftime('%Y-%m-%d %H:%M'),
                          '2099-01-01 00:00')
 
-    def test_get_full_periods(self):
-        """Find the full periods."""
+    def test_get_reserved_periods(self):
+        """Find the reserved periods."""
         self._setup_leases()
         start_date = datetime.datetime.strptime('2028-01-01 08:00',
                                                 '%Y-%m-%d %H:%M')
         end_date = datetime.datetime.strptime('2099-01-01 00:00',
                                               '%Y-%m-%d %H:%M')
         duration = datetime.timedelta(hours=1)
-        full_periods = db_utils.get_full_periods('r1',
-                                                 start_date,
-                                                 end_date,
-                                                 duration)
-        self.assertEqual(len(full_periods), 2)
-        self.assertEqual(full_periods[0][0].strftime('%Y-%m-%d %H:%M'),
+        reserved_periods = db_utils.get_reserved_periods('r1',
+                                                         start_date,
+                                                         end_date,
+                                                         duration)
+        self.assertEqual(len(reserved_periods), 2)
+        self.assertEqual(reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 09:00')
-        self.assertEqual(full_periods[0][1].strftime('%Y-%m-%d %H:%M'),
+        self.assertEqual(reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 10:30')
-        self.assertEqual(full_periods[1][0].strftime('%Y-%m-%d %H:%M'),
+        self.assertEqual(reserved_periods[1][0].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 13:00')
-        self.assertEqual(full_periods[1][1].strftime('%Y-%m-%d %H:%M'),
+        self.assertEqual(reserved_periods[1][1].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 14:00')
         duration = datetime.timedelta(hours=3)
-        full_periods = db_utils.get_full_periods('r1',
-                                                 start_date,
-                                                 end_date,
-                                                 duration)
-        self.assertEqual(len(full_periods), 1)
-        self.assertEqual(full_periods[0][0].strftime('%Y-%m-%d %H:%M'),
+        reserved_periods = db_utils.get_reserved_periods('r1',
+                                                         start_date,
+                                                         end_date,
+                                                         duration)
+        self.assertEqual(len(reserved_periods), 1)
+        self.assertEqual(reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 09:00')
-        self.assertEqual(full_periods[0][1].strftime('%Y-%m-%d %H:%M'),
+        self.assertEqual(reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'),
                          '2030-01-01 14:00')
 
     def test_availability_time(self):

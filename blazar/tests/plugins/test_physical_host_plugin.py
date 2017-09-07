@@ -529,8 +529,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_get_all_by_queries = self.patch(self.db_api,
                                              'host_get_all_by_queries')
         host_get_all_by_queries.return_value = [{'id': 'host1'}]
-        get_full_periods = self.patch(self.db_utils, 'get_full_periods')
-        get_full_periods.return_value = [
+        get_reserved_periods = self.patch(self.db_utils,
+                                          'get_reserved_periods')
+        get_reserved_periods.return_value = [
             (datetime.datetime(2013, 12, 19, 20, 00),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
@@ -583,8 +584,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_get_all_by_queries = self.patch(self.db_api,
                                              'host_get_all_by_queries')
         host_get_all_by_queries.return_value = [{'id': 'host1'}]
-        get_full_periods = self.patch(self.db_utils, 'get_full_periods')
-        get_full_periods.return_value = [
+        get_reserved_periods = self.patch(self.db_utils,
+                                          'get_reserved_periods')
+        get_reserved_periods.return_value = [
             (datetime.datetime(2013, 12, 20, 20, 30),
              datetime.datetime(2013, 12, 20, 21, 00))
         ]
@@ -636,8 +638,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_get_all_by_queries = self.patch(self.db_api,
                                              'host_get_all_by_queries')
         host_get_all_by_queries.return_value = [{'id': 'host1'}]
-        get_full_periods = self.patch(self.db_utils, 'get_full_periods')
-        get_full_periods.return_value = [
+        get_reserved_periods = self.patch(self.db_utils,
+                                          'get_reserved_periods')
+        get_reserved_periods.return_value = [
             (datetime.datetime(2013, 12, 19, 20, 30),
              datetime.datetime(2013, 12, 19, 21, 00))
         ]
@@ -698,8 +701,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_allocation_destroy = self.patch(
             self.db_api,
             'host_allocation_destroy')
-        get_full_periods = self.patch(self.db_utils, 'get_full_periods')
-        get_full_periods.return_value = [
+        get_reserved_periods = self.patch(self.db_utils,
+                                          'get_reserved_periods')
+        get_reserved_periods.return_value = [
             (datetime.datetime(2013, 12, 20, 20, 30),
              datetime.datetime(2013, 12, 20, 21, 00))
         ]
