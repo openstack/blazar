@@ -268,6 +268,7 @@ class ServiceTestCase(tests.TestCase):
         trust_id = 'exxee111qwwwwe'
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -291,6 +292,7 @@ class ServiceTestCase(tests.TestCase):
         trust_id = 'exxee111qwwwwe'
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -310,6 +312,7 @@ class ServiceTestCase(tests.TestCase):
     def test_create_lease_validate_created_events(self):
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -353,6 +356,7 @@ class ServiceTestCase(tests.TestCase):
     def test_create_lease_before_end_event_is_before_lease_start(self):
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -395,6 +399,7 @@ class ServiceTestCase(tests.TestCase):
 
     def test_create_lease_before_end_event_before_start_without_lease_id(self):
         lease_values = {
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -418,6 +423,7 @@ class ServiceTestCase(tests.TestCase):
         start_date = '2026-11-13 13:13'
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -435,6 +441,7 @@ class ServiceTestCase(tests.TestCase):
         before_end_date = '2026-11-15 13:13'
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -451,6 +458,7 @@ class ServiceTestCase(tests.TestCase):
     def test_create_lease_no_before_end_event(self):
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -489,6 +497,7 @@ class ServiceTestCase(tests.TestCase):
         before_end_date = '2026-11-14 10:13'
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
@@ -530,7 +539,8 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual('UNDONE', event['status'])
 
     def test_create_lease_wrong_date(self):
-        lease_values = {'start_date': '2025-13-35 13:13',
+        lease_values = {'name': 'lease-name',
+                        'start_date': '2025-13-35 13:13',
                         'end_date': '2025-12-31 13:13',
                         'trust_id': 'exxee111qwwwwe'}
 
@@ -539,16 +549,19 @@ class ServiceTestCase(tests.TestCase):
 
     def test_create_lease_wrong_format_before_end_date(self):
         before_end_date = '2026-14 10:13'
-        lease_values = {'start_date': '2026-11-13 13:13',
-                        'end_date': '2026-11-14 13:13',
-                        'before_end_date': before_end_date,
-                        'trust_id': 'exxee111qwwwwe'}
+        lease_values = {
+            'name': 'lease-name',
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-11-14 13:13',
+            'before_end_date': before_end_date,
+            'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
 
     def test_create_lease_start_date_in_past(self):
         lease_values = {
+            'name': 'lease-name',
             'start_date':
             datetime.datetime.strftime(
                 datetime.datetime.utcnow() - datetime.timedelta(days=1),
@@ -562,6 +575,7 @@ class ServiceTestCase(tests.TestCase):
     def test_create_lease_unsupported_resource_type(self):
         lease_values = {
             'id': self.lease_id,
+            'name': 'lease-name',
             'reservations': [{'id': '111',
                               'resource_id': '111',
                               'resource_type': 'unsupported:type',
@@ -593,6 +607,32 @@ class ServiceTestCase(tests.TestCase):
 
         self.assertRaises(manager_ex.MissingTrustId,
                           self.manager.create_lease, lease_values)
+
+    def test_create_lease_without_required_params(self):
+        name_missing_values = {
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'trust1'}
+        start_missing_values = {
+            'name': 'name',
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'trust1'}
+        end_missing_values = {
+            'name': 'name',
+            'start_date': '2026-11-13 13:13',
+            'trust_id': 'trust1'}
+        resource_type_missing_value = {
+            'name': 'name',
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13',
+            'reservations': [{'min': 1, 'max': 3}],
+            'trust_id': 'trust1'
+            }
+
+        for value in [name_missing_values, start_missing_values,
+                      end_missing_values, resource_type_missing_value]:
+            self.assertRaises(manager_ex.MissingParameter,
+                              self.manager.create_lease, value)
 
     def test_update_lease_completed_lease_rename(self):
         lease_values = {'name': 'renamed'}
