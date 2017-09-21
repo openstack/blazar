@@ -1,6 +1,18 @@
 Blazar Specs
 ============
 
+Queens
+------
+
+This section has a list of specs for Queens release.
+
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   specs/queens/*
+
 Pike
 ----
 
