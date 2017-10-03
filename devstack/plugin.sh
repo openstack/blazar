@@ -44,12 +44,14 @@ function configure_blazar {
     touch $BLAZAR_CONF_FILE
 
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_version v3
+    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_host $KEYSTONE_AUTH_HOST
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_port 80
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_prefix identity
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_username blazar
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_project_name $SERVICE_TENANT_NAME
     iniset $BLAZAR_CONF_FILE DEFAULT identity_service $BLAZAR_IDENTITY_SERVICE_NAME
+    iniset $BLAZAR_CONF_FILE DEFAULT os_region_name $REGION_NAME
 
     # keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
@@ -132,7 +134,7 @@ function create_blazar_cache_dir {
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
 function create_blazar_aggregate_freepool {
-    openstack aggregate create $BLAZAR_FREEPOOL_NAME
+    openstack --os-region $REGION_NAME aggregate create $BLAZAR_FREEPOOL_NAME
 }
 
 # create_blazar_accounts() - Set up common required BLAZAR accounts

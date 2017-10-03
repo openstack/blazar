@@ -17,7 +17,8 @@ from blazar.manager import exceptions
 
 
 def url_for(service_catalog, service_type, admin=False,
-            endpoint_interface=None):
+            endpoint_interface=None,
+            os_region_name=None):
     """Description
 
     Gets url of the service to communicate through.
@@ -40,6 +41,13 @@ def url_for(service_catalog, service_type, admin=False,
         except KeyError:
             raise exceptions.EndpointsNotFound(
                 "No endpoints for %s" % service['type'])
+        if os_region_name:
+            endpoints = [e for e in endpoints if e['region'] == os_region_name]
+            if not endpoints:
+                raise exceptions.EndpointsNotFound("No endpoints for %s in "
+                                                   "region %s" %
+                                                   (service['type'],
+                                                    os_region_name))
         try:
             # if Keystone API v3 endpoints returned
             endpoint = [e for e in endpoints
