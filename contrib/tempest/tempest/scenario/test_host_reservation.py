@@ -155,7 +155,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         self.assertRaises(exceptions.BadRequest,
                           self.reservation_client.create_lease, body)
 
-        # create new lease and start reservation immediatly
+        # create new lease and start reservation immediately
         body = self.get_lease_body('scenario-1', host['host'])
         lease = self.reservation_client.create_lease(body)['lease']
 
