@@ -8,7 +8,6 @@ enable_service blazar-m
 enable_service blazar-a
 
 BLAZAR_DEBUG=${BLAZAR_DEBUG:-True}
-BLAZAR_VERBOSE=${BLAZAR_VERBOSE:-True}
 BLAZAR_USER_NAME=${BLAZAR_USER_NAME:-blazar}
 
 # Set up default repos

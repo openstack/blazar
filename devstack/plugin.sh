@@ -58,7 +58,6 @@ function configure_blazar {
 
     iniset $BLAZAR_CONF_FILE DEFAULT host $HOST_IP
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
-    iniset $BLAZAR_CONF_FILE DEFAULT verbose $BLAZAR_VERBOSE
 
     iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin,virtual.instance.plugin
 
