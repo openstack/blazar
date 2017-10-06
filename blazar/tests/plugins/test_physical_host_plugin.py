@@ -280,13 +280,36 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         })
 
     def test_delete_host(self):
+        host_allocation_get_all = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = []
         self.fake_phys_plugin.delete_computehost(self.fake_host_id)
 
         self.db_host_destroy.assert_called_once_with(self.fake_host_id)
         self.get_servers_per_host.assert_called_once_with(
             self.fake_host["hypervisor_hostname"])
 
+    def test_delete_host_reserved(self):
+        host_allocation_get_all = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = [
+            {
+                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'compute_host_id': self.fake_host_id
+            }
+        ]
+
+        self.assertRaises(manager_exceptions.CantDeleteHost,
+                          self.fake_phys_plugin.delete_computehost,
+                          self.fake_host_id)
+
     def test_delete_host_having_vms(self):
+        host_allocation_get_all = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = []
         self.get_servers_per_host.return_value = ['server1', 'server2']
         self.assertRaises(manager_exceptions.HostHavingServers,
                           self.fake_phys_plugin.delete_computehost,
@@ -303,8 +326,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_delete_host_issuing_rollback(self):
         def fake_db_host_destroy(*args, **kwargs):
             raise db_exceptions.BlazarDBException
+        host_allocation_get_all = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
+        host_allocation_get_all.return_value = []
         self.db_host_destroy.side_effect = fake_db_host_destroy
-        self.assertRaises(manager_exceptions.CantRemoveHost,
+        self.assertRaises(manager_exceptions.CantDeleteHost,
                           self.fake_phys_plugin.delete_computehost,
                           self.fake_host_id)
 

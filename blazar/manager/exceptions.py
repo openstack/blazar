@@ -30,6 +30,11 @@ class CantRemoveHost(exceptions.BlazarException):
     msg_fmt = _("Can't remove host(s) %(host)s from Aggregate %(pool)s")
 
 
+class CantDeleteHost(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("Can't delete host %(host)s. %(msg)s")
+
+
 class CantAddHost(exceptions.BlazarException):
     code = 409
     msg_fmt = _("Can't add host(s) %(host)s to Aggregate %(pool)s")
