@@ -241,7 +241,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             flavor, group, pool = self._create_resources(instance_reservation)
         except nova_exceptions.ClientException:
             LOG.exception("Failed to create Nova resources "
-                          "for reservation %s" % reservation_id)
+                          "for reservation %s", reservation_id)
             self.cleanup_resources(instance_reservation)
             raise mgr_exceptions.NovaClientError()
 
@@ -265,8 +265,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             self.nova.flavor_access.add_tenant_access(reservation_id,
                                                       ctx.project_id)
         except nova_exceptions.ClientException:
-            LOG.info('Failed to associate flavor %s to project %s' %
-                     (reservation_id, ctx.project_id))
+            LOG.info('Failed to associate flavor %(reservation_id)s '
+                     'to project %(project_id)s',
+                     {'reservation_id': reservation_id,
+                      'project_id': ctx.project_id})
             raise mgr_exceptions.EventError()
 
         pool = nova.ReservationPool()

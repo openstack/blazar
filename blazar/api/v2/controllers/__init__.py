@@ -46,7 +46,7 @@ class V2Controller(rest.RestController):
     def _log_missing_plugins(self, names):
         for name in names:
             if name not in self.extension_manager.names():
-                LOG.error(_("API Plugin %s was not loaded") % name)
+                LOG.error("API Plugin %s was not loaded", name)
 
     def __init__(self):
         extensions = []
@@ -68,7 +68,7 @@ class V2Controller(rest.RestController):
             self._routes.update(ext.obj.extra_routes)
             extensions.append(ext.obj.name)
 
-        LOG.debug(_("Loaded extensions: {0}").format(extensions))
+        LOG.debug("Loaded extensions: {0}".format(extensions))
 
     @pecan.expose()
     def _route(self, args):
@@ -86,5 +86,5 @@ class V2Controller(rest.RestController):
             else:
                 args[0] = route
         except IndexError:
-            LOG.error(_("No args found on V2 controller"))
+            LOG.error("No args found on V2 controller")
         return super(V2Controller, self)._route(args)

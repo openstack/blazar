@@ -80,10 +80,11 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
                                       evt['status'] == 'DONE',
                                       events)) > 0
                 else:
-                    LOG.info("Lease with id %s is empty" % lease_id)
+                    LOG.info("Lease with id %s is empty", lease_id)
             except Exception as e:
-                LOG.info("Unable to find lease with id %s. Exception: %s"
-                         % (lease_id, e.message))
+                LOG.info("Unable to find lease with id %(lease_id)s. "
+                         "Exception: %(message)s",
+                         {'lease_id': lease_id, 'message': e.message})
             return True
 
         if not test_utils.call_until_true(
@@ -100,8 +101,9 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
                            self.image_client.list())
             self.image_client.delete(image)
         except Exception as e:
-            LOG.info("Unable to delete %s snapshot. Exception: %s"
-                     % (image_name, e.message))
+            LOG.info("Unable to delete %(image_name)s snapshot. "
+                     "Exception: %(message)s",
+                     {'image_name': image_name, 'message': e.message})
 
     def is_flavor_enough(self, flavor_id, image_id):
         image = self.compute_images_client.show_image(image_id)['image']

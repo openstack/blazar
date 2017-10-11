@@ -254,8 +254,8 @@ class ReservationPool(NovaClientWrapper):
 
         name = name or self._generate_aggregate_name()
 
-        LOG.debug('Creating pool aggregate: %s with Availability Zone %s'
-                  % (name, az))
+        LOG.debug('Creating pool aggregate: %(name)s with Availability Zone '
+                  '%(az)s', {'name': name, 'az': az})
         agg = self.nova.aggregates.create(name, az)
 
         try:
@@ -295,8 +295,8 @@ class ReservationPool(NovaClientWrapper):
         except manager_exceptions.AggregateNotFound:
             raise manager_exceptions.NoFreePool()
         for host in hosts:
-            LOG.debug("Removing host '%s' from aggregate "
-                      "'%s')" % (host, agg.id))
+            LOG.debug("Removing host '%(host)s' from aggregate '%(id)s')",
+                      {'host': host, 'id': agg.id})
             self.nova.aggregates.remove_host(agg.id, host)
 
             if freepool_agg.id != agg.id and host not in freepool_agg.hosts:
@@ -348,14 +348,15 @@ class ReservationPool(NovaClientWrapper):
             if host not in freepool_agg.hosts:
                 raise manager_exceptions.HostNotInFreePool(
                     host=host, freepool_name=freepool_agg.name)
-            LOG.info("removing host '%s' "
-                     "from aggregate freepool %s" % (host, freepool_agg.name))
+            LOG.info("removing host '%(host)s' from aggregate freepool "
+                     "%(name)s", {'host': host, 'name': freepool_agg.name})
             try:
                 self.remove_computehost(freepool_agg.id, host)
             except nova_exception.NotFound:
                 raise manager_exceptions.HostNotFound(host=host)
 
-        LOG.info("adding host '%s' to aggregate %s" % (host, agg.id))
+        LOG.info("adding host '%(host)s' to aggregate %(id)s",
+                 {'host': host, 'id': agg.id})
         try:
             return self.nova.aggregates.add_host(agg.id, host)
         except nova_exception.NotFound:

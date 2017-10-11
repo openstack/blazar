@@ -23,7 +23,6 @@ from stevedore import enabled
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
 from blazar import exceptions as common_ex
-from blazar.i18n import _
 from blazar import manager
 from blazar.manager import exceptions
 from blazar.notification import api as notification_api
@@ -156,7 +155,7 @@ class ManagerService(service_utils.RPCServer):
                                             events=['event.%s' % event_type])
             except Exception:
                 db_api.event_update(event['id'], {'status': 'ERROR'})
-                LOG.exception(_('Error occurred while event handling.'))
+                LOG.exception('Error occurred while event handling.')
 
     def _date_from_string(self, date_string, date_format=LEASE_DATE_FORMAT):
         try:
@@ -231,7 +230,7 @@ class ManagerService(service_utils.RPCServer):
                     self._check_date_within_lease_limits(before_end_date,
                                                          lease_values)
                 except common_ex.BlazarException as e:
-                    LOG.error("Invalid before_end_date param. %s" % e.message)
+                    LOG.error("Invalid before_end_date param. %s", e.message)
                     raise e
             elif CONF.manager.minutes_before_end_lease > 0:
                 delta = datetime.timedelta(
@@ -349,7 +348,7 @@ class ManagerService(service_utils.RPCServer):
                     self._check_date_within_lease_limits(before_end_date,
                                                          values)
                 except common_ex.BlazarException as e:
-                    LOG.error("Invalid before_end_date param. %s" % e.message)
+                    LOG.error("Invalid before_end_date param. %s", e.message)
                     raise e
 
             # TODO(frossigneux) rollback if an exception is raised
@@ -489,11 +488,9 @@ class ManagerService(service_utils.RPCServer):
                 )
             except common_ex.BlazarException:
                 LOG.exception("Failed to execute action %(action)s "
-                              "for lease %(lease)s"
-                              % {
-                                  'action': action_time,
-                                  'lease': lease_id,
-                              })
+                              "for lease %(lease)s",
+                              {'action': action_time,
+                               'lease': lease_id})
                 event_status = 'ERROR'
                 db_api.reservation_update(reservation['id'],
                                           {'status': 'error'})
@@ -537,9 +534,10 @@ class ManagerService(service_utils.RPCServer):
         event['time'] = before_end_date
         if event['time'] < lease['start_date']:
             LOG.warning("Start_date greater than before_end_date. "
-                        "Setting before_end_date to %s for lease %s"
-                        % (lease['start_date'], lease.get('id',
-                           lease.get('name'))))
+                        "Setting before_end_date to %(start_date)s for "
+                        "lease %(id_name)s",
+                        {'start_date': lease['start_date'],
+                         'id_name': lease.get('id', lease.get('name'))})
             event['time'] = lease['start_date']
 
     def _update_before_end_event(self, old_lease, new_lease,
