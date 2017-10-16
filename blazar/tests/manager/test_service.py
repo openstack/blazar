@@ -18,6 +18,7 @@ import datetime
 import eventlet
 import mock
 from oslo_config import cfg
+from six.moves import reload_module
 from stevedore import enabled
 import testtools
 
@@ -31,6 +32,7 @@ from blazar.notification import api as notifier_api
 from blazar.plugins import base
 from blazar.plugins import dummy_vm_plugin
 from blazar.plugins.oshosts import host_plugin
+from blazar import status
 from blazar import tests
 from blazar.utils.openstack import base as base_utils
 from blazar.utils import trusts
@@ -72,13 +74,22 @@ class FakePluginRaisesException(base.BasePlugin):
         return 'Resource %s should be deleted this moment.' % resource_id
 
 
+class FakeLeaseStatus(object):
+    @classmethod
+    def lease_status(cls, transition, result_in):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+        return decorator
+
+
 class ServiceTestCase(tests.TestCase):
     def setUp(self):
         super(ServiceTestCase, self).setUp()
 
         self.cfg = cfg
         self.context = context
-        self.service = service
         self.enabled = enabled
         self.exceptions = exceptions
         self.eventlet = eventlet
@@ -88,6 +99,7 @@ class ServiceTestCase(tests.TestCase):
         self.trusts = trusts
         self.notifier_api = notifier_api
         self.base_utils = base_utils
+        self.status = status
 
         self.fake_plugin = self.patch(self.dummy_plugin, 'DummyVMPlugin')
 
@@ -103,6 +115,11 @@ class ServiceTestCase(tests.TestCase):
                                         'send_lease_notification')
 
         cfg.CONF.set_override('plugins', ['dummy.vm.plugin'], group='manager')
+
+        with mock.patch('blazar.status.lease.lease_status',
+                        FakeLeaseStatus.lease_status):
+            reload_module(service)
+        self.service = service
         self.manager = self.service.ManagerService()
 
         self.lease_id = '11-22-33'
@@ -641,7 +658,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            lease = self.manager.update_lease(self.lease_id, lease_values)
+            lease = self.manager.update_lease(lease_id=self.lease_id,
+                                              values=lease_values)
         self.lease_update.assert_called_once_with(self.lease_id, lease_values)
         self.assertEqual(lease, self.lease)
 
@@ -677,7 +695,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.update_lease(self.lease_id, lease_values)
+            self.manager.update_lease(lease_id=self.lease_id,
+                                      values=lease_values)
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
@@ -731,7 +750,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.update_lease(self.lease_id, lease_values)
+            self.manager.update_lease(lease_id=self.lease_id,
+                                      values=lease_values)
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
@@ -778,7 +798,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 manager_ex.CantUpdateParameter, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_modify_reservations_without_reservation_id(self):
         lease_values = {
@@ -803,7 +823,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 manager_ex.MissingParameter, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_started_modify_end_date_without_before_end(self):
         def fake_event_get(sort_key, sort_dir, filters):
@@ -835,7 +855,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.update_lease(self.lease_id, lease_values)
+            self.manager.update_lease(lease_id=self.lease_id,
+                                      values=lease_values)
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
@@ -884,7 +905,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.update_lease(self.lease_id, lease_values)
+            self.manager.update_lease(lease_id=self.lease_id,
+                                      values=lease_values)
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
@@ -948,7 +970,8 @@ class ServiceTestCase(tests.TestCase):
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.update_lease(self.lease_id, lease_values)
+            self.manager.update_lease(lease_id=self.lease_id,
+                                      values=lease_values)
         self.fake_plugin.update_reservation.assert_called_with(
             '593e7028-c0d1-4d76-8642-2ffd890b324c',
             {
@@ -1019,7 +1042,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_started_modify_before_end_with_invalid_date(self):
         # before_end_date is greater than current end_date
@@ -1059,7 +1082,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_started_modify_before_end_with_wrong_format(self):
         wrong_before_end_date = '12-21 14:00'
@@ -1098,11 +1121,12 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 manager_ex.InvalidDate, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_is_not_values(self):
-        lease_values = None
-        lease = self.manager.update_lease(self.lease_id, lease_values)
+        lease_values = {}
+        lease = self.manager.update_lease(lease_id=self.lease_id,
+                                          values=lease_values)
         self.lease_get.assert_called_once_with(self.lease_id)
         self.assertEqual(lease, self.lease)
 
@@ -1118,7 +1142,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_not_started_start_date_before_current_time(self):
         lease_values = {
@@ -1132,7 +1156,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_end_date_before_current_time(self):
         lease_values = {
@@ -1146,7 +1170,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_completed_modify_dates(self):
         lease_values = {
@@ -1160,7 +1184,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(
                 exceptions.NotAuthorized, self.manager.update_lease,
-                self.lease_id, lease_values)
+                lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_start_date_event_not_found(self):
         events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
@@ -1171,8 +1195,7 @@ class ServiceTestCase(tests.TestCase):
         }
         self.assertRaises(exceptions.BlazarException,
                           self.manager.update_lease,
-                          self.lease_id,
-                          lease_values)
+                          lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_end_date_event_not_found(self):
         def fake_event_get(sort_key, sort_dir, filters):
@@ -1199,8 +1222,7 @@ class ServiceTestCase(tests.TestCase):
             patched.utcnow.return_value = target
             self.assertRaises(exceptions.BlazarException,
                               self.manager.update_lease,
-                              self.lease_id,
-                              lease_values)
+                              lease_id=self.lease_id, values=lease_values)
         event_update.assert_called_once_with(
             '2eeb784a-2d84-4a89-a201-9d42d61eecb1',
             {'time': datetime.datetime(2013, 12, 20, 13, 0)})
@@ -1302,10 +1324,6 @@ class ServiceTestCase(tests.TestCase):
 
         self.manager.end_lease(self.lease_id, '1')
 
-        self.reservation_update.assert_called_with(
-            self.lease['reservations'][0]['id'],
-            {'status': 'completed'}
-        )
         self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         basic_action.assert_called_once_with(self.lease_id, '1', 'on_end',
                                              'deleted')
@@ -1324,6 +1342,8 @@ class ServiceTestCase(tests.TestCase):
 
     def test_basic_action_with_res_status(self):
         self.patch(self.manager, 'get_lease').return_value = self.lease
+        self.patch(self.status.reservation,
+                   'is_valid_transition').return_value = True
 
         self.manager._basic_action(self.lease_id, '1', 'on_end',
                                    reservation_status='IN_USE')
@@ -1340,6 +1360,8 @@ class ServiceTestCase(tests.TestCase):
             {'virtual:instance':
              {'on_start': self.fake_plugin.on_start,
               'on_end': raiseBlazarException}})
+        self.patch(self.status.reservation,
+                   'is_valid_transition').return_value = True
 
         self.patch(self.manager, 'get_lease').return_value = self.lease
 

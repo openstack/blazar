@@ -25,6 +25,7 @@ from blazar.db import utils as db_utils
 from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
+from blazar import status
 from blazar.utils.openstack import nova
 from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
@@ -438,7 +439,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             dates_before, dates_after, max_hosts, hypervisor_properties,
             resource_properties, allocs)
 
-        if allocs_to_remove and reservation_status == 'active':
+        if (allocs_to_remove and
+                reservation_status == status.reservation.ACTIVE):
             raise manager_ex.NotEnoughHostsAvailable()
 
         kept_hosts = len(allocs) - len(allocs_to_remove)

@@ -26,6 +26,7 @@ from blazar import exceptions as common_ex
 from blazar import manager
 from blazar.manager import exceptions
 from blazar.notification import api as notification_api
+from blazar import status
 from blazar.utils import service as service_utils
 from blazar.utils import trusts
 
@@ -132,14 +133,15 @@ class ManagerService(service_utils.RPCServer):
         event = db_api.event_get_first_sorted_by_filters(
             sort_key='time',
             sort_dir='asc',
-            filters={'status': 'UNDONE'}
+            filters={'status': status.event.UNDONE}
         )
 
         if not event:
             return
 
         if event['time'] < datetime.datetime.utcnow():
-            db_api.event_update(event['id'], {'status': 'IN_PROGRESS'})
+            db_api.event_update(event['id'],
+                                {'status': status.event.IN_PROGRESS})
             event_type = event['event_type']
             event_fn = getattr(self, event_type, None)
             if event_fn is None:
@@ -147,14 +149,16 @@ class ManagerService(service_utils.RPCServer):
                                                   'supported' % event_type)
             try:
                 eventlet.spawn_n(service_utils.with_empty_context(event_fn),
-                                 event['lease_id'], event['id'])
+                                 lease_id=event['lease_id'],
+                                 event_id=event['id'])
                 lease = db_api.lease_get(event['lease_id'])
                 with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
                     self._send_notification(lease,
                                             ctx,
                                             events=['event.%s' % event_type])
             except Exception:
-                db_api.event_update(event['id'], {'status': 'ERROR'})
+                db_api.event_update(event['id'],
+                                    {'status': status.event.ERROR})
                 LOG.exception('Error occurred while event handling.')
 
     def _date_from_string(self, date_string, date_format=LEASE_DATE_FORMAT):
@@ -183,6 +187,8 @@ class ManagerService(service_utils.RPCServer):
 
         Return either the model of created lease or None if any error.
         """
+        lease_values['status'] = status.lease.CREATING
+
         try:
             trust_id = lease_values.pop('trust_id')
         except KeyError:
@@ -226,10 +232,10 @@ class ManagerService(service_utils.RPCServer):
 
             events.append({'event_type': 'start_lease',
                            'time': start_date,
-                           'status': 'UNDONE'})
+                           'status': status.event.UNDONE})
             events.append({'event_type': 'end_lease',
                            'time': end_date,
-                           'status': 'UNDONE'})
+                           'status': status.event.UNDONE})
 
             before_end_date = lease_values.get('before_end_date', None)
             if before_end_date:
@@ -249,7 +255,7 @@ class ManagerService(service_utils.RPCServer):
 
             if before_end_date:
                 event = {'event_type': 'before_end_lease',
-                         'status': 'UNDONE'}
+                         'status': status.event.UNDONE}
                 events.append(event)
                 self._update_before_end_event_date(event, before_end_date,
                                                    lease_values)
@@ -293,10 +299,15 @@ class ManagerService(service_utils.RPCServer):
                     raise
 
                 else:
-                    lease = db_api.lease_get(lease['id'])
+                    db_api.lease_update(
+                        lease_id,
+                        {'status': status.lease.PENDING})
+                    lease = db_api.lease_get(lease_id)
                     self._send_notification(lease, ctx, events=['create'])
                     return lease
 
+    @status.lease.lease_status(
+        transition=status.lease.UPDATING, result_in=status.lease.STABLE)
     def update_lease(self, lease_id, values):
         if not values:
             return db_api.lease_get(lease_id)
@@ -425,6 +436,8 @@ class ManagerService(service_utils.RPCServer):
 
         return lease
 
+    @status.lease.lease_status(transition=status.lease.DELETING,
+                               result_in=(status.lease.ERROR,))
     def delete_lease(self, lease_id):
         lease = self.get_lease(lease_id)
         if (datetime.datetime.utcnow() >= lease['start_date'] and
@@ -437,25 +450,27 @@ class ManagerService(service_utils.RPCServer):
                     'event_type': 'start_lease'
                 }
             )
-            if not start_event or start_event['status'] not in ['DONE',
-                                                                'ERROR']:
-                raise common_ex.BlazarException('Invalid event status')
+            if not start_event:
+                raise common_ex.BlazarException(
+                    'start_lease event for lease %s not found' % lease_id)
             end_event = db_api.event_get_first_sorted_by_filters(
                 'lease_id',
                 'asc',
                 {
                     'lease_id': lease_id,
                     'event_type': 'end_lease',
-                    'status': 'UNDONE'
+                    'status': status.event.UNDONE
                 }
             )
             if not end_event:
-                raise common_ex.BlazarException('Invalid event status')
-            db_api.event_update(end_event['id'], {'status': 'IN_PROGRESS'})
+                raise common_ex.BlazarException(
+                    'end_lease event for lease %s not found' % lease_id)
+            db_api.event_update(end_event['id'],
+                                {'status': status.event.IN_PROGRESS})
 
         with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
             for reservation in lease['reservations']:
-                if reservation['status'] != 'deleted':
+                if reservation['status'] != status.reservation.DELETED:
                     plugin = self.plugins[reservation['resource_type']]
                     try:
                         plugin.on_end(reservation['resource_id'])
@@ -466,18 +481,23 @@ class ManagerService(service_utils.RPCServer):
             db_api.lease_destroy(lease_id)
             self._send_notification(lease, ctx, events=['delete'])
 
+    @status.lease.lease_status(
+        transition=status.lease.STARTING,
+        result_in=(status.lease.ACTIVE, status.lease.ERROR))
     def start_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
         with trusts.create_ctx_from_trust(lease['trust_id']):
-            self._basic_action(lease_id, event_id, 'on_start', 'active')
+            self._basic_action(lease_id, event_id, 'on_start',
+                               status.reservation.ACTIVE)
 
+    @status.lease.lease_status(
+        transition=status.lease.TERMINATING,
+        result_in=(status.lease.TERMINATED, status.lease.ERROR))
     def end_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
-        for reservation in lease['reservations']:
-            db_api.reservation_update(reservation['id'],
-                                      {'status': 'completed'})
         with trusts.create_ctx_from_trust(lease['trust_id']):
-            self._basic_action(lease_id, event_id, 'on_end', 'deleted')
+            self._basic_action(lease_id, event_id, 'on_end',
+                               status.reservation.DELETED)
 
     def before_end_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
@@ -489,10 +509,14 @@ class ManagerService(service_utils.RPCServer):
         """Commits basic lease actions such as starting and ending."""
         lease = self.get_lease(lease_id)
 
-        event_status = 'DONE'
+        event_status = status.event.DONE
         for reservation in lease['reservations']:
             resource_type = reservation['resource_type']
             try:
+                if reservation_status is not None:
+                    if not status.reservation.is_valid_transition(
+                            reservation['status'], reservation_status):
+                        raise common_ex.InvalidStatus
                 self.resource_actions[resource_type][action_time](
                     reservation['resource_id']
                 )
@@ -501,15 +525,18 @@ class ManagerService(service_utils.RPCServer):
                               "for lease %(lease)s",
                               {'action': action_time,
                                'lease': lease_id})
-                event_status = 'ERROR'
-                db_api.reservation_update(reservation['id'],
-                                          {'status': 'error'})
+                event_status = status.event.ERROR
+                db_api.reservation_update(
+                    reservation['id'],
+                    {'status': status.reservation.ERROR})
             else:
                 if reservation_status is not None:
                     db_api.reservation_update(reservation['id'],
                                               {'status': reservation_status})
 
         db_api.event_update(event_id, {'status': event_status})
+
+        return event_status
 
     def _create_reservation(self, values):
         resource_type = values['resource_type']
@@ -518,7 +545,7 @@ class ManagerService(service_utils.RPCServer):
         reservation_values = {
             'lease_id': values['lease_id'],
             'resource_type': resource_type,
-            'status': 'pending'
+            'status': status.reservation.PENDING
         }
         reservation = db_api.reservation_create(reservation_values)
         resource_id = self.plugins[resource_type].reserve_resource(
@@ -572,8 +599,8 @@ class ManagerService(service_utils.RPCServer):
 
             self._update_before_end_event_date(update_values, before_end_date,
                                                new_lease)
-            if event['status'] == 'DONE':
-                update_values['status'] = 'UNDONE'
+            if event['status'] == status.event.DONE:
+                update_values['status'] = status.event.UNDONE
                 notifications.append('event.before_end_lease.stop')
 
             db_api.event_update(event['id'], update_values)
