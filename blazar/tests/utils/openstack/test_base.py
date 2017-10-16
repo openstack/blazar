@@ -27,6 +27,7 @@ class TestBaseStackUtils(tests.TestCase):
 
         self.service_type = 'fake_service'
         self.url = 'http://%s-net.com'
+        self.url_region_two = 'http://%s-net-two.com'
 
     def test_url_for_good_v3(self):
         # TODO(n.s.):Can't find v3 endpoint example. Fix it later.
@@ -76,3 +77,33 @@ class TestBaseStackUtils(tests.TestCase):
 
         self.assertRaises(exceptions.EndpointsNotFound, self.base.url_for,
                           service_catalog, self.service_type)
+
+    def test_url_for_good_v2_region(self):
+        service_catalog = (
+            [{"endpoints": [{"adminURL": self.url % 'admin',
+                             "region": "RegionOne",
+                             "internalURL": self.url % 'internal',
+                             "publicURL": self.url % 'public'},
+                            {"adminURL": self.url_region_two % 'admin',
+                             "region": "RegionTwo",
+                             "internalURL": self.url_region_two % 'internal',
+                             "publicURL": self.url_region_two % 'public'}],
+              "type": "fake_service",
+              "name": "foo"}])
+
+        url = self.base.url_for(service_catalog, self.service_type,
+                                os_region_name='RegionTwo')
+        self.assertEqual(url, self.url_region_two % 'public')
+
+    def test_url_for_no_endpoint_in_region(self):
+        service_catalog = (
+            [{"endpoints": [{"adminURL": self.url % 'admin',
+                             "region": "RegionOne",
+                             "internalURL": self.url % 'internal',
+                             "publicURL": self.url % 'public'}],
+              "type": "fake_service",
+              "name": "foo"}])
+
+        self.assertRaises(exceptions.EndpointsNotFound, self.base.url_for,
+                          service_catalog, self.service_type,
+                          os_region_name='RegionTwo')

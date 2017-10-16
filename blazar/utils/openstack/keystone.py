@@ -28,7 +28,17 @@ from blazar.utils.openstack import base
 opts = [
     cfg.StrOpt('identity_service',
                default='identity',
-               help='Identity service to use.')
+               help='Identity service to use.'),
+    cfg.StrOpt('os_region_name',
+               default=None,
+               help="""
+Region name of this node. This is used when picking the URL in the service
+catalog.
+
+Possible values:
+
+* Any string representing region name
+""")
 ]
 
 keystone_opts = [
@@ -94,12 +104,14 @@ class BlazarKeystoneClient(object):
             kwargs.setdefault('tenant_name', ctx.project_name)
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
-                    ctx.service_catalog, CONF.identity_service)
+                    ctx.service_catalog, CONF.identity_service,
+                    os_region_name=CONF.os_region_name)
             if not kwargs.get('trust_id'):
                 try:
                     kwargs.setdefault('endpoint', base.url_for(
                         ctx.service_catalog, CONF.identity_service,
-                        endpoint_interface='admin'))
+                        endpoint_interface='admin',
+                        os_region_name=CONF.os_region_name))
                 except AttributeError:
                     raise manager_exceptions.NoManagementUrl()
             if not kwargs.get('password'):

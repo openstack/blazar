@@ -121,6 +121,7 @@ Then edit */etc/blazar/blazar.conf* using the following example:
     os_admin_password=<password>
     os_admin_project_name=<project_name>
     identity_service=<identity_service_name>
+    os_region_name=<region_name>
 
     [manager]
     plugins=physical.host.plugin,virtual.instance.plugin

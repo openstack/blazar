@@ -120,8 +120,10 @@ class BlazarNovaClient(object):
             auth_token = auth_token or ctx.auth_token
             endpoint_override = endpoint_override or \
                 base.url_for(ctx.service_catalog,
-                             CONF.nova.compute_service)
-            auth_url = base.url_for(ctx.service_catalog, CONF.identity_service)
+                             CONF.nova.compute_service,
+                             os_region_name=CONF.os_region_name)
+            auth_url = base.url_for(ctx.service_catalog, CONF.identity_service,
+                                    os_region_name=CONF.os_region_name)
 
         if auth_url is None:
             auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
