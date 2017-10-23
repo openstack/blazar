@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    A new Hosts panel is supported in the Reservation group of the Admin
+    dashboard. The following operations are supported:
+
+    * Show a list of hosts
+    * Show details of a host
+    * Create host(s)
+    * Update a host
+    * Delete host(s)
