@@ -10,7 +10,7 @@ The following packages should be installed:
   * blazar-nova
   * python-blazarclient
 
-The four filter schedulers should be configured in nova.conf:
+The following four scheduler filters should be configured in nova.conf:
 
   * AggregateInstanceExtraSpecsFilter
   * AggregateMultiTenancyIsolation
