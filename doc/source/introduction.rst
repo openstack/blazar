@@ -1,6 +1,7 @@
 Introduction
 ============
 
+Blazar is a resource reservation service for OpenStack.
 Idea of creating Blazar originated with two different use cases:
 
 * Compute host reservation (when user with admin privileges can reserve
