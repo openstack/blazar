@@ -321,8 +321,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise manager_ex.HostNotFound(host=host_id)
 
         with trusts.create_ctx_from_trust(host['trust_id']):
-            # TODO(sbauza):
-            #  - Check if no leases having this host scheduled
+            if db_api.host_allocation_get_all_by_values(
+                    compute_host_id=host_id):
+                raise manager_ex.CantDeleteHost(
+                    host=host_id,
+                    msg='The host is reserved.'
+                )
+
             inventory = nova.NovaInventory()
             servers = inventory.get_servers_per_host(
                 host['hypervisor_hostname'])
@@ -337,11 +342,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # NOTE(sbauza): Extracapabilities will be destroyed thanks to
                 #  the DB FK.
                 db_api.host_destroy(host_id)
-            except db_ex.BlazarDBException:
-                # Nothing so bad, but we need to advert the admin
-                # he has to rerun
-                raise manager_ex.CantRemoveHost(host=host_id,
-                                                pool=self.freepool_name)
+            except db_ex.BlazarDBException as e:
+                # Nothing so bad, but we need to alert admins
+                # they have to rerun
+                raise manager_ex.CantDeleteHost(
+                    host=host_id,
+                    msg=e.message)
 
     def _matching_hosts(self, hypervisor_properties, resource_properties,
                         count_range, start_date, end_date):
