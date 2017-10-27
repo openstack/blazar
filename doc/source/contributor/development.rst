@@ -1,10 +1,11 @@
+======================
 Development guidelines
 ======================
 
 Coding Guidelines
 -----------------
 
-`PEP8 <http://legacy.python.org/dev/peps/pep-0008/>`_ checking should pass for
+`PEP8 <http://legacy.python.org/dev/peps/pep-0008/>`_ checks should pass for
 all Blazar code. You may check it using the following command:
 
 .. sourcecode:: console
@@ -13,7 +14,7 @@ all Blazar code. You may check it using the following command:
 
 ..
 
-Also you should keep your code clear using more code style checkings via
+Also you should keep your code clear using more code style checks via
 `pylint <http://www.pylint.org>`_:
 
 .. sourcecode:: console
@@ -22,8 +23,8 @@ Also you should keep your code clear using more code style checkings via
 
 ..
 
-If you see any pep8/pylint errors in your code, it's mandatory to fix them
-before sending your change on review.
+If you see any pep8/pylint errors in your code, it is mandatory to fix them
+before sending your change for review.
 
 Testing Guidelines
 ------------------
@@ -43,7 +44,7 @@ via the commands:
 
 ..
 
-for Python 2.7, Python 3.4, and Python 3.5 accordingly.
+for Python 2.7 and Python 3.5 accordingly.
 
 Note that the Blazar code base is not yet compatible with Python 3, so tests
 will be failing.
@@ -66,6 +67,5 @@ To build Sphinx / RST docs locally run the following command:
 
 ..
 
-After it you can access generated docs in *doc/build/* directory, for example,
-main page - *doc/build/html/index.html*.
-
+Then you can access generated docs in the *doc/build/* directory, for example,
+the main page would be *doc/build/html/index.html*.

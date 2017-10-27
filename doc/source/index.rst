@@ -1,5 +1,5 @@
-Welcome to Blazar!
-===================
+Blazar, the OpenStack Reservation Service
+=========================================
 
 Blazar is an OpenStack service to provide resource reservations in the
 OpenStack cloud for different resource types - both virtual (instances,
@@ -14,47 +14,55 @@ Overview
     introduction
     architecture
 
-User guide
-----------
-
-**Installation**
-
-.. toctree::
-   :maxdepth: 1
-
-   userdoc/installation.guide
-
-**APIs**
-
-.. toctree::
-   :maxdepth: 1
-
-   restapi/index
-
-**Using Blazar**
-
-.. toctree::
-   :maxdepth: 1
-
-   userdoc/using.host-reservation
-   userdoc/using.instance-reservation
-
-Development guide
------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   devref/how.to.contribute
-   devref/development.guidelines
+Installation Guide
+------------------
 
 .. toctree::
    :maxdepth: 2
 
-   devref/spec
+   install/index
 
-Release note
-------------
+Configuration Reference
+-----------------------
+.. toctree::
+   :maxdepth: 2
 
-   `Release note <https://wiki.openstack.org/wiki/Blazar/Release_Notes>`_
+   configuration/index
 
+CLI Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   cli/index
+
+API Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   restapi/index
+
+For Contributors
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   contributor/index
+
+Specs
+-----
+
+.. toctree::
+   :maxdepth: 2
+
+   specs/index
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`search`

@@ -1,42 +1,45 @@
-Using Instance Reservation
-==========================
+====================
+Instance Reservation
+====================
 
 Prerequisites
 -------------
 
 The following packages should be installed:
 
-  * blazar
-  * blazar-nova
-  * python-blazarclient
+* blazar
+* blazar-nova
+* python-blazarclient
 
 The following four scheduler filters should be configured in nova.conf:
 
-  * AggregateInstanceExtraSpecsFilter
-  * AggregateMultiTenancyIsolation
-  * ServerGroupAffinityFilter
-  * BlazarFilter
+* AggregateInstanceExtraSpecsFilter
+* AggregateMultiTenancyIsolation
+* ServerGroupAffinityFilter
+* BlazarFilter
 
 1. Add hosts into the freepool
 ------------------------------
 
 1. Add hosts into the Blazar freepool using the host-create command:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar host-create compute-1
 
-  ..
+..
 
 2. Check hosts in the freepool:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar host-list
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +----+---------------------+-------+-----------+----------+
     | id | hypervisor_hostname | vcpus | memory_mb | local_gb |
@@ -44,19 +47,22 @@ The following four scheduler filters should be configured in nova.conf:
     | 1  | compute-1           |     2 |      3951 |       38 |
     +----+---------------------+-------+-----------+----------+
 
+..
 
 2. Create a lease
 -----------------
 
 1. Create a lease (instance reservation) using lease-create command:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar lease-create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1,affinity=False --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +---------------+--------------------------------------------------------------------------------------------------------------------------+
     | Field         | Value                                                                                                                    |
@@ -89,15 +95,19 @@ The following four scheduler filters should be configured in nova.conf:
     | user_id       |                                                                                                                          |
     +---------------+--------------------------------------------------------------------------------------------------------------------------+
 
+..
+
 2. Check leases:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar lease-list
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +--------------------------------------+---------+----------------------------+----------------------------+
     | id                                   | name    | start_date                 | end_date                   |
@@ -105,18 +115,22 @@ The following four scheduler filters should be configured in nova.conf:
     | becf2f3b-0177-4c0f-a7e7-0123370849a3 | lease-1 | 2020-07-24T20:00:00.000000 | 2020-08-09T21:00:00.000000 |
     +--------------------------------------+---------+----------------------------+----------------------------+
 
+..
+
 3. Use the leased resources
 ---------------------------
 
 While the reservation you created is active you can see and use the flavor of your reservation.
 
-  .. sourcecode:: condole
+.. sourcecode:: console
 
     openstack flavor list
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +--------------------------------------+--------------------------------------------------+-----------+------+-----------+------+-------+-------------+-----------+
     | ID                                   | Name                                             | Memory_MB | Disk | Ephemeral | Swap | VCPUs | RXTX_Factor | Is_Public |
@@ -134,10 +148,12 @@ While the reservation you created is active you can see and use the flavor of yo
     | db83d6fd-c69c-4259-92cf-012db2e55a58 | reservation:db83d6fd-c69c-4259-92cf-012db2e55a58 | 1024      | 20   | 0         |      | 1     | 1.0         | False     |
     +--------------------------------------+--------------------------------------------------+-----------+------+-----------+------+-------+-------------+-----------+
 
+..
+
 1. Create a server: Please specify the flavor of the reservation and group_id as a scheduler hint.
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     openstack server create --flavor db83d6fd-c69c-4259-92cf-012db2e55a58 --image <image> --network <network> --hint group=ba03ebb4-e55c-4da4-9d39-87e13354f3b7 <server-name>
 
-  ..
+..

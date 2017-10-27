@@ -37,12 +37,18 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'wsmeext.sphinxext',
               'openstackdocstheme',
+              'oslo_config.sphinxext',
+              'oslo_config.sphinxconfiggen',
               ]
 
 # openstackdocstheme options
 repository_name = 'openstack/blazar'
 bug_project = 'blazar'
 bug_tag = ''
+
+# oslo_config.sphinxconfiggen options
+config_generator_config_file = '../../etc/blazar/blazar-config-generator.conf'
+sample_config_basename = '_static/blazar'
 
 wsme_protocols = ['restjson', 'restxml']
 

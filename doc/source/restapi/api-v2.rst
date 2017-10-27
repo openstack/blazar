@@ -1,9 +1,11 @@
-Blazar REST API v2
-*********************
+===============================
+Blazar REST API v2 (deprecated)
+===============================
 
+**NOTE**: This version is deprecated. Please use the Blazar REST API v1.
 
 1 General API information
-=========================
+-------------------------
 
 This section contains base information about the Blazar REST API design,
 including operations with different Blazar resource types and examples of
@@ -27,7 +29,7 @@ or
 
 
 2 Leases
-=======
+--------
 
 **Description**
 
@@ -43,7 +45,7 @@ are mentioned.
 
 
 3 Hosts
-=======
+-------
 
 **Description**
 

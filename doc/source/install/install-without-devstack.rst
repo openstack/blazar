@@ -1,60 +1,4 @@
-Installation using DevStack
-===========================
-
-This section includes instructions for Blazar installation using DevStack.
-DevStack configures both the host reservation and the instance reservation.
-
-1. Download DevStack:
-
-.. sourcecode:: console
-
-    git clone https://git.openstack.org/openstack-dev/devstack.git
-
-..
-
-2. Create a local.conf file in the devstack directory. You can use the
-   following sample local.conf:
-
-.. sourcecode:: console
-
-    [[local|localrc]]
-    ADMIN_PASSWORD=password
-    DATABASE_PASSWORD=$ADMIN_PASSWORD
-    RABBIT_PASSWORD=$ADMIN_PASSWORD
-    SERVICE_PASSWORD=$ADMIN_PASSWORD
-    DEST=/opt/stack/
-    LOGFILE=$DEST/logs/stack.sh.log
-    HOST_IP=127.0.0.1
-    GIT_BASE=https://git.openstack.org/
-    RECLONE=yes
-    enable_plugin blazar https://git.openstack.org/openstack/blazar
-
-..
-
-3. Run DevStack as the stack user:
-
-.. sourcecode:: console
-
-    ./stack.sh
-
-..
-
-4. Source the admin credentials:
-
-.. sourcecode:: console
-
-    . openrc admin admin
-
-..
-
-5. Now you can add hosts to Blazar:
-
-.. sourcecode:: console
-
-    blazar host-create hostname
-
-..
-
+=============================
 Installation without DevStack
 =============================
 
@@ -157,9 +101,10 @@ Next you need to configure Nova. Please add the following lines to nova.conf fil
 
 .. sourcecode:: console
 
-    scheduler_available_filters = nova.scheduler.filters.all_filters
-    scheduler_available_filters = blazarnova.scheduler.filters.blazar_filter.BlazarFilter
-    scheduler_default_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,AggregateInstanceExtraSpecsFilter,AggregateMultiTenancyIsolation,ServerGroupAntiAffinityFilter,BlazarFilter
+    [filter_scheduler]
+    available_filters = nova.scheduler.filters.all_filters
+    available_filters = blazarnova.scheduler.filters.blazar_filter.BlazarFilter
+    enabled_filters=RetryFilter,AvailabilityZoneFilter,RamFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,AggregateInstanceExtraSpecsFilter,AggregateMultiTenancyIsolation,ServerGroupAntiAffinityFilter,BlazarFilter
 
 ..
 
@@ -213,4 +158,3 @@ To start Blazar services use:
 ..
 
 Now you can use python-blazarclient to communicate with Blazar.
-

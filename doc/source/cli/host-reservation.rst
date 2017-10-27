@@ -1,14 +1,15 @@
-Using Host Reservation
-======================
+================
+Host Reservation
+================
 
 Prerequisites
 -------------
 
 The following packages should be installed:
 
-  * blazar
-  * blazar-nova
-  * python-blazarclient
+* blazar
+* blazar-nova
+* python-blazarclient
 
 
 1. Add hosts into the freepool
@@ -16,21 +17,23 @@ The following packages should be installed:
 
 1. Add hosts into the Blazar freepool using the host-create command:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar host-create compute-1
 
-  ..
+..
 
 2. Check hosts in the freepool:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar host-list
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +----+---------------------+-------+-----------+----------+
     | id | hypervisor_hostname | vcpus | memory_mb | local_gb |
@@ -38,19 +41,22 @@ The following packages should be installed:
     | 1  | compute-1           |     2 |      3951 |       38 |
     +----+---------------------+-------+-----------+----------+
 
+..
 
 2. Create a lease
 -----------------
 
 1. Create a lease (compute host reservation) using lease-create command:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar lease-create --physical-reservation min=1,max=1,hypervisor_properties='[">=", "$vcpus", "2"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
 
-  ..
+..
 
-  Result::
+Result:
+
+.. sourcecode:: console
 
     +---------------+---------------------------------------------------------------------------------------------------------------------------------------------+
     | Field         | Value                                                                                                                                       |
@@ -78,15 +84,20 @@ The following packages should be installed:
     | user_id       |                                                                                                                                             |
     +---------------+---------------------------------------------------------------------------------------------------------------------------------------------+
 
+..
+
 2. Check leases:
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     blazar lease-list
 
-  ..
+..
 
-  Result::
+Result:
+
+
+.. sourcecode:: console
 
     +--------------------------------------+---------+----------------------------+----------------------------+
     | id                                   | name    | start_date                 | end_date                   |
@@ -94,13 +105,15 @@ The following packages should be installed:
     | 6638c31e-f6c8-4982-9b98-d2ca0a8cb646 | lease-1 | 2020-06-08T12:00:00.000000 | 2020-06-09T12:00:00.000000 |
     +--------------------------------------+---------+----------------------------+----------------------------+
 
+..
+
 3. Use the leased resources
 ---------------------------
 
 1. Create a server: Please specify the reservation id as a scheduler hint.
 
-  .. sourcecode:: console
+.. sourcecode:: console
 
     openstack server create --flavor <flavor> --image <image> --network <network> --hint reservation=4d3dd68f-0e3f-4f6b-bef7-617525c74ccb <server-name>
 
-  ..
+..

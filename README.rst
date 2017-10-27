@@ -24,17 +24,19 @@ Please see the following resources to learn more.
 API
 ---
 
-See `Blazar API reference <http://blazar.readthedocs.io/en/latest/restapi/rest_api_v1.0.html>`__.
+See `Blazar API reference <https://docs.openstack.org/blazar/latest/restapi/>`__.
 
 Operators
 ---------
 
-To learn how to deploy and configure Blazar, see `the installation guide <http://blazar.readthedocs.io/en/latest/userdoc/installation.guide.html>`__.
+To learn how to deploy and configure Blazar,
+see `the installation guide <https://docs.openstack.org/blazar/latest/install/>`__
+and `the configuration reference <https://docs.openstack.org/blazar/latest/configuration/>`__.
 
 Developers
 ----------
 
-To learn how to contribute to Blazar, see `the contribution guide <http://blazar.readthedocs.io/en/latest/devref/how.to.contribute.html>`__.
+To learn how to contribute to Blazar, see `the contributor guide <https://docs.openstack.org/blazar/latest/contributor/>`__.
 
 Other Resources
 ---------------
@@ -47,4 +49,4 @@ Other Resources
   * `Dashboard (Horizon plugin) <https://git.openstack.org/cgit/openstack/blazar-dashboard>`__
 
 * Blueprints/Bugs: https://launchpad.net/blazar
-* Documentation: https://blazar.readthedocs.io/en/latest/
+* Documentation: https://docs.openstack.org/blazar/latest/

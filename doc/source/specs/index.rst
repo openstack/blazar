@@ -1,3 +1,4 @@
+============
 Blazar Specs
 ============
 
@@ -11,7 +12,7 @@ This section has a list of specs for Queens release.
    :maxdepth: 1
    :glob:
 
-   specs/queens/*
+   queens/*
 
 Pike
 ----
@@ -23,4 +24,4 @@ This section has a list of specs for Pike release.
    :maxdepth: 1
    :glob:
 
-   specs/pike/*
+   pike/*
