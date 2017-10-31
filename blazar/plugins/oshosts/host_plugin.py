@@ -17,6 +17,7 @@
 import datetime
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import strutils
 
 from blazar.db import api as db_api
@@ -47,12 +48,28 @@ plugin_opts = [
     cfg.StrOpt('before_end',
                default='',
                help='Actions which we will be taken before the end of '
-                    'the lease')
+                    'the lease'),
+    cfg.BoolOpt('enable_notification_monitor',
+                default=False,
+                help='Enable notification-based resource monitoring. '
+                     'If it is enabled, the blazar-manager monitors states of '
+                     'compute hosts by subscribing to notifications of Nova.'),
+    cfg.ListOpt('notification_topics',
+                default=['notifications', 'versioned_notifications'],
+                help='Notification topics to subscribe to.'),
+    cfg.BoolOpt('enable_polling_monitor',
+                default=False,
+                help='Enable polling-based resource monitoring. '
+                     'If it is enabled, the blazar-manager monitors states '
+                     'of compute hosts by polling the Nova API.'),
+    cfg.IntOpt('polling_interval',
+               default=60,
+               help='Interval (seconds) of polling for health checking.'),
 ]
 
 CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
-
+LOG = logging.getLogger(__name__)
 
 before_end_options = ['', 'snapshot', 'default']
 
@@ -72,6 +89,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             user_domain_name=CONF.os_admin_user_domain_name,
             project_name=CONF.os_admin_project_name,
             project_domain_name=CONF.os_admin_user_domain_name)
+        self.monitor = PhysicalHostMonitorPlugin()
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
@@ -514,3 +532,51 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             return db_api.host_get_all_by_queries(filter)
         else:
             return db_api.host_list()
+
+
+class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin):
+    """Monitor plugin for physical host resource."""
+    def is_notification_enabled(self):
+        """Check if the notification monitor is enabled."""
+        return CONF[plugin.RESOURCE_TYPE].enable_notification_monitor
+
+    def get_notification_event_types(self):
+        """Get event types of notification messages to handle."""
+        return ['service.update']
+
+    def get_notification_topics(self):
+        """Get topics of notification to subscribe to."""
+        return CONF[plugin.RESOURCE_TYPE].notification_topics
+
+    def notification_callback(self, event_type, message):
+        """Handle a notification message.
+
+        It is used as a callback of a notification-based resource monitor.
+
+        :param event_type: an event type of message.
+        :param message: a message passed by monitors.
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
+        LOG.debug('notification_callback() is called.')
+
+        # TODO(hiro-kobayashi): Implement this method
+
+        return {}
+
+    def is_polling_enabled(self):
+        """Check if the polling monitor is enabled."""
+        return CONF[plugin.RESOURCE_TYPE].enable_polling_monitor
+
+    def get_polling_interval(self):
+        """Get interval of polling."""
+        return CONF[plugin.RESOURCE_TYPE].polling_interval
+
+    def poll(self):
+        """Check health of resources."""
+        LOG.debug('poll() is called.')
+
+        # TODO(hiro-kobayashi): Implement this method
+
+        return {}

@@ -25,6 +25,7 @@ from blazar.db import exceptions as db_ex
 from blazar import exceptions as common_ex
 from blazar import manager
 from blazar.manager import exceptions
+from blazar import monitor
 from blazar.notification import api as notification_api
 from blazar.utils import service as service_utils
 from blazar.utils import trusts
@@ -60,10 +61,13 @@ class ManagerService(service_utils.RPCServer):
         super(ManagerService, self).__init__(target)
         self.plugins = self._get_plugins()
         self.resource_actions = self._setup_actions()
+        self.monitors = monitor.load_monitors(self.plugins)
 
     def start(self):
         super(ManagerService, self).start()
         self.tg.add_timer(10, self._event)
+        for m in self.monitors:
+            m.start_monitoring()
 
     def _get_plugins(self):
         """Return dict of resource-plugin class pairs."""
