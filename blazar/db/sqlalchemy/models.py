@@ -64,6 +64,8 @@ class Lease(mb.BlazarBase):
     action = sa.Column(sa.String(255))
     status = sa.Column(sa.String(255))
     status_reason = sa.Column(sa.String(255))
+    degraded = sa.Column(sa.Boolean, nullable=False,
+                         server_default=sa.false())
 
     def to_dict(self):
         d = super(Lease, self).to_dict()
@@ -84,6 +86,10 @@ class Reservation(mb.BlazarBase):
     resource_id = sa.Column(sa.String(36))
     resource_type = sa.Column(sa.String(66))
     status = sa.Column(sa.String(13))
+    missing_resources = sa.Column(sa.Boolean, nullable=False,
+                                  server_default=sa.false())
+    resources_changed = sa.Column(sa.Boolean, nullable=False,
+                                  server_default=sa.false())
     instance_reservations = relationship('InstanceReservations',
                                          uselist=False,
                                          cascade='all,delete',
@@ -218,6 +224,8 @@ class ComputeHost(mb.BlazarBase):
     local_gb = sa.Column(sa.Integer, nullable=False)
     status = sa.Column(sa.String(13))
     trust_id = sa.Column(sa.String(36), nullable=False)
+    reservable = sa.Column(sa.Boolean, nullable=False,
+                           server_default=sa.true())
     computehost_extra_capabilities = relationship('ComputeHostExtraCapability',
                                                   cascade="all,delete",
                                                   backref='computehost',
