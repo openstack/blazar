@@ -633,7 +633,7 @@ def host_get_all_by_queries(queries):
             raise db_exc.BlazarDBInvalidFilter(query_filter=query)
 
         column = getattr(models.ComputeHost, key, None)
-        if column:
+        if column is not None:
             if op == 'in':
                 filt = column.in_(value.split(','))
             else:
