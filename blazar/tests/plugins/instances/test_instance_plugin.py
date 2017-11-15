@@ -174,7 +174,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             db_api, 'host_allocation_get_all_by_values')
         mock_host_allocation_get.return_value = []
 
-        mock_host_get_query = self.patch(db_api, 'host_get_all_by_queries')
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
         hosts_list = [self.generate_host_info('host-1', 4, 4096, 1000),
                       self.generate_host_info('host-2', 4, 4096, 1000),
                       self.generate_host_info('host-3', 4, 4096, 1000)]
@@ -216,7 +217,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             db_api, 'host_allocation_get_all_by_values')
         mock_host_allocation_get.return_value = []
 
-        mock_host_get_query = self.patch(db_api, 'host_get_all_by_queries')
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
         hosts_list = [self.generate_host_info('host-1', 4, 4096, 1000),
                       self.generate_host_info('host-2', 4, 4096, 1000),
                       self.generate_host_info('host-3', 4, 4096, 1000)]
@@ -264,7 +266,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             db_api, 'host_allocation_get_all_by_values')
         mock_host_allocation_get.return_value = []
 
-        mock_host_get_query = self.patch(db_api, 'host_get_all_by_queries')
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
         hosts_list = [self.generate_host_info('host-1', 4, 4096, 1000),
                       self.generate_host_info('host-2', 4, 4096, 1000),
                       self.generate_host_info('host-3', 4, 4096, 1000)]
@@ -318,7 +321,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         plugin = instance_plugin.VirtualInstancePlugin()
 
-        mock_host_get_query = self.patch(db_api, 'host_get_all_by_queries')
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
         hosts_list = [self.generate_host_info('host-1', 4, 4096, 1000),
                       self.generate_host_info('host-2', 4, 4096, 1000),
                       self.generate_host_info('host-3', 4, 4096, 1000)]

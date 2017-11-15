@@ -124,7 +124,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         filters = plugins_utils.convert_requirements(flavor_definitions)
 
-        hosts = db_api.host_get_all_by_queries(filters)
+        hosts = db_api.reservable_host_get_all_by_queries(filters)
 
         free_hosts, reserved_hosts = \
             self.filter_hosts_by_reservation(hosts, start_date, end_date,

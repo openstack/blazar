@@ -353,6 +353,12 @@ def host_get_all_by_queries(queries):
     return IMPL.host_get_all_by_queries(queries)
 
 
+@to_dict
+def reservable_host_get_all_by_queries(queries):
+    """Returns reservable hosts filtered by an array of queries."""
+    return IMPL.reservable_host_get_all_by_queries(queries)
+
+
 def host_destroy(host_id):
     """Delete specific Compute host."""
     IMPL.host_destroy(host_id)

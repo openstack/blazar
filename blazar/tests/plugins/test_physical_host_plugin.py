@@ -1385,7 +1385,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 return True
         host_get = self.patch(
             self.db_api,
-            'host_get_all_by_queries')
+            'reservable_host_get_all_by_queries')
         host_get.return_value = [
             {'id': 'host1'},
             {'id': 'host2'},
@@ -1414,7 +1414,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 return True
         host_get = self.patch(
             self.db_api,
-            'host_get_all_by_queries')
+            'reservable_host_get_all_by_queries')
         host_get.return_value = [
             {'id': 'host1'},
             {'id': 'host2'},
@@ -1440,7 +1440,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_matching_hosts_not_matching(self):
         host_get = self.patch(
             self.db_api,
-            'host_get_all_by_queries')
+            'reservable_host_get_all_by_queries')
         host_get.return_value = []
         result = self.fake_phys_plugin._matching_hosts(
             '["=", "$memory_mb", "2048"]', '[]', '1-1',

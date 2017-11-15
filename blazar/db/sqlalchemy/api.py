@@ -676,6 +676,18 @@ def host_get_all_by_queries(queries):
     return hosts_query.filter(~models.ComputeHost.id.in_(hosts)).all()
 
 
+def reservable_host_get_all_by_queries(queries):
+    """Returns reservable hosts filtered by an array of queries.
+
+    :param queries: array of queries "key op value" where op can be
+        http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
+            #sqlalchemy.sql.operators.ColumnOperators
+
+    """
+    queries.append('reservable == 1')
+    return host_get_all_by_queries(queries)
+
+
 def host_create(values):
     values = values.copy()
     host = models.ComputeHost()
