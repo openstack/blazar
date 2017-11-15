@@ -1,9 +1,9 @@
+====================
 Blazar REST API v1.0
-*********************
-
+====================
 
 1 General API information
-=========================
+-------------------------
 
 This section contains base information about the Blazar REST API design,
 including operations with different Blazar resource types and examples of
@@ -27,7 +27,7 @@ or
 
 
 2 Leases
-========
+--------
 
 **Description**
 
@@ -52,7 +52,7 @@ are mentioned.
 +--------+-----------------------+-------------------------------------------------------------------------------+
 
 2.1 List all leases
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /v1/leases
 
@@ -141,7 +141,7 @@ are mentioned.
         }
 
 2.2 Create new lease
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 .. http:post:: /v1/leases
 
@@ -250,7 +250,7 @@ are mentioned.
        
 
 2.3 Show info about lease
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /v1/leases/{lease_id}
 
@@ -338,7 +338,7 @@ are mentioned.
         }
 
 2.4 Update existing lease
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:put:: /v1/leases/{lease_id}
 
@@ -439,7 +439,7 @@ are mentioned.
         }
 
 2.5 Delete existing lease
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:delete:: /v1/leases/{lease_id}
 
@@ -462,7 +462,7 @@ are mentioned.
 
 
 3 Hosts
-=======
+-------
 
 **Description**
 
@@ -493,7 +493,7 @@ user query.
 +--------+------------------------+---------------------------------------------------------------------------------+
 
 3.1 List all hosts
-------------------
+^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /v1/os-hosts
 
@@ -569,7 +569,7 @@ user query.
         }
 
 3.2 Create host
----------------
+^^^^^^^^^^^^^^^
 
 .. http:post:: /v1/os-hosts
 
@@ -628,7 +628,7 @@ user query.
         }
 
 3.3 Show info about host
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /v1/os-hosts/{host_id}
 
@@ -681,7 +681,7 @@ user query.
         }
 
 3.4 Update existing host
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:put:: /v1/os-hosts/{host_id}
 
@@ -737,7 +737,7 @@ user query.
         }
 
 3.5 Delete existing host
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:delete:: /v1/os-hosts/{host_id}
 
@@ -759,7 +759,7 @@ user query.
         Content-Type: application/json
 
 4 Plugins
-=========
+---------
 
 **Description**
 

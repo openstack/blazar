@@ -355,7 +355,7 @@ Request Example:
            "memory_mb": 4096,
            "disk_gb": 10,
            "amount": 5,
-           "affinity": False
+           "affinity": false
          }
         ],
        "start": "2017-05-17 09:07"
@@ -369,7 +369,7 @@ Response Example:
   .. sourcecode:: json
 
      {
-       "leases": {
+       "lease": {
          "reservations": [
            {
              "id": "reservation-id",
@@ -381,7 +381,7 @@ Response Example:
              "memory_mb": 4096,
              "disk_gb": 10,
              "amount": 5,
-             "affinity": False,
+             "affinity": false,
              "created_at": "2017-05-01 10:00:00",
              "updated_at": "2017-05-01 11:00:00",
            }],
