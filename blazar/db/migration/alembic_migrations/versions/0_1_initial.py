@@ -28,12 +28,13 @@ down_revision = None
 import uuid
 
 from alembic import op
+import six
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
 
 def _generate_unicode_uuid():
-    return unicode(str(uuid.uuid4()))
+    return six.text_type(str(uuid.uuid4()))
 
 
 def MediumText():
