@@ -168,12 +168,18 @@ def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
             }
 
 
-def _get_fake_host_extra_capabilities(id=_get_fake_random_uuid(),
-                                      computehost_id=_get_fake_random_uuid()):
+def _get_fake_host_extra_capabilities(id=None,
+                                      computehost_id=None,
+                                      name='vgpu',
+                                      value='2'):
+    if id is None:
+        id = _get_fake_random_uuid()
+    if computehost_id is None:
+        computehost_id = _get_fake_random_uuid()
     return {'id': id,
             'computehost_id': computehost_id,
-            'capability_name': 'vgpu',
-            'capability_value': '2'}
+            'capability_name': name,
+            'capability_value': value}
 
 
 def is_result_sorted_correctly(results, sort_key, sort_dir='asc'):
@@ -488,6 +494,11 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.host_create(_get_fake_host_values(id=1))
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(computehost_id=1))
+        db_api.host_extra_capability_create(_get_fake_host_extra_capabilities(
+            computehost_id=1,
+            name='nic_model',
+            value='ACME Model A',
+        ))
         # We create a second host, without any extra capabilities
         db_api.host_create(_get_fake_host_values(id=2))
 
@@ -503,6 +514,9 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
                                             'vgpu == 2'])))
         self.assertRaises(db_exceptions.BlazarDBNotFound,
                           db_api.host_get_all_by_queries, ['apples < 2048'])
+        self.assertEqual(1, len(
+            db_api.host_get_all_by_queries(['nic_model == ACME Model A'])
+        ))
 
     def test_search_for_hosts_by_composed_queries(self):
         """Create one host and test composed queries."""
