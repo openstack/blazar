@@ -32,8 +32,8 @@ def list_opts():
         ('DEFAULT',
          itertools.chain(
              blazar.api.v2.app.auth_opts,
-             blazar.cmd.api.api_opts,
              blazar.cmd.api.opts,
+             blazar.config.api_opts,
              blazar.config.cli_opts,
              blazar.config.os_opts,
              blazar.db.base.db_driver_opts,

@@ -66,7 +66,14 @@ os_opts = [
                help='A domain name the os_admin_project_name belongs to')
 ]
 
+api_opts = [
+    cfg.BoolOpt('enable_v1_api',
+                default=True,
+                help='Deploy the v1 API.'),
+]
+
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 CONF.register_opts(os_opts)
+CONF.register_opts(api_opts)
 logging.register_options(cfg.CONF)
