@@ -15,9 +15,9 @@
 
 import json
 
+from blazar.api import app as api
 from blazar.api.v1 import app as v1_app
 from blazar.api.v2 import app as v2_app
-from blazar.cmd import api
 from blazar import tests
 
 
