@@ -628,7 +628,7 @@ def host_get_all_by_queries(queries):
     hosts = []
     for query in queries:
         try:
-            key, op, value = query.split(' ', 3)
+            key, op, value = query.split(' ', 2)
         except ValueError:
             raise db_exc.BlazarDBInvalidFilter(query_filter=query)
 
