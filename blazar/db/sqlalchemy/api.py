@@ -45,8 +45,6 @@ def model_query(model, session=None):
     """Query helper.
 
     :param model: base model to query
-    :param project_only: if present and current context is user-type,
-            then restrict query to match the project_id from current context.
     """
     session = session or get_session()
 
