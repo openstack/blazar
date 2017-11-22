@@ -73,7 +73,7 @@ class CPUInfo(wtypes.UserType):
     """A type for matching CPU info from hypervisors."""
 
     basetype = wtypes.text
-    name = 'cpuinfo'
+    name = 'cpuinfo as JSON formated str'
 
     @staticmethod
     def validate(value):
