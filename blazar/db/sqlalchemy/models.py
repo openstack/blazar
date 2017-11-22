@@ -17,6 +17,7 @@
 # FIXME: https://bugs.launchpad.net/climate/+bug/1300132
 # from oslo_log import log as logging
 from oslo_utils import uuidutils
+import six
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
@@ -29,7 +30,7 @@ from blazar.db.sqlalchemy import model_base as mb
 
 
 def _generate_unicode_uuid():
-    return unicode(uuidutils.generate_uuid())
+    return six.text_type(uuidutils.generate_uuid())
 
 
 def MediumText():

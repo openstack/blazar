@@ -17,6 +17,7 @@ import datetime
 import uuid
 
 import mock
+import six
 
 from blazar import context
 from blazar.db import api as db_api
@@ -54,7 +55,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             }
 
     def get_uuid(self):
-        return unicode(str(uuid.uuid4()))
+        return six.text_type(str(uuid.uuid4()))
 
     def generate_basic_events(self, lease_id, start, before_end, end):
         return [
