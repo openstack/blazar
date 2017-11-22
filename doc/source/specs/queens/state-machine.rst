@@ -75,7 +75,7 @@ Transitional statuses are as follows:
   because delete is the highest prioritized operation. e.g. when a lease hangs
   up in the STARTING status, delete should be allowed.
 
-.. image:: ../../../images/lease_statuses.png
+.. image:: ../../images/lease_statuses.png
    :width: 600 px
 
 Reservation statuses
@@ -93,7 +93,7 @@ backward compatibility:
 
 * **error**: Unrecoverable failures happened to resources.
 
-.. image:: ../../../images/reservation_statuses.png
+.. image:: ../../images/reservation_statuses.png
    :width: 600 px
 
 Event statuses
@@ -101,7 +101,7 @@ Event statuses
 
 Event statuses are not changed.
 
-.. image:: ../../../images/event_statuses.png
+.. image:: ../../images/event_statuses.png
    :width: 600 px
 
 Relationships between statuses
