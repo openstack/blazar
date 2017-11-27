@@ -53,7 +53,10 @@ class BaseMonitor(object):
         lease_ids = set([])
         for reservation_id, flags in reservation_flags.items():
             db_api.reservation_update(reservation_id, flags)
+            LOG.debug('Reservation %s was updated: %s',
+                      reservation_id, flags)
             reservation = db_api.reservation_get(reservation_id)
             lease_ids.add(reservation['lease_id'])
         for lease_id in lease_ids:
+            LOG.debug('Lease %s was updated: {"degraded": True}', lease_id)
             db_api.lease_update(lease_id, {'degraded': True})

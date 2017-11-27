@@ -86,6 +86,16 @@ class BasePlugin(object):
         """Take actions before the end of a lease"""
         pass
 
+    def heal_reservations(self, failed_resources):
+        """Heal reservations which suffer from resource failures.
+
+        :param: failed_resources: failed resources
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
+        raise NotImplementedError
+
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseMonitorPlugin():
