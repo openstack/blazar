@@ -111,6 +111,28 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
         return body
 
+    def get_expiration_lease_body(self, lease_name, host_name):
+        current_time = datetime.datetime.utcnow()
+        end_time = current_time + datetime.timedelta(seconds=90)
+        body = {
+            'start_date': current_time.strftime('%Y-%m-%d %H:%M'),
+            'end_date': end_time.strftime('%Y-%m-%d %H:%M'),
+            'name': lease_name,
+            'events': [],
+            }
+        body['reservations'] = [
+            {
+                'hypervisor_properties': ('["==", "$hypervisor_hostname", "'
+                                          '%s"]' % host_name),
+                'max': 1,
+                'min': 1,
+                'resource_type': 'physical:host',
+                'resource_properties': ''
+                }
+            ]
+
+        return body
+
     def fetch_aggregate_by_name(self, name):
         aggregates = self.aggr_client.list_aggregates()['aggregates']
         try:
@@ -121,24 +143,34 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
             raise exceptions.NotFound(err_msg)
         return aggr
 
+    def wait_until_aggregated(self, aggregate_name, host_name):
+        for i in xrange(self.MAX_RETRY):
+            try:
+                aggr = self.fetch_aggregate_by_name(aggregate_name)
+                self.assertTrue(host_name in aggr['hosts'])
+                return
+            except Exception:
+                pass
+            time.sleep(self.WAIT_TIME)
+        err_msg = ("hostname %s doesn't exist in aggregate %s."
+                   % (host_name, aggregate_name))
+        raise exceptions.NotFound(err_msg)
+
+    def _add_host_once(self):
+        host = self.fetch_one_compute_host()
+        hosts = self.reservation_client.list_host()['hosts']
+        try:
+            next(iter(filter(
+                lambda h: h['hypervisor_hostname'] == host['host'], hosts)))
+        except StopIteration:
+            self.reservation_client.create_host({'name': host['host']})
+        return host
+
     @decorators.attr(type='smoke')
     def test_host_reservation(self):
 
-        def wait_until_aggregated(aggregate_name, host_name):
-            for i in xrange(self.MAX_RETRY):
-                try:
-                    aggr = self.fetch_aggregate_by_name(aggregate_name)
-                    self.assertTrue(host_name in aggr['hosts'])
-                    return
-                except Exception:
-                    pass
-                time.sleep(self.WAIT_TIME)
-            err_msg = ("hostname %s doesn't exist in aggregate %s."
-                       % (host_name, aggregate_name))
-            raise exceptions.NotFound(err_msg)
-
-        host = self.fetch_one_compute_host()
-        self.reservation_client.create_host({'name': host['host']})
+        # Create the host if it doesn't exists
+        host = self._add_host_once()
 
         # check the host is in freepool
         freepool = self.fetch_aggregate_by_name('freepool')
@@ -161,7 +193,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # check host added to the reservation
         reservation_id = next(iter(lease['reservations']))['id']
-        wait_until_aggregated(reservation_id, host['host'])
+        self.wait_until_aggregated(reservation_id, host['host'])
 
         # create an instance with reservation id
         create_kwargs = {
@@ -192,3 +224,51 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         waiters.wait_for_server_status(self.os_admin.servers_client,
                                        server['id'], 'ERROR',
                                        raise_on_error=False)
+
+    @decorators.attr(type='smoke')
+    def test_lease_expiration(self):
+
+        # create the host if it doesn't exist
+        host = self._add_host_once()
+
+        # create new lease and start reservation immediately
+        body = self.get_expiration_lease_body('scenario-2-expiration',
+                                              host['host'])
+        lease = self.reservation_client.create_lease(body)['lease']
+        lease_id = lease['id']
+
+        # check host added to the reservation
+        reservation_id = next(iter(lease['reservations']))['id']
+        self.wait_until_aggregated(reservation_id, host['host'])
+
+        create_kwargs = {
+            'scheduler_hints': {
+                'reservation': reservation_id,
+                },
+            'image_id': CONF.compute.image_ref,
+            'flavor': CONF.compute.flavor_ref,
+            }
+        server = self.create_server(clients=self.os_admin,
+                                    **create_kwargs)
+
+        # wait for lease end
+        self.wait_for_lease_end(lease_id)
+
+        # check if the lease has been correctly terminated and
+        # the instance is removed
+        self.assertRaises(exceptions.NotFound,
+                          self.os_admin.servers_client.show_server,
+                          server['id'])
+
+        # check that the host aggregate was deleted
+        self.assertRaises(exceptions.NotFound,
+                          self.fetch_aggregate_by_name, reservation_id)
+
+        # check that the host is back in the freepool
+        freepool = self.fetch_aggregate_by_name('freepool')
+        self.assertTrue(host['host'] in freepool['hosts'])
+
+        # check the reservation status
+        lease = self.reservation_client.get_lease(lease_id)['lease']
+        self.assertTrue('deleted' in
+                        next(iter(lease['reservations']))['status'])
