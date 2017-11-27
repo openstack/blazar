@@ -163,8 +163,14 @@ class ManagerService(service_utils.RPCServer):
         except ValueError:
             raise exceptions.InvalidDate(date=date_string,
                                          date_format=date_format)
-
         return date
+
+    def validate_params(self, values, required_params):
+        if isinstance(required_params, list):
+            required_params = set(required_params)
+        missing_attr = required_params - set(values.keys())
+        if missing_attr:
+            raise exceptions.MissingParameter(param=', '.join(missing_attr))
 
     def get_lease(self, lease_id):
         return db_api.lease_get(lease_id)
@@ -182,9 +188,13 @@ class ManagerService(service_utils.RPCServer):
         except KeyError:
             raise exceptions.MissingTrustId()
 
+        self.validate_params(lease_values, ['name', 'start_date', 'end_date'])
+
         # Remove and keep event and reservation values
         events = lease_values.pop("events", [])
         reservations = lease_values.pop("reservations", [])
+        for res in reservations:
+            self.validate_params(res, ['resource_type'])
 
         # Create the lease without the reservations
         start_date = lease_values['start_date']
