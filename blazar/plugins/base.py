@@ -116,13 +116,13 @@ class BaseMonitorPlugin():
         pass
 
     @abc.abstractmethod
-    def notification_callback(self, event_type, message):
+    def notification_callback(self, event_type, payload):
         """Handle a notification message.
 
         It is used as a callback of a notification based resource monitor.
 
-        :param event_type: an event type of message.
-        :param message: a message passed by monitors.
+        :param event_type: an event type of a notification.
+        :param payload: a payload of a notification.
         :return: a dictionary of {reservation id: flags to update}
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}

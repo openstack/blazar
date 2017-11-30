@@ -87,8 +87,8 @@ class NotificationMonitor(base.BaseMonitor):
                 self.handlers[event_type].append(
                     # Wrap a notification callback with the update_statuses()
                     # to manage statuses of leases and reservations.
-                    lambda e_type, message: self.update_statuses(
-                        plugin.notification_callback, e_type, message))
+                    lambda e_type, payload: self.update_statuses(
+                        plugin.notification_callback, e_type, payload))
 
         return [NotificationEndpoint(self)]
 
