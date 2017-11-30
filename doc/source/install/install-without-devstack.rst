@@ -79,12 +79,6 @@ Then edit */etc/blazar/blazar.conf* using the following example:
     password=<password>
     auth_url=<identity_service_url>
 
-    [physical:host]
-    aggregate_freepool_name=freepool
-    project_id_key=blazar:project
-    blazar_owner=blazar:owner
-    blazar_az_prefix=blazar:
-
 ..
 
 *os_admin_** flags refer to the Blazar service user. If you do not have this
