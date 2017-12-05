@@ -120,7 +120,8 @@ class Reservation(mb.BlazarBase):
 
         if self.instance_reservations:
             ir_keys = ['vcpus', 'memory_mb', 'disk_gb', 'amount', 'affinity',
-                       'flavor_id', 'aggregate_id', 'server_group_id']
+                       'flavor_id', 'aggregate_id', 'server_group_id',
+                       'resource_properties']
             d.update(self.instance_reservations.to_dict(include=ir_keys))
 
         return d
@@ -174,6 +175,7 @@ class InstanceReservations(mb.BlazarBase):
     disk_gb = sa.Column(sa.Integer, nullable=False)
     amount = sa.Column(sa.Integer, nullable=False)
     affinity = sa.Column(sa.Boolean, nullable=False)
+    resource_properties = sa.Column(MediumText(), nullable=True)
     flavor_id = sa.Column(sa.String(36), nullable=True)
     aggregate_id = sa.Column(sa.Integer, nullable=True)
     server_group_id = sa.Column(sa.String(36), nullable=True)
