@@ -18,7 +18,8 @@
             "vcpus": 2,
             "memory_mb": 4096,
             "disk_gb": 100,
-            "affinity": false
+            "affinity": false,
+            "resource_properties": ""
         }
     ],
     "events": []

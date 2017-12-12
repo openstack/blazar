@@ -114,6 +114,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         return max_vcpus, max_memory, max_disk
 
     def query_available_hosts(self, cpus=None, memory=None, disk=None,
+                              resource_properties=None,
                               start_date=None, end_date=None,
                               excludes_res=None):
         """Query hosts that are available for a reservation.
@@ -129,8 +130,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         filters = plugins_utils.convert_requirements(flavor_definitions)
 
-        hosts = db_api.reservable_host_get_all_by_queries(filters)
+        if resource_properties:
+            filters += plugins_utils.convert_requirements(resource_properties)
 
+        hosts = db_api.reservable_host_get_all_by_queries(filters)
         free_hosts, reserved_hosts = \
             self.filter_hosts_by_reservation(hosts, start_date, end_date,
                                              excludes_res)
@@ -168,6 +171,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'cpus': values['vcpus'],
             'memory': values['memory_mb'],
             'disk': values['disk_gb'],
+            'resource_properties': values['resource_properties'],
             'start_date': values['start_date'],
             'end_date': values['end_date']
             }
@@ -299,7 +303,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def validate_reservation_param(self, values):
         marshall_attributes = set(['vcpus', 'memory_mb', 'disk_gb',
-                                   'amount', 'affinity'])
+                                   'amount', 'affinity',
+                                   'resource_properties'])
         missing_attr = marshall_attributes - set(values.keys())
         if missing_attr:
             raise mgr_exceptions.MissingParameter(param=','.join(missing_attr))
@@ -327,6 +332,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'disk_gb': values['disk_gb'],
             'amount': values['amount'],
             'affinity': bool_from_string(values['affinity']),
+            'resource_properties': values['resource_properties']
             }
         instance_reservation = db_api.instance_reservation_create(
             instance_reservation_val)
@@ -383,7 +389,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
 
-        updatable = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount']
+        updatable = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount',
+                     'resource_properties']
         if (not any([k in updatable for k in new_values.keys()])
                 and new_values['start_date'] >= lease['start_date']
                 and new_values['end_date'] <= lease['end_date']):
@@ -529,7 +536,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         values['start_date'] = max(datetime.datetime.utcnow(),
                                    lease['start_date'])
         values['end_date'] = lease['end_date']
-        specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount']
+        specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount',
+                 'resource_properties']
         for key in specs:
             values[key] = reservation[key]
         changed_hosts = self.pickup_hosts(reservation['id'], values)
