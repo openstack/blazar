@@ -14,13 +14,12 @@
 #    under the License.
 
 from oslo_config import cfg
-from tempest import config
 
 
 service_available_group = cfg.OptGroup(name="service_available",
                                        title="Available OpenStack Services")
 
-ServiceAvailableGroup = [
+service_option = [
     cfg.BoolOpt("climate",
                 default=True,
                 help="Whether or not climate is expected to be available. "
@@ -48,27 +47,3 @@ ResourceReservationGroup = [
                default=300,
                help="Timeout in seconds to wait for a lease to finish.")
 ]
-
-
-class TempestConfigPrivateBlazar(config.TempestConfigPrivate):
-    """Blazar's config wrap over standard config."""
-
-    def __init__(self, parse_conf=True):
-        config.register_opt_group(cfg.CONF, service_available_group,
-                                  ServiceAvailableGroup)
-        config.register_opt_group(cfg.CONF, resource_reservation_group,
-                                  ResourceReservationGroup)
-        self.resource_reservation = cfg.CONF.resource_reservation
-
-
-class TempestBlazarLazyConfig(object):
-    _config = None
-
-    def __getattr__(self, attr):
-        if not self._config:
-            self._config = TempestConfigPrivateBlazar()
-
-        return getattr(self._config, attr)
-
-
-CONF = TempestBlazarLazyConfig()

@@ -22,8 +22,10 @@ from tempest.common import waiters
 from tempest import config
 from tempest import exceptions
 from tempest.lib import decorators
-from tempest.scenario import resource_reservation_scenario as rrs
 from tempest import test
+
+from blazar_tempest_plugin.tests.scenario import (
+    resource_reservation_scenario as rrs)
 
 CONF = config.CONF
 

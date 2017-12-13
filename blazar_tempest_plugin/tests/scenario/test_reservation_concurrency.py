@@ -14,7 +14,8 @@
 
 from multiprocessing.pool import ThreadPool
 
-from tempest.scenario import resource_reservation_scenario as rrs
+from blazar_tempest_plugin.tests.scenario import (
+    resource_reservation_scenario as rrs)
 
 
 class TestReservationConcurrencyScenario(rrs.ResourceReservationScenarioTest):

@@ -1,4 +1,4 @@
-# Copyright 2014 Intel Corporation
+# Copyright 2017 NTT
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,12 +15,7 @@
 
 import json
 
-from oslo_log import log as logging
-from tempest import config_resource_reservation as config
 from tempest.lib.common import rest_client
-
-CONF = config.CONF
-LOG = logging.getLogger(__name__)
 
 
 class ResourceReservationV1Client(rest_client.RestClient):
