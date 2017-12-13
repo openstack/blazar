@@ -53,7 +53,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         current_time = datetime.datetime.utcnow()
         end_time = current_time + datetime.timedelta(hours=1)
         body = {
-            "start_date": current_time.strftime('%Y-%m-%d %H:%M'),
+            "start_date": "now",
             "end_date": end_time.strftime('%Y-%m-%d %H:%M'),
             "name": lease_name,
             "events": [],
@@ -75,7 +75,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         current_time = datetime.datetime.utcnow()
         end_time = current_time + datetime.timedelta(hours=1)
         body = {
-            "start_date": current_time.strftime('%Y-%m-%d %H:%M'),
+            "start_date": "now",
             "end_date": end_time.strftime('%Y-%m-%d %H:%M'),
             "name": lease_name,
             "events": [],
@@ -96,7 +96,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         current_time = datetime.datetime.utcnow()
         end_time = current_time + datetime.timedelta(hours=1)
         body = {
-            "start_date": current_time.strftime('%Y-%m-%d %H:%M'),
+            "start_date": "now",
             "end_date": end_time.strftime('%Y-%m-%d %H:%M'),
             "name": lease_name,
             "events": [],
@@ -118,7 +118,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         current_time = datetime.datetime.utcnow()
         end_time = current_time + datetime.timedelta(seconds=90)
         body = {
-            'start_date': current_time.strftime('%Y-%m-%d %H:%M'),
+            'start_date': "now",
             'end_date': end_time.strftime('%Y-%m-%d %H:%M'),
             'name': lease_name,
             'events': [],
