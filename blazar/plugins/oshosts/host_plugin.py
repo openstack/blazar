@@ -663,6 +663,15 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
                     LOG.warn('%s failed.',
                              failed_hosts[0]['hypervisor_hostname'])
                     reservation_flags = self._handle_failures(failed_hosts)
+            else:
+                recovered_hosts = db_api.host_get_all_by_queries(
+                    ['reservable == 0',
+                     'hypervisor_hostname == ' + data['host']])
+                if recovered_hosts:
+                    db_api.host_update(recovered_hosts[0]['id'],
+                                       {'reservable': True})
+                    LOG.warn('%s recovered.',
+                             recovered_hosts[0]['hypervisor_hostname'])
 
         return reservation_flags
 
@@ -684,32 +693,44 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
         LOG.trace('Poll...')
         reservation_flags = {}
 
-        failed_hosts = self._poll_resource_failures()
+        failed_hosts, recovered_hosts = self._poll_resource_failures()
         if failed_hosts:
             for host in failed_hosts:
                 LOG.warn('%s failed.', host['hypervisor_hostname'])
             reservation_flags = self._handle_failures(failed_hosts)
+        if recovered_hosts:
+            for host in recovered_hosts:
+                db_api.host_update(host['id'], {'reservable': True})
+                LOG.warn('%s recovered.', host['hypervisor_hostname'])
 
         return reservation_flags
 
     def _poll_resource_failures(self):
         """Check health of hosts by calling Nova Hypervisors API.
 
-        :return: a list of failed hosts.
+        :return: a list of failed hosts, a list of recovered hosts.
         """
-        reservable_hosts = db_api.reservable_host_get_all_by_queries([])
+        hosts = db_api.host_get_all_by_filters({})
+        reservable_hosts = [h for h in hosts if h['reservable'] is True]
+        unreservable_hosts = [h for h in hosts if h['reservable'] is False]
 
         try:
             hvs = self.nova.hypervisors.list()
+
             failed_hv_ids = [str(hv.id) for hv in hvs
                              if hv.state == 'down' or hv.status == 'disabled']
             failed_hosts = [host for host in reservable_hosts
                             if host['id'] in failed_hv_ids]
+
+            active_hv_ids = [str(hv.id) for hv in hvs
+                             if hv.state == 'up' and hv.status == 'enabled']
+            recovered_hosts = [host for host in unreservable_hosts
+                               if host['id'] in active_hv_ids]
         except Exception as e:
             LOG.exception('Skipping health check of host %s. %s',
                           host['hypervisor_hostname'], str(e))
 
-        return failed_hosts
+        return failed_hosts, recovered_hosts
 
     def _handle_failures(self, failed_hosts):
         """Handle resource failures.
