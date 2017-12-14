@@ -259,9 +259,8 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
 
         # check if the lease has been correctly terminated and
         # the instance is removed
-        self.assertRaises(exceptions.NotFound,
-                          self.os_admin.servers_client.show_server,
-                          server['id'])
+        waiters.wait_for_server_termination(self.os_admin.servers_client,
+                                            server['id'])
 
         # check that the host aggregate was deleted
         self.assertRaises(exceptions.NotFound,
