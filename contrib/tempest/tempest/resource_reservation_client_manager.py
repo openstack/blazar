@@ -52,7 +52,7 @@ class ResourceReservationV1Client(rest_client.RestClient):
 
     def update_lease(self, lease, body):
         body = json.dumps(body)
-        resp, body = self.post(self.lease_path % lease, body=body)
+        resp, body = self.put(self.lease_path % lease, body=body)
         return self._response_helper(resp, body)
 
     def delete_lease(self, lease):
@@ -74,7 +74,7 @@ class ResourceReservationV1Client(rest_client.RestClient):
 
     def update_host(self, host, body):
         body = json.dumps(body)
-        resp, body = self.post(self.host_path % host, body=body)
+        resp, body = self.put(self.host_path % host, body=body)
         return self._response_helper(resp, body)
 
     def delete_host(self, host):
