@@ -214,7 +214,7 @@ class ManagerService(service_utils.RPCServer):
 
         if start_date < now:
             raise common_ex.NotAuthorized(
-                'Start date must later than current date')
+                'Start date must be later than current date')
 
         with trusts.create_ctx_from_trust(trust_id) as ctx:
             # NOTE(priteau): We should not get user_id from ctx, because we are
@@ -340,7 +340,7 @@ class ManagerService(service_utils.RPCServer):
         if (lease['start_date'] > now and
                 values['start_date'] < now):
             raise common_ex.NotAuthorized(
-                'Start date must later than current date')
+                'Start date must be later than current date')
 
         if lease['end_date'] < now:
             raise common_ex.NotAuthorized(
