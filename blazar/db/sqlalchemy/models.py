@@ -61,9 +61,7 @@ class Lease(mb.BlazarBase):
                                 backref='lease', lazy='joined')
     events = relationship('Event', cascade="all,delete",
                           backref='lease', lazy='joined')
-    action = sa.Column(sa.String(255))
     status = sa.Column(sa.String(255))
-    status_reason = sa.Column(sa.String(255))
     degraded = sa.Column(sa.Boolean, nullable=False,
                          server_default=sa.false())
 
@@ -165,7 +163,6 @@ class ComputeHostReservation(mb.BlazarBase):
     resource_properties = sa.Column(MediumText())
     count_range = sa.Column(sa.String(36))
     hypervisor_properties = sa.Column(MediumText())
-    status = sa.Column(sa.String(13))
     before_end = sa.Column(sa.String(36))
 
     def to_dict(self):
