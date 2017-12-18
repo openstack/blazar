@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
+
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -24,6 +26,7 @@ from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
 from blazar.plugins import base
 from blazar.plugins import oshosts
+from blazar import status
 from blazar.utils.openstack import nova
 from blazar.utils import plugins as plugins_utils
 
@@ -50,6 +53,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             project_domain_name=CONF.os_admin_user_domain_name)
 
         self.freepool_name = CONF.nova.aggregate_freepool_name
+        self.monitor = oshosts.host_plugin.PhysicalHostMonitorPlugin()
+        self.monitor.register_healing_handler(self.heal_reservations)
 
     def filter_hosts_by_reservation(self, hosts, start_date, end_date,
                                     excludes):
@@ -189,19 +194,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                 removed_host_ids.add(kept_host_ids.pop())
         elif len(kept_host_ids) < values['amount']:
             less = values['amount'] - len(kept_host_ids)
-            if less > len(extra_host_ids):
-                raise mgr_exceptions.NotEnoughHostsAvailable()
             ordered_extra_host_ids = [h['id'] for h in new_hosts
                                       if h['id'] in extra_host_ids]
-            for i in range(less):
+            for i in range(min(less, len(extra_host_ids))):
                 added_host_ids.add(ordered_extra_host_ids[i])
-
-        reservation = db_api.reservation_get(reservation_id)
-        if reservation['status'] == 'active' and len(removed_host_ids) > 0:
-            err_msg = ("Instance reservation doesn't allow to reduce/replace "
-                       "reserved instance slots when the reservation is in "
-                       "active status.")
-            raise mgr_exceptions.CantUpdateParameter(err_msg)
 
         return {'added': added_host_ids, 'removed': removed_host_ids}
 
@@ -317,9 +313,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise exceptions.BlazarException('affinity = True is not '
                                              'supported.')
 
-        try:
-            hosts = self.pickup_hosts(reservation_id, values)
-        except mgr_exceptions.NotEnoughHostsAvailable:
+        hosts = self.pickup_hosts(reservation_id, values)
+
+        if len(hosts['added']) < values['amount']:
             raise mgr_exceptions.HostNotFound("The reservation can't be "
                                               "accommodate because of less "
                                               "capacity.")
@@ -409,6 +405,13 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         changed_hosts = self.pickup_hosts(reservation_id, new_values)
 
+        if (reservation['status'] == 'active'
+                and len(changed_hosts['removed']) > 0):
+            err_msg = ("Instance reservation doesn't allow to reduce/replace "
+                       "reserved instance slots when the reservation is in "
+                       "active status.")
+            raise mgr_exceptions.CantUpdateParameter(err_msg)
+
         db_api.instance_reservation_update(
             reservation['resource_id'],
             {key: new_values[key] for key in updatable})
@@ -466,7 +469,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         self.cleanup_resources(instance_reservation)
 
-    def heal_reservations(cls, failed_resources):
+    def heal_reservations(self, failed_resources):
         """Heal reservations which suffer from resource failures.
 
         :param: failed_resources: a list of failed hosts.
@@ -474,8 +477,60 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}
         """
+        reservation_flags = {}
 
-        # TODO(hiro-kobayashi): Implement this method
-        LOG.warn('heal_reservations() is not implemented yet.')
+        failed_allocs = []
+        for host in failed_resources:
+            failed_allocs += db_api.host_allocation_get_all_by_values(
+                compute_host_id=host['id'])
 
-        return {}
+        for alloc in failed_allocs:
+            reservation = db_api.reservation_get(alloc['reservation_id'])
+            if reservation['resource_type'] != RESOURCE_TYPE:
+                continue
+            pool = None
+
+            # Remove the failed host from the aggregate.
+            if reservation['status'] == status.reservation.ACTIVE:
+                host = db_api.host_get(alloc['compute_host_id'])
+                pool = nova.ReservationPool()
+                pool.remove_computehost(reservation['aggregate_id'],
+                                        host['service_name'])
+
+            # Allocate alternative resource.
+            values = {}
+            lease = db_api.lease_get(reservation['lease_id'])
+            values['start_date'] = max(datetime.datetime.utcnow(),
+                                       lease['start_date'])
+            values['end_date'] = lease['end_date']
+            specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount']
+            for key in specs:
+                values[key] = reservation[key]
+            changed_hosts = self.pickup_hosts(reservation['id'], values)
+            if len(changed_hosts['added']) == 0:
+                if reservation['id'] not in reservation_flags:
+                    reservation_flags[reservation['id']] = {}
+                reservation_flags[reservation['id']].update(
+                    {'missing_resources': True})
+                db_api.host_allocation_destroy(alloc['id'])
+                LOG.warn('Could not find alternative host for reservation %s '
+                         '(lease: %s).', reservation['id'], lease['name'])
+            else:
+                new_host_id = changed_hosts['added'].pop()
+                db_api.host_allocation_update(
+                    alloc['id'], {'compute_host_id': new_host_id})
+                if reservation['status'] == status.reservation.ACTIVE:
+                    # Add the alternative host into the aggregate.
+                    new_host = db_api.host_get(new_host_id)
+                    pool.add_computehost(reservation['aggregate_id'],
+                                         new_host['service_name'],
+                                         stay_in=True)
+                    if reservation['id'] not in reservation_flags:
+                        reservation_flags[reservation['id']] = {}
+                    reservation_flags[reservation['id']].update(
+                        {'resources_changed': True})
+
+                LOG.warn('Resource changed for reservation %s (lease: %s).',
+                         reservation['id'], lease['name'])
+
+        return reservation_flags

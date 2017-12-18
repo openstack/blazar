@@ -347,8 +347,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
-        self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
-                          plugin.pickup_hosts, 'reservation-id1', values)
+
+        hosts = plugin.pickup_hosts('reservation-id1', values)
+        self.assertTrue((len(hosts['added']) - len(hosts['removed']))
+                        < values['amount'])
 
     def test_max_usage_with_serial_reservation(self):
         def fake_event_get(sort_key, sort_dir, filters):
@@ -577,53 +579,6 @@ class TestVirtualInstancePlugin(tests.TestCase):
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
-
-        # case: new amount is greater than old amount
-        mock_query_available.return_value = [
-            self.generate_host_info('host-id1', 2, 2024, 1000),
-            self.generate_host_info('host-id2', 2, 2024, 1000),
-            self.generate_host_info('host-id3', 2, 2024, 1000),
-            self.generate_host_info('host-id4', 2, 2024, 1000)]
-
-        values = self.get_input_values(1, 1024, 10, 4, False,
-                                       '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
-        expect = {'added': set(['host-id4']), 'removed': set([])}
-        ret = plugin.pickup_hosts(reservation['id'], values)
-        self.assertEqual(expect['added'], ret['added'])
-        self.assertEqual(expect['removed'], ret['removed'])
-
-    def test_pickup_hosts_for_update_in_active(self):
-        reservation = {'id': 'reservation-id1', 'status': 'active'}
-        plugin = instance_plugin.VirtualInstancePlugin()
-
-        mock_alloc_get = self.patch(db_api,
-                                    'host_allocation_get_all_by_values')
-        mock_alloc_get.return_value = [
-            {'compute_host_id': 'host-id1'}, {'compute_host_id': 'host-id2'},
-            {'compute_host_id': 'host-id3'}]
-        mock_query_available = self.patch(plugin, 'query_available_hosts')
-        mock_query_available.return_value = [
-            self.generate_host_info('host-id2', 2, 2024, 1000),
-            self.generate_host_info('host-id3', 2, 2024, 1000),
-            self.generate_host_info('host-id4', 2, 2024, 1000)]
-
-        mock_reservation_get = self.patch(db_api, 'reservation_get')
-        mock_reservation_get.return_value = reservation
-
-        # case: new amount is less than old amount
-        values = self.get_input_values(1, 1024, 10, 1, False,
-                                       '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
-        self.assertRaises(mgr_exceptions.CantUpdateParameter,
-                          plugin.pickup_hosts, reservation['id'], values)
-
-        # case: new amount is same but change allocations
-        values = self.get_input_values(1, 1024, 10, 3, False,
-                                       '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
-        self.assertRaises(mgr_exceptions.CantUpdateParameter,
-                          plugin.pickup_hosts, reservation['id'], values)
 
         # case: new amount is greater than old amount
         mock_query_available.return_value = [
@@ -877,3 +832,190 @@ class TestVirtualInstancePlugin(tests.TestCase):
             fake.delete.assert_called_once()
         mock_cleanup_resources.assert_called_once_with(
             fake_instance_reservation)
+
+    def test_heal_reservations_before_start_and_resources_changed(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_hosts = [{'id': 1}]
+        new_host_ids = [2]
+        alloc_get = self.patch(db_api,
+                               'host_allocation_get_all_by_values')
+        alloc_get.return_value = [{'id': 'alloc-1',
+                                   'compute_host_id': '1',
+                                   'reservation_id': 'rsrv-1'}]
+        alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': 'rsrv-1',
+            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': False,
+            'amount': 3}
+        host_get = self.patch(db_api, 'host_get')
+        host_get.return_value = {'service_name': 'compute'}
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = mock.MagicMock()
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00)}
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': new_host_ids, 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
+                                                            11, 00)
+            result = plugin.heal_reservations(failed_hosts)
+        alloc_destroy.assert_not_called()
+        pickup_hosts.assert_called_once()
+        alloc_update.assert_called_once_with('alloc-1',
+                                             {'compute_host_id': 2})
+        self.assertEqual({}, result)
+
+    def test_heal_reservations_before_start_and_missing_resources(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_hosts = [{'id': 1}]
+        new_host_ids = []
+        alloc_get = self.patch(db_api,
+                               'host_allocation_get_all_by_values')
+        alloc_get.return_value = [{'id': 'alloc-1',
+                                   'compute_host_id': '1',
+                                   'reservation_id': 'rsrv-1'}]
+        alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': 'rsrv-1',
+            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': False,
+            'amount': 3}
+        host_get = self.patch(db_api, 'host_get')
+        host_get.return_value = {'service_name': 'compute'}
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = mock.MagicMock()
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00)}
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': new_host_ids, 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
+                                                            11, 00)
+            result = plugin.heal_reservations(failed_hosts)
+        alloc_destroy.assert_called_once_with('alloc-1')
+        pickup_hosts.assert_called_once()
+        alloc_update.assert_not_called()
+        self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
+
+    def test_heal_active_reservations_and_resources_changed(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_hosts = [{'id': 1}]
+        new_host_ids = [2]
+        alloc_get = self.patch(db_api,
+                               'host_allocation_get_all_by_values')
+        alloc_get.return_value = [{'id': 'alloc-1',
+                                   'compute_host_id': '1',
+                                   'reservation_id': 'rsrv-1'}]
+        alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': 'rsrv-1',
+            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': False,
+            'amount': 3}
+        host_get = self.patch(db_api, 'host_get')
+        host_get.return_value = {'service_name': 'compute'}
+        fake_pool = mock.MagicMock()
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = fake_pool
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00)}
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': new_host_ids, 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
+                                                            13, 00)
+            result = plugin.heal_reservations(failed_hosts)
+        alloc_destroy.assert_not_called()
+        pickup_hosts.assert_called_once()
+        alloc_update.assert_called_once_with('alloc-1',
+                                             {'compute_host_id': 2})
+        fake_pool.add_computehost.assert_called_once_with('agg-1',
+                                                          'compute',
+                                                          stay_in=True)
+        self.assertEqual({'rsrv-1': {'resources_changed': True}}, result)
+
+    def test_heal_active_reservations_and_missing_resources(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_hosts = [{'id': 1}]
+        new_host_ids = []
+        alloc_get = self.patch(db_api,
+                               'host_allocation_get_all_by_values')
+        alloc_get.return_value = [{'id': 'alloc-1',
+                                   'compute_host_id': '1',
+                                   'reservation_id': 'rsrv-1'}]
+        alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': 'rsrv-1',
+            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': False,
+            'amount': 3}
+        host_get = self.patch(db_api, 'host_get')
+        host_get.return_value = {'service_name': 'compute'}
+        fake_pool = mock.MagicMock()
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = fake_pool
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00)}
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': new_host_ids, 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
+                                                            13, 00)
+            result = plugin.heal_reservations(failed_hosts)
+        alloc_destroy.assert_called_once_with('alloc-1')
+        pickup_hosts.assert_called_once()
+        alloc_update.assert_not_called()
+        self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
