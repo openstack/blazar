@@ -16,11 +16,14 @@ import datetime
 import time
 
 from oslo_log import log as logging
+from six.moves import range
 from tempest.common import waiters
 from tempest import config
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest.scenario import resource_reservation_scenario as rrs
+
+from blazar_tempest_plugin.tests.scenario import (
+    resource_reservation_scenario as rrs)
 
 CONF = config.CONF
 
@@ -144,7 +147,7 @@ class TestHostReservationScenario(rrs.ResourceReservationScenarioTest):
         return aggr
 
     def wait_until_aggregated(self, aggregate_name, host_name):
-        for i in xrange(self.MAX_RETRY):
+        for i in range(self.MAX_RETRY):
             try:
                 aggr = self.fetch_aggregate_by_name(aggregate_name)
                 self.assertTrue(host_name in aggr['hosts'])

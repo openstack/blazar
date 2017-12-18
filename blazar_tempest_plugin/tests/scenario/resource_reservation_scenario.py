@@ -16,11 +16,13 @@
 
 from oslo_log import log
 from tempest import clients as tempestclients
-from tempest import config_resource_reservation as config
+from tempest import config
 from tempest import exceptions
 from tempest.lib.common.utils import test_utils
-from tempest import resource_reservation_client_manager as clients
-from tempest.scenario import manager_freeze as manager
+
+from blazar_tempest_plugin.services.reservation import (
+    reservation_client as clients)
+from blazar_tempest_plugin.tests.scenario import manager_freeze as manager
 
 CONF = config.CONF
 
@@ -37,7 +39,8 @@ class ResourceReservationScenarioTest(manager.ScenarioTest):
         super(ResourceReservationScenarioTest, cls).setup_clients()
         if not (CONF.service_available.climate or
                 CONF.service_available.blazar):
-            raise cls.skipException("Resource reservation support is required")
+            raise cls.skipException("Resource reservation support is"
+                                    "required")
 
         cred_provider = cls._get_credentials_provider()
         creds = cred_provider.get_credentials('admin')
