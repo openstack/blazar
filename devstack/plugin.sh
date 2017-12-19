@@ -97,6 +97,10 @@ function configure_blazar {
     fi
     iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.BlazarFilter"
 
+    if [[ "$BLAZAR_USE_MOD_WSGI" == "True" ]]; then
+        write_uwsgi_config "$BLAZAR_UWSGI_CONF" "$BLAZAR_UWSGI" "/reservation"
+    fi
+
     # Database
     recreate_database blazar utf8
 
@@ -146,13 +150,17 @@ function create_blazar_accounts {
         "$SERVICE_PASSWORD" "default" "blazar@example.com")
     get_or_add_user_project_role $ADMIN_ROLE $BLAZAR_USER_ID $SERVICE_TENANT
 
+    if [[ "$BLAZAR_USE_MOD_WSGI" == "True" ]]; then
+        blazar_api_url="$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST/reservation"
+    else
+        blazar_api_url="$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT"
+    fi
+
     BLAZAR_SERVICE=$(get_or_create_service "blazar" \
         "reservation" "Blazar Reservation Service")
     get_or_create_endpoint $BLAZAR_SERVICE \
         "$REGION_NAME" \
-        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
-        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1" \
-        "$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT/v1"
+        "$blazar_api_url/v1"
 
     KEYSTONEV3_SERVICE=$(get_or_create_service "keystonev3" \
         "identityv3" "Keystone Identity Service V3")
@@ -179,7 +187,11 @@ function install_blazar {
 
 # start_blazar() - Start running processes, including screen
 function start_blazar {
-    run_process blazar-a "$BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
+    if [ "$BLAZAR_USE_MOD_WSGI" == "True" ]; then
+        run_process 'blazar-a' "$BLAZAR_BIN_DIR/uwsgi --ini $BLAZAR_UWSGI_CONF"
+    else
+        run_process blazar-a "$BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
+    fi
     run_process blazar-m "$BLAZAR_BIN_DIR/blazar-manager --debug --config-file $BLAZAR_CONF_FILE"
 }
 
@@ -189,6 +201,14 @@ function stop_blazar {
     for serv in blazar-a blazar-m; do
         stop_process $serv
     done
+}
+
+
+# clean_blazar_configuration() - Cleanup blazar configurations
+function clean_blazar_configuration {
+    if [[ "$BLAZAR_USE_MOD_WSGI" == "True" ]]; then
+        remove_uwsgi_config "$BLAZAR_UWSGI_CONF" "$BLAZAR_UWSGI"
+    fi
 }
 
 
@@ -214,6 +234,7 @@ if is_service_enabled blazar blazar-m blazar-a; then
     if [[ "$1" == "unstack" ]]; then
         echo_summary "Shutting Down Blazar"
         stop_blazar
+        clean_blazar_configuration
     fi
 
 fi
