@@ -40,7 +40,11 @@ manager_opts = [
                default=60,
                help='Minutes prior to the end of a lease in which actions '
                     'like notification and snapshot are taken. If this is '
-                    'set to 0, then these actions are not taken.')
+                    'set to 0, then these actions are not taken.'),
+    cfg.IntOpt('event_max_retries',
+               default=1,
+               max=50,
+               help='Number of times to retry an event action.')
 ]
 
 CONF = cfg.CONF
@@ -48,6 +52,8 @@ CONF.register_opts(manager_opts, 'manager')
 LOG = logging.getLogger(__name__)
 
 LEASE_DATE_FORMAT = "%Y-%m-%d %H:%M"
+
+EVENT_INTERVAL = 10
 
 
 class ManagerService(service_utils.RPCServer):
@@ -66,7 +72,7 @@ class ManagerService(service_utils.RPCServer):
 
     def start(self):
         super(ManagerService, self).start()
-        self.tg.add_timer(10, self._event)
+        self.tg.add_timer(EVENT_INTERVAL, self._event)
         for m in self.monitors:
             m.start_monitoring()
 
@@ -146,24 +152,44 @@ class ManagerService(service_utils.RPCServer):
         if event['time'] < datetime.datetime.utcnow():
             db_api.event_update(event['id'],
                                 {'status': status.event.IN_PROGRESS})
-            event_type = event['event_type']
-            event_fn = getattr(self, event_type, None)
-            if event_fn is None:
-                raise exceptions.EventError(error='Event type %s is not '
-                                                  'supported' % event_type)
             try:
-                eventlet.spawn_n(service_utils.with_empty_context(event_fn),
-                                 lease_id=event['lease_id'],
-                                 event_id=event['id'])
-                lease = db_api.lease_get(event['lease_id'])
-                with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
-                    self._send_notification(lease,
-                                            ctx,
-                                            events=['event.%s' % event_type])
+                eventlet.spawn_n(
+                    service_utils.with_empty_context(self._exec_event),
+                    event)
             except Exception:
                 db_api.event_update(event['id'],
                                     {'status': status.event.ERROR})
                 LOG.exception('Error occurred while event handling.')
+
+    def _exec_event(self, event):
+        """Execute an event function"""
+        event_fn = getattr(self, event['event_type'], None)
+        if event_fn is None:
+            raise exceptions.EventError(
+                error='Event type %s is not supported'
+                      % event['event_type'])
+        try:
+            event_fn(lease_id=event['lease_id'], event_id=event['id'])
+        except common_ex.InvalidStatus:
+            now = datetime.datetime.utcnow()
+            if now < event['time'] + datetime.timedelta(
+                    seconds=CONF.manager.event_max_retries * 10):
+                # Set the event status UNDONE for retrying the event
+                db_api.event_update(event['id'],
+                                    {'status': status.event.UNDONE})
+            else:
+                db_api.event_update(event['id'],
+                                    {'status': status.event.ERROR})
+                LOG.exception('Error occurred while handling event.')
+        except Exception:
+            db_api.event_update(event['id'],
+                                {'status': status.event.ERROR})
+            LOG.exception('Error occurred while handling event.')
+        else:
+            lease = db_api.lease_get(event['lease_id'])
+            with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
+                self._send_notification(
+                    lease, ctx, events=['event.%s' % event['event_type']])
 
     def _date_from_string(self, date_string, date_format=LEASE_DATE_FORMAT):
         try:

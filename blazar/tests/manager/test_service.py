@@ -226,46 +226,115 @@ class ServiceTestCase(tests.TestCase):
 
         self.assertFalse(event_update.called)
 
-    def test_event_all_okay(self):
+    def test_event_success(self):
         events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        events.return_value = {'id': '111-222-333', 'time': self.good_date,
-                               'event_type': 'end_lease',
-                               'lease_id': self.lease_id}
+        events.return_value = {'id': '111-222-333',
+                               'time': self.good_date}
+        self.patch(eventlet, 'spawn_n')
 
         self.manager._event()
 
-        event_update.assert_called_once_with('111-222-333',
-                                             {'status': 'IN_PROGRESS'})
+        event_update.assert_called_once_with(
+            '111-222-333', {'status': status.event.IN_PROGRESS})
+
+    def test_event_spawn_fail(self):
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        event_update = self.patch(self.db_api, 'event_update')
+        self.patch(eventlet, 'spawn_n').side_effect = Exception
+        events.return_value = {'id': '111-222-333',
+                               'time': self.good_date}
+
+        self.manager._event()
+
+        event_update.assert_has_calls([
+            mock.call('111-222-333', {'status': status.event.IN_PROGRESS}),
+            mock.call('111-222-333', {'status': status.event.ERROR})])
+
+    def test_exec_event_success(self):
+        event = {'id': '111-222-333',
+                 'event_type': 'start_lease',
+                 'lease_id': self.lease_id}
+        start_lease = self.patch(self.manager, 'start_lease')
+
+        self.manager._exec_event(event)
+
+        start_lease.assert_called_once_with(lease_id=event['lease_id'],
+                                            event_id=event['id'])
+        self.lease_get.assert_called_once_with(event['lease_id'])
         expected_context = self.trust_ctx.return_value
         self.fake_notifier.assert_called_once_with(
             expected_context.__enter__.return_value,
             notifier_api.format_lease_payload(self.lease),
-            'lease.event.end_lease')
+            'lease.event.start_lease')
 
-    def test_event_wrong_event_status(self):
-        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
-        self.patch(self.db_api, 'event_update')
-        events.return_value = {'id': '111-222-333', 'time': self.good_date,
-                               'event_type': 'wrong_type',
-                               'lease_id': self.lease_id}
+    def test_exec_event_invalid_event_type(self):
+        event = {'id': '111-222-333',
+                 'event_type': 'invalid',
+                 'lease_id': self.lease_id}
 
         self.assertRaises(manager_ex.EventError,
-                          self.manager._event)
+                          self.manager._exec_event,
+                          event)
 
-    def test_event_wrong_eventlet_fail(self):
-        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+    def test_exec_event_retry(self):
+        event = {'id': '111-222-333',
+                 'event_type': 'start_lease',
+                 'lease_id': self.lease_id,
+                 'time': self.good_date}
+        start_lease = self.patch(self.manager, 'start_lease')
+        start_lease.side_effect = exceptions.InvalidStatus
         event_update = self.patch(self.db_api, 'event_update')
-        calls = [mock.call('111-222-333', {'status': 'IN_PROGRESS'}),
-                 mock.call('111-222-333', {'status': 'ERROR'})]
-        self.patch(eventlet, 'spawn_n').side_effect = Exception
-        events.return_value = {'id': '111-222-333', 'time': self.good_date,
-                               'event_type': 'end_lease',
-                               'lease_id': self.lease_id}
 
-        self.manager._event()
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = (self.good_date
+                                           + datetime.timedelta(seconds=1))
+            self.manager._exec_event(event)
 
-        event_update.assert_has_calls(calls)
+        start_lease.assert_called_once_with(lease_id=event['lease_id'],
+                                            event_id=event['id'])
+        event_update.assert_called_once_with(
+            event['id'], {'status': status.event.UNDONE})
+        self.lease_get.assert_not_called()
+
+    def test_exec_event_no_more_retry(self):
+        event = {'id': '111-222-333',
+                 'event_type': 'start_lease',
+                 'lease_id': self.lease_id,
+                 'time': self.good_date}
+        start_lease = self.patch(self.manager, 'start_lease')
+        start_lease.side_effect = exceptions.InvalidStatus
+        event_update = self.patch(self.db_api, 'event_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = (self.good_date
+                                           + datetime.timedelta(days=1))
+            self.manager._exec_event(event)
+
+        start_lease.assert_called_once_with(lease_id=event['lease_id'],
+                                            event_id=event['id'])
+        event_update.assert_called_once_with(
+            event['id'], {'status': status.event.ERROR})
+        self.lease_get.assert_not_called()
+
+    def test_exec_event_handle_exception(self):
+        event = {'id': '111-222-333',
+                 'event_type': 'start_lease',
+                 'lease_id': self.lease_id,
+                 'time': self.good_date}
+        start_lease = self.patch(self.manager, 'start_lease')
+        start_lease.side_effect = Exception
+        event_update = self.patch(self.db_api, 'event_update')
+
+        self.manager._exec_event(event)
+
+        start_lease.assert_called_once_with(lease_id=event['lease_id'],
+                                            event_id=event['id'])
+        event_update.assert_called_once_with(
+            event['id'], {'status': status.event.ERROR})
+        self.lease_get.assert_not_called()
 
     def test_get_lease(self):
         lease = self.manager.get_lease(self.lease_id)
