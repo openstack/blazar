@@ -107,6 +107,10 @@ def get_reservations_by_host_id(host_id, start_date, end_date):
     return IMPL.get_reservations_by_host_id(host_id, start_date, end_date)
 
 
+def get_reservations_by_host_ids(host_ids, start_date, end_date):
+    return IMPL.get_reservations_by_host_ids(host_ids, start_date, end_date)
+
+
 def get_free_periods(resource_id, start_date, end_date, duration):
     """Returns a list of free periods."""
     return IMPL.get_free_periods(resource_id, start_date, end_date, duration)

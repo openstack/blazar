@@ -10,11 +10,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 from oslo_service import threadgroup
 
+from blazar.monitor import base as base_monitor
 from blazar.monitor import polling_monitor
 from blazar.plugins import base
 from blazar import tests
+
+
+POLLING_INTERVAL = 10
+HEALING_INTERVAL = 10
 
 
 class DummyMonitorPlugin(base.BaseMonitorPlugin):
@@ -34,9 +40,15 @@ class DummyMonitorPlugin(base.BaseMonitorPlugin):
         return False
 
     def get_polling_interval(self):
-        return 0
+        return POLLING_INTERVAL
 
     def poll(self):
+        return {}
+
+    def get_healing_interval(self):
+        return HEALING_INTERVAL
+
+    def heal(self):
         return {}
 
 
@@ -48,14 +60,18 @@ class PollingHandlerTestCase(tests.TestCase):
 
     def test_start_monitoring(self):
         add_timer = self.patch(threadgroup.ThreadGroup, 'add_timer')
+        self.patch(base_monitor.BaseMonitor, 'start_monitoring')
 
         self.monitor.start_monitoring()
         add_timer.assert_called_once_with(
-            self.monitor_plugins[0].get_polling_interval(),
-            self.monitor.update_statuses, 0, self.monitor_plugins[0].poll)
+            POLLING_INTERVAL, self.monitor.call_monitor_plugin, None,
+            self.monitor_plugins[0].poll)
 
     def test_stop_monitoring(self):
-        stop = self.patch(threadgroup.ThreadGroup, 'stop')
+        dummy_timer = mock.Mock()
+        timer_done = self.patch(threadgroup.ThreadGroup, 'timer_done')
+        self.monitor.polling_timers.append(dummy_timer)
+        self.patch(base_monitor.BaseMonitor, 'stop_monitoring')
 
         self.monitor.stop_monitoring()
-        stop.assert_called_once()
+        timer_done.assert_called_once_with(dummy_timer)

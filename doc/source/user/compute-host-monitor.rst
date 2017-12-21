@@ -30,11 +30,13 @@ Reservation Healing
 
 If a host failure is detected, Blazar tries to heal host/instance reservations
 which use the failed host by reserving alternative host.
+The length of the *healing interval* can be configured by the
+*healing_interval* option.
 
 Configurations
 ==============
 
-To enable the compute host monitor, enable **enable_notification_monitor**
-or **enable_polling_monitor** option.
+To enable the compute host monitor, enable *enable_notification_monitor*
+or *enable_polling_monitor* option, and set *healing_interval* as
+appropriate for your cloud.
 See also the :doc:`../configuration/blazar-conf` in detail.
-detail

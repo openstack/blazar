@@ -397,7 +397,7 @@ class ReservationPool(NovaClientWrapper):
                 self.nova.aggregates.remove_host(agg.id, host)
             except nova_exception.ClientException:
                 hosts_failing_to_remove.append(host)
-            if freepool_agg.id != agg.id:
+            if freepool_agg.id != agg.id and host not in freepool_agg.hosts:
                 # NOTE(sbauza) : We don't want to put again the host in
                 # freepool if the requested pool is the freepool...
                 try:

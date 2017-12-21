@@ -110,9 +110,12 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         _create_physical_lease(values=r2)
         _create_physical_lease(values=r3)
 
-    def check_reservation(self, expect, host_id, start, end):
+    def check_reservation(self, expect, host_ids, start, end):
         expect.sort(key=lambda x: x['lease_id'])
-        ret = db_utils.get_reservations_by_host_id(host_id, start, end)
+        if isinstance(host_ids, list):
+            ret = db_utils.get_reservations_by_host_ids(host_ids, start, end)
+        else:
+            ret = db_utils.get_reservations_by_host_id(host_ids, start, end)
 
         for i, res in enumerate(sorted(ret, key=lambda x: x['lease_id'])):
             self.assertEqual(expect[i]['lease_id'], res['lease_id'])
@@ -376,6 +379,25 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         self.assertEqual(3, len(expected))
         self.check_reservation(expected, 'r1',
                                '2030-01-01 08:00', '2030-01-01 17:00')
+
+    def test_get_reservations_by_host_ids(self):
+        self._setup_leases()
+
+        self.check_reservation([], ['r1', 'r2'],
+                               '2030-01-01 07:00', '2030-01-01 08:59')
+
+        ret = db_api.reservation_get_all_by_lease_id('lease1')
+        self.check_reservation(ret, ['r1', 'r2'],
+                               '2030-01-01 08:00', '2030-01-01 10:00')
+
+        ret = db_api.reservation_get_all_by_lease_id('lease1')
+        ret.extend(db_api.reservation_get_all_by_lease_id('lease2'))
+        ret.extend(db_api.reservation_get_all_by_lease_id('lease3'))
+        self.check_reservation(ret, ['r1', 'r2'],
+                               '2030-01-01 08:00', '2030-01-01 15:30')
+
+        self.check_reservation([], ['r4'],
+                               '2030-01-01 07:00', '2030-01-01 15:00')
 
 # TODO(frossigneux) longest_availability
 # TODO(frossigneux) shortest_availability

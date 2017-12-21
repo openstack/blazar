@@ -379,12 +379,10 @@ class ReservationPoolTestCase(tests.TestCase):
 
     def test_remove_computehosts_with_duplicate_host(self):
         self._patch_get_aggregate_from_name_or_id()
-        self.nova.aggregates.add_host.side_effect = (
-            nova_exceptions.Conflict(409))
-        self.assertRaises(manager_exceptions.CantAddHost,
-                          self.pool.remove_computehost,
-                          'pool',
-                          'host3')
+        add_host = self.nova.aggregates.add_host
+
+        self.pool.remove_computehost('pool', 'host3')
+        add_host.assert_not_called()
 
     def test_get_computehosts_with_correct_pool(self):
         self._patch_get_aggregate_from_name_or_id()

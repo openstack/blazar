@@ -688,6 +688,20 @@ def reservable_host_get_all_by_queries(queries):
     return host_get_all_by_queries(queries)
 
 
+def unreservable_host_get_all_by_queries(queries):
+    """Returns unreservable hosts filtered by an array of queries.
+
+    :param queries: array of queries "key op value" where op can be
+        http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
+            #sqlalchemy.sql.operators.ColumnOperators
+
+    """
+
+    # TODO(hiro-kobayashi): support the expression 'reservable == False'
+    queries.append('reservable == 0')
+    return host_get_all_by_queries(queries)
+
+
 def host_create(values):
     values = values.copy()
     host = models.ComputeHost()

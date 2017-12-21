@@ -11,32 +11,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
-
 from oslo_log import log as logging
-import six
+from oslo_service import threadgroup
 
 from blazar.db import api as db_api
 
 LOG = logging.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
 class BaseMonitor(object):
     """Base class for monitoring classes."""
 
-    @abc.abstractmethod
+    def __init__(self, monitor_plugins):
+        self.monitor_plugins = monitor_plugins
+        self.tg = threadgroup.ThreadGroup()
+        self.healing_timers = []
+
     def start_monitoring(self):
         """Start monitoring."""
-        pass
+        self.start_periodic_healing()
 
-    @abc.abstractmethod
     def stop_monitoring(self):
         """Stop monitoring."""
-        pass
+        self.stop_periodic_healing()
 
-    def update_statuses(self, callback, *args, **kwargs):
-        """Update leases and reservations table after executing a callback."""
+    def start_periodic_healing(self):
+        """Start periodic healing process."""
+        for plugin in self.monitor_plugins:
+            healing_interval_mins = plugin.get_healing_interval()
+            if healing_interval_mins > 0:
+                self.healing_timers.append(
+                    self.tg.add_timer(healing_interval_mins * 60,
+                                      self.call_monitor_plugin,
+                                      None,
+                                      plugin.heal))
+
+    def stop_periodic_healing(self):
+        """Stop periodic healing process."""
+        for timer in self.healing_timers:
+            self.tg.timer_done(timer)
+
+    def call_monitor_plugin(self, callback, *args, **kwargs):
+        """Call a callback and update lease/reservation flags."""
         try:
             # The callback() has to return a dictionary of
             # {reservation id: flags to update}.
@@ -46,17 +62,20 @@ class BaseMonitor(object):
             LOG.exception('Caught an exception while executing a callback. '
                           '%s', str(e))
 
-            # TODO(hiro-kobayashi): update statuses of related leases and
-            # reservations. Depends on the state-machine blueprint.
+        if reservation_flags:
+            self._update_flags(reservation_flags)
 
-        # Update flags of related leases and reservations.
+    def _update_flags(self, reservation_flags):
+        """Update lease/reservation flags."""
         lease_ids = set([])
+
         for reservation_id, flags in reservation_flags.items():
             db_api.reservation_update(reservation_id, flags)
             LOG.debug('Reservation %s was updated: %s',
                       reservation_id, flags)
             reservation = db_api.reservation_get(reservation_id)
             lease_ids.add(reservation['lease_id'])
+
         for lease_id in lease_ids:
             LOG.debug('Lease %s was updated: {"degraded": True}', lease_id)
             db_api.lease_update(lease_id, {'degraded': True})

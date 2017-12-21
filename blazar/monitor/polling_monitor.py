@@ -12,7 +12,6 @@
 # limitations under the License.
 
 from oslo_log import log as logging
-from oslo_service import threadgroup
 
 from blazar.monitor import base
 
@@ -24,19 +23,23 @@ class PollingMonitor(base.BaseMonitor):
 
     def __init__(self, monitor_plugins):
         """Initialize a polling monitor."""
-        self.monitor_plugins = monitor_plugins
-        self.tg = threadgroup.ThreadGroup()
+        LOG.debug('Initializing a polling monitor...')
+        super(PollingMonitor, self).__init__(monitor_plugins)
+        self.polling_timers = []
 
     def start_monitoring(self):
         """Start polling."""
         LOG.debug('Starting a polling monitor...')
+
         try:
             for plugin in self.monitor_plugins:
-                # Set poll() timer. The poll() is wrapped with the
-                # update_statuses() to manage statuses of leases and
-                # reservations.
-                self.tg.add_timer(plugin.get_polling_interval(),
-                                  self.update_statuses, 0, plugin.poll)
+                # Set polling timer. Wrap the monitor plugin method with the
+                # call_monitor_plugin() to manage lease/reservation flags.
+                self.polling_timers.append(
+                    self.tg.add_timer(plugin.get_polling_interval(),
+                                      self.call_monitor_plugin, None,
+                                      plugin.poll))
+            super(PollingMonitor, self).start_monitoring()
         except Exception as e:
             LOG.exception('Failed to start a polling monitor. (%s)',
                           str(e))
@@ -45,6 +48,8 @@ class PollingMonitor(base.BaseMonitor):
         """Stop polling."""
         LOG.debug('Stopping a polling monitor...')
         try:
-            self.tg.stop()
+            for timer in self.polling_timers:
+                self.tg.timer_done(timer)
+            super(PollingMonitor, self).stop_monitoring()
         except Exception as e:
             LOG.exception('Failed to stop a polling monitor. (%s)', str(e))

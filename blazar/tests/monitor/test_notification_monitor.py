@@ -9,10 +9,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import oslo_messaging
 
-from blazar.db import api as db_api
 from blazar.monitor import notification_monitor
 from blazar.plugins import base
 from blazar import tests
@@ -38,6 +36,12 @@ class DummyMonitorPlugin(base.BaseMonitorPlugin):
         return 0
 
     def poll(self):
+        return {}
+
+    def get_healing_interval(self):
+        return 0
+
+    def heal(self):
         return {}
 
 
@@ -67,27 +71,6 @@ class NotificationMonitorTestCase(tests.TestCase):
 
         self.monitor._get_endpoints(self.plugins)
         endpoint.assert_called_once()
-
-    def test_update_statuses(self):
-        callback = self.patch(DummyMonitorPlugin,
-                              'notification_callback')
-        callback.return_value = {
-            'dummy_id1': {'missing_resources': True}
-        }
-        reservation_update = self.patch(db_api, 'reservation_update')
-        reservation_get = self.patch(db_api, 'reservation_get')
-        reservation_get.return_value = {
-            'lease_id': 'dummy_id2'
-        }
-        lease_update = self.patch(db_api, 'lease_update')
-
-        self.monitor.update_statuses(callback, 'event_type1', 'hello')
-        callback.assert_called_once_with('event_type1', 'hello')
-        reservation_update.assert_called_once_with(
-            'dummy_id1', {'missing_resources': True})
-        reservation_get.assert_called_once_with('dummy_id1')
-        lease_update.assert_called_once_with('dummy_id2',
-                                             {'degraded': True})
 
 
 class NotificationEndpointTestCase(tests.TestCase):

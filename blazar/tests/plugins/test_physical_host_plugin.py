@@ -1380,185 +1380,290 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         delete_pool.assert_called_with(1)
 
     def test_heal_reservations_before_start_and_resources_changed(self):
-        failed_hosts = [{'id': '1'}]
-        new_hostid = '2'
-        alloc_get = self.patch(self.db_api,
-                               'host_allocation_get_all_by_values')
-        alloc_get.return_value = [{'id': 'alloc-1',
-                                   'compute_host_id': '1',
-                                   'reservation_id': 'rsrv-1'}]
-        alloc_destroy = self.patch(self.db_api, 'host_allocation_destroy')
-        reservation_get = self.patch(self.db_api, 'reservation_get')
-        reservation_get.return_value = {'id': 'rsrv-1',
-                                        'resource_type': plugin.RESOURCE_TYPE,
-                                        'lease_id': 'lease-1',
-                                        'status': 'pending',
-                                        'hypervisor_properties': [],
-                                        'resource_properties': [],
-                                        'resource_id': 'resource-1'}
-        host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'compute'}
-        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
-        host_reservation_get.return_value = {'aggregate_id': 1}
-        lease_get = self.patch(self.db_api, 'lease_get')
-        lease_get.return_value = {
-            'name': 'lease-name',
-            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
-            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
-            'trust_id': 'trust-1'}
-        matching_hosts = self.patch(host_plugin.PhysicalHostPlugin,
-                                    '_matching_hosts')
-        matching_hosts.return_value = [new_hostid]
-        alloc_update = self.patch(self.db_api, 'host_allocation_update')
+        failed_host = {'id': '1'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'
+            }]
+        }
+        get_reservations = self.patch(self.db_utils,
+                                      'get_reservations_by_host_ids')
+        get_reservations.return_value = [dummy_reservation]
+        reallocate = self.patch(self.fake_phys_plugin, '_reallocate')
+        reallocate.return_value = True
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
-                                                            11, 00)
-            result = self.fake_phys_plugin.heal_reservations(failed_hosts)
-        alloc_destroy.assert_not_called()
-        matching_hosts.assert_called_once_with(
-            [], [], '1-1',
+        result = self.fake_phys_plugin.heal_reservations(
+            [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
-            datetime.datetime(2020, 1, 2, 12, 00))
-        alloc_update.assert_called_once_with('alloc-1',
-                                             {'compute_host_id': new_hostid})
+            datetime.datetime(2020, 1, 1, 13, 00))
+        reallocate.assert_called_once_with(
+            dummy_reservation['computehost_allocations'][0])
         self.assertEqual({}, result)
 
     def test_heal_reservations_before_start_and_missing_resources(self):
-        failed_hosts = [{'id': '1'}]
-        alloc_get = self.patch(self.db_api,
-                               'host_allocation_get_all_by_values')
-        alloc_get.return_value = [{'id': 'alloc-1',
-                                   'compute_host_id': '1',
-                                   'reservation_id': 'rsrv-1'}]
-        alloc_destroy = self.patch(self.db_api, 'host_allocation_destroy')
-        reservation_get = self.patch(self.db_api, 'reservation_get')
-        reservation_get.return_value = {'id': 'rsrv-1',
-                                        'resource_type': plugin.RESOURCE_TYPE,
-                                        'lease_id': 'lease-1',
-                                        'status': 'pending',
-                                        'hypervisor_properties': [],
-                                        'resource_properties': [],
-                                        'resource_id': 'resource-1'}
-        host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'compute'}
-        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
-        host_reservation_get.return_value = {'aggregate_id': 1}
-        lease_get = self.patch(self.db_api, 'lease_get')
-        lease_get.return_value = {
-            'name': 'lease-name',
-            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
-            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
-            'trust_id': 'trust-1'}
-        matching_hosts = self.patch(host_plugin.PhysicalHostPlugin,
-                                    '_matching_hosts')
-        matching_hosts.return_value = []
-        alloc_update = self.patch(self.db_api, 'host_allocation_update')
+        failed_host = {'id': '1'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'
+            }]
+        }
+        get_reservations = self.patch(self.db_utils,
+                                      'get_reservations_by_host_ids')
+        get_reservations.return_value = [dummy_reservation]
+        reallocate = self.patch(self.fake_phys_plugin, '_reallocate')
+        reallocate.return_value = False
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
-                                                            11, 00)
-            result = self.fake_phys_plugin.heal_reservations(failed_hosts)
-        alloc_destroy.assert_called_once_with('alloc-1')
-        matching_hosts.assert_called_once_with(
-            [], [], '1-1',
+        result = self.fake_phys_plugin.heal_reservations(
+            [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
-            datetime.datetime(2020, 1, 2, 12, 00))
-        alloc_update.assert_not_called()
-        self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
+            datetime.datetime(2020, 1, 1, 13, 00))
+        reallocate.assert_called_once_with(
+            dummy_reservation['computehost_allocations'][0])
+        self.assertEqual(
+            {dummy_reservation['id']: {'missing_resources': True}},
+            result)
 
     def test_heal_active_reservations_and_resources_changed(self):
-        failed_hosts = [{'id': '1'}]
-        new_hostid = '2'
-        alloc_get = self.patch(self.db_api,
-                               'host_allocation_get_all_by_values')
-        alloc_get.return_value = [{'id': 'alloc-1',
-                                   'compute_host_id': '1',
-                                   'reservation_id': 'rsrv-1'}]
-        alloc_destroy = self.patch(self.db_api, 'host_allocation_destroy')
-        reservation_get = self.patch(self.db_api, 'reservation_get')
-        reservation_get.return_value = {'id': 'rsrv-1',
-                                        'resource_type': plugin.RESOURCE_TYPE,
-                                        'lease_id': 'lease-1',
-                                        'status': 'active',
-                                        'hypervisor_properties': [],
-                                        'resource_properties': [],
-                                        'resource_id': 'resource-1'}
-        host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'compute'}
-        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
-        host_reservation_get.return_value = {'aggregate_id': 1}
-        lease_get = self.patch(self.db_api, 'lease_get')
-        lease_get.return_value = {
+        failed_host = {'id': '1'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'
+            }]
+        }
+        get_reservations = self.patch(self.db_utils,
+                                      'get_reservations_by_host_ids')
+        get_reservations.return_value = [dummy_reservation]
+        reallocate = self.patch(self.fake_phys_plugin, '_reallocate')
+        reallocate.return_value = True
+
+        result = self.fake_phys_plugin.heal_reservations(
+            [failed_host],
+            datetime.datetime(2020, 1, 1, 12, 00),
+            datetime.datetime(2020, 1, 1, 13, 00))
+        reallocate.assert_called_once_with(
+            dummy_reservation['computehost_allocations'][0])
+        self.assertEqual(
+            {dummy_reservation['id']: {'resources_changed': True}},
+            result)
+
+    def test_heal_active_reservations_and_missing_resources(self):
+        failed_host = {'id': '1'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'
+            }]
+        }
+        get_reservations = self.patch(self.db_utils,
+                                      'get_reservations_by_host_ids')
+        get_reservations.return_value = [dummy_reservation]
+        reallocate = self.patch(self.fake_phys_plugin, '_reallocate')
+        reallocate.return_value = False
+
+        result = self.fake_phys_plugin.heal_reservations(
+            [failed_host],
+            datetime.datetime(2020, 1, 1, 12, 00),
+            datetime.datetime(2020, 1, 1, 13, 00))
+        reallocate.assert_called_once_with(
+            dummy_reservation['computehost_allocations'][0])
+        self.assertEqual(
+            {dummy_reservation['id']: {'missing_resources': True}},
+            result)
+
+    def test_reallocate_before_start(self):
+        failed_host = {'id': '1'}
+        new_host = {'id': '2'}
+        dummy_allocation = {
+            'id': 'alloc-1',
+            'compute_host_id': failed_host['id'],
+            'reservation_id': 'rsrv-1'
+        }
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1'
+        }
+        dummy_host_reservation = {
+            'aggregate_id': 1
+        }
+        dummy_lease = {
             'name': 'lease-name',
             'start_date': datetime.datetime(2020, 1, 1, 12, 00),
             'end_date': datetime.datetime(2020, 1, 2, 12, 00),
-            'trust_id': 'trust-1'}
+            'trust_id': 'trust-1'
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = dummy_reservation
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = dummy_host_reservation
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
         matching_hosts = self.patch(host_plugin.PhysicalHostPlugin,
                                     '_matching_hosts')
-        matching_hosts.return_value = [new_hostid]
+        matching_hosts.return_value = [new_host['id']]
         alloc_update = self.patch(self.db_api, 'host_allocation_update')
 
         with mock.patch.object(datetime, 'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
-                                                            13, 00)
-            result = self.fake_phys_plugin.heal_reservations(failed_hosts)
-        alloc_destroy.assert_not_called()
-        matching_hosts.assert_called_once_with(
-            [], [], '1-1',
-            datetime.datetime(2020, 1, 1, 13, 00),
-            datetime.datetime(2020, 1, 2, 12, 00))
-        alloc_update.assert_called_once_with('alloc-1',
-                                             {'compute_host_id': new_hostid})
-        self.add_compute_host.assert_called_once_with(1, 'compute')
-        self.assertEqual({'rsrv-1': {'resources_changed': True}}, result)
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 11, 00)
+            result = self.fake_phys_plugin._reallocate(dummy_allocation)
 
-    def test_heal_active_reservations_and_missing_resources(self):
-        failed_hosts = [{'id': '1'}]
-        alloc_get = self.patch(self.db_api,
-                               'host_allocation_get_all_by_values')
-        alloc_get.return_value = [{'id': 'alloc-1',
-                                   'compute_host_id': '1',
-                                   'reservation_id': 'rsrv-1'}]
-        alloc_destroy = self.patch(self.db_api, 'host_allocation_destroy')
-        reservation_get = self.patch(self.db_api, 'reservation_get')
-        reservation_get.return_value = {'id': 'rsrv-1',
-                                        'resource_type': plugin.RESOURCE_TYPE,
-                                        'lease_id': 'lease-1',
-                                        'status': 'pending',
-                                        'hypervisor_properties': [],
-                                        'resource_properties': [],
-                                        'resource_id': 'resource-1'}
-        host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'compute'}
-        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
-        host_reservation_get.return_value = {'aggregate_id': 1}
-        lease_get = self.patch(self.db_api, 'lease_get')
-        lease_get.return_value = {
+        matching_hosts.assert_called_once_with(
+            dummy_reservation['hypervisor_properties'],
+            dummy_reservation['resource_properties'],
+            '1-1', dummy_lease['start_date'], dummy_lease['end_date'])
+        alloc_update.assert_called_once_with(
+            dummy_allocation['id'],
+            {'compute_host_id': new_host['id']})
+        self.assertEqual(True, result)
+
+    def test_reallocate_active(self):
+        failed_host = {'id': '1',
+                       'service_name': 'compute-1'}
+        new_host = {'id': '2',
+                    'service_name': 'compute-2'}
+        dummy_allocation = {
+            'id': 'alloc-1',
+            'compute_host_id': failed_host['id'],
+            'reservation_id': 'rsrv-1'
+        }
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1'
+        }
+        dummy_host_reservation = {
+            'aggregate_id': 1
+        }
+        dummy_lease = {
             'name': 'lease-name',
             'start_date': datetime.datetime(2020, 1, 1, 12, 00),
             'end_date': datetime.datetime(2020, 1, 2, 12, 00),
-            'trust_id': 'trust-1'}
+            'trust_id': 'trust-1'
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = dummy_reservation
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = dummy_host_reservation
+        host_get = self.patch(self.db_api, 'host_get')
+        host_get.side_effect = [failed_host, new_host]
+        matching_hosts = self.patch(host_plugin.PhysicalHostPlugin,
+                                    '_matching_hosts')
+        matching_hosts.return_value = [new_host['id']]
+        alloc_update = self.patch(self.db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 13, 00)
+            result = self.fake_phys_plugin._reallocate(dummy_allocation)
+
+        self.remove_compute_host.assert_called_once_with(
+            dummy_host_reservation['aggregate_id'],
+            failed_host['service_name'])
+        matching_hosts.assert_called_once_with(
+            dummy_reservation['hypervisor_properties'],
+            dummy_reservation['resource_properties'],
+            '1-1', datetime.datetime(2020, 1, 1, 13, 00),
+            dummy_lease['end_date'])
+        alloc_update.assert_called_once_with(
+            dummy_allocation['id'],
+            {'compute_host_id': new_host['id']})
+        self.add_compute_host(
+            dummy_host_reservation['aggregate_id'],
+            new_host['service_name'])
+        self.assertEqual(True, result)
+
+    def test_reallocate_missing_resources(self):
+        failed_host = {'id': '1'}
+        dummy_allocation = {
+            'id': 'alloc-1',
+            'compute_host_id': failed_host['id'],
+            'reservation_id': 'rsrv-1'
+        }
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': plugin.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'hypervisor_properties': [],
+            'resource_properties': [],
+            'resource_id': 'resource-1'
+        }
+        dummy_host_reservation = {
+            'aggregate_id': 1
+        }
+        dummy_lease = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
+            'trust_id': 'trust-1'
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = dummy_reservation
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = dummy_host_reservation
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
         matching_hosts = self.patch(host_plugin.PhysicalHostPlugin,
                                     '_matching_hosts')
         matching_hosts.return_value = []
-        alloc_update = self.patch(self.db_api, 'host_allocation_update')
+        alloc_destroy = self.patch(self.db_api, 'host_allocation_destroy')
 
         with mock.patch.object(datetime, 'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2020, 1, 1,
-                                                            13, 00)
-            result = self.fake_phys_plugin.heal_reservations(failed_hosts)
-        alloc_destroy.assert_called_once_with('alloc-1')
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 11, 00)
+            result = self.fake_phys_plugin._reallocate(dummy_allocation)
+
         matching_hosts.assert_called_once_with(
-            [], [], '1-1',
-            datetime.datetime(2020, 1, 1, 13, 00),
-            datetime.datetime(2020, 1, 2, 12, 00))
-        alloc_update.assert_not_called()
-        self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
+            dummy_reservation['hypervisor_properties'],
+            dummy_reservation['resource_properties'],
+            '1-1', dummy_lease['start_date'], dummy_lease['end_date'])
+        alloc_destroy.assert_called_once_with(dummy_allocation['id'])
+        self.assertEqual(False, result)
 
     def test_matching_hosts_not_allocated_hosts(self):
         def host_allocation_get_all_by_values(**kwargs):
@@ -1865,19 +1970,43 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         self.assertEqual(([], hosts), result)
 
     def test_handle_failures(self):
-        hosts = [
+        failed_hosts = [
+            {'id': '1',
+             'hypervisor_hostname': 'compute-1'}
+        ]
+        host_update = self.patch(db_api, 'host_update')
+        heal = self.patch(self.host_monitor_plugin, 'heal')
+
+        self.host_monitor_plugin._handle_failures(failed_hosts)
+        host_update.assert_called_once_with(failed_hosts[0]['id'],
+                                            {'reservable': False})
+        heal.assert_called_once()
+
+    def test_heal(self):
+        failed_hosts = [
             {'id': '1',
              'hypervisor_hostname': 'compute-1'}
         ]
         reservation_flags = {
             'rsrv-1': {'missing_resources': True}
         }
-        host_update = self.patch(db_api, 'host_update')
-        heal_reservations = self.patch(host_plugin.PhysicalHostPlugin,
-                                       'heal_reservations')
-        heal_reservations.return_value = reservation_flags
-        self.host_monitor_plugin.healing_handlers = [heal_reservations]
+        hosts_get = self.patch(db_api, 'unreservable_host_get_all_by_queries')
+        hosts_get.return_value = failed_hosts
+        get_healing_interval = self.patch(self.host_monitor_plugin,
+                                          'get_healing_interval')
+        get_healing_interval.return_value = 60
+        healing_handler = mock.Mock()
+        healing_handler.return_value = reservation_flags
+        self.host_monitor_plugin.healing_handlers = [healing_handler]
+        start_date = datetime.datetime(2020, 1, 1, 12, 00)
 
-        result = self.host_monitor_plugin._handle_failures(hosts)
-        host_update.assert_called_once_with('1', {'reservable': False})
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = start_date
+            result = self.host_monitor_plugin.heal()
+
+        healing_handler.assert_called_once_with(
+            failed_hosts, start_date,
+            start_date + datetime.timedelta(minutes=60)
+        )
         self.assertEqual(reservation_flags, result)
