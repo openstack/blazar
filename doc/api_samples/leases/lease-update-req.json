@@ -1,0 +1,15 @@
+{
+    "end_date": "2017-12-28 12:00",
+    "reservations": [
+        {
+            "id": "087bc740-6d2d-410b-9d47-c7b2b55a9d36",
+            "min": 6,
+            "max": 8
+        },
+        {
+            "id": "ddc45423-f863-4e4e-8e7a-51d27cfec962",
+            "amount": 6
+        }
+    ],
+    "events": []
+}

@@ -1,0 +1,391 @@
+# variables in path
+lease_id_path:
+  description: |
+    The UUID of the lease.
+  in: path
+  required: true
+  type: string
+
+# variables in body
+created_at:
+  description: |
+    The date and time when the object was created.
+  in: body
+  required: true
+  type: string
+event:
+  description: |
+    An ``event`` object.
+  in: body
+  required: true
+  type: object
+event_id:
+  description: |
+    The UUID of the event.
+  in: body
+  required: true
+  type: string
+event_lease_id:
+  description: |
+    The UUID of the lease to which the event belongs.
+  in: body
+  required: true
+  type: string
+event_status:
+  description: |
+    The status of the event.
+  in: body
+  required: true
+  type: string
+event_time:
+  description: |
+    The date and time of the event.
+  in: body
+  required: true
+  type: string
+event_type:
+  description: |
+    The type of the event.
+  in: body
+  required: true
+  type: string
+events:
+  description: |
+    A list of ``event`` objects.
+  in: body
+  required: true
+  type: array
+events_optional:
+  description: |
+    A list of ``event`` objects.
+  in: body
+  required: false
+  type: array
+lease:
+  description: |
+    A ``lease`` object.
+  in: body
+  required: true
+  type: object
+lease_before_end_date:
+  description: |
+    The date and time for the before-end-action of the lease.
+  in: body
+  required: true
+  type: string
+lease_before_end_date_optional:
+  description: |
+    The date and time for the before-end-action of the lease.
+  in: body
+  required: false
+  type: string
+lease_degraded:
+  description: |
+    The flag for reserved resources of the lease.
+    This is set True while *missing_resources* or *resources_changed* of
+    reservations is set True.
+  in: body
+  required: true
+  type: boolean
+lease_end_date:
+  description: |
+    The end date and time of the lease.
+  in: body
+  required: true
+  type: string
+lease_end_date_optional:
+  description: |
+    The end date and time of the lease.
+  in: body
+  required: false
+  type: string
+lease_id:
+  description: |
+    The UUID of the lease.
+  in: body
+  required: true
+  type: string
+lease_name:
+  description: |
+    The name of the lease.
+  in: body
+  required: true
+  type: string
+lease_name_optional:
+  description: |
+    The name of the lease.
+  in: body
+  required: false
+  type: string
+lease_project_id:
+  description: |
+    The UUID the project which owns the lease.
+  in: body
+  required: true
+  type: string
+lease_start_date:
+  description: |
+    The start date and time of the lease.
+
+    .. note:: If ``now`` is specified, the lease starts immediately.
+  in: body
+  required: true
+  type: string
+lease_start_date_optional:
+  description: |
+    The start date and time of the lease.
+
+    .. note:: If ``now`` is specified, the lease starts immediately.
+  in: body
+  required: false
+  type: string
+lease_start_date_resp:
+  description: |
+    The start date and time of the lease.
+  in: body
+  required: true
+  type: string
+lease_status:
+  description: |
+    The status of the lease.
+  in: body
+  required: true
+  type: string
+lease_trust_id:
+  description: |
+    The UUID of the trust of the lease owner.
+  in: body
+  required: true
+  type: string
+lease_user_id:
+  description: |
+    The UUID of the lease owner.
+  in: body
+  required: true
+  type: string
+leases:
+  description: |
+    A list of ``lease`` objects.
+  in: body
+  required: true
+  type: array
+reservation:
+  description: |
+    A ``reservation`` object.
+  in: body
+  required: true
+  type: object
+reservation_affinity:
+  description: |
+    The affinity of instances to reserve.
+  in: body
+  required: true
+  type: boolean
+reservation_affinity_optional:
+  description: |
+    The affinity of instances to reserve.
+  in: body
+  required: false
+  type: boolean
+reservation_aggregate_id:
+  description: |
+    The aggregate ID of the the reservation.
+  in: body
+  required: true
+  type: integer
+reservation_amount:
+  description: |
+    The amount of instances to reserve.
+  in: body
+  required: true
+  type: integer
+reservation_amount_optional:
+  description: |
+    The amount of instances to reserve.
+  in: body
+  required: false
+  type: integer
+reservation_before_end:
+  description: |
+    The before-end-action of the reservation.
+
+    .. note:: ``default`` and ``snapshot`` actions are supported.
+  in: body
+  required: true
+  type: string
+reservation_before_end_optional:
+  description: |
+    The before-end-action of the reservation.
+
+    .. note:: ``default`` and ``snapshot`` actions are supported.
+  in: body
+  required: false
+  type: string
+reservation_disk_gb:
+  description: |
+    Gigabytes of the local disk per the instance.
+  in: body
+  required: true
+  type: string
+reservation_disk_gb_optional:
+  description: |
+    Gigabytes of the local disk per the instance.
+  in: body
+  required: false
+  type: string
+reservation_flavor_id:
+  description: |
+    The flavor ID used for launching instances on reserved resources.
+  in: body
+  required: true
+  type: string
+reservation_hypervisor_properties:
+  description: |
+    Properties of the hypervisor to reserve.
+  in: body
+  required: true
+  type: string
+reservation_hypervisor_properties_optional:
+  description: |
+    Properties of the hypervisor to reserve.
+  in: body
+  required: true
+  type: string
+reservation_id:
+  description: |
+    The UUID of the reservation.
+  in: body
+  required: true
+  type: string
+reservation_lease_id:
+  description: |
+    The UUID of the lease to which the reservation belongs.
+  in: body
+  required: true
+  type: string
+reservation_max:
+  description: |
+    The maximum number of hosts to reserve.
+  in: body
+  required: true
+  type: integer
+reservation_max_optional:
+  description: |
+    The maximum number of hosts to reserve.
+  in: body
+  required: false
+  type: integer
+reservation_memory_mb:
+  description: |
+    Megabytes of memory per the instance.
+  in: body
+  required: true
+  type: integer
+reservation_memory_mb_optional:
+  description: |
+    Megabytes of memory per the instance.
+  in: body
+  required: false
+  type: integer
+reservation_min:
+  description: |
+    The minimum number of hosts to reserve.
+  in: body
+  required: true
+  type: integer
+reservation_min_optional:
+  description: |
+    The minimum number of hosts to reserve.
+  in: body
+  required: false
+  type: integer
+reservation_missing_resources:
+  description: |
+    The flag for the capacity of reserved resources.
+    It is set True while the amount of reserved resources is less than the
+    request.
+  in: body
+  required: true
+  type: boolean
+reservation_resource_id:
+  description: |
+    The ID of the resource object of the reservation.
+  in: body
+  required: true
+  type: string
+reservation_resource_properties:
+  description: |
+    Properties of the resource to reserve.
+  in: body
+  required: true
+  type: string
+reservation_resource_properties_optional:
+  description: |
+    Properties of the resource to reserve.
+  in: body
+  required: false
+  type: string
+reservation_resource_type:
+  description: |
+    The type of the resource to reserve.
+
+    .. note:: ``physical:host`` and ``virtual:instance`` types are supported.
+  in: body
+  required: true
+  type: string
+reservation_resource_type_resp:
+  description: |
+    The type of the resource to reserve.
+  in: body
+  required: true
+  type: string
+reservation_resources_changed:
+  description: |
+    The flag for changes of reserved resources.
+    If it is set True if reserved resources were changed after the lease
+    started.
+  in: body
+  required: true
+  type: boolean
+reservation_server_group_id:
+  description: |
+    The server group ID specified when launch instances on reserved resources.
+  in: body
+  required: true
+  type: string
+reservation_status:
+  description: |
+    The status of the reservation.
+  in: body
+  required: true
+  type: string
+reservation_vcpus:
+  description: |
+    The number of VCPUs per the instance.
+  in: body
+  required: true
+  type: integer
+reservation_vcpus_optional:
+  description: |
+    The number of VCPUs per the instance.
+  in: body
+  required: false
+  type: integer
+reservations:
+  description: |
+    A list of ``reservation`` objects.
+  in: body
+  required: true
+  type: array
+reservations_optional:
+  description: |
+    A list of ``reservation`` objects.
+  in: body
+  required: false
+  type: array
+updated_at:
+  description: |
+    The date and time when the object was updated.
+  in: body
+  required: true
+  type: string
