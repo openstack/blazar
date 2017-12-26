@@ -1,0 +1,31 @@
+{
+    "hosts": [
+        {
+            "id": "1",
+            "hypervisor_hostname": "compute-1",
+            "hypervisor_type": "QEMU",
+            "hypervisor_version": 2010001,
+            "vcpus": 4,
+            "cpu_info": "{'arch': 'x86_64', 'model': 'cpu64-rhel6',
+                          'vendor': 'Intel', 'features': [
+                              'pge', 'clflush', 'sep', 'syscall', 'msr',
+                              'vmx', 'cmov', 'nx', 'pat', 'lm', 'tsc',
+                              'fpu', 'fxsr', 'pae', 'mmx', 'cx8', 'mce',
+                              'de', 'mca', 'pse', 'pni', 'apic', 'sse',
+                              'lahf_lm', 'sse2', 'hypervisor', 'cx16',
+                              'pse36', 'mttr', 'x2apic'],
+                          'topology': {
+                              'cores': 1, 'cells': 1, 'threads': 1, 'sockets': 4
+                          }}",
+            "memory_mb": 8192,
+            "local_gb": 100,
+            "service_name": "compute-1",
+            "reservable": true,
+            "status": null,
+            "trust_id": "5f67f11215cf4c52906453a181bfcfea",
+            "created_at": "2017-12-27 10:00:00",
+            "updated_at": null,
+            "extra_capability_sample": "foo"
+        }
+    ]
+}

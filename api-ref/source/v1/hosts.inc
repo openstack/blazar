@@ -4,4 +4,247 @@
 Hosts
 =====
 
-TBD
+List Hosts
+==========
+
+.. rest_method:: GET v1/os_hosts
+
+List hosts.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Internal Server Error(500)
+
+Request
+-------
+
+No body content, path, nor query option.
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - hosts: hosts
+  - id: host_id
+  - hypervisor_hostname: host_hypervisor_hostname
+  - hypervisor_type: host_hypervisor_type
+  - hypervisor_version: host_hypervisor_version
+  - vcpus: host_vcpus
+  - cpu_info: host_cpu_info
+  - memory_mb: host_memory_mb
+  - local_gb: host_local_gb
+  - service_name: host_service_name
+  - reservable: host_reservable
+  - status: host_status
+  - trust_id: host_trust_id
+  - created_at: created_at
+  - updated_at: updated_at
+  - extra_capability: host_extra_capability
+
+**Example of List Hosts Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-list-resp.json
+  :language: javascript
+
+
+Create Host
+===========
+
+.. rest_method:: POST v1/os_hosts
+
+Create a host.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Conflict(409), Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - name: host_name
+  - extra_capability: host_extra_capability
+
+**Example of Create Host Request**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-create-req.json
+  :language: javascript
+
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - host: host
+  - id: host_id
+  - hypervisor_hostname: host_hypervisor_hostname
+  - hypervisor_type: host_hypervisor_type
+  - hypervisor_version: host_hypervisor_version
+  - vcpus: host_vcpus
+  - cpu_info: host_cpu_info
+  - memory_mb: host_memory_mb
+  - local_gb: host_local_gb
+  - service_name: host_service_name
+  - reservable: host_reservable
+  - status: host_status
+  - trust_id: host_trust_id
+  - created_at: created_at
+  - updated_at: updated_at
+  - extra_capability: host_extra_capability
+
+**Example of Create Host Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-create-resp.json
+  :language: javascript
+
+
+Show Host Details
+=================
+
+.. rest_method:: GET v1/os_hosts/{host_id}
+
+Show details of a host.
+
+**Preconditions**
+
+The host must exist.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Not Found(404), Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - host_id: host_id_path
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - host: host
+  - id: host_id
+  - hypervisor_hostname: host_hypervisor_hostname
+  - hypervisor_type: host_hypervisor_type
+  - hypervisor_version: host_hypervisor_version
+  - vcpus: host_vcpus
+  - cpu_info: host_cpu_info
+  - memory_mb: host_memory_mb
+  - local_gb: host_local_gb
+  - service_name: host_service_name
+  - reservable: host_reservable
+  - status: host_status
+  - trust_id: host_trust_id
+  - created_at: created_at
+  - updated_at: updated_at
+  - extra_capability: host_extra_capability
+
+**Example of Show Host Details Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-details-resp.json
+  :language: javascript
+
+
+Update Host
+===========
+
+.. rest_method:: PUT v1/os_hosts/{host_id}
+
+Update a host.
+
+**Preconditions**
+
+The host must exist.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Not Found(404), Conflict(409), Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - host_id: host_id_path
+  - extra_capability: host_extra_capability
+
+**Example of Update Host Request**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-update-req.json
+  :language: javascript
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - host: host
+  - id: host_id
+  - hypervisor_hostname: host_hypervisor_hostname
+  - hypervisor_type: host_hypervisor_type
+  - hypervisor_version: host_hypervisor_version
+  - vcpus: host_vcpus
+  - cpu_info: host_cpu_info
+  - memory_mb: host_memory_mb
+  - local_gb: host_local_gb
+  - service_name: host_service_name
+  - reservable: host_reservable
+  - status: host_status
+  - trust_id: host_trust_id
+  - created_at: created_at
+  - updated_at: updated_at
+  - extra_capability: host_extra_capability
+
+**Example of Host Update Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-update-resp.json
+  :language: javascript
+
+
+Delete Host
+===========
+
+.. rest_method:: DELETE v1/os_hosts/{host_id}
+
+Delete a host.
+
+**Preconditions**
+
+The host must exist.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Not Found(404), Conflict(409), Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - host_id: host_id_path
+
+Response
+--------
+
+No body content is returned on a successful DELETE.

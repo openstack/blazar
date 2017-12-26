@@ -1,4 +1,10 @@
 # variables in path
+host_id_path:
+  description: |
+    The ID of the host.
+  in: path
+  required: true
+  type: string
 lease_id_path:
   description: |
     The UUID of the lease.
@@ -60,6 +66,107 @@ events_optional:
     A list of ``event`` objects.
   in: body
   required: false
+  type: array
+host:
+  description: |
+    A ``host`` object.
+  in: body
+  required: true
+  type: object
+host_cpu_info:
+  description: |
+    Information of the CPU of the host.
+  in: body
+  required: true
+  type: string
+host_extra_capability:
+  description: |
+    The extra capability of the host.
+
+    .. note:: Any key-value pair can be stored as one of extra capabilities of
+              the host.
+  in: body
+  required: false
+  type: any
+host_hypervisor_hostname:
+  description: |
+    The hypervisor name of the host.
+  in: body
+  required: true
+  type: string
+host_hypervisor_type:
+  description: |
+    The hypervisor type the host.
+  in: body
+  required: true
+  type: string
+host_hypervisor_version:
+  description: |
+    The hypervisor version of the host.
+  in: body
+  required: true
+  type: integer
+host_id:
+  description: |
+    The ID of the host.
+  in: body
+  required: true
+  type: string
+host_local_gb:
+  description: |
+    Gigabytes of the disk of the host.
+  in: body
+  required: true
+  type: integer
+host_memory_mb:
+  description: |
+    Megabytes of the memory of the host.
+  in: body
+  required: true
+  type: integer
+host_name:
+  description: |
+    The name of the host.
+  in: body
+  required: true
+  type: string
+host_reservable:
+  description: |
+    The flag which represents whether the host is reservable or not.
+  in: body
+  required: true
+  type: boolean
+host_service_name:
+  description: |
+    The compute service name of the host.
+  in: body
+  required: true
+  type: string
+host_status:
+  description: |
+    The status of the host.
+
+    .. note:: This is null currently.
+  in: body
+  required: true
+  type: string
+host_trust_id:
+  description: |
+    The UUID of the trust of the host operator.
+  in: body
+  required: true
+  type: string
+host_vcpus:
+  description: |
+    The number of the VCPUs of the host.
+  in: body
+  required: true
+  type: integer
+hosts:
+  description: |
+    A list of ``host`` objects.
+  in: body
+  required: true
   type: array
 lease:
   description: |
