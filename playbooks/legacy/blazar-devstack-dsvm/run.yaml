@@ -30,6 +30,8 @@
           cat << 'EOF' >>"/tmp/dg-local.conf"
           [[local|localrc]]
           enable_plugin blazar git://git.openstack.org/openstack/blazar
+          # Enable Tempest plugin
+          TEMPEST_PLUGINS='/opt/stack/new/blazar-tempest-plugin'
           EOF
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
@@ -45,8 +47,8 @@
           export PROJECTS="openstack/blazar $PROJECTS"
           export PROJECTS="openstack/blazar-nova $PROJECTS"
           export PROJECTS="openstack/python-blazarclient $PROJECTS"
-          export DEVSTACK_GATE_TEMPEST_ALL_PLUGINS=1
-          export DEVSTACK_GATE_TEMPEST_REGEX="blazar_tempest_plugin.tests"
+          export PROJECTS="openstack/blazar-tempest-plugin $PROJECTS"
+          export DEVSTACK_GATE_TEMPEST_REGEX="blazar_tempest_plugin"
           cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
           ./safe-devstack-vm-gate-wrap.sh
         executable: /bin/bash

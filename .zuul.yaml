@@ -18,6 +18,7 @@
       - openstack/blazar
       - openstack/blazar-nova
       - openstack/python-blazarclient
+      - openstack/blazar-tempest-plugin
 
 - project:
     name: openstack/blazar
