@@ -7,6 +7,7 @@ User Guide
 
     introduction.rst
     architecture.rst
+    state-machines.rst
     resource-monitoring.rst
     ../cli/index
     ../restapi/index
