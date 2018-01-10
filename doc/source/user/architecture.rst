@@ -4,7 +4,7 @@ Blazar architecture
 
 Blazar design can be described by following diagram:
 
-.. image:: images/blazar-architecture.png
+.. image:: ../images/blazar-architecture.png
     :width: 700 px
     :scale: 99 %
     :align: left
