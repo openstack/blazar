@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    The resource monitoring feature is available from this release.
+    This feature monitors states of resources in the freepool. If any failure
+    is detected, reservations which suffer from the failure are healed.
+    New flags have been introduced into leases and reservations to indicate
+    health of reserved resources.
+    Resource monitor is plugable and the compute host resource monitor is
+    currently supported. See documentation [1]_ in detail.
+
+    .. [1] https://docs.openstack.org/blazar/latest/admin/resource-monitoring.html
