@@ -59,14 +59,8 @@ class Lease(base._Base):
     before_end_date = types.Datetime(service.LEASE_DATE_FORMAT)
     "Datetime when some actions will be taken before lease ending"
 
-    action = wtypes.text
-    "The current action running"
-
     status = wtypes.text
-    "The status of the action running"
-
-    status_reason = wtypes.text
-    "A brief description of the status, if any"
+    "The status of the lease"
 
     @classmethod
     def sample(cls):
@@ -81,9 +75,7 @@ class Lease(base._Base):
                                   u'resource_type': u'physical:host'}],
                    events=[],
                    before_end_date=u'2014-02-01 10:37',
-                   action=u'START',
-                   status=u'COMPLETE',
-                   status_reason=u'Lease currently running',
+                   status=u'ACTIVE',
                    )
 
 

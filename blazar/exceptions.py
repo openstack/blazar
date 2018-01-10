@@ -100,3 +100,7 @@ class InvalidInput(BlazarException):
 class UnsupportedAPIVersion(BlazarException):
     msg_fmt = _('API version %(version)s is not supported. Blazar only '
                 'supports Keystone v3 API.')
+
+
+class InvalidStatus(BlazarException):
+    msg_fmt = _("Invalid lease status.")

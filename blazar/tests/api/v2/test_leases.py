@@ -40,9 +40,7 @@ def fake_lease(**kw):
             }
         ]),
         u'events': kw.get('events', []),
-        u'action': kw.get('action', 'START'),
-        u'status': kw.get('status', 'COMPLETE'),
-        u'status_reason': kw.get('status_reason', 'Lease currently running'),
+        u'status': kw.get('status', 'ACTIVE'),
     }
 
 
@@ -51,9 +49,7 @@ def fake_lease_request_body(exclude=[], **kw):
     exclude.append('trust_id')
     exclude.append('user_id')
     exclude.append('project_id')
-    exclude.append('action')
     exclude.append('status')
-    exclude.append('status_reason')
     lease_body = fake_lease(**kw)
     return dict((key, lease_body[key])
                 for key in lease_body if key not in exclude)
