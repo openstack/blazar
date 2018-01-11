@@ -93,7 +93,7 @@ class Constraint(object):
         self.conditions = conditions
 
     def apply(self, model, query):
-        for key, condition in self.conditions.iteritems():
+        for key, condition in self.conditions.items():
             for clause in condition.clauses(getattr(model, key)):
                 query = query.filter(clause)
         return query
