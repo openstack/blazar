@@ -39,7 +39,7 @@ class PollingMonitor(base.BaseMonitor):
                                   self.update_statuses, 0, plugin.poll)
         except Exception as e:
             LOG.exception('Failed to start a polling monitor. (%s)',
-                          e.message)
+                          str(e))
 
     def stop_monitoring(self):
         """Stop polling."""
@@ -47,4 +47,4 @@ class PollingMonitor(base.BaseMonitor):
         try:
             self.tg.stop()
         except Exception as e:
-            LOG.exception('Failed to stop a polling monitor. (%s)', e.message)
+            LOG.exception('Failed to stop a polling monitor. (%s)', str(e))

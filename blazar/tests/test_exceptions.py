@@ -37,7 +37,7 @@ class BlazarExceptionTestCase(tests.TestCase):
 
         exc = FakeBlazarException(code=500)
         self.assertEqual(six.text_type(exc), 'default message: 500')
-        self.assertEqual(exc.message, 'default message: 500')
+        self.assertEqual(str(exc), 'default message: 500')
 
     def test_error_msg_exception_with_kwargs(self):
         class FakeBlazarException(exceptions.BlazarException):
@@ -45,7 +45,7 @@ class BlazarExceptionTestCase(tests.TestCase):
 
         exc = FakeBlazarException(code=500, mispelled_code='blah')
         self.assertEqual(six.text_type(exc), 'default message: blah')
-        self.assertEqual(exc.message, 'default message: blah')
+        self.assertEqual(str(exc), 'default message: blah')
 
     def test_default_error_code(self):
         class FakeBlazarException(exceptions.BlazarException):
@@ -63,6 +63,6 @@ class BlazarExceptionTestCase(tests.TestCase):
 
     def test_policynotauthorized_exception(self):
         exc = exceptions.PolicyNotAuthorized(action='foo')
-        self.assertEqual(six.text_type(exc.message),
+        self.assertEqual(six.text_type(exc),
                          "Policy doesn't allow foo to be performed")
         self.assertEqual(exc.kwargs['code'], 403)

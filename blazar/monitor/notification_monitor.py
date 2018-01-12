@@ -39,7 +39,7 @@ class NotificationMonitor(base.BaseMonitor):
             LOG.debug('Notification listener is successfully created.')
         except Exception as e:
             LOG.exception('Failed to create a notification listener. (%s)',
-                          e.message)
+                          str(e))
 
     def start_monitoring(self):
         """Start subscribing notifications."""
@@ -48,7 +48,7 @@ class NotificationMonitor(base.BaseMonitor):
             self.listener.start()
         except Exception as e:
             LOG.exception('Failed to start a notification monitor. (%s)',
-                          e.message)
+                          str(e))
 
     def stop_monitoring(self):
         """Stop subscribing notifications."""
@@ -57,7 +57,7 @@ class NotificationMonitor(base.BaseMonitor):
             self.listener.stop()
         except Exception as e:
             LOG.exception('Failed to stop a notification monitor. (%s)',
-                          e.message)
+                          str(e))
 
     def _get_targets(self, monitor_plugins):
         """Get a list of targets to subscribe.

@@ -250,7 +250,7 @@ class ManagerService(service_utils.RPCServer):
                     self._check_date_within_lease_limits(before_end_date,
                                                          lease_values)
                 except common_ex.BlazarException as e:
-                    LOG.error("Invalid before_end_date param. %s", e.message)
+                    LOG.error("Invalid before_end_date param. %s", str(e))
                     raise e
             elif CONF.manager.minutes_before_end_lease > 0:
                 delta = datetime.timedelta(
@@ -373,7 +373,7 @@ class ManagerService(service_utils.RPCServer):
                     self._check_date_within_lease_limits(before_end_date,
                                                          values)
                 except common_ex.BlazarException as e:
-                    LOG.error("Invalid before_end_date param. %s", e.message)
+                    LOG.error("Invalid before_end_date param. %s", str(e))
                     raise e
 
             # TODO(frossigneux) rollback if an exception is raised

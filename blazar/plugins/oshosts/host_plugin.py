@@ -364,9 +364,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             except db_ex.BlazarDBException as e:
                 # Nothing so bad, but we need to alert admins
                 # they have to rerun
-                raise manager_ex.CantDeleteHost(
-                    host=host_id,
-                    msg=e.message)
+                raise manager_ex.CantDeleteHost(host=host_id, msg=str(e))
 
     def _matching_hosts(self, hypervisor_properties, resource_properties,
                         count_range, start_date, end_date):

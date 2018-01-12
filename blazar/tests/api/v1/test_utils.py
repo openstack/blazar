@@ -19,10 +19,10 @@ from blazar.api.v1 import utils
 from blazar import tests
 
 
-class Error:
+class Error(Exception):
     def __init__(self, message=None, code=None):
-        self.message = message
         self.code = code
+        super(Error, self).__init__(message)
 
 
 class UtilsTestCase(tests.TestCase):

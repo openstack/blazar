@@ -247,9 +247,9 @@ def bad_request(error):
 
     LOG.debug("Validation Error occurred: error_code=%(code)s, "
               "error_message=%(msg)s, error_name=%(name)s",
-              {'code': error.code, 'msg': error.message, 'name': error.code})
+              {'code': error.code, 'msg': str(error), 'name': error.code})
 
-    return render_error_message(error.code, error.message, error.code)
+    return render_error_message(error.code, str(error), error.code)
 
 
 def not_found(error):
@@ -259,6 +259,6 @@ def not_found(error):
 
     LOG.debug("Not Found exception occurred: error_code=%(code)s, "
               "error_message=%(msg)s, error_name=%(name)s",
-              {'code': error.code, 'msg': error.message, 'name': error.code})
+              {'code': error.code, 'msg': str(error), 'name': error.code})
 
-    return render_error_message(error.code, error.message, error.code)
+    return render_error_message(error.code, str(error), error.code)

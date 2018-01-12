@@ -265,7 +265,7 @@ class ReservationPool(NovaClientWrapper):
             project_id = ctx.project_id
         except RuntimeError:
             e = manager_exceptions.ProjectIdNotFound()
-            LOG.error(e.message)
+            LOG.error(str(e))
             raise e
 
         if metadata:

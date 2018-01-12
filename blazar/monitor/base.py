@@ -44,7 +44,7 @@ class BaseMonitor(object):
             reservation_flags = callback(*args, **kwargs)
         except Exception as e:
             LOG.exception('Caught an exception while executing a callback. '
-                          '%s', e.message)
+                          '%s', str(e))
 
             # TODO(hiro-kobayashi): update statuses of related leases and
             # reservations. Depends on the state-machine blueprint.
