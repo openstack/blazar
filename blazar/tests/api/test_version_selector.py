@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
+from oslo_serialization import jsonutils
 
 from blazar.api import app as api
 from blazar.api.v1 import app as v1_app
@@ -35,7 +35,7 @@ class FakeWSGIApp(object):
 
     def __call__(self, environ, start_response):
         start_response(self.status_code, [])
-        return [json.dumps(self.versions)]
+        return [jsonutils.dump_as_bytes(self.versions)]
 
 
 class TestVersionDiscovery(tests.TestCase):
@@ -62,7 +62,7 @@ class TestVersionDiscovery(tests.TestCase):
         environ = {'PATH_INFO': self.path}
 
         versions_raw = version_selector(environ, self.start_response)
-        versions = json.loads("".join(versions_raw))
+        versions = jsonutils.loads(versions_raw.pop())
 
         self.assertEqual(2, len(versions['versions']))
         self.assertEqual("v{0}".format(self.v1_make_app().id_version),
@@ -79,7 +79,7 @@ class TestVersionDiscovery(tests.TestCase):
         environ = {'PATH_INFO': self.path}
 
         versions_raw = version_selector(environ, self.start_response)
-        versions = json.loads("".join(versions_raw))
+        versions = jsonutils.loads(versions_raw.pop())
 
         self.assertEqual(1, len(versions['versions']))
         self.assertEqual("v{0}".format(self.v1_make_app().id_version),
@@ -117,7 +117,7 @@ class TestVersionSelectorApplication(tests.TestCase):
         environ = {'PATH_INFO': "/v1"}
 
         versions_raw = version_selector(environ, self.start_response)
-        versions = json.loads("".join(versions_raw))
+        versions = jsonutils.loads(versions_raw.pop())
         self.assertEqual(self.v1_make_app().versions, versions)
 
     def test_get_v2_app(self):
@@ -125,5 +125,5 @@ class TestVersionSelectorApplication(tests.TestCase):
         environ = {'PATH_INFO': "/v2"}
 
         versions_raw = version_selector(environ, self.start_response)
-        versions = json.loads("".join(versions_raw))
+        versions = jsonutils.loads(versions_raw.pop())
         self.assertEqual(self.v2_make_app().versions, versions)

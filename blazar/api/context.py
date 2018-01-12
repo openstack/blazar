@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
+from oslo_serialization import jsonutils
 import six
 
 from blazar import context
@@ -23,7 +22,7 @@ from blazar import exceptions
 
 def ctx_from_headers(headers):
     try:
-        service_catalog = json.loads(headers['X-Service-Catalog'])
+        service_catalog = jsonutils.loads(headers['X-Service-Catalog'])
     except KeyError:
         raise exceptions.ServiceCatalogNotFound()
     except TypeError:

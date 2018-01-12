@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 from oslo_log import log as logging
+from oslo_serialization import jsonutils
 import webob
 
 from blazar.db import exceptions as db_exceptions
@@ -79,7 +78,7 @@ class ParsableErrorMiddleware(object):
             if not state:
                 return app_iter
             try:
-                res_dct = json.loads(app_iter[0])
+                res_dct = jsonutils.loads(app_iter[0])
             except ValueError:
                 return app_iter
             else:
@@ -128,7 +127,7 @@ class ParsableErrorMiddleware(object):
                     state['status_code'] = cls.code
 
         # NOTE(sbauza): Client expects a JSON encoded dict
-        body = [json.dumps(
+        body = [jsonutils.dump_as_bytes(
                 {'error_code': state['status_code'],
                  'error_message': faultstring,
                  'error_name': state['status_code']}

@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import datetime
-import json
 import uuid
 
+from oslo_serialization import jsonutils
 import six
 from wsme import types as wtypes
 from wsme import utils as wutils
@@ -81,7 +81,7 @@ class CPUInfo(wtypes.UserType):
         #               another. We need to keep this method as generic as
         #               possible, ie. we accept JSONified dict.
         try:
-            cpu_info = json.loads(value)
+            cpu_info = jsonutils.loads(value)
         except TypeError:
             raise exceptions.InvalidInput(cls=CPUInfo.name, value=value)
         if not isinstance(cpu_info, dict):

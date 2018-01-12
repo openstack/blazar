@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from oslo_serialization import jsonutils
 
 from blazar.api.v1 import app as v1_app
 from blazar.api.v2 import app as v2_app
@@ -31,7 +31,7 @@ class VersionSelectorApplication(object):
     def _append_versions_from_app(self, versions, app, environ):
         tmp_versions = app(environ, self.internal_start_response)
         if self._status.startswith("300"):
-            tmp_versions = json.loads("".join(tmp_versions))
+            tmp_versions = jsonutils.loads(tmp_versions.pop())
             versions['versions'].extend(tmp_versions['versions'])
 
     def internal_start_response(self, status, response_headers, exc_info=None):
@@ -49,7 +49,7 @@ class VersionSelectorApplication(object):
             if len(versions['versions']):
                 start_response("300 Multiple Choices",
                                [("Content-Type", "application/json")])
-                return [json.dumps(versions)]
+                return [jsonutils.dump_as_bytes(versions)]
             else:
                 start_response("204 No Content", [])
                 return []

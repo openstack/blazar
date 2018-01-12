@@ -24,7 +24,7 @@ class JsonEncoded(sa.TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
-            value = jsonutils.dumps(value)
+            value = jsonutils.dump_as_bytes(value)
         return value
 
     def process_result_value(self, value, dialect):
