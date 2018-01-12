@@ -384,8 +384,8 @@ class ManagerService(service_utils.RPCServer):
                 v['start_date'] = values['start_date']
                 v['end_date'] = values['end_date']
                 try:
-                    v.update(filter(lambda x: x['id'] == reservation['id'],
-                                    reservations).pop())
+                    v.update([r for r in reservations
+                              if r['id'] == reservation['id']].pop())
                 except KeyError:
                     raise exceptions.MissingParameter(param='reservation ID')
                 except IndexError:

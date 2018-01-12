@@ -62,13 +62,13 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                                                 end_date)
 
             if excludes:
-                reservations = filter(lambda r: r['id'] not in excludes,
-                                      reservations)
+                reservations = [r for r in reservations
+                                if r['id'] not in excludes]
 
             if reservations == []:
                 free.append({'host': host, 'reservations': None})
-            elif not filter(lambda x: x['resource_type'] ==
-                            oshosts.RESOURCE_TYPE, reservations):
+            elif not [r for r in reservations
+                      if r['resource_type'] == oshosts.RESOURCE_TYPE]:
                 non_free.append({'host': host, 'reservations': reservations})
 
         return free, non_free

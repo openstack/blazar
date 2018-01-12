@@ -130,8 +130,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
 
-        if (not filter(lambda x: x in ['min', 'max', 'hypervisor_properties',
-                                       'resource_properties'], values.keys())
+        if (not [x for x in values.keys() if x in ['min', 'max',
+                                                   'hypervisor_properties',
+                                                   'resource_properties']]
                 and values['start_date'] >= lease['start_date']
                 and values['end_date'] <= lease['end_date']):
             # Nothing to update

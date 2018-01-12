@@ -638,8 +638,8 @@ def host_get_all_by_queries(queries):
                 if op in oper:
                     op = oper[op][0]
                 try:
-                    attr = filter(lambda e: hasattr(column, e % op),
-                                  ['%s', '%s_', '__%s__'])[0] % op
+                    attr = [e for e in ['%s', '%s_', '__%s__']
+                            if hasattr(column, e % op)][0] % op
                 except IndexError:
                     raise db_exc.BlazarDBInvalidFilterOperator(
                         filter_operator=op)
