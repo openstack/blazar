@@ -75,7 +75,7 @@ class UtilsTestCase(tests.TestCase):
         self.utils.render(result={}, response_type='application/json',
                           status='lol')
         self.response.assert_called_once_with(mimetype='application/json',
-                                              status='lol', response='{}')
+                                              status='lol', response=b'{}')
 
     def test_request_data_data(self):
         self.request.parsed_data = "data"
