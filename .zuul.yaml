@@ -20,10 +20,34 @@
       - openstack/python-blazarclient
       - openstack/blazar-tempest-plugin
 
+- job:
+    name: blazar-devstack-dsvm-py35
+    parent: legacy-dsvm-base
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^blazar/tests/.*$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+      - ^test-requirements.txt$
+      - ^tools/.*$
+      - ^tox.ini$
+    run: playbooks/legacy/blazar-devstack-dsvm-py35/run.yaml
+    post-run: playbooks/legacy/blazar-devstack-dsvm-py35/post.yaml
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/blazar
+      - openstack/blazar-nova
+      - openstack/python-blazarclient
+      - openstack/blazar-tempest-plugin
+    voting: false
+
 - project:
     check:
       jobs:
         - blazar-devstack-dsvm
+        - blazar-devstack-dsvm-py35
     gate:
       jobs:
         - blazar-devstack-dsvm

@@ -22,7 +22,7 @@ import sys
 from oslo_config import cfg
 from oslo_service import service
 
-gettext.install('blazar', unicode=1)
+gettext.install('blazar')
 
 from blazar.db import api as db_api
 from blazar.manager import service as manager_service
