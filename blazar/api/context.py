@@ -35,5 +35,5 @@ def ctx_from_headers(headers):
         service_catalog=service_catalog,
         user_name=headers['X-User-Name'],
         project_name=headers['X-Project-Name'],
-        roles=map(six.text_type.strip, headers['X-Roles'].split(',')),
+        roles=list(map(six.text_type.strip, headers['X-Roles'].split(','))),
     )
