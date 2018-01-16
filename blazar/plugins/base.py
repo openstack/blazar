@@ -31,6 +31,7 @@ class BasePlugin(object):
     resource_type = 'none'
     title = None
     description = None
+    monitor = None
 
     def get_plugin_opts(self):
         """Plugin can expose some options that should be specified in conf file
@@ -83,4 +84,57 @@ class BasePlugin(object):
 
     def before_end(self, resource_id):
         """Take actions before the end of a lease"""
+        pass
+
+
+@six.add_metaclass(abc.ABCMeta)
+class BaseMonitorPlugin():
+    """Base class of monitor plugin."""
+    @abc.abstractmethod
+    def is_notification_enabled(self):
+        """Check if the notification monitor is enabled."""
+        pass
+
+    @abc.abstractmethod
+    def get_notification_event_types(self):
+        """Get a list of event types of messages to handle."""
+        pass
+
+    @abc.abstractmethod
+    def get_notification_topics(self):
+        """Get a list of topics of notification to subscribe to."""
+        pass
+
+    @abc.abstractmethod
+    def notification_callback(self, event_type, message):
+        """Handle a notification message.
+
+        It is used as a callback of a notification based resource monitor.
+
+        :param event_type: an event type of message.
+        :param message: a message passed by monitors.
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
+        pass
+
+    @abc.abstractmethod
+    def is_polling_enabled(self):
+        """Check if the polling monitor is enabled."""
+        pass
+
+    @abc.abstractmethod
+    def get_polling_interval(self):
+        """Get an interval of polling in seconds."""
+        pass
+
+    @abc.abstractmethod
+    def poll(self):
+        """Check health of resources.
+
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
         pass
