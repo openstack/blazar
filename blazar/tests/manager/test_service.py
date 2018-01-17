@@ -53,7 +53,7 @@ class FakePlugin(base.BasePlugin):
         return None
 
     def on_start(self, resource_id):
-        return 'Resorce %s should be started this moment.' % resource_id
+        return 'Resource %s should be started this moment.' % resource_id
 
     def on_end(self, resource_id):
         return 'Resource %s should be deleted this moment.' % resource_id
@@ -68,7 +68,7 @@ class FakePluginRaisesException(base.BasePlugin):
         raise Exception
 
     def on_start(self, resource_id):
-        return 'Resorce %s should be started this moment.' % resource_id
+        return 'Resource %s should be started this moment.' % resource_id
 
     def on_end(self, resource_id):
         return 'Resource %s should be deleted this moment.' % resource_id
