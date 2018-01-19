@@ -44,7 +44,7 @@ class BlazarException(Exception):
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
-                for name, value in kwargs.iteritems():
+                for name, value in kwargs.items():
                     LOG.error("%(name)s: %(value)s",
                               {'name': name, 'value': value})
 

@@ -78,7 +78,7 @@ def make_app():
             and 'physical.host.plugin' in cfg.CONF.manager.plugins):
         app.register_blueprint(host_api_v1_0.rest, url_prefix='/v1/os-hosts')
 
-    for code in werkzeug_exceptions.default_exceptions.iterkeys():
+    for code in werkzeug_exceptions.default_exceptions:
         app.error_handler_spec[None][code] = make_json_error
 
     if cfg.CONF.debug and not cfg.CONF.log_exchange:
