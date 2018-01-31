@@ -21,7 +21,6 @@
       - openstack/blazar-tempest-plugin
 
 - project:
-    name: openstack/blazar
     check:
       jobs:
         - blazar-devstack-dsvm
