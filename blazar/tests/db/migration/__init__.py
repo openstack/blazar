@@ -498,7 +498,7 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
         for successful testing of migrations in up>down>up mode.
         """
         versions = self._get_alembic_versions(engine)
-        return zip(versions, ['-1'] + versions)
+        return list(zip(versions, ['-1'] + versions))
 
     def _walk_versions(self, engine=None, snake_walk=False,
                        downgrade=True):
