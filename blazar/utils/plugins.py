@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
+from oslo_serialization import jsonutils
 import six
 
 from blazar.manager import exceptions as manager_ex
@@ -30,7 +29,7 @@ def convert_requirements(requirements):
     # Convert text to json
     if isinstance(requirements, six.string_types):
         try:
-            requirements = json.loads(requirements)
+            requirements = jsonutils.loads(requirements)
         except ValueError:
             raise manager_ex.MalformedRequirements(rqrms=requirements)
 

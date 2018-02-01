@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from oslo_serialization import jsonutils
 
 from blazar.api import context as api_context
 from blazar import context
@@ -34,7 +34,7 @@ class ContextTestCase(tests.TestCase):
 
     def test_ctx_from_headers(self):
         self.context = self.patch(context, 'BlazarContext')
-        catalog = json.dumps({'nova': 'catalog'})
+        catalog = jsonutils.dump_as_bytes({'nova': 'catalog'})
         self.fake_headers[u'X-Service-Catalog'] = catalog
         api_context.ctx_from_headers(self.fake_headers)
         self.context.assert_called_once_with(user_id=u'1',

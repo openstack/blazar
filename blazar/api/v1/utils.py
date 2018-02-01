@@ -160,7 +160,7 @@ def render(result=None, response_type=None, status=None, **kwargs):
                       _("Content type '%s' isn't supported") % response_type)
         return
 
-    body = serializer.dumps(result)
+    body = serializer.dump_as_bytes(result)
 
     response_type = str(response_type)
 

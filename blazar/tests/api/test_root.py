@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from oslo_serialization import jsonutils
 
 from blazar.tests import api
 
@@ -21,7 +21,7 @@ from blazar.tests import api
 class TestRoot(api.APITest):
     def setUp(self):
         super(TestRoot, self).setUp()
-        self.versions = json.dumps(
+        self.versions = jsonutils.dump_as_bytes(
             {"versions":
              [{"status": "CURRENT",
                "id": "v2.0",

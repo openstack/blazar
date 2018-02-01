@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from oslo_serialization import jsonutils
 import pecan
 
 from blazar.api.v2 import controllers
@@ -37,7 +37,7 @@ class RootController(object):
         versions = {"versions": []}
         self._append_versions_from_controller(versions['versions'],
                                               self.v2, 'v2')
-        return json.dumps(versions)
+        return jsonutils.dump_as_bytes(versions)
 
     @pecan.expose(content_type='application/json')
     def versions(self):
