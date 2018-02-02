@@ -1,0 +1,25 @@
+{
+    "name": "lease_foo",
+    "start_date": "2017-12-26 12:00",
+    "end_date": "2017-12-27 12:00",
+    "before_end_date": "2017-12-27 11:00",
+    "reservations": [
+        {
+            "resource_type": "physical:host",
+            "min": 4,
+            "max": 6,
+            "hypervisor_properties": "[\">=\", \"$vcpus\", \"4\"]",
+            "resource_properties": "",
+            "before_end": "default"
+        },
+        {
+            "resource_type": "virtual:instance",
+            "amount": 4,
+            "vcpus": 2,
+            "memory_mb": 4096,
+            "disk_gb": 100,
+            "affinity": false
+        }
+    ],
+    "events": []
+}
