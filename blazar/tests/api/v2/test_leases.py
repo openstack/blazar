@@ -145,15 +145,17 @@ class TestShowLease(api.APITest):
     def test_empty(self):
         expected = {
             u'error_code': 404,
-            u'error_message': u"Object with {{'lease_id': "
-                              u"u'{0}'}} not found".format(self.id1),
+            u'error_message': u"not found",
             u'error_name': 404
         }
         self.patch(self.rpcapi, 'get_lease').return_value = None
         response = self.get_json(self.path, expect_errors=True)
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_get(self):
         def fake_get_lease(*args, **kwargs):
@@ -194,9 +196,7 @@ class TestCreateLease(api.APITest):
     def test_create_wrong_attr(self):
         expected = {
             "error_name": 400,
-            "error_message": "Invalid input for field/attribute name. "
-                             "Value: '1'. Wrong type. "
-                             "Expected '<type 'unicode'>', got '<type 'int'>'",
+            "error_message": "Invalid input for field/attribute name.",
             "error_code": 400
         }
 
@@ -204,7 +204,10 @@ class TestCreateLease(api.APITest):
                                   expect_errors=True)
         self.assertEqual(400, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_create_with_empty_body(self):
         expected = {
@@ -298,8 +301,7 @@ class TestUpdateLease(api.APITest):
     def test_empty_response(self):
         expected = {
             u'error_code': 404,
-            u'error_message': u"Object with {{'lease_id': "
-                              u"u'{0}'}} not found".format(self.id1),
+            u'error_message': u"not found",
             u'error_name': 404
         }
         self.patch(self.rpcapi, 'update_lease').return_value = None
@@ -307,7 +309,10 @@ class TestUpdateLease(api.APITest):
                                  expect_errors=True)
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_update(self):
         def fake_update_lease(*args, **kwargs):
@@ -339,15 +344,14 @@ class TestDeleteLease(api.APITest):
         response = self.delete(self.path)
         self.assertEqual(204, response.status_int)
         self.assertIsNone(response.content_type)
-        self.assertEqual('', response.body)
+        self.assertEqual(b'', response.body)
 
     def test_delete_not_existing_lease(self):
         def fake_delete_lease(*args, **kwargs):
             raise TypeError("Nah...")
         expected = {
             u'error_code': 404,
-            u'error_message': u"Object with {{'lease_id': "
-                              u"u'{0}'}} not found".format(self.id1),
+            u'error_message': u"not found",
             u'error_name': 404
         }
         self.patch(
@@ -355,7 +359,10 @@ class TestDeleteLease(api.APITest):
         response = self.delete(self.path, expect_errors=True)
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_delete(self):
         def fake_delete_lease(*args, **kwargs):

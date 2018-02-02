@@ -85,17 +85,17 @@ class TestIncorrectHostFromRPC(api.APITest):
     def test_bad_list(self):
         expected = {
             u'error_code': 400,
-            u'error_message': u"Invalid input for field/attribute "
-                              u"hypervisor_type. Value: '1'. Wrong type. "
-                              u"Expected '<type 'unicode'>', "
-                              u"got '<type 'int'>'",
+            u'error_message': u"Invalid input",
             u'error_name': 400
         }
         response = self.get_json(self.path, expect_errors=True,
                                  headers=self.headers)
         self.assertEqual(400, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
 
 class TestListHosts(api.APITest):
@@ -227,9 +227,7 @@ class TestCreateHost(api.APITest):
     def test_create_wrong_attr(self):
         expected = {
             "error_name": 400,
-            "error_message": "Invalid input for field/attribute name. "
-                             "Value: '1'. Wrong type. "
-                             "Expected '<type 'unicode'>', got '<type 'int'>'",
+            "error_message": "Invalid input for field/attribute name. ",
             "error_code": 400
         }
 
@@ -238,7 +236,10 @@ class TestCreateHost(api.APITest):
                                   expect_errors=True, headers=self.headers)
         self.assertEqual(400, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_create_with_empty_body(self):
         expected = {
@@ -370,15 +371,14 @@ class TestDeleteHost(api.APITest):
         response = self.delete(self.path, headers=self.headers)
         self.assertEqual(204, response.status_int)
         self.assertIsNone(response.content_type)
-        self.assertEqual('', response.body)
+        self.assertEqual(b'', response.body)
 
     def test_delete_not_existing_computehost(self):
         def fake_delete_computehost(*args, **kwargs):
             raise TypeError("Nah...")
         expected = {
             u'error_code': 404,
-            u'error_message': u"Object with {{'host_id': "
-                              u"u'{0}'}} not found".format(self.id1),
+            u'error_message': u"not found",
             u'error_name': 404
         }
         self.patch(
@@ -388,7 +388,10 @@ class TestDeleteHost(api.APITest):
                                headers=self.headers)
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
-        self.assertEqual(expected, response.json)
+        self.assertEqual(expected["error_name"], response.json["error_name"])
+        self.assertTrue(expected["error_message"]
+                        in response.json["error_message"])
+        self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_delete(self):
         def fake_delete_computehost(*args, **kwargs):
