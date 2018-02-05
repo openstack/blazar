@@ -1670,9 +1670,6 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def setUp(self):
         super(PhysicalHostMonitorPluginTestCase, self).setUp()
         self.patch(nova_client, 'Client')
-        self.patch(base, 'url_for').return_value = 'http://foo.bar'
-        self.patch(context, 'BlazarContext')
-        self.patch(trusts, 'create_ctx_from_trust')
         self.host_monitor_plugin = host_plugin.PhysicalHostMonitorPlugin()
 
     def test_notification_callback_disabled_true(self):
@@ -1751,10 +1748,11 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         host_get_all = self.patch(db_api,
                                   'reservable_host_get_all_by_queries')
         host_get_all.return_value = hosts
-        hypervisor_get = self.patch(self.host_monitor_plugin.nova.hypervisors,
-                                    'get')
-        hypervisor_get.return_value = mock.MagicMock(state='down',
-                                                     status='enabled')
+        hypervisors_list = self.patch(
+            self.host_monitor_plugin.nova.hypervisors, 'list')
+        hypervisors_list.return_value = [
+            mock.MagicMock(id=1, state='down', status='enabled'),
+            mock.MagicMock(id=2, state='down', status='enabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
         self.assertEqual(hosts, result)
@@ -1772,10 +1770,11 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         host_get_all = self.patch(db_api,
                                   'reservable_host_get_all_by_queries')
         host_get_all.return_value = hosts
-        hypervisor_get = self.patch(self.host_monitor_plugin.nova.hypervisors,
-                                    'get')
-        hypervisor_get.return_value = mock.MagicMock(state='up',
-                                                     status='disabled')
+        hypervisors_list = self.patch(
+            self.host_monitor_plugin.nova.hypervisors, 'list')
+        hypervisors_list.return_value = [
+            mock.MagicMock(id=1, state='up', status='disabled'),
+            mock.MagicMock(id=2, state='up', status='disabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
         self.assertEqual(hosts, result)
@@ -1793,10 +1792,11 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         host_get_all = self.patch(db_api,
                                   'reservable_host_get_all_by_queries')
         host_get_all.return_value = hosts
-        hypervisor_get = self.patch(self.host_monitor_plugin.nova.hypervisors,
-                                    'get')
-        hypervisor_get.return_value = mock.MagicMock(state='up',
-                                                     status='enabled')
+        hypervisors_list = self.patch(
+            self.host_monitor_plugin.nova.hypervisors, 'list')
+        hypervisors_list.return_value = [
+            mock.MagicMock(id=1, state='up', status='enabled'),
+            mock.MagicMock(id=2, state='up', status='enabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
         self.assertEqual([], result)

@@ -57,9 +57,10 @@ class TestCNClient(tests.TestCase):
         user_domain = 'User_Domain'
         project_name = 'admin'
         project_domain = 'Project_Domain'
-        auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
+        auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
                                       CONF.os_auth_host,
-                                      CONF.os_auth_port)
+                                      CONF.os_auth_port,
+                                      CONF.os_auth_prefix)
 
         kwargs = {'version': self.version,
                   'endpoint_override': endpoint,

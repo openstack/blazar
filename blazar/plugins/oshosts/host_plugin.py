@@ -696,19 +696,17 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
 
         :return: a list of failed hosts.
         """
-        failed_hosts = []
-        hosts = db_api.reservable_host_get_all_by_queries([])
-        for host in hosts:
-            with trusts.create_ctx_from_trust(host['trust_id']):
-                try:
-                    hv = self.nova.hypervisors.get(host['id'])
-                    LOG.debug('%s: state=%s, status=%s.',
-                              hv.hypervisor_hostname, hv.state, hv.status)
-                    if hv.state == 'down' or hv.status == 'disabled':
-                        failed_hosts.append(host)
-                except Exception as e:
-                    LOG.exception('Skipping health check of host %s. %s',
-                                  host['hypervisor_hostname'], str(e))
+        reservable_hosts = db_api.reservable_host_get_all_by_queries([])
+
+        try:
+            hvs = self.nova.hypervisors.list()
+            failed_hv_ids = [str(hv.id) for hv in hvs
+                             if hv.state == 'down' or hv.status == 'disabled']
+            failed_hosts = [host for host in reservable_hosts
+                            if host['id'] in failed_hv_ids]
+        except Exception as e:
+            LOG.exception('Skipping health check of host %s. %s',
+                          host['hypervisor_hostname'], str(e))
 
         return failed_hosts
 

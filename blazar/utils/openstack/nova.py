@@ -126,9 +126,10 @@ class BlazarNovaClient(object):
                                     os_region_name=CONF.os_region_name)
 
         if auth_url is None:
-            auth_url = "%s://%s:%s/v3" % (CONF.os_auth_protocol,
+            auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
                                           CONF.os_auth_host,
-                                          CONF.os_auth_port)
+                                          CONF.os_auth_port,
+                                          CONF.os_auth_prefix)
 
         if username:
             kwargs.setdefault('username', username)
@@ -191,9 +192,7 @@ class NovaClientWrapper(object):
 
     @property
     def nova(self):
-        ctx = context.current()
-        nova = BlazarNovaClient(ctx=ctx,
-                                username=self.username,
+        nova = BlazarNovaClient(username=self.username,
                                 password=self.password,
                                 user_domain_name=self.user_domain_name,
                                 project_name=self.project_name,
