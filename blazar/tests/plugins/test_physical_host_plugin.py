@@ -1702,6 +1702,8 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
 
         result = self.host_monitor_plugin.notification_callback(event_type,
                                                                 payload)
+        host_get_all.assert_called_once_with(
+            ['hypervisor_hostname == ' + payload['nova_object.data']['host']])
         self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
 
     def test_notification_callback_no_failure(self):
@@ -1724,14 +1726,53 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
                 'uuid': 'fa69c544-906b-4a6a-a9c6-c1f7a8078c73'
             }
         }
-        host_get_all = self.patch(db_api,
-                                  'reservable_host_get_all_by_queries')
+        host_get_all = self.patch(db_api, 'host_get_all_by_queries')
+        host_get_all.return_value = []
         handle_failures = self.patch(self.host_monitor_plugin,
                                      '_handle_failures')
 
         result = self.host_monitor_plugin.notification_callback(event_type,
                                                                 payload)
-        host_get_all.assert_not_called()
+        host_get_all.assert_called_once_with(
+            ['reservable == 0',
+             'hypervisor_hostname == ' + payload['nova_object.data']['host']])
+        handle_failures.assert_not_called()
+        self.assertEqual({}, result)
+
+    def test_notification_callback_recover(self):
+        recovered_host = {'hypervisor_hostname': 'compute-1', 'id': 1}
+        event_type = 'service.update'
+        payload = {
+            'nova_object.namespace': 'nova',
+            'nova_object.name': 'ServiceStatusPayload',
+            'nova_object.version': '1.1',
+            'nova_object.data': {
+                'host': 'compute-1',
+                'disabled': False,
+                'last_seen_up': '2012-10-29T13:42:05Z',
+                'binary': 'nova-compute',
+                'topic': 'compute',
+                'disabled_reason': None,
+                'report_count': 1,
+                'forced_down': False,
+                'version': 22,
+                'availability_zone': None,
+                'uuid': 'fa69c544-906b-4a6a-a9c6-c1f7a8078c73'
+            }
+        }
+        host_get_all = self.patch(db_api, 'host_get_all_by_queries')
+        host_get_all.return_value = [recovered_host]
+        handle_failures = self.patch(self.host_monitor_plugin,
+                                     '_handle_failures')
+        host_update = self.patch(db_api, 'host_update')
+
+        result = self.host_monitor_plugin.notification_callback(event_type,
+                                                                payload)
+        host_get_all.assert_called_once_with(
+            ['reservable == 0',
+             'hypervisor_hostname == ' + payload['nova_object.data']['host']])
+        host_update.assert_called_once_with(recovered_host['id'],
+                                            {'reservable': True})
         handle_failures.assert_not_called()
         self.assertEqual({}, result)
 
@@ -1739,14 +1780,14 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         hosts = [
             {'id': '1',
              'hypervisor_hostname': 'compute-1',
-             'trust_id': 'trust-1'},
+             'reservable': True},
             {'id': '2',
              'hypervisor_hostname': 'compute-2',
-             'trust_id': 'trust-2'},
+             'reservable': True},
         ]
 
         host_get_all = self.patch(db_api,
-                                  'reservable_host_get_all_by_queries')
+                                  'host_get_all_by_filters')
         host_get_all.return_value = hosts
         hypervisors_list = self.patch(
             self.host_monitor_plugin.nova.hypervisors, 'list')
@@ -1755,20 +1796,20 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
             mock.MagicMock(id=2, state='down', status='enabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
-        self.assertEqual(hosts, result)
+        self.assertEqual((hosts, []), result)
 
     def test_poll_resource_failures_status_disabled(self):
         hosts = [
             {'id': '1',
              'hypervisor_hostname': 'compute-1',
-             'trust_id': 'trust-1'},
+             'reservable': True},
             {'id': '2',
              'hypervisor_hostname': 'compute-2',
-             'trust_id': 'trust-2'},
+             'reservable': True},
         ]
 
         host_get_all = self.patch(db_api,
-                                  'reservable_host_get_all_by_queries')
+                                  'host_get_all_by_filters')
         host_get_all.return_value = hosts
         hypervisors_list = self.patch(
             self.host_monitor_plugin.nova.hypervisors, 'list')
@@ -1777,20 +1818,20 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
             mock.MagicMock(id=2, state='up', status='disabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
-        self.assertEqual(hosts, result)
+        self.assertEqual((hosts, []), result)
 
     def test_poll_resource_failures_nothing(self):
         hosts = [
             {'id': '1',
              'hypervisor_hostname': 'compute-1',
-             'trust_id': 'trust-1'},
+             'reservable': True},
             {'id': '2',
              'hypervisor_hostname': 'compute-2',
-             'trust_id': 'trust-2'},
+             'reservable': True},
         ]
 
         host_get_all = self.patch(db_api,
-                                  'reservable_host_get_all_by_queries')
+                                  'host_get_all_by_filters')
         host_get_all.return_value = hosts
         hypervisors_list = self.patch(
             self.host_monitor_plugin.nova.hypervisors, 'list')
@@ -1799,7 +1840,29 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
             mock.MagicMock(id=2, state='up', status='enabled')]
 
         result = self.host_monitor_plugin._poll_resource_failures()
-        self.assertEqual([], result)
+        self.assertEqual(([], []), result)
+
+    def test_poll_resource_failures_recover(self):
+        hosts = [
+            {'id': '1',
+             'hypervisor_hostname': 'compute-1',
+             'reservable': False},
+            {'id': '2',
+             'hypervisor_hostname': 'compute-2',
+             'reservable': False},
+        ]
+
+        host_get_all = self.patch(db_api,
+                                  'host_get_all_by_filters')
+        host_get_all.return_value = hosts
+        hypervisors_list = self.patch(
+            self.host_monitor_plugin.nova.hypervisors, 'list')
+        hypervisors_list.return_value = [
+            mock.MagicMock(id=1, state='up', status='enabled'),
+            mock.MagicMock(id=2, state='up', status='enabled')]
+
+        result = self.host_monitor_plugin._poll_resource_failures()
+        self.assertEqual(([], hosts), result)
 
     def test_handle_failures(self):
         hosts = [
