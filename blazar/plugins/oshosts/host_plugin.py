@@ -639,22 +639,31 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
         """Get topics of notification to subscribe to."""
         return CONF[plugin.RESOURCE_TYPE].notification_topics
 
-    def notification_callback(self, event_type, message):
+    def notification_callback(self, event_type, payload):
         """Handle a notification message.
 
         It is used as a callback of a notification-based resource monitor.
 
-        :param event_type: an event type of message.
-        :param message: a message passed by monitors.
+        :param event_type: an event type of a notification.
+        :param payload: a payload of a notification.
         :return: a dictionary of {reservation id: flags to update}
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}
         """
-        LOG.debug('notification_callback() is called.')
+        LOG.trace('Handling a notification...')
+        reservation_flags = {}
 
-        # TODO(hiro-kobayashi): Implement this method
+        data = payload.get('nova_object.data', None)
+        if data:
+            if data['disabled'] or data['forced_down']:
+                failed_hosts = db_api.reservable_host_get_all_by_queries(
+                    ['hypervisor_hostname == ' + data['host']])
+                if failed_hosts:
+                    LOG.warn('%s failed.',
+                             failed_hosts[0]['hypervisor_hostname'])
+                    reservation_flags = self._handle_failures(failed_hosts)
 
-        return {}
+        return reservation_flags
 
     def is_polling_enabled(self):
         """Check if the polling monitor is enabled."""

@@ -1675,6 +1675,69 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         self.patch(trusts, 'create_ctx_from_trust')
         self.host_monitor_plugin = host_plugin.PhysicalHostMonitorPlugin()
 
+    def test_notification_callback_disabled_true(self):
+        failed_host = {'hypervisor_hostname': 'compute-1'}
+        event_type = 'service.update'
+        payload = {
+            'nova_object.namespace': 'nova',
+            'nova_object.name': 'ServiceStatusPayload',
+            'nova_object.version': '1.1',
+            'nova_object.data': {
+                'host': failed_host['hypervisor_hostname'],
+                'disabled': True,
+                'last_seen_up': '2012-10-29T13:42:05Z',
+                'binary': 'nova-compute',
+                'topic': 'compute',
+                'disabled_reason': None,
+                'report_count': 1,
+                'forced_down': False,
+                'version': 22,
+                'availability_zone': None,
+                'uuid': 'fa69c544-906b-4a6a-a9c6-c1f7a8078c73'
+            }
+        }
+        host_get_all = self.patch(db_api,
+                                  'reservable_host_get_all_by_queries')
+        host_get_all.return_value = [failed_host]
+        handle_failures = self.patch(self.host_monitor_plugin,
+                                     '_handle_failures')
+        handle_failures.return_value = {'rsrv-1': {'missing_resources': True}}
+
+        result = self.host_monitor_plugin.notification_callback(event_type,
+                                                                payload)
+        self.assertEqual({'rsrv-1': {'missing_resources': True}}, result)
+
+    def test_notification_callback_no_failure(self):
+        event_type = 'service.update'
+        payload = {
+            'nova_object.namespace': 'nova',
+            'nova_object.name': 'ServiceStatusPayload',
+            'nova_object.version': '1.1',
+            'nova_object.data': {
+                'host': 'compute-1',
+                'disabled': False,
+                'last_seen_up': '2012-10-29T13:42:05Z',
+                'binary': 'nova-compute',
+                'topic': 'compute',
+                'disabled_reason': None,
+                'report_count': 1,
+                'forced_down': False,
+                'version': 22,
+                'availability_zone': None,
+                'uuid': 'fa69c544-906b-4a6a-a9c6-c1f7a8078c73'
+            }
+        }
+        host_get_all = self.patch(db_api,
+                                  'reservable_host_get_all_by_queries')
+        handle_failures = self.patch(self.host_monitor_plugin,
+                                     '_handle_failures')
+
+        result = self.host_monitor_plugin.notification_callback(event_type,
+                                                                payload)
+        host_get_all.assert_not_called()
+        handle_failures.assert_not_called()
+        self.assertEqual({}, result)
+
     def test_poll_resource_failures_state_down(self):
         hosts = [
             {'id': '1',
