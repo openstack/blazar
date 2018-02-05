@@ -1,7 +1,7 @@
 :tocdepth: 2
 
 ==================
-Reservation API V1
+Reservation API v1
 ==================
 
 This is a reference for the OpenStack Reservation API which is provided by the
