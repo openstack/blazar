@@ -465,3 +465,17 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             server.delete()
 
         self.cleanup_resources(instance_reservation)
+
+    def heal_reservations(cls, failed_resources):
+        """Heal reservations which suffer from resource failures.
+
+        :param: failed_resources: a list of failed hosts.
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
+
+        # TODO(hiro-kobayashi): Implement this method
+        LOG.warn('heal_reservations() is not implemented yet.')
+
+        return {}

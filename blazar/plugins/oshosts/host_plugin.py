@@ -91,6 +91,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             project_name=CONF.os_admin_project_name,
             project_domain_name=CONF.os_admin_user_domain_name)
         self.monitor = PhysicalHostMonitorPlugin()
+        self.monitor.register_healing_handler(self.heal_reservations)
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
@@ -208,6 +209,73 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             pool.delete(host_reservation['aggregate_id'])
         except manager_ex.AggregateNotFound:
             pass
+
+    def heal_reservations(self, failed_resources):
+        """Heal reservations which suffer from resource failures.
+
+        :param: failed_resources: a list of failed hosts.
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                       {'missing_resources': True}}
+        """
+        reservation_flags = {}
+
+        failed_allocs = []
+        for host in failed_resources:
+            failed_allocs += db_api.host_allocation_get_all_by_values(
+                compute_host_id=host['id'])
+
+        for alloc in failed_allocs:
+            reservation = db_api.reservation_get(alloc['reservation_id'])
+            if reservation['resource_type'] != plugin.RESOURCE_TYPE:
+                continue
+            lease = db_api.lease_get(reservation['lease_id'])
+            host_reservation = None
+            pool = None
+
+            # Remove the failed host from the aggregate.
+            if reservation['status'] == status.reservation.ACTIVE:
+                host = db_api.host_get(alloc['compute_host_id'])
+                host_reservation = db_api.host_reservation_get(
+                    reservation['resource_id'])
+                with trusts.create_ctx_from_trust(lease['trust_id']):
+                    pool = nova.ReservationPool()
+                    pool.remove_computehost(host_reservation['aggregate_id'],
+                                            host['service_name'])
+
+            # Allocate alternative resource.
+            start_date = max(datetime.datetime.utcnow(), lease['start_date'])
+            new_hostids = self._matching_hosts(
+                reservation['hypervisor_properties'],
+                reservation['resource_properties'],
+                '1-1', start_date, lease['end_date']
+            )
+            if not new_hostids:
+                if reservation['id'] not in reservation_flags:
+                    reservation_flags[reservation['id']] = {}
+                reservation_flags[reservation['id']].update(
+                    {'missing_resources': True})
+                db_api.host_allocation_destroy(alloc['id'])
+                LOG.warn('Could not find alternative host for reservation %s '
+                         '(lease: %s).', reservation['id'], lease['name'])
+            else:
+                new_hostid = new_hostids.pop()
+                db_api.host_allocation_update(alloc['id'],
+                                              {'compute_host_id': new_hostid})
+                if reservation['status'] == status.reservation.ACTIVE:
+                    # Add the alternative host into the aggregate.
+                    new_host = db_api.host_get(new_hostid)
+                    with trusts.create_ctx_from_trust(lease['trust_id']):
+                        pool.add_computehost(host_reservation['aggregate_id'],
+                                             new_host['service_name'])
+                    if reservation['id'] not in reservation_flags:
+                        reservation_flags[reservation['id']] = {}
+                    reservation_flags[reservation['id']].update(
+                        {'resources_changed': True})
+                LOG.warn('Resource changed for reservation %s (lease: %s).',
+                         reservation['id'], lease['name'])
+
+        return reservation_flags
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
@@ -535,8 +603,30 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             return db_api.host_list()
 
 
-class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin):
+class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
+                                nova.NovaClientWrapper):
     """Monitor plugin for physical host resource."""
+
+    # Singleton design pattern
+    _instance = None
+
+    def __new__(cls):
+        if not cls._instance:
+            cls._instance = super(PhysicalHostMonitorPlugin, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        super(PhysicalHostMonitorPlugin, self).__init__(
+            username=CONF.os_admin_username,
+            password=CONF.os_admin_password,
+            user_domain_name=CONF.os_admin_user_domain_name,
+            project_name=CONF.os_admin_project_name,
+            project_domain_name=CONF.os_admin_user_domain_name)
+        self.healing_handlers = []
+
+    def register_healing_handler(self, handler):
+        self.healing_handlers.append(handler)
+
     def is_notification_enabled(self):
         """Check if the notification monitor is enabled."""
         return CONF[plugin.RESOURCE_TYPE].enable_notification_monitor
@@ -575,9 +665,64 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin):
         return CONF[plugin.RESOURCE_TYPE].polling_interval
 
     def poll(self):
-        """Check health of resources."""
-        LOG.debug('poll() is called.')
+        """Detect and handle resource failures.
 
-        # TODO(hiro-kobayashi): Implement this method
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                 {'missing_resources': True}}
+        """
+        LOG.trace('Poll...')
+        reservation_flags = {}
 
-        return {}
+        failed_hosts = self._poll_resource_failures()
+        if failed_hosts:
+            for host in failed_hosts:
+                LOG.warn('%s failed.', host['hypervisor_hostname'])
+            reservation_flags = self._handle_failures(failed_hosts)
+
+        return reservation_flags
+
+    def _poll_resource_failures(self):
+        """Check health of hosts by calling Nova Hypervisors API.
+
+        :return: a list of failed hosts.
+        """
+        failed_hosts = []
+        hosts = db_api.reservable_host_get_all_by_queries([])
+        for host in hosts:
+            with trusts.create_ctx_from_trust(host['trust_id']):
+                try:
+                    hv = self.nova.hypervisors.get(host['id'])
+                    LOG.debug('%s: state=%s, status=%s.',
+                              hv.hypervisor_hostname, hv.state, hv.status)
+                    if hv.state == 'down' or hv.status == 'disabled':
+                        failed_hosts.append(host)
+                except Exception as e:
+                    LOG.exception('Skipping health check of host %s. %s',
+                                  host['hypervisor_hostname'], str(e))
+
+        return failed_hosts
+
+    def _handle_failures(self, failed_hosts):
+        """Handle resource failures.
+
+        :param: failed_hosts: a list of failed hosts.
+        :return: a dictionary of {reservation id: flags to update}
+                 e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
+                 {'missing_resources': True}}
+        """
+
+        # Update the computehosts table
+        for host in failed_hosts:
+            try:
+                db_api.host_update(host['id'], {'reservable': False})
+            except Exception as e:
+                LOG.exception('Failed to update %s. %s',
+                              host['hypervisor_hostname'], str(e))
+
+        # Heal related reservations
+        reservation_flags = {}
+        for handler in self.healing_handlers:
+            reservation_flags.update(handler(failed_hosts))
+
+        return reservation_flags

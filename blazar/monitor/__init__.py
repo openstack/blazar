@@ -24,21 +24,21 @@ def load_monitors(plugins):
     monitors = []
 
     # Setup a notification monitor
-    notification_plugins = []
+    notification_plugins = set([])
     for plugin in plugins.values():
         if plugin.monitor:
             if plugin.monitor.is_notification_enabled():
-                notification_plugins.append(plugin.monitor)
+                notification_plugins.add(plugin.monitor)
     if notification_plugins:
         monitors.append(
             notification_monitor.NotificationMonitor(notification_plugins))
 
     # Setup a polling monitor
-    polling_plugins = []
+    polling_plugins = set([])
     for plugin in plugins.values():
         if plugin.monitor:
             if plugin.monitor.is_polling_enabled():
-                polling_plugins.append(plugin.monitor)
+                polling_plugins.add(plugin.monitor)
     if polling_plugins:
         monitors.append(polling_monitor.PollingMonitor(polling_plugins))
 
