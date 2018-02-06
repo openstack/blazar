@@ -65,7 +65,6 @@ General Parameters
   - event.created_at: created_at
   - event_updated_at: updated_at
 
-
 Parameters for Host Reservation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -131,7 +130,6 @@ General Parameters
   - reservations: reservations
   - reservation.resource_type: reservation_resource_type
   - events: events_optional
-
 
 Parameters for Host Reservation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,7 +203,6 @@ General Parameters
   - event.created_at: created_at
   - event_updated_at: updated_at
 
-
 Parameters for Host Reservation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -242,7 +239,6 @@ are in the ``reservation`` object.
 .. literalinclude:: ../../../doc/api_samples/leases/lease-create-resp.json
   :language: javascript
 
-
 Show Lease Details
 ==================
 
@@ -261,7 +257,6 @@ Normal response code: 200
 Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
 Not Found(404), Internal Server Error(500)
 
-
 Request
 -------
 
@@ -271,7 +266,6 @@ Request
 
 Response
 --------
-
 
 General Parameters
 ^^^^^^^^^^^^^^^^^^
@@ -309,7 +303,6 @@ General Parameters
   - event.created_at: created_at
   - event_updated_at: updated_at
 
-
 Parameters for Host Reservation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -345,7 +338,6 @@ are in the ``reservation`` object.
 
 .. literalinclude:: ../../../doc/api_samples/leases/lease-details-resp.json
   :language: javascript
-
 
 Update Lease
 ============
@@ -467,7 +459,6 @@ are in the ``reservation`` object.
   - reservation.resource_properties: reservation_resource_properties
   - reservation.before_end: reservation_before_end
 
-
 Parameters for Instance Reservation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -489,8 +480,6 @@ are in the ``reservation`` object.
 
 .. literalinclude:: ../../../doc/api_samples/leases/lease-update-resp.json
   :language: javascript
-
-
 
 Delete Lease
 ============

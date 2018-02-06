@@ -50,7 +50,6 @@ Response
 .. literalinclude:: ../../../doc/api_samples/hosts/host-list-resp.json
   :language: javascript
 
-
 Create Host
 ===========
 
@@ -78,7 +77,6 @@ Request
 .. literalinclude:: ../../../doc/api_samples/hosts/host-create-req.json
   :language: javascript
 
-
 Response
 --------
 
@@ -105,7 +103,6 @@ Response
 
 .. literalinclude:: ../../../doc/api_samples/hosts/host-create-resp.json
   :language: javascript
-
 
 Show Host Details
 =================
@@ -158,7 +155,6 @@ Response
 
 .. literalinclude:: ../../../doc/api_samples/hosts/host-details-resp.json
   :language: javascript
-
 
 Update Host
 ===========
@@ -217,7 +213,6 @@ Response
 
 .. literalinclude:: ../../../doc/api_samples/hosts/host-update-resp.json
   :language: javascript
-
 
 Delete Host
 ===========
