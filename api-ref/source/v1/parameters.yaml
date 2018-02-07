@@ -296,7 +296,7 @@ reservation_affinity_optional:
   type: boolean
 reservation_aggregate_id:
   description: |
-    The aggregate ID of the the reservation.
+    The aggregate ID of the reservation.
   in: body
   required: true
   type: integer
