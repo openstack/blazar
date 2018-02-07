@@ -7,6 +7,6 @@ features:
     New flags have been introduced into leases and reservations to indicate
     health of reserved resources.
     Resource monitor is plugable and the compute host resource monitor is
-    currently supported. See documentation [1]_ in detail.
+    currently supported. See `resource monitoring documentation`_ in detail.
 
-    .. [1] https://docs.openstack.org/blazar/latest/admin/resource-monitoring.html
+    .. _resource monitoring documentation: https://docs.openstack.org/blazar/latest/user/resource-monitoring.html
