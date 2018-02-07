@@ -11,12 +11,12 @@ Idea of creating Blazar originated with two different use cases:
   to provide him working VM not necessarily now, but also in the future)
 
 Now these ideas have been transformed to more general view: with Blazar, user
-can request the resources of cloud environment to be provided (“leased”) to his
+can request the resources of cloud environment to be provided ("leased") to his
 project for specific amount of time, immediately or in the future.
 
 Both virtual (Instances, Volumes, Networks) and hardware (full hosts with
 specific characteristics of RAM, CPU, etc) resources can be allocated via
-“lease”.
+"lease".
 
 In terms of benefits added, Resource Reservation Service will:
 

@@ -122,7 +122,7 @@ None
 Testing
 =======
 
-* Adds unit tests of update capacity request for the the update_reservation()
+* Adds unit tests of update capacity request for the update_reservation()
   method
 * Adds scenario test of update capacity request
 
