@@ -8,4 +8,4 @@ features:
     automatically updated from *None* at the time of an event or an API call.
     See `state machine documentation`_ for more details.
 
-    .. _state machine documentation: https://docs.openstack.org/blazar/latest/user/state-machine.html
+    .. _state machine documentation: https://docs.openstack.org/blazar/latest/user/state-machines.html
