@@ -5,7 +5,7 @@ features:
     With this change, transition graphs of statuses of leases, reservations,
     and events are redefined while keeping backward compatibility.
     If you update Blazar from an older version, the lease status is
-    automatically updated from *None* at the time of an event or an API call.
+    automatically updated from *None* by an Alembic database migration script.
     See `state machine documentation`_ for more details.
 
     .. _state machine documentation: https://docs.openstack.org/blazar/latest/user/state-machines.html
