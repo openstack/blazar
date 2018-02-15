@@ -11,3 +11,4 @@ User Guide
     resource-monitoring.rst
     ../cli/index
     ../restapi/index
+    Blazar Dashboard (external link) <https://docs.openstack.org/blazar-dashboard/latest/index.html>

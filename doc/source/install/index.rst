@@ -6,3 +6,4 @@ Blazar Installation Guide
 
    install-using-devstack.rst
    install-without-devstack.rst
+   install-dashboard.rst
