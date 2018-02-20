@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Blazar now supports being deployed in a multi-region setup. Operators of
+    OpenStack deployments with multiple regions must set the new configuration
+    option ``[DEFAULT]/os_region_name``. See `the configuration reference
+    <https://docs.openstack.org/blazar/queens/configuration/blazar-conf.html#DEFAULT.os_region_name>`_
+    for more details.
