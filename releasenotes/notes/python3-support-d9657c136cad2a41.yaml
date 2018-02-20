@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    Blazar now supports being run under Python 3. The
+    Python 3 and Python 3.5 classifiers have been added.
