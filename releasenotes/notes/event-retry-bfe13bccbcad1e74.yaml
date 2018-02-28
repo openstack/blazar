@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Event actions are now retried if they fail. This allows events to be
+    executed successfully even if they are scheduled at the same time as an API
+    operation such as update lease. Operators can configure the number of
+    retries using the [manager]/event_max_retries configuration value.
