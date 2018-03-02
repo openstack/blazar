@@ -41,7 +41,6 @@
       - openstack/blazar-nova
       - openstack/python-blazarclient
       - openstack/blazar-tempest-plugin
-    voting: false
 
 - project:
     check:
@@ -51,3 +50,4 @@
     gate:
       jobs:
         - blazar-devstack-dsvm
+        - blazar-devstack-dsvm-py35
