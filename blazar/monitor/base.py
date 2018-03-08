@@ -50,7 +50,7 @@ class BaseMonitor(object):
             # reservations. Depends on the state-machine blueprint.
 
         # Update flags of related leases and reservations.
-        lease_ids = set([])
+        lease_ids = set()
         for reservation_id, flags in reservation_flags.items():
             db_api.reservation_update(reservation_id, flags)
             LOG.debug('Reservation %s was updated: %s',

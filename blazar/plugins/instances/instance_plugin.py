@@ -186,7 +186,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         kept_host_ids = old_host_ids & candidate_ids
         removed_host_ids = old_host_ids - candidate_ids
         extra_host_ids = candidate_ids - old_host_ids
-        added_host_ids = set([])
+        added_host_ids = set()
 
         if len(kept_host_ids) > values['amount']:
             extra = len(kept_host_ids) - values['amount']

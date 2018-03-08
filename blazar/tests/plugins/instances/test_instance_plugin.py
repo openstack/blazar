@@ -200,7 +200,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
-        expected = {'added': set(['host-2', 'host-3']), 'removed': set([])}
+        expected = {'added': set(['host-2', 'host-3']), 'removed': set()}
         ret = plugin.pickup_hosts('reservation-id1', values)
 
         self.assertEqual(expected, ret)
@@ -241,7 +241,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
-        expected = {'added': set(['host-1', 'host-2']), 'removed': set([])}
+        expected = {'added': set(['host-1', 'host-2']), 'removed': set()}
         ret = plugin.pickup_hosts('reservation-id1', values)
 
         self.assertEqual(expected, ret)
@@ -295,7 +295,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'end_date': '2030-01-01 12:00'
             }
 
-        expected = {'added': set(['host-1', 'host-3']), 'removed': set([])}
+        expected = {'added': set(['host-1', 'host-3']), 'removed': set()}
         ret = plugin.pickup_hosts('reservation-id1', params)
 
         self.assertEqual(expected, ret)
@@ -564,7 +564,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         values = self.get_input_values(1, 1024, 10, 1, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
                                        'lease-1')
-        expect = {'added': set([]),
+        expect = {'added': set(),
                   'removed': set(['host-id1', 'host-id2', 'host-id3'])}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
@@ -590,7 +590,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         values = self.get_input_values(1, 1024, 10, 4, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
                                        'lease-1')
-        expect = {'added': set(['host-id4']), 'removed': set([])}
+        expect = {'added': set(['host-id4']), 'removed': set()}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
