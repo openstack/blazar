@@ -2,6 +2,18 @@
 Blazar Specs
 ============
 
+Rocky
+-----
+
+This section has a list of specs for Rocky release.
+
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   rocky/*
+
 Queens
 ------
 
