@@ -14,8 +14,6 @@
 # limitations under the License.
 
 
-# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-# from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
 import sqlalchemy as sa
@@ -23,8 +21,6 @@ from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import relationship
 
 from blazar.db.sqlalchemy import model_base as mb
-# FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-# LOG = logging.getLogger(__name__)
 
 # Helpers
 
@@ -119,9 +115,6 @@ class Reservation(mb.BlazarBase):
                     minMax = res['count_range'].split('-', 1)
                     (d['min'], d['max']) = map(int, minMax)
                 except ValueError:
-                    # FIXME: https://bugs.launchpad.net/climate/+bug/1300132
-                    # LOG.error(
-                    # "Invalid Range: {0}".format(res['count_range']))
                     e = "Invalid count range: {0}".format(res['count_range'])
                     raise RuntimeError(e)
 

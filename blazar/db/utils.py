@@ -28,7 +28,7 @@ interface.
               `sqlalchemy` is the only supported backend right now.
 
 :sql_connection:  string specifying the sqlalchemy connection to use, like:
-                  `sqlite:///var/lib/climate/climate.sqlite`.
+                  `sqlite:///var/lib/blazar/blazar.sqlite`.
 
 """
 

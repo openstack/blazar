@@ -44,7 +44,6 @@ plugin_opts = [
                help='Actions which we will use at the start of the lease'),
     cfg.StrOpt('blazar_az_prefix',
                default='blazar_',
-               deprecated_name='climate_az_prefix',
                help='Prefix for Availability Zones created by Blazar'),
     cfg.StrOpt('before_end',
                default='',
