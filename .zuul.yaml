@@ -47,7 +47,9 @@
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
+        - openstack-tox-lower-constraints
     gate:
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
+        - openstack-tox-lower-constraints
