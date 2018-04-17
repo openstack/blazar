@@ -7,7 +7,7 @@ Hosts
 List Hosts
 ==========
 
-.. rest_method:: GET v1/os_hosts
+.. rest_method:: GET v1/os-hosts
 
 List hosts.
 
@@ -53,7 +53,7 @@ Response
 Create Host
 ===========
 
-.. rest_method:: POST v1/os_hosts
+.. rest_method:: POST v1/os-hosts
 
 Create a host.
 
@@ -107,7 +107,7 @@ Response
 Show Host Details
 =================
 
-.. rest_method:: GET v1/os_hosts/{host_id}
+.. rest_method:: GET v1/os-hosts/{host_id}
 
 Show details of a host.
 
@@ -159,7 +159,7 @@ Response
 Update Host
 ===========
 
-.. rest_method:: PUT v1/os_hosts/{host_id}
+.. rest_method:: PUT v1/os-hosts/{host_id}
 
 Update a host.
 
@@ -217,7 +217,7 @@ Response
 Delete Host
 ===========
 
-.. rest_method:: DELETE v1/os_hosts/{host_id}
+.. rest_method:: DELETE v1/os-hosts/{host_id}
 
 Delete a host.
 
