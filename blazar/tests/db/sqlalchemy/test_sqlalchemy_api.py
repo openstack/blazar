@@ -157,6 +157,7 @@ def _get_fake_cpu_info():
 
 def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
     return {'id': id,
+            'availability_zone': 'az1',
             'vcpus': 1,
             'cpu_info': _get_fake_cpu_info(),
             'hypervisor_type': 'QEMU',

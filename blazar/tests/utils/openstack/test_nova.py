@@ -18,8 +18,10 @@ from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
+from novaclient.v2 import availability_zones
 from novaclient.v2 import hypervisors
 from oslo_config import cfg
+from oslo_config import fixture
 
 from blazar import context
 from blazar.manager import exceptions as manager_exceptions
@@ -411,6 +413,7 @@ class FakeNovaHypervisors(object):
 
     class FakeHost(object):
         id = 1
+        availability_zone = 'fake_az1'
         hypervisor_hostname = 'fake_name'
         vcpus = 1
         cpu_info = 'fake_cpu'
@@ -445,6 +448,7 @@ class FakeNovaHypervisors(object):
     @classmethod
     def expected(cls):
         return {'id': cls.FakeHost.id,
+                'availability_zone': cls.FakeHost.availability_zone,
                 'hypervisor_hostname': cls.FakeHost.hypervisor_hostname,
                 'service_name': cls.FakeHost.service['host'],
                 'vcpus': cls.FakeHost.vcpus,
@@ -453,6 +457,30 @@ class FakeNovaHypervisors(object):
                 'hypervisor_version': cls.FakeHost.hypervisor_version,
                 'memory_mb': cls.FakeHost.memory_mb,
                 'local_gb': cls.FakeHost.local_gb}
+
+
+class FakeAvailabilityZones(object):
+
+    class FakeAZ1(object):
+        zoneName = 'fake_az1'
+        hosts = {
+            "fake_name": {
+                "nova-compute": {}
+            },
+        }
+
+    class FakeAZ2(object):
+        zoneName = 'fake_az2'
+        hosts = {
+            "fake_name": {
+                "nova-conductor": {},
+                "nova-scheduler": {}
+            },
+        }
+
+    @classmethod
+    def list(cls, detailed=False):
+        return [cls.FakeAZ1, cls.FakeAZ2]
 
 
 class NovaInventoryTestCase(tests.TestCase):
@@ -469,6 +497,9 @@ class NovaInventoryTestCase(tests.TestCase):
         self.hypervisors_search = self.patch(hypervisors.HypervisorManager,
                                              'search')
         self.hypervisors_search.side_effect = FakeNovaHypervisors.search
+        self.availability_zones = self.patch(
+            availability_zones.AvailabilityZoneManager, 'list')
+        self.availability_zones.side_effect = FakeAvailabilityZones.list
 
     def test_get_host_details_with_host_id(self):
         host = self.inventory.get_host_details('1')
@@ -498,6 +529,14 @@ class NovaInventoryTestCase(tests.TestCase):
         self.hypervisors_get.return_value = invalid_host
         self.assertRaises(manager_exceptions.InvalidHost,
                           self.inventory.get_host_details, '1')
+
+    def test_get_host_details_without_az(self):
+        conf = fixture.Config(CONF)
+        conf.config(group='nova', az_aware=False)
+        host = self.inventory.get_host_details('fake_name')
+        expected = FakeNovaHypervisors.expected()
+        expected['availability_zone'] = ''
+        self.assertEqual(expected, host)
 
     def test_get_servers_per_host(self):
         servers = self.inventory.get_servers_per_host('fake_name')

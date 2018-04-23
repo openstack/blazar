@@ -53,7 +53,10 @@ nova_opts = [
     cfg.StrOpt('blazar_owner',
                default='blazar:owner',
                deprecated_group=oshosts.RESOURCE_TYPE,
-               help='Aggregate metadata key for knowing owner project_id')
+               help='Aggregate metadata key for knowing owner project_id'),
+    cfg.BoolOpt('az_aware',
+                default=True,
+                help='A flag to store original availability zone')
 ]
 
 
@@ -455,8 +458,18 @@ class NovaInventory(NovaClientWrapper):
                 # NOTE(sbauza): No need to catch the exception as we're sure
                 #  that the hypervisor exists
                 hypervisor = self.nova.hypervisors.get(hypervisor_id)
+
+        az_name = ''
+        if CONF.nova.az_aware:
+            host_name = hypervisor.hypervisor_hostname
+            for zone in self.nova.availability_zones.list(detailed=True):
+                if (host_name in zone.hosts
+                   and 'nova-compute' in zone.hosts[host_name]):
+                    az_name = zone.zoneName
+
         try:
             return {'id': hypervisor.id,
+                    'availability_zone': az_name,
                     'hypervisor_hostname': hypervisor.hypervisor_hostname,
                     'service_name': hypervisor.service['host'],
                     'vcpus': hypervisor.vcpus,

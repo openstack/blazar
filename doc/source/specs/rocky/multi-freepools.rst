@@ -91,9 +91,8 @@ REST API impact
 
 * URL: POST /v1/leases
 
-  * Introduce the availability_zone key in physical:host and virtual:instance
-    resource_type.
-  * The availability_zone key is an optional parameter in request body.
+  * The hypervisor_properties in physical:host and the resource_properties
+    in virtual:instance support a query for availability_zone key.
 
 Request Example:
 
@@ -109,7 +108,14 @@ Request Example:
            "disk_gb": 10,
            "amount": 5,
            "affinity": False,
-           "availability_zone", "az1"
+           "resource_properties": "[\"==\", \"$availability_zone\", \"az1\"]"
+         },
+         {
+           "resource_type": "physical:host",
+           "min": 3,
+           "max": 4,
+           "hypervisor_properties": "[]",
+           "resource_properties": "[\"==\", \"$availability_zone\", \"az1\"]"
          }
         ],
        "start": "2020-05-17 09:00"
@@ -119,9 +125,6 @@ Request Example:
 
 
 Response Example:
-
-  * The availability_zone is set to specified az name if an user sends a
-    request with the key. If not, the key is set to None.
 
   .. sourcecode:: json
 
@@ -139,7 +142,7 @@ Response Example:
              "disk_gb": 10,
              "amount": 5,
              "affinity": False,
-             "availability_zone", "az1",
+             "resource_properties": "[\"==\", \"$availability_zone\", \"az1\"]",
              "created_at": "2017-05-01 10:00:00",
              "updated_at": "2017-05-01 11:00:00",
            }],
@@ -171,7 +174,7 @@ Other end user impact
 The original az name a hypervisor belongs to is only visible through
 Blazar API. Nova returns az name based on meta data of host aggregate and
 Blazar sets blazar_* az name to an aggregate of host reservation. It results
-users need to call Blazar Host details API if they want to know what az value
+users need to call Blazar Host details API when they want to know what az value
 is available in "availability_zone" key.
 
 In most cases, only admin is allowed to configure az in Nova.
@@ -192,6 +195,11 @@ registered in Blazar's freeppol after upgrading to store availability zone
 information into computehost table. If hosts are used for a host reservation
 Blazar can't find out the original az information while deployers upgrade
 Blazar.
+
+If deployers move a host to another availability zone by Nova API, the
+deployers need to re-create the host by the Blazar host create API to
+apply the new availability zone to the Blazar DB. The information is
+automatically registered by Blazar only in the Blazar host create API.
 
 Developer impact
 ----------------

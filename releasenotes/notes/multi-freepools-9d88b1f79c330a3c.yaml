@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Blazar handles availability zone information the compute host belongs to.
+    When cloud operators add a compute host resource to the Blazar's freepool,
+    Blazar records the availability zone into it's DB. The cloud user can
+    specify the availability zone information by hypervisor_properties in the
+    host reservation and by resource_properties in the instance reservation.
+upgrade:
+  - |
+    The availability zone information is stored only when cloud operators add
+    a new host to Blazar's freepool. If the operators needs the infomation,
+    please re-add hosts already registered in Blazar.
