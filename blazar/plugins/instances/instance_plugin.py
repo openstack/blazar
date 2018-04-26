@@ -25,6 +25,7 @@ from blazar.db import utils as db_utils
 from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
 from blazar.plugins import base
+from blazar.plugins import instances as plugin
 from blazar.plugins import oshosts
 from blazar import status
 from blazar.utils.openstack import nova
@@ -33,7 +34,6 @@ from blazar.utils import plugins as plugins_utils
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
-RESOURCE_TYPE = u'virtual:instance'
 RESERVATION_PREFIX = 'reservation'
 FLAVOR_EXTRA_SPEC = "aggregate_instance_extra_specs:" + RESERVATION_PREFIX
 
@@ -41,7 +41,7 @@ FLAVOR_EXTRA_SPEC = "aggregate_instance_extra_specs:" + RESERVATION_PREFIX
 class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for virtual instance resources."""
 
-    resource_type = RESOURCE_TYPE
+    resource_type = plugin.RESOURCE_TYPE
     title = 'Virtual Instance Plugin'
 
     def __init__(self):
@@ -495,7 +495,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                                              interval_end)
 
         for reservation in reservations:
-            if reservation['resource_type'] != RESOURCE_TYPE:
+            if reservation['resource_type'] != plugin.RESOURCE_TYPE:
                 continue
 
             for allocation in [alloc for alloc

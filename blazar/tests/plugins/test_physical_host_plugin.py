@@ -241,22 +241,32 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_values = {'foo': 'baz'}
 
         self.db_host_extra_capability_get_all_per_name.return_value = [
-            {'id': '1',
+            {'id': 'extra_id1',
+             'computehost_id': self.fake_host_id,
              'capability_name': 'foo',
              'capability_value': 'bar'
              },
         ]
+
+        self.get_reservations_by_host = self.patch(
+            self.db_utils, 'get_reservations_by_host_id')
+        self.get_reservations_by_host.return_value = []
+
         self.fake_phys_plugin.update_computehost(self.fake_host_id,
                                                  host_values)
         self.db_host_extra_capability_update.assert_called_once_with(
-            '1', {'capability_name': 'foo', 'capability_value': 'baz'})
+            'extra_id1', {'capability_name': 'foo', 'capability_value': 'baz'})
 
     def test_update_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_update(*args, **kwargs):
             raise RuntimeError
         host_values = {'foo': 'baz'}
+        self.get_reservations_by_host = self.patch(
+            self.db_utils, 'get_reservations_by_host_id')
+        self.get_reservations_by_host.return_value = []
         self.db_host_extra_capability_get_all_per_name.return_value = [
-            {'id': '1',
+            {'id': 'extra_id1',
+             'computehost_id': self.fake_host_id,
              'capability_name': 'foo',
              'capability_value': 'bar'
              },
@@ -268,16 +278,46 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                           self.fake_host_id, host_values)
 
     def test_update_host_with_new_extra_capability(self):
-        host_values = {'buzz': 'word'}
+        host_values = {'qux': 'word'}
 
-        self.db_host_extra_capability_get_all_per_name.return_value = []
+        self.db_host_extra_capability_get_all_per_host.return_value = []
         self.fake_phys_plugin.update_computehost(self.fake_host_id,
                                                  host_values)
         self.db_host_extra_capability_create.assert_called_once_with({
             'computehost_id': '1',
-            'capability_name': 'buzz',
+            'capability_name': 'qux',
             'capability_value': 'word'
         })
+
+    def test_update_host_with_used_capability(self):
+        host_values = {'foo': 'buzz'}
+
+        self.db_host_extra_capability_get_all_per_name.return_value = [
+            {'id': 'extra_id1',
+             'computehost_id': self.fake_host_id,
+             'capability_name': 'foo',
+             'capability_value': 'bar'
+             },
+        ]
+        fake_phys_reservation = {
+            'resource_type': plugin.RESOURCE_TYPE,
+            'resource_id': 'resource-1',
+        }
+
+        fake_get_reservations = self.patch(self.db_utils,
+                                           'get_reservations_by_host_id')
+        fake_get_reservations.return_value = [fake_phys_reservation]
+
+        fake_get_plugin_reservation = self.patch(self.db_utils,
+                                                 'get_plugin_reservation')
+        fake_get_plugin_reservation.return_value = {
+            'resource_properties': '["==", "$foo", "bar"]'
+        }
+        self.assertRaises(manager_exceptions.CantAddExtraCapability,
+                          self.fake_phys_plugin.update_computehost,
+                          self.fake_host_id, host_values)
+        fake_get_plugin_reservation.assert_called_once_with(
+            plugin.RESOURCE_TYPE, 'resource-1')
 
     def test_delete_host(self):
         host_allocation_get_all = self.patch(
