@@ -175,3 +175,8 @@ class InvalidRange(exceptions.BlazarException):
 class CantUpdateParameter(exceptions.BlazarException):
     code = 409
     msg_fmt = _("%(param)s cannot be updated")
+
+
+class InvalidPeriod(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _('The end_date must be later than the start_date.')

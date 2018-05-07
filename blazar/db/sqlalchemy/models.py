@@ -99,7 +99,7 @@ class Reservation(mb.BlazarBase):
                                             backref='reservation',
                                             lazy='joined')
     computehost_allocations = relationship('ComputeHostAllocation',
-                                           uselist=False,
+                                           uselist=True,
                                            cascade="all,delete",
                                            backref='reservation',
                                            lazy='joined')

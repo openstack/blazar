@@ -66,6 +66,11 @@ plugin_opts = [
     cfg.IntOpt('polling_interval',
                default=60,
                help='Interval (seconds) of polling for health checking.'),
+    cfg.IntOpt('healing_interval',
+               default=60,
+               help='Interval (minutes) of reservation healing. '
+                    'If 0 is specified, the interval is infinite and all the '
+                    'reservations in the future is healed at one time.'),
 ]
 
 CONF = cfg.CONF
@@ -210,72 +215,88 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         except manager_ex.AggregateNotFound:
             pass
 
-    def heal_reservations(self, failed_resources):
+    def heal_reservations(self, failed_resources, interval_begin,
+                          interval_end):
         """Heal reservations which suffer from resource failures.
 
         :param: failed_resources: a list of failed hosts.
+        :param: interval_begin: start date of the period to heal.
+        :param: interval_end: end date of the period to heal.
         :return: a dictionary of {reservation id: flags to update}
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}
         """
         reservation_flags = {}
 
-        failed_allocs = []
-        for host in failed_resources:
-            failed_allocs += db_api.host_allocation_get_all_by_values(
-                compute_host_id=host['id'])
+        host_ids = [h['id'] for h in failed_resources]
+        reservations = db_utils.get_reservations_by_host_ids(host_ids,
+                                                             interval_begin,
+                                                             interval_end)
 
-        for alloc in failed_allocs:
-            reservation = db_api.reservation_get(alloc['reservation_id'])
+        for reservation in reservations:
             if reservation['resource_type'] != plugin.RESOURCE_TYPE:
                 continue
-            lease = db_api.lease_get(reservation['lease_id'])
-            host_reservation = None
-            pool = None
 
-            # Remove the failed host from the aggregate.
-            if reservation['status'] == status.reservation.ACTIVE:
-                host = db_api.host_get(alloc['compute_host_id'])
-                host_reservation = db_api.host_reservation_get(
-                    reservation['resource_id'])
-                with trusts.create_ctx_from_trust(lease['trust_id']):
-                    pool = nova.ReservationPool()
-                    pool.remove_computehost(host_reservation['aggregate_id'],
-                                            host['service_name'])
-
-            # Allocate alternative resource.
-            start_date = max(datetime.datetime.utcnow(), lease['start_date'])
-            new_hostids = self._matching_hosts(
-                reservation['hypervisor_properties'],
-                reservation['resource_properties'],
-                '1-1', start_date, lease['end_date']
-            )
-            if not new_hostids:
-                if reservation['id'] not in reservation_flags:
-                    reservation_flags[reservation['id']] = {}
-                reservation_flags[reservation['id']].update(
-                    {'missing_resources': True})
-                db_api.host_allocation_destroy(alloc['id'])
-                LOG.warn('Could not find alternative host for reservation %s '
-                         '(lease: %s).', reservation['id'], lease['name'])
-            else:
-                new_hostid = new_hostids.pop()
-                db_api.host_allocation_update(alloc['id'],
-                                              {'compute_host_id': new_hostid})
-                if reservation['status'] == status.reservation.ACTIVE:
-                    # Add the alternative host into the aggregate.
-                    new_host = db_api.host_get(new_hostid)
-                    with trusts.create_ctx_from_trust(lease['trust_id']):
-                        pool.add_computehost(host_reservation['aggregate_id'],
-                                             new_host['service_name'])
+            for allocation in [alloc for alloc
+                               in reservation['computehost_allocations']
+                               if alloc['compute_host_id'] in host_ids]:
+                if self._reallocate(allocation):
+                    if reservation['status'] == status.reservation.ACTIVE:
+                        if reservation['id'] not in reservation_flags:
+                            reservation_flags[reservation['id']] = {}
+                        reservation_flags[reservation['id']].update(
+                            {'resources_changed': True})
+                else:
                     if reservation['id'] not in reservation_flags:
                         reservation_flags[reservation['id']] = {}
                     reservation_flags[reservation['id']].update(
-                        {'resources_changed': True})
-                LOG.warn('Resource changed for reservation %s (lease: %s).',
-                         reservation['id'], lease['name'])
+                        {'missing_resources': True})
 
         return reservation_flags
+
+    def _reallocate(self, allocation):
+        """Allocate an alternative host.
+
+        :param: allocation: allocation to change.
+        :return: True if an alternative host was successfully allocated.
+        """
+        reservation = db_api.reservation_get(allocation['reservation_id'])
+        h_reservation = db_api.host_reservation_get(
+            reservation['resource_id'])
+        lease = db_api.lease_get(reservation['lease_id'])
+        pool = nova.ReservationPool()
+
+        # Remove the old host from the aggregate.
+        if reservation['status'] == status.reservation.ACTIVE:
+            host = db_api.host_get(allocation['compute_host_id'])
+            pool.remove_computehost(h_reservation['aggregate_id'],
+                                    host['service_name'])
+
+        # Allocate an alternative host.
+        start_date = max(datetime.datetime.utcnow(), lease['start_date'])
+        new_hostids = self._matching_hosts(
+            reservation['hypervisor_properties'],
+            reservation['resource_properties'],
+            '1-1', start_date, lease['end_date']
+        )
+        if not new_hostids:
+            db_api.host_allocation_destroy(allocation['id'])
+            LOG.warn('Could not find alternative host for reservation %s '
+                     '(lease: %s).', reservation['id'], lease['name'])
+            return False
+        else:
+            new_hostid = new_hostids.pop()
+            db_api.host_allocation_update(allocation['id'],
+                                          {'compute_host_id': new_hostid})
+            LOG.warn('Resource changed for reservation %s (lease: %s).',
+                     reservation['id'], lease['name'])
+            if reservation['status'] == status.reservation.ACTIVE:
+                # Add the alternative host into the aggregate.
+                new_host = db_api.host_get(new_hostid)
+                pool.add_computehost(h_reservation['aggregate_id'],
+                                     new_host['service_name'])
+
+            return True
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
@@ -754,8 +775,31 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
                               host['hypervisor_hostname'], str(e))
 
         # Heal related reservations
+        return self.heal()
+
+    def get_healing_interval(self):
+        """Get interval of reservation healing in minutes."""
+        return CONF[plugin.RESOURCE_TYPE].healing_interval
+
+    def heal(self):
+        """Heal suffering reservations in the next healing interval.
+
+        :return: a dictionary of {reservation id: flags to update}
+        """
         reservation_flags = {}
+        hosts = db_api.unreservable_host_get_all_by_queries([])
+
+        interval_begin = datetime.datetime.utcnow()
+        interval = self.get_healing_interval()
+        if interval == 0:
+            interval_end = datetime.date.max
+        else:
+            interval_end = interval_begin + datetime.timedelta(
+                minutes=interval)
+
         for handler in self.healing_handlers:
-            reservation_flags.update(handler(failed_hosts))
+            reservation_flags.update(handler(hosts,
+                                             interval_begin,
+                                             interval_end))
 
         return reservation_flags

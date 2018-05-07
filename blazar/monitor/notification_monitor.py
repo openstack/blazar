@@ -28,6 +28,7 @@ class NotificationMonitor(base.BaseMonitor):
     def __init__(self, monitor_plugins):
         """Initialize a notification monitor."""
         LOG.debug('Initializing a notification monitor...')
+        super(NotificationMonitor, self).__init__(monitor_plugins)
         try:
             self.handlers = defaultdict(list)
             self.listener = oslo_messaging.get_notification_listener(
@@ -46,6 +47,7 @@ class NotificationMonitor(base.BaseMonitor):
         LOG.debug('Starting a notification monitor...')
         try:
             self.listener.start()
+            super(NotificationMonitor, self).start_monitoring()
         except Exception as e:
             LOG.exception('Failed to start a notification monitor. (%s)',
                           str(e))
@@ -55,6 +57,7 @@ class NotificationMonitor(base.BaseMonitor):
         LOG.debug('Stopping a notification monitor...')
         try:
             self.listener.stop()
+            super(NotificationMonitor, self).stop_monitoring()
         except Exception as e:
             LOG.exception('Failed to stop a notification monitor. (%s)',
                           str(e))
@@ -85,9 +88,9 @@ class NotificationMonitor(base.BaseMonitor):
         for plugin in monitor_plugins:
             for event_type in plugin.get_notification_event_types():
                 self.handlers[event_type].append(
-                    # Wrap a notification callback with the update_statuses()
-                    # to manage statuses of leases and reservations.
-                    lambda e_type, payload: self.update_statuses(
+                    # Wrap the notification callback with the
+                    # call_monitor_plugin() to manage lease/reservation flags.
+                    lambda e_type, payload: self.call_monitor_plugin(
                         plugin.notification_callback, e_type, payload))
 
         return [NotificationEndpoint(self)]

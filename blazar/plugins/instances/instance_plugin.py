@@ -469,68 +469,86 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         self.cleanup_resources(instance_reservation)
 
-    def heal_reservations(self, failed_resources):
+    def heal_reservations(self, failed_resources, interval_begin,
+                          interval_end):
         """Heal reservations which suffer from resource failures.
 
-        :param: failed_resources: a list of failed hosts.
+        :param: failed_resources: failed resources
+        :param: interval_begin: start date of the period to heal.
+        :param: interval_end: end date of the period to heal.
         :return: a dictionary of {reservation id: flags to update}
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}
         """
         reservation_flags = {}
 
-        failed_allocs = []
-        for host in failed_resources:
-            failed_allocs += db_api.host_allocation_get_all_by_values(
-                compute_host_id=host['id'])
+        host_ids = [h['id'] for h in failed_resources]
+        reservations = db_utils.get_reservations_by_host_ids(host_ids,
+                                                             interval_begin,
+                                                             interval_end)
 
-        for alloc in failed_allocs:
-            reservation = db_api.reservation_get(alloc['reservation_id'])
+        for reservation in reservations:
             if reservation['resource_type'] != RESOURCE_TYPE:
                 continue
-            pool = None
 
-            # Remove the failed host from the aggregate.
-            if reservation['status'] == status.reservation.ACTIVE:
-                host = db_api.host_get(alloc['compute_host_id'])
-                pool = nova.ReservationPool()
-                pool.remove_computehost(reservation['aggregate_id'],
-                                        host['service_name'])
-
-            # Allocate alternative resource.
-            values = {}
-            lease = db_api.lease_get(reservation['lease_id'])
-            values['start_date'] = max(datetime.datetime.utcnow(),
-                                       lease['start_date'])
-            values['end_date'] = lease['end_date']
-            specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount']
-            for key in specs:
-                values[key] = reservation[key]
-            changed_hosts = self.pickup_hosts(reservation['id'], values)
-            if len(changed_hosts['added']) == 0:
-                if reservation['id'] not in reservation_flags:
-                    reservation_flags[reservation['id']] = {}
-                reservation_flags[reservation['id']].update(
-                    {'missing_resources': True})
-                db_api.host_allocation_destroy(alloc['id'])
-                LOG.warn('Could not find alternative host for reservation %s '
-                         '(lease: %s).', reservation['id'], lease['name'])
-            else:
-                new_host_id = changed_hosts['added'].pop()
-                db_api.host_allocation_update(
-                    alloc['id'], {'compute_host_id': new_host_id})
-                if reservation['status'] == status.reservation.ACTIVE:
-                    # Add the alternative host into the aggregate.
-                    new_host = db_api.host_get(new_host_id)
-                    pool.add_computehost(reservation['aggregate_id'],
-                                         new_host['service_name'],
-                                         stay_in=True)
+            for allocation in [alloc for alloc
+                               in reservation['computehost_allocations']
+                               if alloc['compute_host_id'] in host_ids]:
+                if self._reallocate(allocation):
+                    if reservation['status'] == status.reservation.ACTIVE:
+                        if reservation['id'] not in reservation_flags:
+                            reservation_flags[reservation['id']] = {}
+                        reservation_flags[reservation['id']].update(
+                            {'resources_changed': True})
+                else:
                     if reservation['id'] not in reservation_flags:
                         reservation_flags[reservation['id']] = {}
                     reservation_flags[reservation['id']].update(
-                        {'resources_changed': True})
-
-                LOG.warn('Resource changed for reservation %s (lease: %s).',
-                         reservation['id'], lease['name'])
+                        {'missing_resources': True})
 
         return reservation_flags
+
+    def _reallocate(self, allocation):
+        """Allocate an alternative host.
+
+        :param: allocation: allocation to change.
+        :return: True if an alternative host was successfully allocated.
+        """
+        reservation = db_api.reservation_get(allocation['reservation_id'])
+        pool = nova.ReservationPool()
+
+        # Remove the failed host from the aggregate.
+        if reservation['status'] == status.reservation.ACTIVE:
+            host = db_api.host_get(allocation['compute_host_id'])
+            pool.remove_computehost(reservation['aggregate_id'],
+                                    host['service_name'])
+
+        # Allocate an alternative host.
+        values = {}
+        lease = db_api.lease_get(reservation['lease_id'])
+        values['start_date'] = max(datetime.datetime.utcnow(),
+                                   lease['start_date'])
+        values['end_date'] = lease['end_date']
+        specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount']
+        for key in specs:
+            values[key] = reservation[key]
+        changed_hosts = self.pickup_hosts(reservation['id'], values)
+        if len(changed_hosts['added']) == 0:
+            db_api.host_allocation_destroy(allocation['id'])
+            LOG.warn('Could not find alternative host for reservation %s '
+                     '(lease: %s).', reservation['id'], lease['name'])
+            return False
+        else:
+            new_host_id = changed_hosts['added'].pop()
+            db_api.host_allocation_update(
+                allocation['id'], {'compute_host_id': new_host_id})
+            if reservation['status'] == status.reservation.ACTIVE:
+                # Add the alternative host into the aggregate.
+                new_host = db_api.host_get(new_host_id)
+                pool.add_computehost(reservation['aggregate_id'],
+                                     new_host['service_name'],
+                                     stay_in=True)
+            LOG.warn('Resource changed for reservation %s (lease: %s).',
+                     reservation['id'], lease['name'])
+
+            return True
