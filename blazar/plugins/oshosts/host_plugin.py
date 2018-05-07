@@ -613,16 +613,21 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
     def __new__(cls):
         if not cls._instance:
             cls._instance = super(PhysicalHostMonitorPlugin, cls).__new__(cls)
+            cls._instance.healing_handlers = []
+            super(PhysicalHostMonitorPlugin, cls._instance).__init__(
+                password=CONF.os_admin_password,
+                user_domain_name=CONF.os_admin_user_domain_name,
+                project_name=CONF.os_admin_project_name,
+                project_domain_name=CONF.os_admin_user_domain_name)
         return cls._instance
 
     def __init__(self):
-        super(PhysicalHostMonitorPlugin, self).__init__(
-            username=CONF.os_admin_username,
-            password=CONF.os_admin_password,
-            user_domain_name=CONF.os_admin_user_domain_name,
-            project_name=CONF.os_admin_project_name,
-            project_domain_name=CONF.os_admin_user_domain_name)
-        self.healing_handlers = []
+        """Do nothing.
+
+        This class uses the Singleton design pattern and an instance of this
+        class is generated and initialized in __new__().
+        """
+        pass
 
     def register_healing_handler(self, handler):
         self.healing_handlers.append(handler)
