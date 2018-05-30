@@ -256,6 +256,10 @@ class ManagerService(service_utils.RPCServer):
             raise common_ex.NotAuthorized(
                 'Start date must be later than current date')
 
+        if end_date <= start_date:
+            raise common_ex.InvalidInput(
+                'End date must be later than start date.')
+
         with trusts.create_ctx_from_trust(trust_id) as ctx:
             # NOTE(priteau): We should not get user_id from ctx, because we are
             # in the context of the trustee (blazar user).

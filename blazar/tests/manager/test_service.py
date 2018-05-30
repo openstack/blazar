@@ -658,6 +658,16 @@ class ServiceTestCase(tests.TestCase):
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
+    def test_create_lease_end_before_start(self):
+        lease_values = {
+            'name': 'lease-name',
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-11-13 12:13',
+            'trust_id': 'exxee111qwwwwe'}
+
+        self.assertRaises(
+            exceptions.InvalidInput, self.manager.create_lease, lease_values)
+
     def test_create_lease_unsupported_resource_type(self):
         lease_values = {
             'id': self.lease_id,
