@@ -39,7 +39,7 @@ os_opts = [
                        help='IP or hostname of machine on which OpenStack '
                             'Identity service is located'),
     cfg.StrOpt('os_auth_port',
-               default='35357',
+               default='5000',
                help='Port of OpenStack Identity service.'),
     cfg.StrOpt('os_auth_prefix',
                default='',
@@ -56,7 +56,7 @@ os_opts = [
                default='admin',
                help='Name of project where the user is admin.'),
     cfg.StrOpt('os_auth_version',
-               default='v2.0',
+               default='v3',
                help='Blazar uses API v3 to allow trusts using.'),
     cfg.StrOpt('os_admin_user_domain_name',
                default='Default',
