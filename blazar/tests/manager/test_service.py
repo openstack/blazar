@@ -218,7 +218,7 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(actions, self.manager._setup_actions())
 
     def test_no_events(self):
-        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
         events.return_value = None
 
@@ -227,23 +227,23 @@ class ServiceTestCase(tests.TestCase):
         self.assertFalse(event_update.called)
 
     def test_event_success(self):
-        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        events.return_value = {'id': '111-222-333',
-                               'time': self.good_date}
+        events.return_value = [{'id': '111-222-333', 'time': self.good_date},
+                               {'id': '444-555-666', 'time': self.good_date}]
         self.patch(eventlet, 'spawn_n')
 
         self.manager._event()
 
-        event_update.assert_called_once_with(
-            '111-222-333', {'status': status.event.IN_PROGRESS})
+        event_update.assert_has_calls([
+            mock.call('111-222-333', {'status': status.event.IN_PROGRESS}),
+            mock.call('444-555-666', {'status': status.event.IN_PROGRESS})])
 
     def test_event_spawn_fail(self):
-        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
         self.patch(eventlet, 'spawn_n').side_effect = Exception
-        events.return_value = {'id': '111-222-333',
-                               'time': self.good_date}
+        events.return_value = [{'id': '111-222-333', 'time': self.good_date}]
 
         self.manager._event()
 

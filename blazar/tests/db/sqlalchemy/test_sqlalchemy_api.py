@@ -935,6 +935,32 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
                                                    sort_key=sort_key,
                                                    sort_dir=sort_dir))
 
+    def test_event_get_sorted_asc_by_time_filter(self):
+        def check_query(border, op, expected_ids):
+            filtered_events = db_api.event_get_all_sorted_by_filters(
+                sort_key=sort_key,
+                sort_dir=sort_dir,
+                filters={'time': {'border': _get_datetime(border),
+                                  'op': op}})
+            filtered_event_ids = [e.id for e in filtered_events]
+            self.assertListEqual(expected_ids, filtered_event_ids)
+
+        time1 = _get_datetime('2030-01-01 01:00')
+        time2 = _get_datetime('2030-01-01 02:00')
+        time3 = _get_datetime('2030-01-01 03:00')
+        sort_key = 'time'
+        sort_dir = 'asc'
+
+        db_api.event_create(_get_fake_event_values(id='1', time=time1))
+        db_api.event_create(_get_fake_event_values(id='2', time=time2))
+        db_api.event_create(_get_fake_event_values(id='3', time=time3))
+
+        check_query('2030-01-01 02:00', 'lt', ['1'])
+        check_query('2030-01-01 02:00', 'le', ['1', '2'])
+        check_query('2030-01-01 02:00', 'gt', ['3'])
+        check_query('2030-01-01 02:00', 'ge', ['2', '3'])
+        check_query('2030-01-01 02:00', 'eq', ['2'])
+
     def test_event_get_sorted_desc_by_event_type_filter(self):
         fake_event_type = 'test_event'
         sort_dir = 'desc'
@@ -1014,3 +1040,29 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertTrue(is_result_sorted_correctly(filtered_events,
                                                    sort_key=sort_key,
                                                    sort_dir=sort_dir))
+
+    def test_event_get_sorted_desc_by_time_filter(self):
+        def check_query(border, op, expected_ids):
+            filtered_events = db_api.event_get_all_sorted_by_filters(
+                sort_key=sort_key,
+                sort_dir=sort_dir,
+                filters={'time': {'border': _get_datetime(border),
+                                  'op': op}})
+            filtered_event_ids = [e.id for e in filtered_events]
+            self.assertListEqual(expected_ids, filtered_event_ids)
+
+        time1 = _get_datetime('2030-01-01 01:00')
+        time2 = _get_datetime('2030-01-01 02:00')
+        time3 = _get_datetime('2030-01-01 03:00')
+        sort_key = 'time'
+        sort_dir = 'desc'
+
+        db_api.event_create(_get_fake_event_values(id='1', time=time1))
+        db_api.event_create(_get_fake_event_values(id='2', time=time2))
+        db_api.event_create(_get_fake_event_values(id='3', time=time3))
+
+        check_query('2030-01-01 02:00', 'lt', ['1'])
+        check_query('2030-01-01 02:00', 'le', ['2', '1'])
+        check_query('2030-01-01 02:00', 'gt', ['3'])
+        check_query('2030-01-01 02:00', 'ge', ['3', '2'])
+        check_query('2030-01-01 02:00', 'eq', ['2'])

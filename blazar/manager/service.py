@@ -140,16 +140,19 @@ class ManagerService(service_utils.RPCServer):
         status to 'DONE'.
         """
         LOG.debug('Trying to get event from DB.')
-        event = db_api.event_get_first_sorted_by_filters(
+        events = db_api.event_get_all_sorted_by_filters(
             sort_key='time',
             sort_dir='asc',
-            filters={'status': status.event.UNDONE}
+            filters={'status': status.event.UNDONE,
+                     'time': {'op': 'le',
+                              'border': datetime.datetime.utcnow()}}
         )
 
-        if not event:
+        if not events:
             return
 
-        if event['time'] < datetime.datetime.utcnow():
+        LOG.info("Trying to execute events: %s", events)
+        for event in events:
             db_api.event_update(event['id'],
                                 {'status': status.event.IN_PROGRESS})
             try:
@@ -159,7 +162,8 @@ class ManagerService(service_utils.RPCServer):
             except Exception:
                 db_api.event_update(event['id'],
                                     {'status': status.event.ERROR})
-                LOG.exception('Error occurred while event handling.')
+                LOG.exception('Error occurred while event %s handling.',
+                              event['id'])
 
     def _exec_event(self, event):
         """Execute an event function"""

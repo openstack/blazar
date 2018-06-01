@@ -317,6 +317,18 @@ def _event_get_sorted_by_filters(sort_key, sort_dir, filters):
     if 'event_type' in filters:
         events_query = events_query.filter(models.Event.event_type ==
                                            filters['event_type'])
+    if 'time' in filters:
+        border = filters['time']['border']
+        if filters['time']['op'] == 'lt':
+            events_query = events_query.filter(models.Event.time < border)
+        elif filters['time']['op'] == 'le':
+            events_query = events_query.filter(models.Event.time <= border)
+        elif filters['time']['op'] == 'gt':
+            events_query = events_query.filter(models.Event.time > border)
+        elif filters['time']['op'] == 'ge':
+            events_query = events_query.filter(models.Event.time >= border)
+        elif filters['time']['op'] == 'eq':
+            events_query = events_query.filter(models.Event.time == border)
 
     events_query = events_query.order_by(
         sort_fn[sort_dir](getattr(models.Event, sort_key))
