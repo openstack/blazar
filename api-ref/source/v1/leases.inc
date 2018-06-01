@@ -92,6 +92,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
   - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
   - reservation.flavor_id: reservation_flavor_id
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
@@ -158,6 +159,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
   - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
 
 **Example of Create Lease Request**
 
@@ -230,6 +232,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
   - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
   - reservation.flavor_id: reservation_flavor_id
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
@@ -330,6 +333,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
   - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
   - reservation.flavor_id: reservation_flavor_id
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
@@ -400,6 +404,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb_optional
   - reservation.disk_gb: reservation_disk_gb_optional
   - reservation.affinity : reservation_affinity_optional
+  - reservation.resource_properties: reservation_resource_properties_optional
 
 **Example of Update Lease Request**
 
@@ -472,6 +477,7 @@ are in the ``reservation`` object.
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
   - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
   - reservation.flavor_id: reservation_flavor_id
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id

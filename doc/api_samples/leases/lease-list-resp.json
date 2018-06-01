@@ -42,6 +42,7 @@
                     "memory_mb": 4096,
                     "disk_gb": 100,
                     "affinity": false,
+                    "resource_properties": "",
                     "flavor_id": "ddc45423-f863-4e4e-8e7a-51d27cfec962",
                     "server_group_id": "33cdfc42-5a04-4fcc-b190-1abebaa056bb",
                     "aggregate_id": 11,

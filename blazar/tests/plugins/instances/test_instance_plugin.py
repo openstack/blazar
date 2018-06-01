@@ -36,10 +36,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
         super(TestVirtualInstancePlugin, self).setUp()
 
     def get_input_values(self, vcpus, memory, disk, amount, affinity,
-                         start, end, lease_id):
-        return {'vcpus': vcpus, 'memory_mb': memory, 'disk_gb': disk,
-                'amount': amount, 'affinity': affinity, 'start_date': start,
-                'end_date': end, 'lease_id': lease_id}
+                         start, end, lease_id, resource_properties):
+        values = {'vcpus': vcpus, 'memory_mb': memory, 'disk_gb': disk,
+                  'amount': amount, 'affinity': affinity, 'start_date': start,
+                  'end_date': end, 'lease_id': lease_id,
+                  'resource_properties': resource_properties}
+        return values
 
     def generate_host_info(self, id, vcpus, memory, disk):
         return {'id': id, 'vcpus': vcpus,
@@ -93,7 +95,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         inputs = self.get_input_values(2, 4018, 10, 1, False,
                                        '2030-01-01 08:00', '2030-01-01 08:00',
-                                       'lease-1')
+                                       'lease-1', '')
 
         expected_ret = 'instance-reservation-id1'
 
@@ -102,7 +104,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
         self.assertEqual(expected_ret, ret)
         pickup_hosts_value = {}
         for key in ['vcpus', 'memory_mb', 'disk_gb', 'amount', 'affinity',
-                    'lease_id', 'start_date', 'end_date']:
+                    'lease_id', 'start_date', 'end_date',
+                    'resource_properties']:
             pickup_hosts_value[key] = inputs[key]
         mock_pickup_hosts.assert_called_once_with('res_id1',
                                                   pickup_hosts_value)
@@ -122,7 +125,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         plugin = instance_plugin.VirtualInstancePlugin()
         inputs = self.get_input_values(2, 4018, 10, 1, True,
                                        '2030-01-01 08:00', '2030-01-01 08:00',
-                                       'lease-1')
+                                       'lease-1', '')
         self.assertRaises(exceptions.BlazarException, plugin.reserve_resource,
                           'reservation_id', inputs)
         self.assertRaises(exceptions.BlazarException,
@@ -197,6 +200,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'resource_properties': '',
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
@@ -238,6 +242,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'resource_properties': '',
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
@@ -291,6 +296,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'resource_properties': '',
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
@@ -344,6 +350,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'resource_properties': '',
             'start_date': '2030-01-01 08:00',
             'end_date': '2030-01-01 12:00'
             }
@@ -563,22 +570,38 @@ class TestVirtualInstancePlugin(tests.TestCase):
         # case: new amount is less than old amount
         values = self.get_input_values(1, 1024, 10, 1, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
+                                       'lease-1', '')
         expect = {'added': set([]),
                   'removed': set(['host-id1', 'host-id2', 'host-id3'])}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertTrue(len(ret['removed']) == 2)
         self.assertTrue(all([h in expect['removed'] for h in ret['removed']]))
+        query_params = {
+            'cpus': 1, 'memory': 1024, 'disk': 10,
+            'resource_properties': '',
+            'start_date': '2020-07-01 10:00',
+            'end_date': '2020-07-01 11:00',
+            'excludes_res': ['reservation-id1']
+            }
+        mock_query_available.assert_called_with(**query_params)
 
         # case: new amount is same but change allocations
         values = self.get_input_values(1, 1024, 10, 3, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
+                                       'lease-1', '["==", "key1", "value1"]')
         expect = {'added': set(['host-id4']), 'removed': set(['host-id1'])}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
+        query_params = {
+            'cpus': 1, 'memory': 1024, 'disk': 10,
+            'resource_properties': '["==", "key1", "value1"]',
+            'start_date': '2020-07-01 10:00',
+            'end_date': '2020-07-01 11:00',
+            'excludes_res': ['reservation-id1']
+            }
+        mock_query_available.assert_called_with(**query_params)
 
         # case: new amount is greater than old amount
         mock_query_available.return_value = [
@@ -589,11 +612,19 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         values = self.get_input_values(1, 1024, 10, 4, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
-                                       'lease-1')
+                                       'lease-1', '')
         expect = {'added': set(['host-id4']), 'removed': set([])}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
+        query_params = {
+            'cpus': 1, 'memory': 1024, 'disk': 10,
+            'resource_properties': '',
+            'start_date': '2020-07-01 10:00',
+            'end_date': '2020-07-01 11:00',
+            'excludes_res': ['reservation-id1']
+            }
+        mock_query_available.assert_called_with(**query_params)
 
     def test_update_resources(self):
         reservation = {
@@ -673,7 +704,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'lease_id': 'lease-id1',
             'resource_id': 'instance-reservation-id1',
             'vcpus': 2, 'memory_mb': 1024, 'disk_gb': 100,
-            'amount': 2, 'affinity': False}
+            'amount': 2, 'affinity': False,
+            'resource_properties': ''}
         mock_reservation_get = self.patch(db_api, 'reservation_get')
         mock_reservation_get.return_value = old_reservation
 
@@ -700,11 +732,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_pickup_hosts.assert_called_once_with(
             'reservation-id1',
             {'vcpus': 4, 'memory_mb': 1024, 'disk_gb': 200,
-             'amount': 2, 'affinity': False})
+             'amount': 2, 'affinity': False, 'resource_properties': ''})
         mock_inst_update.assert_called_once_with(
             'instance-reservation-id1',
             {'vcpus': 4, 'memory_mb': 1024, 'disk_gb': 200,
-             'amount': 2, 'affinity': False})
+             'amount': 2, 'affinity': False, 'resource_properties': ''})
         mock_update_alloc.assert_called_once_with(set(['host-id1']),
                                                   set(['host-id2']),
                                                   'reservation-id1')
@@ -847,6 +879,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'aggregate_id': 'agg-1',
             'affinity': False,
             'amount': 3,
+            'resource_properties': '',
             'computehost_allocations': [{
                 'id': 'alloc-1', 'compute_host_id': failed_host['id'],
                 'reservation_id': 'rsrv-1'
@@ -880,6 +913,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'aggregate_id': 'agg-1',
             'affinity': False,
             'amount': 3,
+            'resource_properties': '',
             'computehost_allocations': [{
                 'id': 'alloc-1', 'compute_host_id': failed_host['id'],
                 'reservation_id': 'rsrv-1'
@@ -990,7 +1024,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 256,
             'aggregate_id': 'agg-1',
             'affinity': False,
-            'amount': 3
+            'amount': 3,
+            'resource_properties': ''
         }
         dummy_lease = {
             'name': 'lease-name',
@@ -1039,8 +1074,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 256,
             'aggregate_id': 'agg-1',
             'affinity': False,
-            'amount': 3
-        }
+            'amount': 3,
+            'resource_properties': ''}
         dummy_lease = {
             'name': 'lease-name',
             'start_date': datetime.datetime(2020, 1, 1, 12, 00),
@@ -1098,7 +1133,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 256,
             'aggregate_id': 'agg-1',
             'affinity': False,
-            'amount': 3
+            'amount': 3,
+            'resource_properties': ''
         }
         dummy_lease = {
             'name': 'lease-name',
