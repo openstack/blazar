@@ -69,7 +69,7 @@ Technically speaking, resource ID here will be not host ID, because there might
 be many of them wanted. Resource here will be new aggregate containing reserved
 hosts. The time lease starts, user may use reserved compute capacity to run
 his/her instances on it passing special scheduler hint to Nova. When host is
-reserved, it’s not used for usual instance running, it might be used only when
+reserved, it's not used for usual instance running, it might be used only when
 lease starts and only by passing reservation ID to Nova. That is implemented
 using special Nova Scheduler filter, that passes reservation ID to Blazar and
 checks if user really can use reserved compute capacity.
