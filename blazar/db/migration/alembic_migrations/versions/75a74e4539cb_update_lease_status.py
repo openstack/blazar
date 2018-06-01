@@ -25,19 +25,86 @@ Create Date: 2018-01-23 11:05:56.753579
 revision = '75a74e4539cb'
 down_revision = 'e66f199a5414'
 
-from blazar.db import api as db_api
-from blazar.status import LeaseStatus as ls
+from alembic import op
+import sqlalchemy as sa
+
+
+def _get_metadata():
+    connection = op.get_bind().engine
+    meta = sa.MetaData()
+    meta.bind = connection
+    return meta
 
 
 def upgrade():
-    leases = db_api.lease_get_all()
-    for lease in leases:
-        db_api.lease_update(lease['id'],
-                            {'status': ls.derive_stable_status(lease['id'])})
+    def get_query(start_status, end_status):
+        start_event_query = (sess.query(event.c.lease_id, event.c.status).
+                             filter(event.c.event_type == 'start_lease').
+                             subquery('start_t'))
+        start_table = sa.orm.aliased(start_event_query)
+
+        end_event_query = (sess.query(event.c.lease_id, event.c.status).
+                           filter(event.c.event_type == 'end_lease').
+                           subquery('end_t'))
+        end_table = sa.orm.aliased(end_event_query)
+
+        query = (sess.query(lease.c.id).
+                 join(start_table, lease.c.id == start_table.c.lease_id).
+                 join(end_table, lease.c.id == end_table.c.lease_id).
+                 filter(
+                     sa.and_(start_table.c.status == start_status,
+                             end_table.c.status == end_status)))
+
+        return query
+
+    meta = _get_metadata()
+    lease = sa.Table('leases', meta, autoload=True)
+    event = sa.Table('events', meta, autoload=True)
+
+    Session = sa.orm.sessionmaker()
+    sess = Session(bind=meta.bind)
+
+    stable_lease_id = []
+
+    # PENDING Lease
+    pending_query = get_query('UNDONE', 'UNDONE')
+    for l in pending_query:
+        op.execute(
+            lease.update().values(status='PENDING').
+            where(lease.c.id == l[0]))
+        stable_lease_id.append(l[0])
+
+    # ACTIVE Lease
+    active_query = get_query('DONE', 'UNDONE')
+
+    for l in active_query:
+        op.execute(
+            lease.update().values(status='ACTIVE').
+            where(lease.c.id == l[0]))
+        stable_lease_id.append(l[0])
+
+    # TERMINATED Lease
+    terminated_query = get_query('DONE', 'DONE')
+
+    for l in terminated_query:
+        op.execute(
+            lease.update().values(status='TERMINATED').
+            where(lease.c.id == l[0]))
+        stable_lease_id.append(l[0])
+
+    # ERROR Lease
+    all_query = sess.query(lease.c.id)
+
+    for l in all_query:
+        if l[0] not in stable_lease_id:
+            op.execute(
+                lease.update().values(status='ERROR').
+                where(lease.c.id == l[0]))
 
 
 def downgrade():
-    leases = db_api.lease_get_all()
-    for lease in leases:
-        db_api.lease_update(lease['id'],
-                            {'status': None})
+    meta = _get_metadata()
+    lease = sa.Table('leases', meta, autoload=True)
+
+    op.execute(
+        lease.update().values(status=None))
