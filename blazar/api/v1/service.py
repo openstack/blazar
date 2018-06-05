@@ -40,7 +40,7 @@ class API(object):
             project_id = ctx.project_id
         return self.manager_rpcapi.list_leases(project_id=project_id)
 
-    @policy.authorize('leases', 'create')
+    @policy.authorize('leases', 'post')
     @trusts.use_trust_auth()
     def create_lease(self, data):
         """Create new lease.
@@ -64,7 +64,7 @@ class API(object):
         """
         return self.manager_rpcapi.get_lease(lease_id)
 
-    @policy.authorize('leases', 'update')
+    @policy.authorize('leases', 'put')
     def update_lease(self, lease_id, data):
         """Update lease.
 

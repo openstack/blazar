@@ -39,6 +39,8 @@ extensions = ['sphinx.ext.autodoc',
               'openstackdocstheme',
               'oslo_config.sphinxext',
               'oslo_config.sphinxconfiggen',
+              'oslo_policy.sphinxpolicygen',
+              'oslo_policy.sphinxext',
               ]
 
 # openstackdocstheme options
@@ -46,11 +48,16 @@ repository_name = 'openstack/blazar'
 bug_project = 'blazar'
 bug_tag = ''
 
+wsme_protocols = ['restjson', 'restxml']
+
 # oslo_config.sphinxconfiggen options
 config_generator_config_file = '../../etc/blazar/blazar-config-generator.conf'
 sample_config_basename = '_static/blazar'
 
-wsme_protocols = ['restjson', 'restxml']
+# oslo_policy.sphinxpolicygen options
+policy_generator_config_file = [
+    ('../../etc/blazar/blazar-policy-generator.conf', '_static/blazar'),
+]
 
 # The suffix of source filenames.
 source_suffix = '.rst'
