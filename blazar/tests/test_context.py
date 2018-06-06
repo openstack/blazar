@@ -36,7 +36,8 @@ class TestContextCreate(tests.TestCase):
         self.assertEqual(ctx.to_dict(), {"first": 1, "second": 2})
 
     def test_fail(self):
-        self.assertRaises(TypeError, TestContext, forth=4)
+        ctx = TestContext({'first': 1, "forth": 4}, fifth=5)
+        self.assertEqual(ctx.to_dict(), {"first": 1})
 
 
 class TestBaseContext(tests.TestCase):

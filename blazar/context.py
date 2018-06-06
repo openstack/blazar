@@ -29,10 +29,9 @@ class BaseContext(object):
                 __mapping = __mapping.__values
             self.__values = dict(__mapping)
             self.__values.update(**kwargs)
-        bad_keys = set(self.__values) - self._elements
-        if bad_keys:
-            raise TypeError("Only %s keys are supported. %s given" %
-                            (tuple(self._elements), tuple(bad_keys)))
+        not_supported_keys = set(self.__values) - self._elements
+        for k in not_supported_keys:
+            del self.__values[k]
 
     def __getattr__(self, name):
         try:
