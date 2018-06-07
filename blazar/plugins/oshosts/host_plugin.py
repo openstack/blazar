@@ -32,16 +32,6 @@ from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
 
 plugin_opts = [
-    cfg.StrOpt('on_end',
-               default='on_end',
-               deprecated_for_removal=True,
-               deprecated_since='0.3.0',
-               help='Actions which we will use in the end of the lease'),
-    cfg.StrOpt('on_start',
-               default='on_start',
-               deprecated_for_removal=True,
-               deprecated_since='0.3.0',
-               help='Actions which we will use at the start of the lease'),
     cfg.StrOpt('blazar_az_prefix',
                default='blazar_',
                help='Prefix for Availability Zones created by Blazar'),
