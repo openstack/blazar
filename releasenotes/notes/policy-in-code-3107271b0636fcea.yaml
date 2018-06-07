@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Default policy for API access control has been moved from a file, e.g.
+    *policy.json*, into codebase. Policy is basically defined in codebase but
+    able to be changed by a policy file. See `the policy configuration guide`_
+    in detail.
+
+    .. _the policy configuration guide: https://docs.openstack.org/blazar/latest/configuration/blazar-policy.html
