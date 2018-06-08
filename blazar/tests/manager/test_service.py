@@ -656,7 +656,7 @@ class ServiceTestCase(tests.TestCase):
             'trust_id': 'exxee111qwwwwe'}
 
         self.assertRaises(
-            exceptions.NotAuthorized, self.manager.create_lease, lease_values)
+            exceptions.InvalidInput, self.manager.create_lease, lease_values)
 
     def test_create_lease_end_before_start(self):
         lease_values = {
@@ -1220,7 +1220,7 @@ class ServiceTestCase(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
             self.assertRaises(
-                exceptions.NotAuthorized, self.manager.update_lease,
+                exceptions.InvalidInput, self.manager.update_lease,
                 lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_not_started_start_date_before_current_time(self):
@@ -1234,7 +1234,7 @@ class ServiceTestCase(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
             self.assertRaises(
-                exceptions.NotAuthorized, self.manager.update_lease,
+                exceptions.InvalidInput, self.manager.update_lease,
                 lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_end_date_before_current_time(self):
@@ -1248,7 +1248,7 @@ class ServiceTestCase(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
             self.assertRaises(
-                exceptions.NotAuthorized, self.manager.update_lease,
+                exceptions.InvalidInput, self.manager.update_lease,
                 lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_completed_modify_dates(self):
@@ -1262,7 +1262,7 @@ class ServiceTestCase(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
             self.assertRaises(
-                exceptions.NotAuthorized, self.manager.update_lease,
+                exceptions.InvalidInput, self.manager.update_lease,
                 lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_start_date_event_not_found(self):
