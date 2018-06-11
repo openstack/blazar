@@ -776,8 +776,7 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
             recovered_hosts = [host for host in unreservable_hosts
                                if host['id'] in active_hv_ids]
         except Exception as e:
-            LOG.exception('Skipping health check of host %s. %s',
-                          host['hypervisor_hostname'], str(e))
+            LOG.exception('Skipping health check. %s', str(e))
 
         return failed_hosts, recovered_hosts
 

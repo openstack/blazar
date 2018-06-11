@@ -161,7 +161,7 @@ def _merge_periods(reserved_periods, start_date, end_date, duration):
     """Merge periods if the interval is too narrow."""
     reserved_start = None
     reserved_end = None
-    previous = None
+    previous = []
     merged_reserved_periods = []
     for period in reserved_periods:
         if not reserved_start:

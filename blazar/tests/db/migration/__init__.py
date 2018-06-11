@@ -571,8 +571,8 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
         # the previous (higher numbered) migration.
         if with_data:
             post_downgrade = getattr(
-                self, "_post_downgrade_%s" % next_version, None)
-            if post_downgrade:
+                self, "_post_downgrade_%s" % next_version, self._do_nothing)
+            if post_downgrade is not self._do_nothing:
                 post_downgrade(engine)
 
         return True
@@ -604,3 +604,11 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
             LOG.error("Failed to migrate to version %(version)s on engine "
                       "%(engine)s", {'version': version, 'engine': engine})
             raise
+
+    def _do_nothing(self, *args, **kwargs):
+        """Workaround for passing the pylint check.
+
+        NOTE(hiro-kobayashi): this method is used by the _migrate_down() to
+        prevent 'not-callable' error of the pylint checker.
+        """
+        pass
