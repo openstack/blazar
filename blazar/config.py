@@ -72,8 +72,18 @@ api_opts = [
                 help='Deploy the v1 API.'),
 ]
 
+lease_opts = [
+    cfg.IntOpt('cleaning_time',
+               default=0,
+               min=0,
+               help='The minimum interval [minutes] between the end of a '
+                    'lease and the start of the next lease for the same '
+                    'resource. This interval is used for cleanup.')
+]
+
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 CONF.register_opts(os_opts)
 CONF.register_opts(api_opts)
+CONF.register_opts(lease_opts)
 logging.register_options(cfg.CONF)

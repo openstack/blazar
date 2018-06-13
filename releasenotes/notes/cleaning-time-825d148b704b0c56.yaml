@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    A time margin for cleaning up resources between the end of a lease and the
+    start of the next lease is introduced. Leases are allocated to resources
+    only if they have enough spare time for cleaning up before and after the
+    lease. Note that this cleaning time is not included in the lease time, but
+    is taken into account when looking for available resources. The length of
+    cleaning time can be configured by the configuration option
+    **cleaning_time** in the [DEFAULT] section. The default value for this
+    option is **0**, in which case the behavior is the same as previous
+    releases.

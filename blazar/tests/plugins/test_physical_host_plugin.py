@@ -1796,6 +1796,38 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             datetime.datetime(2013, 12, 19, 21, 00))
         self.assertEqual(['host1', 'host2', 'host3'], result)
 
+    def test_matching_hosts_allocated_hosts_with_cleaning_time(self):
+        def host_allocation_get_all_by_values(**kwargs):
+            if kwargs['compute_host_id'] == 'host1':
+                return True
+        self.cfg.CONF.set_override('cleaning_time', '5')
+        host_get = self.patch(
+            self.db_api,
+            'reservable_host_get_all_by_queries')
+        host_get.return_value = [
+            {'id': 'host1'},
+            {'id': 'host2'},
+            {'id': 'host3'},
+        ]
+        host_get = self.patch(
+            self.db_api,
+            'host_allocation_get_all_by_values')
+        host_get.side_effect = host_allocation_get_all_by_values
+        host_get = self.patch(
+            self.db_utils,
+            'get_free_periods')
+        host_get.return_value = [
+            (datetime.datetime(2013, 12, 19, 20, 00)
+             - datetime.timedelta(minutes=5),
+             datetime.datetime(2013, 12, 19, 21, 00)
+             + datetime.timedelta(minutes=5))
+        ]
+        result = self.fake_phys_plugin._matching_hosts(
+            '[]', '[]', '3-3',
+            datetime.datetime(2013, 12, 19, 20, 00),
+            datetime.datetime(2013, 12, 19, 21, 00))
+        self.assertEqual(['host1', 'host2', 'host3'], result)
+
     def test_matching_hosts_not_matching(self):
         host_get = self.patch(
             self.db_api,
