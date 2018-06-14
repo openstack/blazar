@@ -22,7 +22,6 @@ from oslo_utils.strutils import bool_from_string
 from blazar import context
 from blazar.db import api as db_api
 from blazar.db import utils as db_utils
-from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
 from blazar.plugins import base
 from blazar.plugins import instances as plugin
@@ -315,8 +314,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         # TODO(masahito) the instance reservation plugin only supports
         # anti-affinity rule in short-term goal.
         if bool_from_string(values['affinity']):
-            raise exceptions.BlazarException('affinity = True is not '
-                                             'supported.')
+            raise mgr_exceptions.MalformedParameter(
+                param='affinity (only affinity = False is supported)')
 
         hosts = self.pickup_hosts(reservation_id, values)
 
@@ -383,8 +382,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         # TODO(masahito) the instance reservation plugin only supports
         # anti-affinity rule in short-term goal.
         if bool_from_string(new_values.get('affinity', None)):
-            raise exceptions.BlazarException('affinity = True is not '
-                                             'supported.')
+            raise mgr_exceptions.MalformedParameter(
+                param='affinity (only affinity = False is supported)')
 
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
