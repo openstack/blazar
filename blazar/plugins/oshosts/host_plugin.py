@@ -341,6 +341,10 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             extra_capabilities = dict(
                 (key, host_values[key]) for key in extra_capabilities_keys
             )
+
+            if any([len(key) > 64 for key in extra_capabilities_keys]):
+                raise manager_ex.ExtraCapabilityTooLong()
+
             pool = nova.ReservationPool()
             pool.add_computehost(self.freepool_name,
                                  host_details['service_name'])

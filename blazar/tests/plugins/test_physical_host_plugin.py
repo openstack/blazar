@@ -221,6 +221,19 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_extra_capability_create.assert_called_once_with(fake_capa)
         self.assertEqual(host, fake_host)
 
+    def test_create_host_with_capabilities_too_long(self):
+        fake_host = self.fake_host.copy()
+        fake_host.update({'foo': 'bar'})
+        # NOTE(sbauza): 'id' will be pop'd, we need to keep track of it
+        fake_request = fake_host.copy()
+        long_key = ""
+        for i in range(65):
+            long_key += "0"
+        fake_request[long_key] = "foo"
+        self.assertRaises(manager_exceptions.ExtraCapabilityTooLong,
+                          self.fake_phys_plugin.create_computehost,
+                          fake_request)
+
     def test_create_host_without_trust_id(self):
         self.assertRaises(manager_exceptions.MissingTrustId,
                           self.fake_phys_plugin.create_computehost, {})
