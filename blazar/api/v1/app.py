@@ -24,9 +24,9 @@ from oslo_log import log as logging
 from oslo_middleware import debug
 from werkzeug import exceptions as werkzeug_exceptions
 
+from blazar.api.v1.leases import v1_0 as leases_api_v1_0
 from blazar.api.v1.oshosts import v1_0 as host_api_v1_0
 from blazar.api.v1 import utils as api_utils
-from blazar.api.v1 import v1_0 as api_v1_0
 
 
 LOG = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def make_app():
 
     app.route('/', methods=['GET'])(version_list)
     app.route('/versions', methods=['GET'])(version_list)
-    app.register_blueprint(api_v1_0.rest, url_prefix='/v1')
+    app.register_blueprint(leases_api_v1_0.rest, url_prefix='/v1')
 
     LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)
     # TODO(sbauza) : Change this whole crap by removing hardcoded values and

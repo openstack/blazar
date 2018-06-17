@@ -15,7 +15,7 @@
 
 from oslo_log import log as logging
 
-from blazar.api.v1 import service
+from blazar.api.v1.leases import service
 from blazar.api.v1 import utils as api_utils
 from blazar.api.v1 import validation
 from blazar import utils

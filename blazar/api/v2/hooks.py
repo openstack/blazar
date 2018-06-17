@@ -19,8 +19,8 @@ from pecan import hooks
 
 from blazar.api import context
 from blazar.db import api as dbapi
+from blazar.manager.leases import rpcapi as leases_rpcapi
 from blazar.manager.oshosts import rpcapi as hosts_rpcapi
-from blazar.manager import rpcapi
 
 LOG = logging.getLogger(__name__)
 
@@ -64,5 +64,5 @@ class RPCHook(hooks.PecanHook):
     """Attach the rpcapi object to the request so controllers can get to it."""
 
     def before(self, state):
-        state.request.rpcapi = rpcapi.ManagerRPCAPI()
+        state.request.rpcapi = leases_rpcapi.ManagerRPCAPI()
         state.request.hosts_rpcapi = hosts_rpcapi.ManagerRPCAPI()

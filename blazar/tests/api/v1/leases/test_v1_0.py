@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from blazar.api.v1 import service as service_api
+from blazar.api.v1.leases import service as service_api
+from blazar.api.v1.leases import v1_0 as api
 from blazar.api.v1 import utils as utils_api
-from blazar.api.v1 import v1_0 as api
 from blazar import tests
 
 
