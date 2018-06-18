@@ -15,11 +15,16 @@
 
 import mock
 
+from oslo_config import cfg
+from oslo_config import fixture as conf_fixture
+
 from blazar import context
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import keystone
 from blazar.utils import trusts
+
+CONF = cfg.CONF
 
 
 class TestTrusts(tests.TestCase):
@@ -33,6 +38,8 @@ class TestTrusts(tests.TestCase):
         self.client = self.patch(self.keystone, 'BlazarKeystoneClient')
         self.patch(self.context, 'current')
         self.patch(self.base, 'url_for').return_value = 'http://www.foo.fake'
+
+        self.cfg = self.useFixture(conf_fixture.Config(CONF))
 
     def test_create_trust(self):
         correct_trust = self.client().trusts.create()
@@ -49,6 +56,8 @@ class TestTrusts(tests.TestCase):
         self.client.assert_called_once_with(trust_id='1')
 
     def test_create_ctx_from_trust(self):
+        self.cfg.config(os_admin_project_name='admin')
+        self.cfg.config(os_admin_username='admin')
         fake_item = self.client().service_catalog.catalog.__getitem__()
         fake_ctx_dict = {'_BaseContext__values': {
             'auth_token': self.client().auth_token,
