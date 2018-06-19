@@ -7,3 +7,8 @@ features:
     in detail.
 
     .. _the policy configuration guide: https://docs.openstack.org/blazar/latest/configuration/blazar-policy.html
+upgrade:
+  - |
+    The default policy for the list and get hosts API is changed. Admin and
+    its owner are allowed to call the API until Queens. From Rocky release,
+    only the admin is allowed to call the API.
