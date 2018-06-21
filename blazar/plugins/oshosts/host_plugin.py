@@ -376,41 +376,76 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             else:
                 return None
 
+    def is_updatable_extra_capability(self, capability):
+        reservations = db_utils.get_reservations_by_host_id(
+            capability['computehost_id'], datetime.datetime.utcnow(),
+            datetime.date.max)
+
+        for r in reservations:
+            plugin_reservation = db_utils.get_plugin_reservation(
+                r['resource_type'], r['resource_id'])
+
+            requirements_queries = plugins_utils.convert_requirements(
+                plugin_reservation['resource_properties'])
+
+            # TODO(masahito): If all the reservations using the
+            # extra_capability can be re-allocated it's okay to update
+            # the extra_capability.
+            for requirement in requirements_queries:
+                # A requirement is of the form "key op value" as string
+                if requirement.split(" ")[0] == capability['capability_name']:
+                    return False
+        return True
+
     def update_computehost(self, host_id, values):
-        if values:
-            cant_update_extra_capability = []
-            for value in values:
-                capabilities = db_api.host_extra_capability_get_all_per_name(
-                    host_id,
-                    value,
-                )
-                if capabilities:
-                    for raw_capability in capabilities:
-                        capability = {
-                            'capability_name': value,
-                            'capability_value': values[value],
-                        }
-                        try:
-                            db_api.host_extra_capability_update(
-                                raw_capability['id'], capability)
-                        except (db_ex.BlazarDBException, RuntimeError):
-                            cant_update_extra_capability.append(
-                                raw_capability['capability_name'])
-                else:
-                    new_capability = {
-                        'computehost_id': host_id,
-                        'capability_name': value,
-                        'capability_value': values[value],
-                    }
-                    try:
-                        db_api.host_extra_capability_create(new_capability)
-                    except (db_ex.BlazarDBException, RuntimeError):
-                        cant_update_extra_capability.append(
-                            new_capability['capability_name'])
-            if cant_update_extra_capability:
-                raise manager_ex.CantAddExtraCapability(
-                    host=host_id,
-                    keys=cant_update_extra_capability)
+        # nothing to update
+        if not values:
+            return self.get_computehost(host_id)
+
+        cant_update_extra_capability = []
+        previous_capabilities = self._get_extra_capabilities(host_id)
+        updated_keys = set(values.keys()) & set(previous_capabilities.keys())
+        new_keys = set(values.keys()) - set(previous_capabilities.keys())
+
+        for key in updated_keys:
+            raw_capability = next(iter(
+                db_api.host_extra_capability_get_all_per_name(host_id, key)))
+            capability = {
+                'capability_name': key,
+                'capability_value': values[key],
+            }
+            if self.is_updatable_extra_capability(raw_capability):
+                try:
+                    db_api.host_extra_capability_update(
+                        raw_capability['id'], capability)
+                except (db_ex.BlazarDBException, RuntimeError):
+                    cant_update_extra_capability.append(
+                        raw_capability['capability_name'])
+            else:
+                LOG.info("Capability %s can't be updated because "
+                         "existing reservations require it.",
+                         raw_capability['capability_name'])
+                cant_update_extra_capability.append(
+                    raw_capability['capability_name'])
+
+        for key in new_keys:
+            new_capability = {
+                'computehost_id': host_id,
+                'capability_name': key,
+                'capability_value': values[key],
+            }
+            try:
+                db_api.host_extra_capability_create(new_capability)
+            except (db_ex.BlazarDBException, RuntimeError):
+                cant_update_extra_capability.append(
+                    new_capability['capability_name'])
+
+        if cant_update_extra_capability:
+            raise manager_ex.CantAddExtraCapability(
+                host=host_id, keys=cant_update_extra_capability)
+
+        LOG.info('Extra capabilities on compute host %s updated with %s',
+                 host_id, values)
         return self.get_computehost(host_id)
 
     def delete_computehost(self, host_id):

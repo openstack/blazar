@@ -19,8 +19,12 @@ import sys
 
 import sqlalchemy as sa
 
+from blazar.db.sqlalchemy import api
 from blazar.db.sqlalchemy import facade_wrapper
 from blazar.db.sqlalchemy import models
+from blazar.manager import exceptions as mgr_exceptions
+from blazar.plugins import instances as instance_plugin
+from blazar.plugins import oshosts as host_plugin
 
 get_session = facade_wrapper.get_session
 
@@ -82,6 +86,15 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
                      .in_(host_ids))
              .filter(~sa.or_(border0, border1)))
     return query.all()
+
+
+def get_plugin_reservation(resource_type, resource_id):
+    if resource_type == host_plugin.RESOURCE_TYPE:
+        return api.host_reservation_get(resource_id)
+    elif resource_type == instance_plugin.RESOURCE_TYPE:
+        return api.instance_reservation_get(resource_id)
+    else:
+        raise mgr_exceptions.UnsupportedResourceType(resource_type)
 
 
 def get_free_periods(resource_id, start_date, end_date, duration):

@@ -22,6 +22,7 @@ import six
 
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import utils as db_utils
+from blazar.manager import exceptions as mgr_exceptions
 from blazar import tests
 
 
@@ -35,10 +36,17 @@ def _get_fake_lease_uuid():
 
 
 def _get_fake_phys_reservation_values(lease_id=_get_fake_lease_uuid(),
-                                      resource_id=None):
+                                      resource_id='1234'):
     return {'lease_id': lease_id,
-            'resource_id': '1234' if not resource_id else resource_id,
+            'resource_id': resource_id,
             'resource_type': 'physical:host'}
+
+
+def _get_fake_inst_reservation_values(lease_id=_get_fake_lease_uuid(),
+                                      resource_id='5678'):
+    return {'lease_id': lease_id,
+            'resource_id': resource_id,
+            'resource_type': 'virtual:instance'}
 
 
 def _get_datetime(value='2030-01-01 00:00'):
@@ -398,6 +406,29 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
 
         self.check_reservation([], ['r4'],
                                '2030-01-01 07:00', '2030-01-01 15:00')
+
+    def test_get_plugin_reservation_with_host(self):
+        patch_host_reservation_get = self.patch(db_api, 'host_reservation_get')
+        patch_host_reservation_get.return_value = {
+            'id': 'id',
+            'reservation_id': 'reservation-id',
+        }
+        db_utils.get_plugin_reservation('physical:host', 'id-1')
+        patch_host_reservation_get.assert_called_once_with('id-1')
+
+    def test_get_plugin_reservation_with_instance(self):
+        patch_inst_reservation_get = self.patch(db_api,
+                                                'instance_reservation_get')
+        patch_inst_reservation_get.return_value = {
+            'id': 'id',
+            'reservation_id': 'reservation-id',
+        }
+        db_utils.get_plugin_reservation('virtual:instance', 'id-1')
+        patch_inst_reservation_get.assert_called_once_with('id-1')
+
+    def test_get_plugin_reservation_with_invalid(self):
+        self.assertRaises(mgr_exceptions.UnsupportedResourceType,
+                          db_utils.get_plugin_reservation, 'invalid', 'id1')
 
 # TODO(frossigneux) longest_availability
 # TODO(frossigneux) shortest_availability

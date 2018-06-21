@@ -24,6 +24,7 @@ from blazar.db import api as db_api
 from blazar.db import utils as db_utils
 from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
+from blazar.plugins import instances
 from blazar.plugins.instances import instance_plugin
 from blazar.plugins import oshosts
 from blazar import tests
@@ -136,7 +137,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             if host_id == 'host-1':
                 return [
                     {'id': '1',
-                     'resource_type': instance_plugin.RESOURCE_TYPE}]
+                     'resource_type': instances.RESOURCE_TYPE}]
             else:
                 return []
 
@@ -168,8 +169,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         def fake_get_reservation_by_host(host_id, start, end):
             return [
-                {'id': '1', 'resource_type': instance_plugin.RESOURCE_TYPE},
-                {'id': '2', 'resource_type': instance_plugin.RESOURCE_TYPE}]
+                {'id': '1', 'resource_type': instances.RESOURCE_TYPE},
+                {'id': '2', 'resource_type': instances.RESOURCE_TYPE}]
 
         plugin = instance_plugin.VirtualInstancePlugin()
 
@@ -258,9 +259,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
             if host_id in ['host-1', 'host-3']:
                 return [
                     {'id': '1',
-                     'resource_type': instance_plugin.RESOURCE_TYPE},
+                     'resource_type': instances.RESOURCE_TYPE},
                     {'id': '2',
-                     'resource_type': instance_plugin.RESOURCE_TYPE}
+                     'resource_type': instances.RESOURCE_TYPE}
                     ]
             else:
                 return []
@@ -315,14 +316,14 @@ class TestVirtualInstancePlugin(tests.TestCase):
                     {'id': '1',
                      'resource_type': oshosts.RESOURCE_TYPE},
                     {'id': '2',
-                     'resource_type': instance_plugin.RESOURCE_TYPE}
+                     'resource_type': instances.RESOURCE_TYPE}
                     ]
             else:
                 return [
                     {'id': '1',
-                     'resource_type': instance_plugin.RESOURCE_TYPE},
+                     'resource_type': instances.RESOURCE_TYPE},
                     {'id': '2',
-                     'resource_type': instance_plugin.RESOURCE_TYPE}
+                     'resource_type': instances.RESOURCE_TYPE}
                     ]
 
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -870,7 +871,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         failed_host = {'id': '1'}
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'pending',
             'vcpus': 2,
@@ -904,7 +905,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         failed_host = {'id': '1'}
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'pending',
             'vcpus': 2,
@@ -940,7 +941,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         failed_host = {'id': '1'}
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'active',
             'vcpus': 2,
@@ -975,7 +976,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         failed_host = {'id': '1'}
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'active',
             'vcpus': 2,
@@ -1016,7 +1017,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         }
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'pending',
             'vcpus': 2,
@@ -1066,7 +1067,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         }
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'active',
             'vcpus': 2,
@@ -1125,7 +1126,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         }
         dummy_reservation = {
             'id': 'rsrv-1',
-            'resource_type': instance_plugin.RESOURCE_TYPE,
+            'resource_type': instances.RESOURCE_TYPE,
             'lease_id': 'lease-1',
             'status': 'pending',
             'vcpus': 2,
