@@ -194,3 +194,64 @@ class BlazarPlacementClient(object):
         rp = self.get_resource_provider(rp_name)
         rp_uuid = rp['uuid']
         self.delete_resource_provider(rp_uuid)
+
+    def create_resource_class(self, rc_name):
+        """Calls the placement API to create a resource class.
+
+        :param rc_name: string name of the resource class to create. This
+                        shall be something like "CUSTOM_RESERVATION_{uuid}".
+        :raises: ResourceClassCreationFailed error.
+        """
+        url = '/resource_classes'
+        payload = {'name': rc_name}
+        resp = self.post(url, payload)
+        if resp:
+            LOG.info("Created resource class %s", rc_name)
+            return
+        msg = ("Failed to create resource class with placement API for "
+               "%(rc_name)s. Got %(status_code)d: %(err_text)s.")
+        args = {
+            'rc_name': rc_name,
+            'status_code': resp.status_code,
+            'err_text': resp.text,
+        }
+        LOG.error(msg, args)
+        raise exceptions.ResourceClassCreationFailed(resource_class=rc_name)
+
+    def delete_resource_class(self, rc_name):
+        """Calls the placement API to delete a resource class.
+
+        :param rc_name: string name of the resource class to delete. This
+                        shall be something like "CUSTOM_RESERVATION_{uuid}"
+        :raises: ResourceClassDeletionFailed error.
+        """
+        url = '/resource_classes/%s' % rc_name
+        resp = self.delete(url)
+        if resp:
+            LOG.info("Deleted resource class %s", rc_name)
+            return
+        msg = ("Failed to delete resource class with placement API for "
+               "%(rc_name)s. Got %(status_code)d: %(err_text)s.")
+        args = {
+            'rc_name': rc_name,
+            'status_code': resp.status_code,
+            'err_text': resp.text,
+        }
+        LOG.error(msg, args)
+        raise exceptions.ResourceClassDeletionFailed(resource_class=rc_name)
+
+    def create_reservation_class(self, reservation_uuid):
+        """Create the reservation class from the given reservation uuid"""
+        # Placement API doesn't accept resource classes with lower characters
+        # and "-"(hyphen) in its name. We should translate the uuid here.
+        reservation_uuid = reservation_uuid.upper().replace("-", "_")
+        rc_name = 'CUSTOM_RESERVATION_' + reservation_uuid
+        self.create_resource_class(rc_name)
+
+    def delete_reservation_class(self, reservation_uuid):
+        """Delete the reservation class from the given reservation uuid"""
+        # Placement API doesn't accept resource classes with lower characters
+        # and "-"(hyphen) in its name. We should translate the uuid here.
+        reservation_uuid = reservation_uuid.upper().replace("-", "_")
+        rc_name = 'CUSTOM_RESERVATION_' + reservation_uuid
+        self.delete_resource_class(rc_name)

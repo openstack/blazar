@@ -25,3 +25,11 @@ class ResourceProviderCreationFailed(exceptions.BlazarException):
 
 class ResourceProviderDeletionFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to delete resource provider %(uuid)s")
+
+
+class ResourceClassCreationFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to create resource class '%(resource_class)s'")
+
+
+class ResourceClassDeletionFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to delete resource class '%(resource_class)s'")
