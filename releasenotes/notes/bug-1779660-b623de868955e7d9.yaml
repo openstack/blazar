@@ -1,0 +1,20 @@
+---
+fixes:
+  - |
+    In the `Blazar configuration`_, we have the following options:
+
+    * os_admin_user_domain_name
+    * os_admin_project_domain_name
+
+    They are used for Keystone authentication. However,
+    ``os_admin_project_domain_name`` in the configuration file was not
+    reflected in Blazar. This was because internally in the Blazar service
+    ``os_admin_user_domain_name`` was used wrongly for both the project domain
+    name and the user domain name.
+
+    This didn't affect operators who set neither of the values explicitly in
+    the configuration file, because the default values of the two options are
+    both set to ``Default``. This release fixes the bug for operators who set
+    either of the values explicitly.
+
+    .. _Blazar configuration: https://docs.openstack.org/blazar/latest/configuration/samples/blazar-conf.html

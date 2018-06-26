@@ -83,7 +83,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             password=CONF.os_admin_password,
             user_domain_name=CONF.os_admin_user_domain_name,
             project_name=CONF.os_admin_project_name,
-            project_domain_name=CONF.os_admin_user_domain_name)
+            project_domain_name=CONF.os_admin_project_domain_name)
         self.monitor = PhysicalHostMonitorPlugin()
         self.monitor.register_healing_handler(self.heal_reservations)
 
@@ -663,7 +663,7 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
                 password=CONF.os_admin_password,
                 user_domain_name=CONF.os_admin_user_domain_name,
                 project_name=CONF.os_admin_project_name,
-                project_domain_name=CONF.os_admin_user_domain_name)
+                project_domain_name=CONF.os_admin_project_domain_name)
         return cls._instance
 
     def __init__(self):
