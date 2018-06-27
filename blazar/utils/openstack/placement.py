@@ -255,3 +255,99 @@ class BlazarPlacementClient(object):
         reservation_uuid = reservation_uuid.upper().replace("-", "_")
         rc_name = 'CUSTOM_RESERVATION_' + reservation_uuid
         self.delete_resource_class(rc_name)
+
+    def get_inventory(self, rp_uuid):
+        """Calls the placement API to get resource inventory information.
+
+        :param rp_uuid: UUID of the resource provider to get
+        """
+        url = '/resource_providers/%s/inventories' % rp_uuid
+        resp = self.get(url)
+        if resp:
+            return resp.json()
+        raise exceptions.ResourceProviderNotFound(resource_provider=rp_uuid)
+
+    def update_inventory(self, rp_uuid, inv_data):
+        """Update the inventory for the resource provider.
+
+        :param rp_uuid: The resource provider UUID for the operation
+        :param inv_data: The new inventory for the resource provider
+        :raises: ResourceProviderNotFound or InventoryUpdateFailed error.
+        """
+        curr = self.get_inventory(rp_uuid)
+        inventories = curr['inventories']
+        generation = curr['resource_provider_generation']
+
+        inventories.update(inv_data)
+
+        payload = {
+            'inventories': inventories,
+            'resource_provider_generation': generation,
+        }
+        url = '/resource_providers/%s/inventories' % rp_uuid
+
+        resp = self.put(url, payload)
+        if resp:
+            return resp.json()
+
+        # TODO(tetsuro): Try again on 409 conflict errors
+        raise exceptions.InventoryUpdateFailed(resource_provider=rp_uuid)
+
+    def delete_inventory(self, rp_uuid, rc_name):
+        """Delete the inventory for the resource provider.
+
+        :param rp_uuid: The resource provider UUID for the operation
+        :param rc_name: The resource class name to delete from inventory
+        :raises: InventoryUpdateFailed error
+        """
+        url = '/resource_providers/%s/inventories/%s' % (rp_uuid, rc_name)
+
+        resp = self.delete(url)
+        if resp:
+            return
+
+        raise exceptions.InventoryUpdateFailed(resource_provider=rp_uuid)
+
+    def update_reservation_inventory(self, host_name, reserv_uuid, num):
+        """Update the reservation inventory for the reservation provider.
+
+        :param host_name: The name of the target host
+        :param reserv_uuid: The reservation uuid
+        :param num: The number of the instances to reserve on the host
+        :return: The updated inventory record
+        """
+        # Get reservation provider uuid
+        rp_name = "blazar_" + host_name
+        rp = self.get_resource_provider(rp_name)
+        rp_uuid = rp['uuid']
+
+        # Build inventory data
+        reserv_uuid = reserv_uuid.upper().replace("-", "_")
+        rc_name = 'CUSTOM_RESERVATION_' + reserv_uuid
+        inv_data = {
+            rc_name: {
+                "allocation_ratio": 1.0,
+                "max_unit": 1,
+                "min_unit": 1,
+                "reserved": 0,
+                "step_size": 1,
+                "total": num
+            },
+        }
+        return self.update_inventory(rp_uuid, inv_data)
+
+    def delete_reservation_inventory(self, host_name, reserv_uuid):
+        """Delete the reservation inventory for the reservation provider.
+
+        :param host_name: The name of the target host
+        :param reserv_uuid: The reservation uuid
+        """
+        # Get reservation provider uuid
+        rp_name = "blazar_" + host_name
+        rp = self.get_resource_provider(rp_name)
+        rp_uuid = rp['uuid']
+
+        # Convert reservation uuid to resource class name
+        reserv_uuid = reserv_uuid.upper().replace("-", "_")
+        rc_name = 'CUSTOM_RESERVATION_' + reserv_uuid
+        self.delete_inventory(rp_uuid, rc_name)
