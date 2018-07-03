@@ -103,7 +103,7 @@ class LeasesController(extensions.BaseController):
         return [Lease.convert(lease)
                 for lease in pecan.request.rpcapi.list_leases()]
 
-    @policy.authorize('leases', 'create')
+    @policy.authorize('leases', 'post')
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=202)
     @trusts.use_trust_auth()
     def post(self, lease):
@@ -120,7 +120,7 @@ class LeasesController(extensions.BaseController):
         else:
             raise exceptions.BlazarException(_("Lease can't be created"))
 
-    @policy.authorize('leases', 'update')
+    @policy.authorize('leases', 'put')
     @wsme_pecan.wsexpose(Lease, types.UuidType(), body=Lease, status_code=202)
     def put(self, id, sublease):
         """Update an existing lease.

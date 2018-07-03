@@ -24,6 +24,7 @@ from oslo_policy import policy
 
 from blazar import context
 from blazar import exceptions
+from blazar import policies
 
 CONF = cfg.CONF
 opts.set_defaults(CONF)
@@ -45,6 +46,7 @@ def init():
     if not _ENFORCER:
         LOG.debug("Enforcer not present, recreating at init stage.")
         _ENFORCER = policy.Enforcer(CONF)
+        _ENFORCER.register_defaults(policies.list_rules())
 
 
 def set_rules(data, default_rule=None):

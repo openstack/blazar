@@ -32,14 +32,6 @@ or
 
 ..
 
-Next you need to create a Blazar policy file:
-
-.. sourcecode:: console
-
-    cp /path/to/blazar/etc/policy.json /etc/blazar/
-
-..
-
 Next you need to configure Blazar and Nova. First, generate a blazar.conf sample:
 
 .. sourcecode:: console
