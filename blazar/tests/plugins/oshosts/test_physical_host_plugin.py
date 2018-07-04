@@ -1353,7 +1353,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             {'compute_host_id': 'host1'},
         ]
         host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'host1_hostname'}
+        host_get.return_value = {'hypervisor_hostname': 'host1_hostname'}
         add_computehost = self.patch(
             self.nova.ReservationPool, 'add_computehost')
 
@@ -1425,7 +1425,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
-        list_servers.assert_called_with(search_opts={'host': 'host',
+        list_servers.assert_called_with(search_opts={'node': 'host',
                                                      'all_tenants': 1})
         delete_server.assert_any_call(server='server1')
         delete_server.assert_any_call(server='server2')
@@ -1643,9 +1643,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def test_reallocate_active(self):
         failed_host = {'id': '1',
-                       'service_name': 'compute-1'}
+                       'hypervisor_hostname': 'compute-1'}
         new_host = {'id': '2',
-                    'service_name': 'compute-2'}
+                    'hypervisor_hostname': 'compute-2'}
         dummy_allocation = {
             'id': 'alloc-1',
             'compute_host_id': failed_host['id'],
@@ -1690,7 +1690,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         self.remove_compute_host.assert_called_once_with(
             dummy_host_reservation['aggregate_id'],
-            failed_host['service_name'])
+            failed_host['hypervisor_hostname'])
         matching_hosts.assert_called_once_with(
             dummy_reservation['hypervisor_properties'],
             dummy_reservation['resource_properties'],
@@ -1701,7 +1701,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             {'compute_host_id': new_host['id']})
         self.add_compute_host(
             dummy_host_reservation['aggregate_id'],
-            new_host['service_name'])
+            new_host['hypervisor_hostname'])
         self.assertEqual(True, result)
 
     def test_reallocate_missing_resources(self):

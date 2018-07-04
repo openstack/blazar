@@ -169,7 +169,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 reservation_id=host_reservation['reservation_id']):
             host = db_api.host_get(allocation['compute_host_id'])
             pool.add_computehost(host_reservation['aggregate_id'],
-                                 host['service_name'])
+                                 host['hypervisor_hostname'])
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""
@@ -183,7 +183,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             for host in pool.get_computehosts(
                     host_reservation['aggregate_id']):
                 for server in client.servers.list(
-                        search_opts={"host": host, "all_tenants": 1}):
+                        search_opts={"node": host, "all_tenants": 1}):
                         client.servers.create_image(server=server)
 
     def on_end(self, resource_id):
@@ -198,7 +198,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         pool = nova.ReservationPool()
         for host in pool.get_computehosts(host_reservation['aggregate_id']):
             for server in self.nova.servers.list(
-                    search_opts={"host": host, "all_tenants": 1}):
+                    search_opts={"node": host, "all_tenants": 1}):
                 try:
                     self.nova.servers.delete(server=server)
                 except nova_exceptions.NotFound:
@@ -266,7 +266,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         if reservation['status'] == status.reservation.ACTIVE:
             host = db_api.host_get(allocation['compute_host_id'])
             pool.remove_computehost(h_reservation['aggregate_id'],
-                                    host['service_name'])
+                                    host['hypervisor_hostname'])
 
         # Allocate an alternative host.
         start_date = max(datetime.datetime.utcnow(), lease['start_date'])
@@ -290,7 +290,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # Add the alternative host into the aggregate.
                 new_host = db_api.host_get(new_hostid)
                 pool.add_computehost(h_reservation['aggregate_id'],
-                                     new_host['service_name'])
+                                     new_host['hypervisor_hostname'])
 
             return True
 
@@ -354,7 +354,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
             pool = nova.ReservationPool()
             pool.add_computehost(self.freepool_name,
-                                 host_details['service_name'])
+                                 host_details['hypervisor_hostname'])
 
             host = None
             cantaddextracapability = []
@@ -367,7 +367,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # TODO(sbauza): Investigate use of Taskflow for atomic
                 # transactions
                 pool.remove_computehost(self.freepool_name,
-                                        host_details['service_name'])
+                                        host_details['hypervisor_hostname'])
                 raise e
             for key in extra_capabilities:
                 values = {'computehost_id': host['id'],
@@ -479,7 +479,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             try:
                 pool = nova.ReservationPool()
                 pool.remove_computehost(self.freepool_name,
-                                        host['service_name'])
+                                        host['hypervisor_hostname'])
                 # NOTE(sbauza): Extracapabilities will be destroyed thanks to
                 #  the DB FK.
                 db_api.host_destroy(host_id)
