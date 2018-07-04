@@ -34,7 +34,7 @@ NOTIFIER = None
 
 def init():
     global TRANSPORT, NOTIFIER
-    TRANSPORT = messaging.get_notification_transport(CONF)
+    TRANSPORT = messaging.get_transport(CONF)
     NOTIFIER = messaging.Notifier(TRANSPORT,
                                   publisher_id=CONF.notifications.publisher_id)
 

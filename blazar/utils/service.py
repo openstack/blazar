@@ -32,7 +32,7 @@ class RPCClient(object):
         super(RPCClient, self).__init__()
         self._client = messaging.RPCClient(
             target=target,
-            transport=messaging.get_rpc_transport(cfg.CONF),
+            transport=messaging.get_transport(cfg.CONF),
         )
 
     def cast(self, name, **kwargs):
@@ -49,7 +49,7 @@ class RPCServer(service.Service):
         super(RPCServer, self).__init__()
         self._server = messaging.get_rpc_server(
             target=target,
-            transport=messaging.get_rpc_transport(cfg.CONF),
+            transport=messaging.get_transport(cfg.CONF),
             endpoints=[ContextEndpointHandler(self, target)],
             executor='eventlet',
         )

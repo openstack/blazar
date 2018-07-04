@@ -37,9 +37,8 @@ class NotifierTestCase(tests.TestCase):
         # Fake Oslo notifier
         self.fake_notifier = self.patch(messaging, 'Notifier')
         self.fake_notifier.return_value = FakeNotifier()
-        self.fake_transport = self.patch(
-            messaging,
-            'get_notification_transport').return_value
+        self.fake_transport = self.patch(messaging,
+                                         'get_transport').return_value
 
         self.info_method = self.patch(FakeNotifier, 'info')
 
