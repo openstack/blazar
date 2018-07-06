@@ -317,7 +317,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         else:
             return host
 
-    def list_computehosts(self):
+    def list_computehosts(self, query=None):
         raw_host_list = db_api.host_list()
         host_list = []
         for host in raw_host_list:

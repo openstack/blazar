@@ -210,7 +210,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     @testtools.skip('incorrect decorator')
     def test_list_hosts(self):
-        self.fake_phys_plugin.list_computehosts()
+        self.fake_phys_plugin.list_computehosts({})
         self.db_host_list.assert_called_once_with()
         del self.service_utils
 

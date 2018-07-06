@@ -37,9 +37,9 @@ class ManagerRPCAPI(service.RPCClient):
         """Get detailed info about some computehost."""
         return self.call('physical:host:get_computehost', host_id=host_id)
 
-    def list_computehosts(self):
+    def list_computehosts(self, query=None):
         """List all computehosts."""
-        return self.call('physical:host:list_computehosts')
+        return self.call('physical:host:list_computehosts', query=query)
 
     def create_computehost(self, host_values):
         """Create computehost with specified parameters."""

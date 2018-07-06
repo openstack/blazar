@@ -25,10 +25,10 @@ _api = utils.LazyProxy(service.API)
 
 # Computehosts operations
 
-@rest.get('')
-def computehosts_list():
+@rest.get('', query=True)
+def computehosts_list(query=None):
     """List all existing computehosts."""
-    return api_utils.render(hosts=_api.get_computehosts())
+    return api_utils.render(hosts=_api.get_computehosts(query))
 
 
 @rest.post('')

@@ -28,10 +28,10 @@ _api = utils.LazyProxy(service.API)
 
 # Leases operations
 
-@rest.get('/leases')
-def leases_list():
+@rest.get('/leases', query=True)
+def leases_list(query):
     """List all existing leases."""
-    return api_utils.render(leases=_api.get_leases())
+    return api_utils.render(leases=_api.get_leases(query))
 
 
 @rest.post('/leases')

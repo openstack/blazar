@@ -31,14 +31,15 @@ class API(object):
     # Leases operations
 
     @policy.authorize('leases', 'get')
-    def get_leases(self):
+    def get_leases(self, query):
         """List all existing leases."""
         ctx = context.current()
         if policy.enforce(ctx, 'admin', {}, do_raise=False):
             project_id = None
         else:
             project_id = ctx.project_id
-        return self.manager_rpcapi.list_leases(project_id=project_id)
+        return self.manager_rpcapi.list_leases(project_id=project_id,
+                                               query=query)
 
     @policy.authorize('leases', 'post')
     @trusts.use_trust_auth()
