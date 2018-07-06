@@ -43,12 +43,12 @@ class UtilsTestCase(tests.TestCase):
         self.rest._mroute.called_once_with('GET', 'rule', 200)
 
     def test_post(self):
-        self.rest.post('rule', status_code=202)
-        self.rest._mroute.called_once_with('POST', 'rule', 200)
+        self.rest.post('rule', status_code=201)
+        self.rest._mroute.called_once_with('POST', 'rule', 201)
 
     def test_put(self):
-        self.rest.put('rule', status_code=202)
-        self.rest._mroute.called_once_with('PUT', 'rule', 202)
+        self.rest.put('rule', status_code=200)
+        self.rest._mroute.called_once_with('PUT', 'rule', 200)
 
     def test_delete(self):
         self.rest.delete('rule', status_code=204)

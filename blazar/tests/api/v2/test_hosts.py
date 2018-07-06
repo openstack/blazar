@@ -220,7 +220,7 @@ class TestCreateHost(api.APITest):
     def test_create_one(self):
         response = self.post_json(self.path, self.fake_computehost_body,
                                   headers=self.headers)
-        self.assertEqual(202, response.status_int)
+        self.assertEqual(201, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(self.fake_computehost, response.json)
 
@@ -308,7 +308,7 @@ class TestUpdateHost(api.APITest):
         response = self.put_json(self.path, fake_computehost_request_body(
                                  exclude=['trust_id']),
                                  headers=self.headers)
-        self.assertEqual(202, response.status_int)
+        self.assertEqual(200, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(self.fake_computehost, response.json)
 

@@ -189,7 +189,7 @@ class TestCreateLease(api.APITest):
 
     def test_create_one(self):
         response = self.post_json(self.path, self.fake_lease_body)
-        self.assertEqual(202, response.status_int)
+        self.assertEqual(201, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(self.fake_lease, response.json)
 
@@ -268,7 +268,7 @@ class TestUpdateLease(api.APITest):
 
     def test_update_one(self):
         response = self.put_json(self.path, self.fake_lease_body)
-        self.assertEqual(202, response.status_int)
+        self.assertEqual(200, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(self.fake_lease, response.json)
 

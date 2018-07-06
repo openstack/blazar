@@ -36,10 +36,10 @@ class Rest(flask.Blueprint):
     def get(self, rule, status_code=200):
         return self._mroute('GET', rule, status_code)
 
-    def post(self, rule, status_code=202):
+    def post(self, rule, status_code=201):
         return self._mroute('POST', rule, status_code)
 
-    def put(self, rule, status_code=202):
+    def put(self, rule, status_code=200):
         return self._mroute('PUT', rule, status_code)
 
     def delete(self, rule, status_code=204):
