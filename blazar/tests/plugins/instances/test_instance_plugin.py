@@ -22,7 +22,6 @@ import six
 from blazar import context
 from blazar.db import api as db_api
 from blazar.db import utils as db_utils
-from blazar import exceptions
 from blazar.manager import exceptions as mgr_exceptions
 from blazar.plugins import instances
 from blazar.plugins.instances import instance_plugin
@@ -127,9 +126,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
         inputs = self.get_input_values(2, 4018, 10, 1, True,
                                        '2030-01-01 08:00', '2030-01-01 08:00',
                                        'lease-1', '')
-        self.assertRaises(exceptions.BlazarException, plugin.reserve_resource,
-                          'reservation_id', inputs)
-        self.assertRaises(exceptions.BlazarException,
+        self.assertRaises(mgr_exceptions.MalformedParameter,
+                          plugin.reserve_resource, 'reservation_id', inputs)
+        self.assertRaises(mgr_exceptions.MalformedParameter,
                           plugin.update_reservation, 'reservation_id', inputs)
 
     def test_filter_hosts_by_reservation_with_exclude(self):
