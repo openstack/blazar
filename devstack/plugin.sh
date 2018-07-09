@@ -185,6 +185,27 @@ function install_blazar {
 }
 
 
+# install_blazar_dashboard() - Install Blazar dashboard for Horizon
+function install_blazar_dashboard {
+    git_clone $BLAZAR_DASHBOARD_REPO $BLAZAR_DASHBOARD_DIR $BLAZAR_DASHBOARD_BRANCH
+    setup_develop $BLAZAR_DASHBOARD_DIR
+    blazar_setup_horizon
+}
+
+
+# Set up Horizon integration with Blazar
+function blazar_setup_horizon {
+    # Link Dashboard panel to Horizon's directory
+    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_90_admin_reservation_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_90_project_reservations_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_91_admin_reservation_hosts_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_91_project_reservations_leases_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+
+    # Restart Horizon
+    restart_apache_server
+}
+
+
 # start_blazar() - Start running processes, including screen
 function start_blazar {
     if [ "$BLAZAR_USE_MOD_WSGI" == "True" ]; then
@@ -220,6 +241,11 @@ if is_service_enabled blazar blazar-m blazar-a; then
         echo_summary "Installing Blazar"
         # Use stack_install_service here to account for virtualenv
         stack_install_service blazar
+
+        if is_service_enabled horizon; then
+            install_blazar_dashboard
+        fi
+
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring Blazar"
         configure_blazar
