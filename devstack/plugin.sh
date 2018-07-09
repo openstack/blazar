@@ -133,7 +133,7 @@ function create_blazar_cache_dir {
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
 function create_blazar_aggregate_freepool {
-    openstack --os-region $REGION_NAME aggregate create $BLAZAR_FREEPOOL_NAME
+    openstack --os-region-name $REGION_NAME aggregate create $BLAZAR_FREEPOOL_NAME
 }
 
 # create_blazar_accounts() - Set up common required Blazar accounts
