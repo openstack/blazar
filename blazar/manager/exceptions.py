@@ -153,6 +153,11 @@ class MissingParameter(exceptions.BlazarException):
     msg_fmt = _("Missing parameter %(param)s")
 
 
+class ExtraCapabilityTooLong(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _("Extra capability key too long")
+
+
 class InvalidState(exceptions.BlazarException):
     code = 409
     msg_fmt = _("Invalid State %(state)s for %(id)s")
