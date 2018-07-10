@@ -253,7 +253,7 @@ class ManagerService(service_utils.RPCServer):
         end_date = self._date_from_string(end_date)
 
         if start_date < now:
-            raise common_ex.NotAuthorized(
+            raise common_ex.InvalidInput(
                 'Start date must be later than current date')
 
         if end_date <= start_date:
@@ -383,21 +383,21 @@ class ManagerService(service_utils.RPCServer):
 
         if (lease['start_date'] < now and
                 values['start_date'] != lease['start_date']):
-            raise common_ex.NotAuthorized(
+            raise common_ex.InvalidInput(
                 'Cannot modify the start date of already started leases')
 
         if (lease['start_date'] > now and
                 values['start_date'] < now):
-            raise common_ex.NotAuthorized(
+            raise common_ex.InvalidInput(
                 'Start date must be later than current date')
 
         if lease['end_date'] < now:
-            raise common_ex.NotAuthorized(
+            raise common_ex.InvalidInput(
                 'Terminated leases can only be renamed')
 
         if (values['end_date'] < now or
            values['end_date'] < values['start_date']):
-            raise common_ex.NotAuthorized(
+            raise common_ex.InvalidInput(
                 'End date must be later than current and start date')
 
         with trusts.create_ctx_from_trust(lease['trust_id']):
