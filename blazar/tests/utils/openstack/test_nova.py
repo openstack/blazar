@@ -538,9 +538,13 @@ class NovaInventoryTestCase(tests.TestCase):
                           self.inventory.get_host_details, 'wrong_name')
 
     def test_get_host_details_with_invalid_host(self):
-        invalid_host = FakeNovaHypervisors.FakeHost
+        # Create a new class from FakeHost called `invalid_host`,
+        # which lacks the vcpus attribute.
+        invalid_host = type('invalid_host',
+                            FakeNovaHypervisors.FakeHost.__bases__,
+                            dict(FakeNovaHypervisors.FakeHost.__dict__))
         del invalid_host.vcpus
-        self.hypervisors_get.return_value = invalid_host
+        self.hypervisors_get.side_effect = [invalid_host]
         self.assertRaises(manager_exceptions.InvalidHost,
                           self.inventory.get_host_details, '1')
 
