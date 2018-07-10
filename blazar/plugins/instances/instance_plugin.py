@@ -49,7 +49,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             password=CONF.os_admin_password,
             user_domain_name=CONF.os_admin_user_domain_name,
             project_name=CONF.os_admin_project_name,
-            project_domain_name=CONF.os_admin_user_domain_name)
+            project_domain_name=CONF.os_admin_project_domain_name)
 
         self.freepool_name = CONF.nova.aggregate_freepool_name
         self.monitor = oshosts.host_plugin.PhysicalHostMonitorPlugin()

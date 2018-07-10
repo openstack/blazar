@@ -124,6 +124,13 @@ class ReservationPoolTestCase(tests.TestCase):
         self.blazar_owner = nova_conf.blazar_owner
         self.blazar_az_prefix = physical_host_conf.blazar_az_prefix
 
+        self.cfg = self.useFixture(fixture.Config(CONF))
+        self.cfg.config(os_admin_username='fake-user')
+        self.cfg.config(os_admin_password='fake-passwd')
+        self.cfg.config(os_admin_user_domain_name='fake-user-domain')
+        self.cfg.config(os_admin_project_name='fake-pj-name')
+        self.cfg.config(os_admin_project_domain_name='fake-pj-domain')
+
         self.fake_freepool = AggregateFake(i=456,
                                            name=self.freepool_name,
                                            hosts=['host3'])
@@ -141,6 +148,13 @@ class ReservationPoolTestCase(tests.TestCase):
 
         self.p_name = self.patch(self.pool, '_generate_aggregate_name')
         self.p_name.return_value = self.pool_name
+
+    def test_configuration(self):
+        self.assertEqual("fake-user", self.pool.username)
+        self.assertEqual("fake-passwd", self.pool.password)
+        self.assertEqual("fake-user-domain", self.pool.user_domain_name)
+        self.assertEqual("fake-pj-name", self.pool.project_name)
+        self.assertEqual("fake-pj-domain", self.pool.project_domain_name)
 
     def _patch_get_aggregate_from_name_or_id(self):
         def get_fake_aggregate(*args):

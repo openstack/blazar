@@ -210,7 +210,7 @@ class ReservationPool(NovaClientWrapper):
             password=CONF.os_admin_password,
             user_domain_name=CONF.os_admin_user_domain_name,
             project_name=CONF.os_admin_project_name,
-            project_domain_name=CONF.os_admin_user_domain_name)
+            project_domain_name=CONF.os_admin_project_domain_name)
 
         self.config = CONF.nova
         self.freepool_name = self.config.aggregate_freepool_name
