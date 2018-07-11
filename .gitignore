@@ -26,7 +26,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
-nosetests.xml
+.stestr/
 cover
 
 # Translations
@@ -34,8 +34,6 @@ cover
 
 AUTHORS
 ChangeLog
-
-.testrepository
 
 # generated policy file
 etc/blazar/policy.yaml.sample
