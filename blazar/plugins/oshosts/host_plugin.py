@@ -16,6 +16,8 @@
 
 import collections
 import datetime
+import shlex
+import subprocess
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -29,6 +31,7 @@ from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
 from blazar import status
+from blazar.utils.openstack import keystone
 from blazar.utils.openstack import nova
 from blazar.utils.openstack import placement
 from blazar.utils import plugins as plugins_utils
@@ -71,7 +74,8 @@ CONF = cfg.CONF
 CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 LOG = logging.getLogger(__name__)
 
-before_end_options = ['', 'snapshot', 'default']
+
+before_end_options = ['', 'snapshot', 'default', 'email']
 
 QUERY_TYPE_ALLOCATION = 'allocation'
 
@@ -220,6 +224,38 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 for server in client.servers.list(
                         search_opts={"node": host, "all_tenants": 1}):
                         client.servers.create_image(server=server)
+        elif action == 'email':
+            reservation_id = host_reservation['reservation_id']
+            reservation = db_api.reservation_get(reservation_id)
+            lease = db_api.lease_get(reservation['lease_id'])
+            project_id = lease['project_id']
+            user_id = lease['user_id']
+            keystoneclient = keystone.BlazarKeystoneClient(
+                username=CONF.os_admin_username,
+                password=CONF.os_admin_password,
+                tenant_name=CONF.os_admin_project_name)
+            project = keystoneclient.projects.get(project_id)
+            user = keystoneclient.users.get(user_id)
+            params_tmp = ('--to "{recipient}" '
+                          '--username "{username}" '
+                          '--project-name "{project_name}" '
+                          '--lease-name "{lease_name}" '
+                          '--lease-id "{lease_id}" '
+                          '--end-datetime "{end_datetime}" '
+                          '--site "{site}"')
+            params = params_tmp.format(recipient=user.email,
+                                       username=user.name,
+                                       project_name=project.name,
+                                       lease_name=lease['name'],
+                                       lease_id=lease['id'],
+                                       end_datetime=lease['end_date'],
+                                       site=CONF.os_region_name)
+            try:
+                subprocess.check_call(shlex.split(
+                    '/usr/local/bin/blazar_before_end_action_email {params}'.
+                    format(params=params)))
+            except Exception as e:
+                LOG.exception(str(e))
 
     def on_end(self, resource_id):
         """Remove the hosts from the pool."""
