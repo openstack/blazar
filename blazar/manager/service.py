@@ -613,7 +613,20 @@ class ManagerService(service_utils.RPCServer):
     def before_end_lease(self, lease_id, event_id):
         lease = self.get_lease(lease_id)
         with trusts.create_ctx_from_trust(lease['trust_id']):
-            self._basic_action(lease_id, event_id, 'before_end')
+            for reservation in lease['reservations']:
+                resource_type = reservation['resource_type']
+                try:
+                    self.resource_actions[resource_type]['before_end'](
+                        reservation['resource_id']
+                        )
+                except common_ex.BlazarException:
+                    LOG.exception("Failed to execute action %(action)s "
+                                  "for lease %(lease)s"
+                                  % {
+                                      'action': 'before_end',
+                                      'lease': lease_id,
+                                })
+            db_api.event_update(event_id, {'status': 'DONE'})
 
     def _basic_action(self, lease_id, event_id, action_time,
                       reservation_status=None):
