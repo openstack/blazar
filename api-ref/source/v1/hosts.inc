@@ -59,7 +59,7 @@ Create a host.
 
 **Response codes**
 
-Normal response code: 200
+Normal response code: 201
 
 Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
 Conflict(409), Internal Server Error(500)
@@ -227,7 +227,7 @@ The host must exist.
 
 **Response codes**
 
-Normal response code: 200
+Normal response code: 204
 
 Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
 Not Found(404), Conflict(409), Internal Server Error(500)
