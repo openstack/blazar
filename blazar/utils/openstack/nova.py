@@ -441,12 +441,18 @@ class NovaInventory(NovaClientWrapper):
     def get_host_details(self, host):
         """Get Nova capabilities of a single host
 
-        :param host: UUID or name of nova-compute host
+        :param host: UUID, ID or name of nova-compute host
         :return: Dict of capabilities or raise HostNotFound
         """
         try:
+            # NOTE(tetsuro): Only id (microversion < 2.53) or uuid
+            # (microversion >= 2.53) is acceptable for the
+            # `novaclient.hypervisors.get` argument. The invalid arguments
+            # result in NotFound exception for microversion < 2.53 and
+            # BadRequest exception for microversion >= 2.53
             hypervisor = self.nova.hypervisors.get(host)
-        except nova_exception.NotFound:
+        except (nova_exception.NotFound, nova_exception.BadRequest):
+            # Name (not id or uuid) is given for the `host` parameter.
             try:
                 hypervisors_list = self.nova.hypervisors.search(host)
             except nova_exception.NotFound:
@@ -468,12 +474,15 @@ class NovaInventory(NovaClientWrapper):
                     az_name = zone.zoneName
 
         try:
+            # NOTE(tetsuro): compute API microversion 2.28 changes cpu_info
+            # from string to object
+            cpu_info = str(hypervisor.cpu_info)
             return {'id': hypervisor.id,
                     'availability_zone': az_name,
                     'hypervisor_hostname': hypervisor.hypervisor_hostname,
                     'service_name': hypervisor.service['host'],
                     'vcpus': hypervisor.vcpus,
-                    'cpu_info': hypervisor.cpu_info,
+                    'cpu_info': cpu_info,
                     'hypervisor_type': hypervisor.hypervisor_type,
                     'hypervisor_version': hypervisor.hypervisor_version,
                     'memory_mb': hypervisor.memory_mb,
