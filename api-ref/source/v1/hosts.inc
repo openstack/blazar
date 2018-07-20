@@ -243,3 +243,79 @@ Response
 --------
 
 No body content is returned on a successful DELETE.
+
+====================
+Resource Allocations
+====================
+
+List Allocations
+================
+
+.. rest_method:: GET v1/os-hosts/allocations
+
+List allocations of all hosts.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Internal Server Error(500)
+
+Request
+-------
+
+No body content, path, nor query option.
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - allocations: allocations
+  - resource_id: host_id
+  - reservations: reservation_allocation
+  - reservation.id: reservation_id
+  - reservation.lease_id: lease_id
+
+**Example of List Allocations Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/allocation-list-resp.json
+   :language: javascript
+
+Get Allocation
+==============
+
+.. rest_method:: GET v1/os-hosts/{host_id}/allocation
+
+Get allocation of a host.
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - host_id: host_id_path
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - allocation: allocation
+  - resource_id: host_id
+  - reservations: reservation_allocation
+  - reservation.id: reservation_id
+  - reservation.lease_id: lease_id
+
+**Example of Get Allocation Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/allocation-get-resp.json
+   :language: javascript

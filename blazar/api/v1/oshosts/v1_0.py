@@ -61,3 +61,16 @@ def computehosts_delete(host_id):
     """Delete specified computehost."""
     _api.delete_computehost(host_id)
     return api_utils.render()
+
+
+@rest.get('/allocations', query=True)
+def allocations_list(query):
+    """List all allocations on all computehosts."""
+    return api_utils.render(allocations=_api.list_allocations(query))
+
+
+@rest.get('/<host_id>/allocation', query=True)
+@validation.check_exists(_api.get_computehost, host_id='host_id')
+def allocations_get(host_id, query):
+    """List all allocations on a specific host."""
+    return api_utils.render(allocation=_api.get_allocations(host_id, query))
