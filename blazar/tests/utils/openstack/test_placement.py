@@ -200,3 +200,88 @@ class TestPlacementClient(tests.TestCase):
         self.assertRaises(
             exceptions.ResourceProviderDeletionFailed,
             self.client.delete_resource_provider, rp_uuid)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_create_reservation_provider(self, kss_req):
+        host_uuid = uuidutils.generate_uuid()
+        host_name = "compute-1"
+        rp_uuid = uuidutils.generate_uuid()
+        rp_name = "blazar_compute-1"
+        get_json_mock = {
+            'resource_providers': [
+                {
+                    'uuid': host_uuid,
+                    'name': host_name,
+                    'generation': 0,
+                    'parent_provider_uuid': None
+                }
+            ]
+        }
+        post_json_mock = {'uuid': rp_uuid,
+                          'name': rp_name,
+                          'generation': 0,
+                          'parent_provider_uuid': host_uuid}
+        mock_call1 = fake_requests.FakeResponse(
+            200, content=json.dumps(get_json_mock))
+        mock_call2 = fake_requests.FakeResponse(
+            200, content=json.dumps(post_json_mock))
+        kss_req.side_effect = [mock_call1, mock_call2]
+
+        self.client.create_reservation_provider(host_name)
+
+        expected_url_get = "/resource_providers?name=%s" % host_name
+        kss_req.assert_any_call(
+            expected_url_get, 'GET',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+        expected_url_post = "/resource_providers"
+        kss_req.assert_any_call(
+            expected_url_post, 'POST',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            json={'name': 'blazar_compute-1',
+                  'parent_provider_uuid': host_uuid},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_delete_reservation_provider(self, kss_req):
+        host_uuid = uuidutils.generate_uuid()
+        host_name = "compute-1"
+        rp_uuid = uuidutils.generate_uuid()
+        rp_name = "blazar_compute-1"
+        get_json_mock = {
+            'resource_providers': [
+                {
+                    'uuid': rp_uuid,
+                    'name': rp_name,
+                    'generation': 0,
+                    'parent_provider_uuid': host_uuid
+                }
+            ]
+        }
+        mock_call1 = fake_requests.FakeResponse(
+            200, content=json.dumps(get_json_mock))
+        mock_call2 = fake_requests.FakeResponse(200)
+        kss_req.side_effect = [mock_call1, mock_call2]
+
+        self.client.delete_reservation_provider(host_name)
+
+        expected_url_get = "/resource_providers?name=%s" % rp_name
+        kss_req.assert_any_call(
+            expected_url_get, 'GET',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+        expected_url_post = "/resource_providers/%s" % rp_uuid
+        kss_req.assert_any_call(
+            expected_url_post, 'DELETE',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
