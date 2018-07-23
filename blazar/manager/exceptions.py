@@ -82,6 +82,7 @@ class EventError(exceptions.BlazarException):
 
 
 class InvalidDate(exceptions.BlazarException):
+    code = 400
     msg_fmt = _(
         '%(date)s is an invalid date. Required format: %(date_format)s')
 
