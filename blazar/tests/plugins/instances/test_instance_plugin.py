@@ -219,8 +219,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 20,
             'amount': 2,
             'resource_properties': '',
-            'start_date': '2030-01-01 08:00',
-            'end_date': '2030-01-01 12:00'
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
         expected = {'added': set(['host-2', 'host-3']), 'removed': set([])}
         ret = plugin.pickup_hosts('reservation-id1', values)
@@ -261,8 +261,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 20,
             'amount': 2,
             'resource_properties': '',
-            'start_date': '2030-01-01 08:00',
-            'end_date': '2030-01-01 12:00'
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00),
             }
         expected = {'added': set(['host-1', 'host-2']), 'removed': set([])}
         ret = plugin.pickup_hosts('reservation-id1', values)
@@ -315,8 +315,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 20,
             'amount': 2,
             'resource_properties': '',
-            'start_date': '2030-01-01 08:00',
-            'end_date': '2030-01-01 12:00'
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
 
         expected = {'added': set(['host-1', 'host-3']), 'removed': set([])}
@@ -369,8 +369,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'disk_gb': 20,
             'amount': 2,
             'resource_properties': '',
-            'start_date': '2030-01-01 08:00',
-            'end_date': '2030-01-01 12:00'
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
 
         hosts = plugin.pickup_hosts('reservation-id1', values)

@@ -495,6 +495,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         allocated_host_ids = []
         not_allocated_host_ids = []
         filter_array = []
+        start_date_with_margin = start_date - datetime.timedelta(
+            minutes=CONF.cleaning_time)
+        end_date_with_margin = end_date + datetime.timedelta(
+            minutes=CONF.cleaning_time)
+
         # TODO(frossigneux) support "or" operator
         if hypervisor_properties:
             filter_array = plugins_utils.convert_requirements(
@@ -508,11 +513,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 not_allocated_host_ids.append(host['id'])
             elif db_utils.get_free_periods(
                 host['id'],
-                start_date,
-                end_date,
-                end_date - start_date,
+                start_date_with_margin,
+                end_date_with_margin,
+                end_date_with_margin - start_date_with_margin
             ) == [
-                (start_date, end_date),
+                (start_date_with_margin, end_date_with_margin),
             ]:
                 allocated_host_ids.append(host['id'])
         if len(not_allocated_host_ids) >= int(min_host):
