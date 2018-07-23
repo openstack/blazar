@@ -27,7 +27,9 @@ from blazar.plugins import base
 from blazar.plugins import instances as plugin
 from blazar.plugins import oshosts
 from blazar import status
+from blazar.utils.openstack import exceptions as openstack_ex
 from blazar.utils.openstack import nova
+from blazar.utils.openstack import placement
 from blazar.utils import plugins as plugins_utils
 
 CONF = cfg.CONF
@@ -54,6 +56,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         self.freepool_name = CONF.nova.aggregate_freepool_name
         self.monitor = oshosts.host_plugin.PhysicalHostMonitorPlugin()
         self.monitor.register_healing_handler(self.heal_reservations)
+        self.placement_client = placement.BlazarPlacementClient()
 
     def filter_hosts_by_reservation(self, hosts, start_date, end_date,
                                     excludes):
@@ -216,11 +219,17 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'is_public': False
             }
         reserved_flavor = self.nova.nova.flavors.create(**flavor_details)
+
+        # Set extra specs to the flavor
+        rsv_id_rc_format = reservation_id.upper().replace("-", "_")
+        reservation_rc = "resources:CUSTOM_RESERVATION_" + rsv_id_rc_format
         extra_specs = {
             FLAVOR_EXTRA_SPEC: reservation_id,
-            "affinity_id": group_id
+            "affinity_id": group_id,
+            reservation_rc: "1"
             }
         reserved_flavor.set_keys(extra_specs)
+
         return reserved_flavor
 
     def _create_resources(self, inst_reservation):
@@ -247,6 +256,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'affinity_id': reserved_group.id
             }
         agg = pool.create(name=reservation_id, metadata=pool_metadata)
+
+        self.placement_client.create_reservation_class(reservation_id)
 
         return reserved_flavor, reserved_group, agg
 
@@ -289,6 +300,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                     err_msg = ('Fail to add host %s to aggregate %s.'
                                % (host, reservation['aggregate_id']))
                     raise mgr_exceptions.NovaClientError(err_msg)
+                self.placement_client.update_reservation_inventory(
+                    host['service_name'], reservation['id'], 1)
         else:
             try:
                 self.nova.nova.flavors.delete(reservation['id'])
@@ -458,28 +471,38 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             host = db_api.host_get(allocation['compute_host_id'])
             pool.add_computehost(instance_reservation['aggregate_id'],
                                  host['service_name'], stay_in=True)
+            self.placement_client.update_reservation_inventory(
+                host['service_name'], reservation_id, 1)
 
     def on_end(self, resource_id):
         instance_reservation = db_api.instance_reservation_get(resource_id)
+        reservation_id = instance_reservation['reservation_id']
         ctx = context.current()
 
         try:
             self.nova.flavor_access.remove_tenant_access(
-                instance_reservation['reservation_id'], ctx.project_id)
+                reservation_id, ctx.project_id)
         except nova_exceptions.NotFound:
             pass
 
         allocations = db_api.host_allocation_get_all_by_values(
-            reservation_id=instance_reservation['reservation_id'])
+            reservation_id=reservation_id)
         for allocation in allocations:
+            host = db_api.host_get(allocation['compute_host_id'])
             db_api.host_allocation_destroy(allocation['id'])
+            try:
+                self.placement_client.delete_reservation_inventory(
+                    host['service_name'], reservation_id)
+            except openstack_ex.ResourceProviderNotFound:
+                pass
 
         for server in self.nova.servers.list(search_opts={
-                'flavor': instance_reservation['reservation_id'],
+                'flavor': reservation_id,
                 'all_tenants': 1}, detailed=False):
             server.delete()
 
         self.cleanup_resources(instance_reservation)
+        self.placement_client.delete_reservation_class(reservation_id)
 
     def heal_reservations(self, failed_resources, interval_begin,
                           interval_end):
@@ -534,6 +557,11 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             host = db_api.host_get(allocation['compute_host_id'])
             pool.remove_computehost(reservation['aggregate_id'],
                                     host['service_name'])
+            try:
+                self.placement_client.delete_reservation_inventory(
+                    host['service_name'], reservation['id'])
+            except openstack_ex.ResourceProviderNotFound:
+                pass
 
         # Allocate an alternative host.
         values = {}
@@ -561,6 +589,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                 pool.add_computehost(reservation['aggregate_id'],
                                      new_host['service_name'],
                                      stay_in=True)
+                self.placement_client.update_reservation_inventory(
+                    new_host['service_name'], reservation['id'], 1)
             LOG.warn('Resource changed for reservation %s (lease: %s).',
                      reservation['id'], lease['name'])
 

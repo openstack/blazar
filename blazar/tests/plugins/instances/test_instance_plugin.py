@@ -540,6 +540,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
         type(plugin).nova = mock_nova
         mock_nova.nova.flavors.create.return_value = fake_flavor
 
+        mock_create_reservation_class = self.patch(
+            plugin.placement_client, 'create_reservation_class')
+
         fake_pool = mock.MagicMock(id='pool-id1')
         fake_agg = mock.MagicMock()
         fake_pool.create.return_value = fake_agg
@@ -560,12 +563,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
             vcpus=2, ram=1024, disk=20, is_public=False)
         fake_flavor.set_keys.assert_called_once_with(
             {'aggregate_instance_extra_specs:reservation': 'reservation-id1',
-             'affinity_id': 'server_group_id1'})
+             'affinity_id': 'server_group_id1',
+             'resources:CUSTOM_RESERVATION_RESERVATION_ID1': '1'})
         fake_pool.create.assert_called_once_with(
             name='reservation-id1',
             metadata={'reservation': 'reservation-id1',
                       'filter_tenant_id': 'fake-project',
                       'affinity_id': 'server_group_id1'})
+        mock_create_reservation_class.assert_called_once_with(
+            'reservation-id1')
 
     def test_pickup_hosts_for_update(self):
         reservation = {'id': 'reservation-id1', 'status': 'pending'}
@@ -675,7 +681,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
             vcpus=2, ram=1024, disk=10, is_public=False)
         fake_flavor.set_keys.assert_called_once_with(
             {'aggregate_instance_extra_specs:reservation': 'reservation-id1',
-             'affinity_id': 'group-1'})
+             'affinity_id': 'group-1',
+             'resources:CUSTOM_RESERVATION_RESERVATION_ID1': '1'})
 
     def test_update_resources_in_active(self):
         def fake_host_get(host_id):
@@ -691,6 +698,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_reservation_get.return_value = reservation
         self.set_context(context.BlazarContext(project_id='fake-project'))
         plugin = instance_plugin.VirtualInstancePlugin()
+
+        mock_update_reservation_inventory = self.patch(
+            plugin.placement_client, 'update_reservation_inventory')
 
         fake_pool = mock.MagicMock()
         mock_pool = self.patch(nova, 'ReservationPool')
@@ -709,9 +719,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         mock_reservation_get.assert_called_once_with('reservation-id1')
         for i in range(3):
-            fake_pool.add_computehost.assert_any_call('aggregate-1',
-                                                      'host' + str(i + 1),
-                                                      stay_in=True)
+            fake_pool.add_computehost.assert_any_call(
+                'aggregate-1', 'host' + str(i + 1), stay_in=True)
+            mock_update_reservation_inventory.assert_any_call(
+                'host' + str(i + 1), 'reservation-id1', 1)
 
     def test_update_reservation(self):
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -856,6 +867,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_pool = self.patch(nova, 'ReservationPool')
         mock_pool.return_value = fake_pool
 
+        mock_update_reservation_inventory = self.patch(
+            plugin.placement_client, 'update_reservation_inventory')
+
         mock_alloc_get = self.patch(db_api,
                                     'host_allocation_get_all_by_values')
         mock_alloc_get.return_value = [
@@ -870,9 +884,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_nova.flavor_access.add_tenant_access.assert_called_once_with(
             'reservation-id1', 'fake-project')
         for i in range(3):
-            fake_pool.add_computehost.assert_any_call('aggregate-id1',
-                                                      'host' + str(i + 1),
-                                                      stay_in=True)
+            fake_pool.add_computehost.assert_any_call(
+                'aggregate-id1', 'host' + str(i + 1), stay_in=True)
+            mock_update_reservation_inventory.assert_any_call(
+                'host' + str(i + 1), 'reservation-id1', 1)
 
     def test_on_end(self):
         self.set_context(context.BlazarContext(project_id='fake-project-id'))
@@ -885,8 +900,20 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         mock_alloc_get = self.patch(db_api,
                                     'host_allocation_get_all_by_values')
-        mock_alloc_get.return_value = [{'id': 'host-alloc-id1'},
-                                       {'id': 'host-alloc-id2'}]
+        mock_alloc_get.return_value = [{'id': 'host-alloc-id1',
+                                        'compute_host_id': 'host-id1'},
+                                       {'id': 'host-alloc-id2',
+                                        'compute_host_id': 'host-id2'}]
+
+        mock_host_get = self.patch(db_api, 'host_get')
+        mock_host_get.side_effect = [
+            {'service_name': 'host1'}, {'service_name': 'host2'}
+        ]
+
+        mock_delete_reservation_inventory = self.patch(
+            plugin.placement_client, 'delete_reservation_inventory')
+        mock_delete_reservation_class = self.patch(
+            plugin.placement_client, 'delete_reservation_class')
 
         self.patch(db_api, 'host_allocation_destroy')
 
@@ -907,8 +934,13 @@ class TestVirtualInstancePlugin(tests.TestCase):
             detailed=False)
         for fake in fake_servers:
             fake.delete.assert_called_once()
+        for i in range(2):
+            mock_delete_reservation_inventory.assert_any_call(
+                'host' + str(i + 1), 'reservation-id1')
         mock_cleanup_resources.assert_called_once_with(
             fake_instance_reservation)
+        mock_delete_reservation_class.assert_called_once_with(
+            'reservation-id1')
 
     def test_heal_reservations_before_start_and_resources_changed(self):
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -1132,13 +1164,17 @@ class TestVirtualInstancePlugin(tests.TestCase):
         lease_get = self.patch(db_api, 'lease_get')
         lease_get.return_value = dummy_lease
         host_get = self.patch(db_api, 'host_get')
-        host_get.return_value = failed_host
+        host_get.side_effect = [failed_host, new_host]
         fake_pool = mock.MagicMock()
         mock_pool = self.patch(nova, 'ReservationPool')
         mock_pool.return_value = fake_pool
         pickup_hosts = self.patch(plugin, 'pickup_hosts')
         pickup_hosts.return_value = {'added': [new_host['id']], 'removed': []}
         alloc_update = self.patch(db_api, 'host_allocation_update')
+        mock_delete_reservation_inventory = self.patch(
+            plugin.placement_client, 'delete_reservation_inventory')
+        mock_update_reservation_inventory = self.patch(
+            plugin.placement_client, 'update_reservation_inventory')
 
         with mock.patch.object(datetime, 'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
@@ -1155,8 +1191,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
             {'compute_host_id': new_host['id']})
         fake_pool.add_computehost.assert_called_once_with(
             dummy_reservation['aggregate_id'],
-            failed_host['service_name'],
+            new_host['service_name'],
             stay_in=True)
+        mock_delete_reservation_inventory.assert_called_once_with(
+            'compute-1', 'rsrv-1')
+        mock_update_reservation_inventory.assert_called_once_with(
+            'compute-2', 'rsrv-1', 1)
         self.assertEqual(True, result)
 
     def test_reallocate_missing_resources(self):
