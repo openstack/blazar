@@ -12,6 +12,16 @@ lease_id_path:
   required: true
   type: string
 
+
+# variables in query
+allocation_lease_id_query:
+  description: |
+    Filter allocations results by lease id
+  in: query
+  required: false
+  type: string
+
+
 # variables in body
 allocation:
   description: |
