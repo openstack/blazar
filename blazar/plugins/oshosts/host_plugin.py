@@ -362,30 +362,27 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 if trust_id:
                     host_details.update({'trust_id': trust_id})
                 host = db_api.host_create(host_details)
-            except db_ex.BlazarDBException:
+            except db_ex.BlazarDBException as e:
                 # We need to rollback
                 # TODO(sbauza): Investigate use of Taskflow for atomic
                 # transactions
                 pool.remove_computehost(self.freepool_name,
                                         host_details['service_name'])
-            if host:
-                for key in extra_capabilities:
-                    values = {'computehost_id': host['id'],
-                              'capability_name': key,
-                              'capability_value': extra_capabilities[key],
-                              }
-                    try:
-                        db_api.host_extra_capability_create(values)
-                    except db_ex.BlazarDBException:
-                        cantaddextracapability.append(key)
+                raise e
+            for key in extra_capabilities:
+                values = {'computehost_id': host['id'],
+                          'capability_name': key,
+                          'capability_value': extra_capabilities[key],
+                          }
+                try:
+                    db_api.host_extra_capability_create(values)
+                except db_ex.BlazarDBException:
+                    cantaddextracapability.append(key)
             if cantaddextracapability:
                 raise manager_ex.CantAddExtraCapability(
                     keys=cantaddextracapability,
                     host=host['id'])
-            if host:
-                return self.get_computehost(host['id'])
-            else:
-                return None
+            return self.get_computehost(host['id'])
 
     def is_updatable_extra_capability(self, capability):
         reservations = db_utils.get_reservations_by_host_id(
