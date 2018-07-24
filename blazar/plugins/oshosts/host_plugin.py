@@ -29,6 +29,7 @@ from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
 from blazar import status
 from blazar.utils.openstack import nova
+from blazar.utils.openstack import placement
 from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
 
@@ -87,6 +88,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             project_domain_name=CONF.os_admin_project_domain_name)
         self.monitor = PhysicalHostMonitorPlugin()
         self.monitor.register_healing_handler(self.heal_reservations)
+        self.placement_client = placement.BlazarPlacementClient()
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
@@ -352,6 +354,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             if any([len(key) > 64 for key in extra_capabilities_keys]):
                 raise manager_ex.ExtraCapabilityTooLong()
 
+            self.placement_client.create_reservation_provider(
+                host_details['service_name'])
+
             pool = nova.ReservationPool()
             pool.add_computehost(self.freepool_name,
                                  host_details['service_name'])
@@ -368,6 +373,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # transactions
                 pool.remove_computehost(self.freepool_name,
                                         host_details['service_name'])
+                self.placement_client.delete_reservation_provider(
+                    host_details['service_name'])
                 raise e
             for key in extra_capabilities:
                 values = {'computehost_id': host['id'],
@@ -480,6 +487,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 pool = nova.ReservationPool()
                 pool.remove_computehost(self.freepool_name,
                                         host['service_name'])
+                self.placement_client.delete_reservation_provider(
+                    host['service_name'])
                 # NOTE(sbauza): Extracapabilities will be destroyed thanks to
                 #  the DB FK.
                 db_api.host_destroy(host_id)
