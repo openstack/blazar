@@ -16,7 +16,7 @@
 from oslo_log import log as logging
 
 from blazar import context
-from blazar.manager import rpcapi as manager_rpcapi
+from blazar.manager.leases import rpcapi as manager_rpcapi
 from blazar import policy
 from blazar.utils import trusts
 

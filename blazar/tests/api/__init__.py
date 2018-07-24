@@ -22,8 +22,8 @@ import six
 
 from blazar.api import context as api_context
 from blazar import context
+from blazar.manager.leases import rpcapi as leases_api
 from blazar.manager.oshosts import rpcapi as hosts_rpcapi
-from blazar.manager import rpcapi
 from blazar import tests
 
 PATH_PREFIX = '/v2'
@@ -65,7 +65,7 @@ class APITest(tests.TestCase):
                                                 'ctx_from_headers')
         self.fake_ctx_from_headers.side_effect = fake_ctx_from_headers
 
-        self.rpcapi = rpcapi.ManagerRPCAPI
+        self.rpcapi = leases_api.ManagerRPCAPI
         self.hosts_rpcapi = hosts_rpcapi.ManagerRPCAPI
 
         # self.patch(rpcapi.ManagerRPCAPI, 'list_leases').return_value = []

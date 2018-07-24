@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from blazar.manager import rpcapi
+from blazar.manager.leases import rpcapi
 from blazar import tests
 
 
