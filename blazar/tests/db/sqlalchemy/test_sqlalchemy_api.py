@@ -34,9 +34,11 @@ def _get_fake_lease_uuid():
     return 'aaaaaaaa-1111-bbbb-2222-cccccccccccc'
 
 
-def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
+def _get_fake_phys_reservation_values(id=None,
                                       lease_id=_get_fake_lease_uuid(),
                                       resource_id=None):
+    if id is None:
+        id = _get_fake_random_uuid()
     return {'id': id,
             'lease_id': lease_id,
             'resource_id': '1234' if not resource_id else resource_id,
@@ -47,11 +49,13 @@ def _get_fake_phys_reservation_values(id=_get_fake_random_uuid(),
             'trust_id': 'exxee111qwwwwe'}
 
 
-def _get_fake_event_values(id=_get_fake_random_uuid(),
+def _get_fake_event_values(id=None,
                            lease_id=_get_fake_lease_uuid(),
                            event_type='fake_event_type',
                            time=None,
                            status='fake_event_status'):
+    if id is None:
+        id = _get_fake_random_uuid()
     return {'id': id,
             'lease_id': lease_id,
             'event_type': event_type,
@@ -63,11 +67,13 @@ def _get_datetime(value='2030-01-01 00:00'):
     return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M')
 
 
-def _get_fake_phys_lease_values(id=_get_fake_lease_uuid(),
+def _get_fake_phys_lease_values(id=None,
                                 name='fake_phys_lease',
                                 start_date=_get_datetime('2030-01-01 00:00'),
                                 end_date=_get_datetime('2030-01-02 00:00'),
                                 resource_id=None):
+    if id is None:
+        id = _get_fake_random_uuid()
     return {'id': id,
             'name': name,
             'user_id': 'fake',
@@ -122,8 +128,11 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     return lease
 
 
-def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
-                                      reservation_id=_get_fake_random_uuid()):
+def _get_fake_host_reservation_values(id=None, reservation_id=None):
+    if id is None:
+        id = _get_fake_random_uuid()
+    if reservation_id is None:
+        reservation_id = _get_fake_random_uuid()
     return {'id': id,
             'reservation_id': reservation_id,
             'resource_properties': "fake",
@@ -132,8 +141,11 @@ def _get_fake_host_reservation_values(id=_get_fake_random_uuid(),
             'trust_id': 'exxee111qwwwwe'}
 
 
-def _get_fake_instance_values(id=_get_fake_random_uuid(),
-                              reservation_id=_get_fake_random_uuid()):
+def _get_fake_instance_values(id=None, reservation_id=None):
+    if id is None:
+        id = _get_fake_random_uuid()
+    if reservation_id is None:
+        reservation_id = _get_fake_random_uuid()
     return {'id': id,
             'reservation_id': reservation_id,
             'vcpus': 1,
@@ -155,7 +167,9 @@ def _get_fake_cpu_info():
                 'topology': {'cores': 1, 'threads': 1, 'sockets': 2}})
 
 
-def _get_fake_host_values(id=_get_fake_random_uuid(), mem=8192, disk=10):
+def _get_fake_host_values(id=None, mem=8192, disk=10):
+    if id is None:
+        id = _get_fake_random_uuid()
     return {'id': id,
             'availability_zone': 'az1',
             'vcpus': 1,
@@ -215,12 +229,12 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(1, len(db_api.reservation_get_all()))
 
     def test_create_duplicate_leases(self):
-        """Create two leases with same names, and checks it raises an error."""
+        """Create two leases with same ids, and checks it raises an error."""
 
-        db_api.lease_create(_get_fake_phys_lease_values())
+        db_api.lease_create(_get_fake_phys_lease_values(id='42'))
         self.assertRaises(db_exceptions.BlazarDBDuplicateEntry,
                           db_api.lease_create,
-                          _get_fake_phys_lease_values())
+                          _get_fake_phys_lease_values(id='42'))
 
     def test_create_leases_with_duplicated_reservation(self):
         """Check duplicated reservation create
