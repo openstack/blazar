@@ -79,7 +79,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def max_usages(self, host, reservations):
         def resource_usage_by_event(event, resource_type):
-            return event['reservation']['instance_reservations'][resource_type]
+            return event['reservation']['instance_reservation'][resource_type]
 
         events_list = []
         for r in reservations:
