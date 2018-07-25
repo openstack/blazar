@@ -258,6 +258,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                           self.fake_phys_plugin.create_computehost,
                           self.fake_host)
 
+    def test_create_duplicate_host(self):
+        def fake_db_host_create(*args, **kwargs):
+            raise db_exceptions.BlazarDBDuplicateEntry
+        self.db_host_create.side_effect = fake_db_host_create
+        self.assertRaises(db_exceptions.BlazarDBDuplicateEntry,
+                          self.fake_phys_plugin.create_computehost,
+                          self.fake_host)
+
     def test_create_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_create(*args, **kwargs):
             raise db_exceptions.BlazarDBException

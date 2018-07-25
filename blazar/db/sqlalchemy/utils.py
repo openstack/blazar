@@ -40,7 +40,8 @@ def _get_leases_from_resource_id(resource_id, start_date, end_date):
                       models.Lease.end_date < start_date)
     border1 = sa.and_(models.Lease.start_date > end_date,
                       models.Lease.end_date > end_date)
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .filter(models.Reservation.resource_id == resource_id)
              .filter(~sa.or_(border0, border1)))
     for lease in query:
@@ -53,7 +54,8 @@ def _get_leases_from_host_id(host_id, start_date, end_date):
                       models.Lease.end_date < start_date)
     border1 = sa.and_(models.Lease.start_date > end_date,
                       models.Lease.end_date > end_date)
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(~sa.or_(border0, border1)))
@@ -67,7 +69,8 @@ def get_reservations_by_host_id(host_id, start_date, end_date):
                       models.Lease.end_date < start_date)
     border1 = sa.and_(models.Lease.start_date > end_date,
                       models.Lease.end_date > end_date)
-    query = (session.query(models.Reservation).join(models.Lease)
+    query = (api.model_query(models.Reservation, session=session)
+             .join(models.Lease)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(~sa.or_(border0, border1)))
@@ -80,7 +83,8 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
                       models.Lease.end_date < start_date)
     border1 = sa.and_(models.Lease.start_date > end_date,
                       models.Lease.end_date > end_date)
-    query = (session.query(models.Reservation).join(models.Lease)
+    query = (api.model_query(models.Reservation, session=session)
+             .join(models.Lease)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
@@ -238,7 +242,8 @@ def longest_lease(host_id, start_date, end_date):
     max_duration = datetime.timedelta(0)
     longest_lease = None
     session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)
@@ -256,7 +261,8 @@ def shortest_lease(host_id, start_date, end_date):
     min_duration = datetime.timedelta(365 * 1000)
     longest_lease = None
     session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)
