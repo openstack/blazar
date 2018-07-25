@@ -41,7 +41,7 @@ def _id_column():
 
 # Main objects: Lease, Reservation, Event
 
-class Lease(mb.BlazarBase):
+class Lease(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Contains all info about lease."""
 
     __tablename__ = 'leases'
@@ -68,7 +68,7 @@ class Lease(mb.BlazarBase):
         return d
 
 
-class Reservation(mb.BlazarBase):
+class Reservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Specifies group of nodes within a cluster."""
 
     __tablename__ = 'reservations'
@@ -141,7 +141,7 @@ class Reservation(mb.BlazarBase):
         return d
 
 
-class Event(mb.BlazarBase):
+class Event(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """An events occurring with the lease."""
 
     __tablename__ = 'events'
@@ -156,7 +156,7 @@ class Event(mb.BlazarBase):
         return super(Event, self).to_dict()
 
 
-class ComputeHostReservation(mb.BlazarBase):
+class ComputeHostReservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Description
 
     Specifies resources asked by reservation from
@@ -177,7 +177,7 @@ class ComputeHostReservation(mb.BlazarBase):
         return super(ComputeHostReservation, self).to_dict()
 
 
-class InstanceReservations(mb.BlazarBase):
+class InstanceReservations(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """The definition of a flavor of the reservation."""
 
     __tablename__ = 'instance_reservations'
@@ -195,14 +195,13 @@ class InstanceReservations(mb.BlazarBase):
     server_group_id = sa.Column(sa.String(36), nullable=True)
 
 
-class ComputeHostAllocation(mb.BlazarBase):
+class ComputeHostAllocation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Mapping between ComputeHost, ComputeHostReservation and Reservation."""
 
     __tablename__ = 'computehost_allocations'
 
     id = _id_column()
-    compute_host_id = sa.Column(sa.String(36),
-                                sa.ForeignKey('computehosts.id'))
+    compute_host_id = sa.Column(sa.String(36))
     reservation_id = sa.Column(sa.String(36),
                                sa.ForeignKey('reservations.id'))
 

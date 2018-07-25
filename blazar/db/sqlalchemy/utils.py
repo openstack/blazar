@@ -282,7 +282,8 @@ def longest_lease(host_id, start_date, end_date):
     max_duration = datetime.timedelta(0)
     longest_lease = None
     session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)
@@ -300,7 +301,8 @@ def shortest_lease(host_id, start_date, end_date):
     min_duration = datetime.timedelta(365 * 1000)
     longest_lease = None
     session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)

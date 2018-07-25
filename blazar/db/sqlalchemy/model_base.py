@@ -14,8 +14,28 @@
 # limitations under the License.
 
 from oslo_db.sqlalchemy import models
+from oslo_utils import timeutils
+from sqlalchemy import Column
+from sqlalchemy import DateTime
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
+from sqlalchemy import String
+
+
+class SoftDeleteMixinWithUuid(object):
+    """Mixin to provide soft delete capabilities.
+
+    We cannot use oslo.db's SoftDeleteMixin as it assumes the `id` column is an
+    integer, while we use a UUID string.
+    """
+    deleted_at = Column(DateTime)
+    deleted = Column(String(36), nullable=True)
+
+    def soft_delete(self, session):
+        """Mark this object as deleted."""
+        self.deleted = self.id
+        self.deleted_at = timeutils.utcnow()
+        self.save(session=session)
 
 
 class _BlazarBase(models.ModelBase, models.TimestampMixin):
@@ -40,6 +60,12 @@ class _BlazarBase(models.ModelBase, models.TimestampMixin):
 
         datetime_to_str(d, 'created_at')
         datetime_to_str(d, 'updated_at')
+
+        # Don't show fields created by SoftDeleteMixinWithUuid
+        if 'deleted' in d:
+            del d['deleted']
+        if 'deleted_at' in d:
+            del d['deleted_at']
 
         return d
 

@@ -87,6 +87,11 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
     return lease
 
 
+def _delete_physical_lease(id):
+    """Delete fake lease."""
+    db_api.lease_destroy(id)
+
+
 class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
     """Test case for SQLAlchemy DB utils."""
 
@@ -114,9 +119,17 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
             start_date=_get_datetime('2030-01-01 13:00'),
             end_date=_get_datetime('2030-01-01 14:00'),
             resource_id='r1')
+        r_del = _get_fake_phys_lease_values(
+            id='lease_del',
+            name='fake_phys_lease_r_del',
+            start_date=_get_datetime('2030-01-01 14:30'),
+            end_date=_get_datetime('2030-01-01 15:00'),
+            resource_id='r1')
         _create_physical_lease(values=r1)
         _create_physical_lease(values=r2)
         _create_physical_lease(values=r3)
+        _create_physical_lease(values=r_del)
+        _delete_physical_lease(r_del['id'])
 
     def check_reservation(self, expect, host_ids, start, end):
         expect.sort(key=lambda x: x['lease_id'])

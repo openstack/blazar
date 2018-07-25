@@ -41,14 +41,26 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def model_query(model, session=None):
+def _read_deleted_filter(query, db_model, deleted):
+    if 'deleted' not in db_model.__table__.columns:
+        return query
+
+    default_deleted_value = None
+    if deleted:
+        query = query.filter(db_model.deleted != default_deleted_value)
+    else:
+        query = query.filter(db_model.deleted == default_deleted_value)
+    return query
+
+
+def model_query(model, session=None, deleted=False):
     """Query helper.
 
     :param model: base model to query
     """
     session = session or get_session()
 
-    return session.query(model)
+    return _read_deleted_filter(session.query(model), model, deleted)
 
 
 def setup_db():
@@ -175,6 +187,20 @@ def reservation_update(reservation_id, values):
     return reservation_get(reservation_id)
 
 
+def _reservation_destroy(session, reservation):
+    if reservation.instance_reservation:
+        reservation.instance_reservation.soft_delete(session=session)
+
+    if reservation.computehost_reservation:
+        reservation.computehost_reservation.soft_delete(session=session)
+
+    if reservation.computehost_allocations:
+        for computehost_allocation in reservation.computehost_allocations:
+            computehost_allocation.soft_delete(session=session)
+
+    reservation.soft_delete(session=session)
+
+
 def reservation_destroy(reservation_id):
     session = get_session()
     with session.begin():
@@ -185,7 +211,7 @@ def reservation_destroy(reservation_id):
             raise db_exc.BlazarDBNotFound(id=reservation_id,
                                           model='Reservation')
 
-        session.delete(reservation)
+        _reservation_destroy(session, reservation)
 
 
 # Lease
@@ -279,7 +305,13 @@ def lease_destroy(lease_id):
             # raise not found error
             raise db_exc.BlazarDBNotFound(id=lease_id, model='Lease')
 
-        session.delete(lease)
+        for reservation in lease.reservations:
+            _reservation_destroy(session, reservation)
+
+        for event in lease.events:
+            event.soft_delete(session=session)
+
+        lease.soft_delete(session=session)
 
 
 # Event
@@ -390,7 +422,7 @@ def event_destroy(event_id):
             # raise not found error
             raise db_exc.BlazarDBNotFound(id=event_id, model='Event')
 
-        session.delete(event)
+        event.soft_delete(session=session)
 
 
 # ComputeHostReservation
@@ -459,7 +491,7 @@ def host_reservation_destroy(host_reservation_id):
             raise db_exc.BlazarDBNotFound(
                 id=host_reservation_id, model='ComputeHostReservation')
 
-        session.delete(host_reservation)
+        host_reservation.soft_delete(session=session)
 
 
 # InstanceReservation
@@ -513,7 +545,8 @@ def instance_reservation_destroy(instance_reservation_id):
         if not instance:
             raise db_exc.BlazarDBNotFound(
                 id=instance_reservation_id, model='InstanceReservations')
-        session.delete(instance)
+
+        instance.soft_delete(session=session)
 
 
 # ComputeHostAllocation
@@ -582,7 +615,7 @@ def host_allocation_destroy(host_allocation_id):
             raise db_exc.BlazarDBNotFound(
                 id=host_allocation_id, model='ComputeHostAllocation')
 
-        session.delete(host_allocation)
+        host_allocation.soft_delete(session=session)
 
 
 # ComputeHost
