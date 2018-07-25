@@ -83,7 +83,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     freepool_name = CONF.nova.aggregate_freepool_name
     pool = None
     query_options = {
-        QUERY_TYPE_ALLOCATION: ['lease_id']
+        QUERY_TYPE_ALLOCATION: ['lease_id', 'reservation_id']
     }
 
     def __init__(self):
@@ -521,7 +521,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         allocs = host_allocations[host_id]
         return {"resource_id": host_id, "reservations": allocs}
 
-    def query_host_allocations(self, hosts, lease_id=None):
+    def query_host_allocations(self, hosts, lease_id=None,
+                               reservation_id=None):
         """Return dict of host and its allocations.
 
         The list element forms
@@ -540,7 +541,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         # To reduce overhead, this method only executes one query
         # to get the allocation information
         allocs = db_utils.get_reservation_allocations_by_host_ids(
-            hosts, start, end, lease_id)
+            hosts, start, end, lease_id, reservation_id)
 
         hosts_allocs = {}
         for reservation, alloc in allocs:

@@ -89,7 +89,8 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
 
 
 def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
-                                            lease_id=None):
+                                            lease_id=None,
+                                            reservation_id=None):
     session = get_session()
     border0 = models.Lease.end_date < start_date
     border1 = models.Lease.start_date > end_date
@@ -100,6 +101,8 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
              .filter(~sa.or_(border0, border1)))
     if lease_id:
         query = query.filter(models.Reservation.lease_id == lease_id)
+    if reservation_id:
+        query = query.filter(models.Reservation.id == reservation_id)
     return query.all()
 
 

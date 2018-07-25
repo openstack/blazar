@@ -20,6 +20,12 @@ allocation_lease_id_query:
   in: query
   required: false
   type: string
+allocation_reservation_id_query:
+  description: |
+    Filter allocations results by reservation id
+  in: query
+  required: false
+  type: string
 
 
 # variables in body
