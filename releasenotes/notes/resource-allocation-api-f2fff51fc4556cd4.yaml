@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    The List Allocations API and the Get Allocation API are newly implemented.
+    The two APIs return list of mappings between a reservable resource and
+    reservations. Currently Blazar only supports reservation of compute
+    resources, so the APIs return mappings of hosts with reservation IDs of
+    physical host reservations and instance reservations. See details of the
+    API in the `API reference`_ .
+
+    .. _`API reference`: https://developer.openstack.org/api-ref/reservation/v1/index.html#resource-allocations
