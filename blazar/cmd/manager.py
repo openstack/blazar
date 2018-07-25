@@ -37,7 +37,8 @@ def main():
     notifier.init()
     service.launch(
         cfg.CONF,
-        manager_service.ManagerService()
+        manager_service.ManagerService(),
+        restart_method='mutate'
     ).wait()
 
 
