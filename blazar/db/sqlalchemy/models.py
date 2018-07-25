@@ -84,16 +84,16 @@ class Reservation(mb.BlazarBase):
                                   server_default=sa.false())
     resources_changed = sa.Column(sa.Boolean, nullable=False,
                                   server_default=sa.false())
-    instance_reservations = relationship('InstanceReservations',
-                                         uselist=False,
-                                         cascade='all,delete',
-                                         backref='reservation',
-                                         lazy='joined')
-    computehost_reservations = relationship('ComputeHostReservation',
-                                            uselist=False,
-                                            cascade="all,delete",
-                                            backref='reservation',
-                                            lazy='joined')
+    instance_reservation = relationship('InstanceReservations',
+                                        uselist=False,
+                                        cascade='all,delete',
+                                        backref='reservation',
+                                        lazy='joined')
+    computehost_reservation = relationship('ComputeHostReservation',
+                                           uselist=False,
+                                           cascade="all,delete",
+                                           backref='reservation',
+                                           lazy='joined')
     computehost_allocations = relationship('ComputeHostAllocation',
                                            uselist=True,
                                            cascade="all,delete",
@@ -103,9 +103,9 @@ class Reservation(mb.BlazarBase):
     def to_dict(self):
         d = super(Reservation, self).to_dict()
 
-        if self.computehost_reservations:
+        if self.computehost_reservation:
 
-            res = self.computehost_reservations.to_dict()
+            res = self.computehost_reservation.to_dict()
             d['hypervisor_properties'] = res['hypervisor_properties']
             d['resource_properties'] = res['resource_properties']
             d['before_end'] = res['before_end']
@@ -118,11 +118,11 @@ class Reservation(mb.BlazarBase):
                     e = "Invalid count range: {0}".format(res['count_range'])
                     raise RuntimeError(e)
 
-        if self.instance_reservations:
+        if self.instance_reservation:
             ir_keys = ['vcpus', 'memory_mb', 'disk_gb', 'amount', 'affinity',
                        'flavor_id', 'aggregate_id', 'server_group_id',
                        'resource_properties']
-            d.update(self.instance_reservations.to_dict(include=ir_keys))
+            d.update(self.instance_reservation.to_dict(include=ir_keys))
 
         return d
 

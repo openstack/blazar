@@ -110,7 +110,7 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
             'reservation_id': reservation['id']
         }
         db_api.host_allocation_create(allocation_values)
-        computehost_reservations = {
+        computehost_reservation = {
             'id': _get_fake_random_uuid(),
             'reservation_id': values['reservations'][0]['id'],
             'resource_properties': phys_res['resource_properties'],
@@ -118,7 +118,7 @@ def _create_physical_lease(values=_get_fake_phys_lease_values(),
             'count_range': "{0} - {1}".format(phys_res['min'],
                                               phys_res['max'])
         }
-        db_api.host_reservation_create(computehost_reservations)
+        db_api.host_reservation_create(computehost_reservation)
     return lease
 
 

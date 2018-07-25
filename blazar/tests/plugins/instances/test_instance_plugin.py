@@ -394,11 +394,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
         reservations = [
             {
                 'lease_id': 'lease-1',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 2, 'memory_mb': 3072, 'disk_gb': 20}},
             {
                 'lease_id': 'lease-2',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 3, 'memory_mb': 2048, 'disk_gb': 30}}
             ]
 
@@ -427,11 +427,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
         reservations = [
             {
                 'lease_id': 'lease-1',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 2, 'memory_mb': 3072, 'disk_gb': 20}},
             {
                 'lease_id': 'lease-2',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 3, 'memory_mb': 2048, 'disk_gb': 30}},
             ]
 
@@ -455,11 +455,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
         reservations = [
             {
                 'lease_id': 'lease-1',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 2, 'memory_mb': 3072, 'disk_gb': 20}},
             {
                 'lease_id': 'lease-1',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 3, 'memory_mb': 2048, 'disk_gb': 30}},
             ]
 
@@ -493,15 +493,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         reservations = [
             {
                 'lease_id': 'lease-1',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 2, 'memory_mb': 3072, 'disk_gb': 20}},
             {
                 'lease_id': 'lease-2',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 1, 'memory_mb': 1024, 'disk_gb': 10}},
             {
                 'lease_id': 'lease-3',
-                'instance_reservations': {
+                'instance_reservation': {
                     'vcpus': 4, 'memory_mb': 2048, 'disk_gb': 40
                     }},
             ]
