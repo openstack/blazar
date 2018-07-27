@@ -101,6 +101,8 @@ def upgrade():
                 lease.update().values(status='ERROR').
                 where(lease.c.id == l[0]))
 
+    sess.close()
+
 
 def downgrade():
     meta = _get_metadata()
