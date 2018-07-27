@@ -18,6 +18,8 @@ from keystoneauth1 import session
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from blazar.utils.openstack import exceptions
+
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
@@ -91,3 +93,87 @@ class BlazarPlacementClient(object):
     def delete(self, url, microversion=PLACEMENT_MICROVERSION):
         return self._client.delete(url, raise_exc=False,
                                    microversion=microversion)
+
+    def get_resource_provider(self, rp_name):
+        """Calls the placement API for a resource provider record.
+
+        :param rp_name: Name of the resource provider
+        :return: A dict of resource provider information.
+        :raise: ResourceProviderRetrievalFailed on error.
+        """
+        url = "/resource_providers?name=%s" % rp_name
+        resp = self.get(url)
+        if resp:
+            json_resp = resp.json()
+            return json_resp['resource_providers'][0]
+
+        msg = ("Failed to get resource provider %(name)s. "
+               "Got %(status_code)d: %(err_text)s.")
+        args = {
+            'name': rp_name,
+            'status_code': resp.status_code,
+            'err_text': resp.text,
+        }
+        LOG.error(msg, args)
+        raise exceptions.ResourceProviderRetrievalFailed(name=rp_name)
+
+    def create_resource_provider(self, rp_name, rp_uuid=None,
+                                 parent_uuid=None):
+        """Calls the placement API to create a new resource provider record.
+
+        :param rp_name: Name of the resource provider
+        :param rp_uuid: Optional UUID of the new resource provider
+        :param parent_uuid: Optional UUID of the parent resource provider
+        :return: A dict of resource provider information object representing
+                 the newly-created resource provider.
+        :raise: ResourceProviderCreationFailed error.
+        """
+        url = "/resource_providers"
+        payload = {'name': rp_name}
+        if rp_uuid is not None:
+            payload['uuid'] = rp_uuid
+        if parent_uuid is not None:
+            payload['parent_provider_uuid'] = parent_uuid
+
+        resp = self.post(url, payload)
+
+        if resp:
+            msg = ("Created resource provider record via placement API for "
+                   "resource provider %(name)s.")
+            args = {'name': rp_name}
+            LOG.info(msg, args)
+            return resp.json()
+
+        msg = ("Failed to create resource provider record in placement API "
+               "for resource provider %(name)s. "
+               "Got %(status_code)d: %(err_text)s.")
+        args = {
+            'name': rp_name,
+            'status_code': resp.status_code,
+            'err_text': resp.text,
+        }
+        LOG.error(msg, args)
+        raise exceptions.ResourceProviderCreationFailed(name=rp_name)
+
+    def delete_resource_provider(self, rp_uuid):
+        """Calls the placement API to delete a resource provider.
+
+        :param rp_uuid: UUID of the resource provider to delete
+        :raise: ResourceProviderDeletionFailed error
+        """
+        url = '/resource_providers/%s' % rp_uuid
+        resp = self.delete(url)
+
+        if resp:
+            LOG.info("Deleted resource provider %s", rp_uuid)
+            return
+
+        msg = ("Failed to delete resource provider with UUID %(uuid)s from "
+               "the placement API. Got %(status_code)d: %(err_text)s.")
+        args = {
+            'uuid': rp_uuid,
+            'status_code': resp.status_code,
+            'err_text': resp.text
+        }
+        LOG.error(msg, args)
+        raise exceptions.ResourceProviderDeletionFailed(uuid=rp_uuid)
