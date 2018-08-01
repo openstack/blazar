@@ -317,6 +317,13 @@ COMBINATIONS = {
         'end_lease': (EventStatus.UNDONE,
                       EventStatus.DONE,
                       EventStatus.ERROR)
+    },
+    LeaseStatus.ERROR: {
+        'reservation': ReservationStatus.ERROR,
+        'start_lease': (EventStatus.DONE,
+                        EventStatus.ERROR),
+        'end_lease': (EventStatus.UNDONE,
+                      EventStatus.ERROR)
     }
 }
 
