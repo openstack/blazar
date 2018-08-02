@@ -1,0 +1,60 @@
+---
+fixes:
+  - |
+    Some API responses are changed to use more appropriate status codes. The
+    following requests will receive different response status codes:
+
+    - Requesting instance reservation with ``affinity = True``: 500 to 400
+
+      * Instance reservation only accepts affinity = False until the plugin
+        implements the `Support no affinity rule`_ blueprint.
+        The Create Lease API and the Update Lease API now return 400 Bad
+        Request instead of 500 Internal Server Error when affinity = True
+        is specified.
+
+    - Requesting end_date earlier than start_date in the Create Lease API:
+      202 to 400
+
+      * The end_date parameter must be later than the start_date parameter.
+        However, the Create Lease API was accepting requests where end_date is
+        earlier than start_date, which was causing lease errors because of
+        invalid status change. From the Rocky release, the API checks the
+        ordering of the two events and returns an appropriate response status
+        code.
+
+    - Requesting invalid start_date or end_date in the Create Lease API and the
+      Update Lease API: 403 to 400
+
+      * 403 response code means an API request is Not Authorized. When the
+        ordering of the two is invalid, the response status code is now 400 Bad
+        Request, since the request is authorized but has an invalid request
+        body.
+
+    - Requesting an extra capability key longer than 64 characters: 500 to 400
+
+      * The length of a host's extra capability key is limited to a maximum of
+        64 characters. When a request body includes an extra capability longer
+        than 64 characters, the response status code of the Create Host API and
+        the Update Host API is now 400 Bad Request instead of 500
+        Internal Server Error.
+
+    - Creating a new host/lease: 202 to 201
+
+      * The Create Host API and the Create Lease API now return 201 Created
+        instead of 202 Accepted, since Blazar ensures that a new host/lease is
+        created before responding.
+
+    - Updating a host/lease: 202 to 200
+
+      * The Update Host API and the Update Lease API now return 200 OK instead
+        of 202 Accepted, since Blazar ensures that a host/lease is updated
+        before responding.
+
+    - Requesting invalid date in the Create Lease API and the Update Lease API:
+      500 to 400
+
+      * The start_date, end_date and before_end_date should be the format of
+        "CCYY-MM-DD hh:mm" such as "2020-07-01 10:00", otherwise
+        it raises 400 Bad Request instead of 500 Internal Server Error.
+
+    .. _`Support no affinity rule`: https://blueprints.launchpad.net/blazar/+spec/no-affinity-instance-reservation
