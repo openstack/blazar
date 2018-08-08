@@ -16,6 +16,7 @@
 
 import datetime
 
+from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import strutils
@@ -198,7 +199,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         for host in pool.get_computehosts(host_reservation['aggregate_id']):
             for server in self.nova.servers.list(
                     search_opts={"host": host, "all_tenants": 1}):
-                self.nova.servers.delete(server=server)
+                try:
+                    self.nova.servers.delete(server=server)
+                except nova_exceptions.NotFound:
+                    LOG.info('Could not find server %s, may have been deleted '
+                             'concurrently.', server)
+                except Exception as e:
+                    LOG.exception('Failed to delete %s: %s.', server, str(e))
         try:
             pool.delete(host_reservation['aggregate_id'])
         except manager_ex.AggregateNotFound:
