@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import datetime
 
 import eventlet
@@ -222,30 +223,97 @@ class ServiceTestCase(tests.TestCase):
         event_update = self.patch(self.db_api, 'event_update')
         events.return_value = None
 
-        self.manager._event()
+        self.manager._process_events()
 
         self.assertFalse(event_update.called)
 
     def test_event_success(self):
         events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date},
-                               {'id': '444-555-666', 'time': self.good_date}]
-        self.patch(eventlet, 'spawn_n')
+        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
+                                'lease_id': 'aaa-bbb-ccc',
+                                'event_type': 'start_lease'},
+                               {'id': '444-555-666', 'time': self.good_date,
+                                'lease_id': 'bbb-ccc-ddd',
+                                'event_type': 'start_lease'}]
+        self.patch(eventlet, 'spawn')
 
-        self.manager._event()
+        self.manager._process_events()
 
         event_update.assert_has_calls([
             mock.call('111-222-333', {'status': status.event.IN_PROGRESS}),
             mock.call('444-555-666', {'status': status.event.IN_PROGRESS})])
 
+    def test_concurrent_events(self):
+        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
+        self.patch(self.db_api, 'event_update')
+        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
+                                'lease_id': 'aaa-bbb-ccc',
+                                'event_type': 'start_lease'},
+                               {'id': '222-333-444', 'time': self.good_date,
+                                'lease_id': 'bbb-ccc-ddd',
+                                'event_type': 'end_lease'},
+                               {'id': '333-444-555', 'time': self.good_date,
+                                'lease_id': 'bbb-ccc-ddd',
+                                'event_type': 'before_end_lease'},
+                               {'id': '444-555-666', 'time': self.good_date,
+                                # Same lease as start_lease event above
+                                'lease_id': 'aaa-bbb-ccc',
+                                'event_type': 'before_end_lease'},
+                               {'id': '555-666-777', 'time': self.good_date,
+                                'lease_id': 'ccc-ddd-eee',
+                                'event_type': 'end_lease'},
+                               {'id': '666-777-888',
+                                'time': self.good_date + datetime.timedelta(
+                                    minutes=1),
+                                'lease_id': 'ddd-eee-fff',
+                                'event_type': 'end_lease'}]
+        events_values = copy.copy(events.return_value)
+        _process_events_concurrently = self.patch(
+            self.manager, '_process_events_concurrently')
+
+        self.manager._process_events()
+        _process_events_concurrently.assert_has_calls([
+            # First execute the before_end_lease event which doesn't have a
+            # corresponding start_lease
+            mock.call([events_values[2]]),
+            # Then end_lease events
+            mock.call([events_values[1], events_values[4]]),
+            # Then the start_lease event
+            mock.call([events_values[0]]),
+            # Then the before_end_lease which is for the same lease as the
+            # previous start_lease event
+            mock.call([events_values[3]]),
+            # Finally the event scheduled at the next minute
+            mock.call([events_values[5]])])
+
+    def test_process_events_concurrently(self):
+        events = [{'id': '111-222-333', 'time': self.good_date,
+                   'lease_id': 'aaa-bbb-ccc',
+                   'event_type': 'start_lease'},
+                  {'id': '222-333-444', 'time': self.good_date,
+                   'lease_id': 'bbb-ccc-ddd',
+                   'event_type': 'start_lease'},
+                  {'id': '333-444-555', 'time': self.good_date,
+                   'lease_id': 'ccc-ddd-eee',
+                   'event_type': 'start_lease'}]
+        spawn = self.patch(eventlet, 'spawn')
+
+        self.manager._process_events_concurrently(events)
+        spawn.assert_has_calls([
+            mock.call(mock.ANY, events[0]),
+            mock.call(mock.ANY, events[1]),
+            mock.call(mock.ANY, events[2])])
+
     def test_event_spawn_fail(self):
         events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        self.patch(eventlet, 'spawn_n').side_effect = Exception
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date}]
+        self.patch(eventlet, 'spawn').side_effect = Exception
+        events.return_value = [{'id': '111-222-333', 'time': self.good_date,
+                                'lease_id': 'aaa-bbb-ccc',
+                                'event_type': 'start_lease'}]
 
-        self.manager._event()
+        self.manager._process_events()
 
         event_update.assert_has_calls([
             mock.call('111-222-333', {'status': status.event.IN_PROGRESS}),
