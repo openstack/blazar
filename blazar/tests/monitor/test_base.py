@@ -14,6 +14,7 @@ import mock
 from oslo_service import threadgroup
 
 from blazar.db import api as db_api
+from blazar import exceptions
 from blazar.monitor import base as base_monitor
 from blazar.plugins import base
 from blazar import tests
@@ -86,6 +87,13 @@ class BaseMonitorTestCase(tests.TestCase):
         update_flags.assert_called_once_with(
             {'dummy_id1': {'missing_resources': True}})
 
+    def test_error_in_callback(self):
+        callback = self.patch(DummyMonitorPlugin, 'poll')
+        callback.side_effect = exceptions.BlazarException('error')
+
+        # Testing that no exception is raised even if the callback raises one
+        self.monitor.call_monitor_plugin(callback)
+
     def test_call_update_flags(self):
         reservation_update = self.patch(db_api, 'reservation_update')
         reservation_get = self.patch(db_api, 'reservation_get')
@@ -100,3 +108,15 @@ class BaseMonitorTestCase(tests.TestCase):
         reservation_get.assert_called_once_with('dummy_id1')
         lease_update.assert_called_once_with('dummy_id2',
                                              {'degraded': True})
+
+    def test_error_in_update_flags(self):
+        callback = self.patch(DummyMonitorPlugin, 'poll')
+        callback.return_value = {
+            'dummy_id1': {'missing_resources': True}
+        }
+
+        update_flags = self.patch(self.monitor, '_update_flags')
+        update_flags.side_effect = exceptions.BlazarException('error')
+
+        # Testing that no exception is raised even if the callback raises one
+        self.monitor.call_monitor_plugin(callback)

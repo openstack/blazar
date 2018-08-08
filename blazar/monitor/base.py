@@ -53,17 +53,20 @@ class BaseMonitor(object):
 
     def call_monitor_plugin(self, callback, *args, **kwargs):
         """Call a callback and update lease/reservation flags."""
+        # This method has to handle any exception internally. It shouldn't
+        # raise an exception because the timer threads in the BaseMonitor class
+        # terminates its execution once the thread has received any exception.
         try:
             # The callback() has to return a dictionary of
             # {reservation id: flags to update}.
             # e.g. {'dummyid': {'missing_resources': True}}
             reservation_flags = callback(*args, **kwargs)
+
+            if reservation_flags:
+                self._update_flags(reservation_flags)
         except Exception as e:
             LOG.exception('Caught an exception while executing a callback. '
                           '%s', str(e))
-
-        if reservation_flags:
-            self._update_flags(reservation_flags)
 
     def _update_flags(self, reservation_flags):
         """Update lease/reservation flags."""
