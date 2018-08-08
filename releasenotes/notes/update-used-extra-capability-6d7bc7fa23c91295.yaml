@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The update host API denies update requests trying to change extra
+    capabilities in use by any pending or active reservation. This avoids
+    mismatches between updated extra capabilities and resource_properties
+    specified before the update host request.

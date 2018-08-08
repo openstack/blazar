@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    Resource monitoring supports periodic healing from the Rocky release. It
+    only heals reservations starting within a configurable time window in order
+    to avoid unnecessary reservation healing, e.g. when resources become
+    available again at a later date. The interval is defined with the
+    ``[physical:host]/healing_interval`` configuration option. The default
+    value is 60 minutes. For more details, please see the `Resource
+    Monitoring`_ section in the Blazar documentation. The previous mode of
+    operation, which heals all reservations regardless of their start date, can
+    be used by setting ``[physical:host]/healing_interval`` to ``0``.
+
+    .. _`Resource Monitoring`: https://docs.openstack.org/blazar/latest/user/resource-monitoring.html

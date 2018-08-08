@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    The DevStack plugin now supports installing blazar-dashboard when both
+    blazar and horizon services are enabled in ``local.conf``.
