@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import defaultdict
 import datetime
+from operator import itemgetter
 
 import eventlet
 from oslo_config import cfg
@@ -77,7 +79,7 @@ class ManagerService(service_utils.RPCServer):
         # NOTE(jakecoll): stop_on_exception=False was added because database
         # exceptions would prevent threads from being scheduled again.
         # TODO(jakecoll): Find a way to test this.
-        self.tg.add_timer_args(EVENT_INTERVAL, self._event,
+        self.tg.add_timer_args(EVENT_INTERVAL, self._process_events,
                                stop_on_exception=False)
         for m in self.monitors:
             m.start_monitoring()
@@ -139,25 +141,12 @@ class ManagerService(service_utils.RPCServer):
         return actions
 
     @service_utils.with_empty_context
-    def _event(self):
-        """Tries to commit event.
-
-        If there is an event in Blazar DB to be done, do it and change its
-        status to 'DONE'.
-        """
-        LOG.debug('Trying to get event from DB.')
-        events = db_api.event_get_all_sorted_by_filters(
-            sort_key='time',
-            sort_dir='asc',
-            filters={'status': status.event.UNDONE,
-                     'time': {'op': 'le',
-                              'border': datetime.datetime.utcnow()}}
-        )
-
+    def _process_events_concurrently(self, events):
         if not events:
             return
 
         LOG.info("Trying to execute events: %s", events)
+        event_threads = {}
         for event in events:
             if not status.LeaseStatus.is_stable(event['lease_id']):
                 LOG.info("Skip event %s because the status of the lease %s "
@@ -166,14 +155,88 @@ class ManagerService(service_utils.RPCServer):
             db_api.event_update(event['id'],
                                 {'status': status.event.IN_PROGRESS})
             try:
-                eventlet.spawn_n(
+                event_thread = eventlet.spawn(
                     service_utils.with_empty_context(self._exec_event),
                     event)
+                event_threads[event['id']] = event_thread
             except Exception:
                 db_api.event_update(event['id'],
                                     {'status': status.event.ERROR})
-                LOG.exception('Error occurred while event %s handling.',
+                LOG.exception('Error occurred while spawning event %s.',
                               event['id'])
+
+        for event_id, event_thread in event_threads.items():
+            try:
+                event_thread.wait()
+            except Exception:
+                db_api.event_update(event['id'],
+                                    {'status': status.event.ERROR})
+                LOG.exception('Error occurred while handling event %s.',
+                              event_id)
+
+    def _select_for_execution(self, events):
+        """Orders the events such that they can be safely executed concurrently.
+
+        Events are selected to be executed concurrently if they are of the same
+        type, while keeping strict time ordering and the following priority of
+        event types: before_end_lease, end_lease, and start_lease (except for
+        before_end_lease events where there is a start_lease event for the same
+        lease at the same time).
+
+        We ensure that:
+
+        - the before_end_lease event of a lease is executed after the
+          start_lease event and before the end_lease event of the same lease,
+        - for two reservations using the same hosts back to back, the end_lease
+          event is executed before the start_lease event.
+        """
+        if not events:
+            return []
+
+        events_by_lease = defaultdict(list)
+        events_by_type = defaultdict(list)
+
+        for e in sorted(events, key=itemgetter('time')):
+            events_by_lease[e['lease_id']].append(e)
+            events_by_type[e['event_type']].append(e)
+
+        # If there is a start_lease event for the same lease, we run it first.
+        deferred_before_end_events = []
+        deferred_end_events = []
+        for start_event in events_by_type['start_lease']:
+            for e in events_by_lease[start_event['lease_id']]:
+                if e['event_type'] == 'before_end_lease':
+                    events_by_type['before_end_lease'].remove(e)
+                    deferred_before_end_events.append(e)
+                elif e['event_type'] == 'end_lease':
+                    events_by_type['end_lease'].remove(e)
+                    deferred_end_events.append(e)
+
+        return [
+            events_by_type['before_end_lease'],
+            events_by_type['end_lease'],
+            events_by_type['start_lease'],
+            deferred_before_end_events,
+            deferred_end_events
+        ]
+
+    def _process_events(self):
+        """Tries to execute events.
+
+        If there is any event in Blazar DB to be executed, do it and change its
+        status to 'DONE'. Events are executed concurrently if possible.
+        """
+        LOG.debug('Trying to get events from DB.')
+        events = db_api.event_get_all_sorted_by_filters(
+            sort_key='time',
+            sort_dir='asc',
+            filters={'status': status.event.UNDONE,
+                     'time': {'op': 'le',
+                              'border': datetime.datetime.utcnow()}}
+        )
+
+        for batch in self._select_for_execution(events):
+            self._process_events_concurrently(batch)
 
     def _exec_event(self, event):
         """Execute an event function"""
