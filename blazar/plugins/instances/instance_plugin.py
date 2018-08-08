@@ -412,6 +412,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                        "active status.")
             raise mgr_exceptions.CantUpdateParameter(err_msg)
 
+        if (new_values['amount'] - reservation['amount'] !=
+           (len(changed_hosts['added']) - len(changed_hosts['removed']))):
+            raise mgr_exceptions.NotEnoughHostsAvailable()
+
         db_api.instance_reservation_update(
             reservation['resource_id'],
             {key: new_values[key] for key in updatable})
