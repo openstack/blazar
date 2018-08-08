@@ -669,6 +669,7 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
             cls._instance = super(PhysicalHostMonitorPlugin, cls).__new__(cls)
             cls._instance.healing_handlers = []
             super(PhysicalHostMonitorPlugin, cls._instance).__init__(
+                username=CONF.os_admin_username,
                 password=CONF.os_admin_password,
                 user_domain_name=CONF.os_admin_user_domain_name,
                 project_name=CONF.os_admin_project_name,

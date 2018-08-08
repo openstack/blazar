@@ -1886,11 +1886,13 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         # reset the singleton at first
         host_plugin.PhysicalHostMonitorPlugin._instance = None
         self.cfg = self.useFixture(conf_fixture.Config(CONF))
+        self.cfg.config(os_admin_username='fake-user')
         self.cfg.config(os_admin_password='fake-passwd')
         self.cfg.config(os_admin_user_domain_name='fake-user-domain')
         self.cfg.config(os_admin_project_name='fake-pj-name')
         self.cfg.config(os_admin_project_domain_name='fake-pj-domain')
         self.host_monitor_plugin = host_plugin.PhysicalHostMonitorPlugin()
+        self.assertEqual('fake-user', self.host_monitor_plugin.username)
         self.assertEqual("fake-passwd", self.host_monitor_plugin.password)
         self.assertEqual("fake-user-domain",
                          self.host_monitor_plugin.user_domain_name)
