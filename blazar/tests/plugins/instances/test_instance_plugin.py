@@ -760,6 +760,33 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                                   'reservation-id1')
         mock_update_resource.assert_called_once_with('reservation-id1')
 
+    def test_update_reservation_not_enough_hosts(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        old_reservation = {
+            'id': 'reservation-id1',
+            'status': 'pending',
+            'lease_id': 'lease-id1',
+            'resource_id': 'instance-reservation-id1',
+            'vcpus': 2, 'memory_mb': 1024, 'disk_gb': 100,
+            'amount': 2, 'affinity': False,
+            'resource_properties': ''}
+        mock_reservation_get = self.patch(db_api, 'reservation_get')
+        mock_reservation_get.return_value = old_reservation
+
+        mock_lease_get = self.patch(db_api, 'lease_get')
+        mock_lease_get.return_value = {'start_date': '2020-07-07 18:00',
+                                       'end_date': '2020-07-07 19:00'}
+
+        mock_pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        mock_pickup_hosts.return_value = {
+            'added': set(), 'removed': set(['host-id2'])}
+
+        new_values = {'vcpus': 4, 'disk_gb': 200}
+        self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
+                          plugin.update_reservation, 'reservation-id1',
+                          new_values)
+
     def test_update_flavor_in_active(self):
         plugin = instance_plugin.VirtualInstancePlugin()
 
