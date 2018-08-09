@@ -17,6 +17,7 @@ import datetime
 
 import mock
 from novaclient import client as nova_client
+from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_config import fixture as conf_fixture
 import testtools
@@ -1404,6 +1405,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         list_servers = self.patch(self.ServerManager, 'list')
         list_servers.return_value = ['server1', 'server2']
         delete_server = self.patch(self.ServerManager, 'delete')
+        # Mock delete_server so the first call fails to find the instance.
+        # This can happen when the user is deleting instances concurrently.
+        delete_server.side_effect = mock.Mock(
+            side_effect=[nova_exceptions.NotFound(
+                404, 'Instance server1 could not be found.'), None])
         delete_pool = self.patch(self.nova.ReservationPool, 'delete')
         self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         host_reservation_update.assert_called_with(
