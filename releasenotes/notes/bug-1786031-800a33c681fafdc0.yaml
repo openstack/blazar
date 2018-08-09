@@ -1,0 +1,8 @@
+---
+issues:
+  - |
+    When the update lease API returns any error regardless of the reason, the
+    lease status goes into ERROR. If the reason is wrong input, e.g. invalid
+    format or not enough hosts available, updating the lease again with correct
+    information will fix the ERROR status. For more details, see `bug 1786031
+    <https://bugs.launchpad.net/blazar/+bug/1786031>`_.
