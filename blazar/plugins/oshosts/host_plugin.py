@@ -165,11 +165,22 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         """Add the hosts in the pool."""
         host_reservation = db_api.host_reservation_get(resource_id)
         pool = nova.ReservationPool()
+        added_hosts = []
         for allocation in db_api.host_allocation_get_all_by_values(
                 reservation_id=host_reservation['reservation_id']):
-            host = db_api.host_get(allocation['compute_host_id'])
-            pool.add_computehost(host_reservation['aggregate_id'],
-                                 host['hypervisor_hostname'])
+            try:
+                host = db_api.host_get(allocation['compute_host_id'])
+                pool.add_computehost(host_reservation['aggregate_id'],
+                                     host['hypervisor_hostname'])
+                added_hosts.append(host['hypervisor_hostname'])
+            except Exception:
+                if added_hosts:
+                    LOG.warn('Removing hosts added to aggregate %s: %s',
+                             host_reservation['aggregate_id'], added_hosts)
+                    for host in added_hosts:
+                        pool.remove_computehost(
+                            host_reservation['aggregate_id'], host)
+                raise
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""

@@ -1362,6 +1362,37 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         add_computehost.assert_called_with(
             1, 'host1_hostname')
 
+    def test_on_start_failure(self):
+        host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
+        host_reservation_get.return_value = {
+            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'aggregate_id': 1,
+        }
+        host_allocation_get_all_by_values = self.patch(
+            self.db_api, 'host_allocation_get_all_by_values')
+        host_allocation_get_all_by_values.return_value = [
+            {'compute_host_id': 'host1'},
+            {'compute_host_id': 'host2'},
+            {'compute_host_id': 'host3'},
+        ]
+        host_get = self.patch(self.db_api, 'host_get')
+        host_get.side_effect = [{'hypervisor_hostname': 'host1_hostname'},
+                                {'hypervisor_hostname': 'host2_hostname'},
+                                {'hypervisor_hostname': 'host3_hostname'}]
+        add_computehost = self.patch(
+            self.nova.ReservationPool, 'add_computehost')
+        remove_computehost = self.patch(
+            self.nova.ReservationPool, 'remove_computehost')
+        add_computehost.side_effect = [
+            None, None, manager_exceptions.HostNotInFreePool(
+                host='host3_hostname', freepool_name='freepool')]
+
+        self.assertRaises(manager_exceptions.HostNotInFreePool,
+                          self.fake_phys_plugin.on_start,
+                          '04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        remove_computehost.assert_has_calls([mock.call(1, 'host1_hostname'),
+                                             mock.call(1, 'host2_hostname')])
+
     def test_before_end_with_no_action(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_reservation_get.return_value = {'before_end': ''}
