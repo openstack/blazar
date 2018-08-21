@@ -27,7 +27,7 @@ class API(object):
         """List all existing computehosts."""
         return self.manager_rpcapi.list_computehosts()
 
-    @policy.authorize('oshosts', 'post')
+    @policy.authorize('oshosts', 'create')
     @trusts.use_trust_auth()
     def create_computehost(self, data):
         """Create new computehost.
@@ -47,7 +47,7 @@ class API(object):
         """
         return self.manager_rpcapi.get_computehost(host_id)
 
-    @policy.authorize('oshosts', 'put')
+    @policy.authorize('oshosts', 'update')
     def update_computehost(self, host_id, data):
         """Update computehost. Only name changing may be proceeded.
 

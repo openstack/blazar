@@ -39,7 +39,7 @@ class BlazarPolicyTestCase(tests.TestCase):
                        'project_id': self.context.project_id}
         target_wrong = {'user_id': self.context.user_id,
                         'project_id': 'bad_project'}
-        action = "blazar:leases:get"
+        action = "blazar:leases"
         self.assertTrue(policy.enforce(self.context, action,
                                        target_good))
         self.assertFalse(policy.enforce(self.context, action,
@@ -48,14 +48,14 @@ class BlazarPolicyTestCase(tests.TestCase):
     def test_adminpolicy(self):
         target = {'user_id': self.context.user_id,
                   'project_id': self.context.project_id}
-        action = "blazar:oshosts:get"
+        action = "blazar:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def test_elevatedpolicy(self):
         target = {'user_id': self.context.user_id,
                   'project_id': self.context.project_id}
-        action = "blazar:oshosts:get"
+        action = "blazar:oshosts"
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
         elevated_context = self.context.elevated()
@@ -63,14 +63,23 @@ class BlazarPolicyTestCase(tests.TestCase):
 
     def test_authorize(self):
 
+        @policy.authorize('leases', ctx=self.context)
+        def user_method(self):
+            return True
+
         @policy.authorize('leases', 'get', ctx=self.context)
         def user_method_with_action(self):
             return True
 
-        @policy.authorize('oshosts', 'get', ctx=self.context)
-        def adminonly_method_with_action(self):
+        @policy.authorize('oshosts', ctx=self.context)
+        def adminonly_method(self):
             return True
 
+        self.assertTrue(user_method(self))
         self.assertTrue(user_method_with_action(self))
-        self.assertRaises(exceptions.PolicyNotAuthorized,
-                          adminonly_method_with_action, self)
+        try:
+            adminonly_method(self)
+            self.assertTrue(False)
+        except exceptions.PolicyNotAuthorized:
+            # We are expecting this exception
+            self.assertTrue(True)

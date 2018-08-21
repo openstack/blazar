@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import fixtures
 import tempfile
 import testscenarios
@@ -24,6 +26,8 @@ from oslotest import base
 from blazar import context
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import facade_wrapper
+from blazar import policy
+from blazar.tests import fake_policy
 
 cfg.CONF.set_override('use_stderr', False)
 
@@ -48,6 +52,22 @@ class Database(fixtures.Fixture):
         self.addCleanup(db_api.drop_db)
 
 
+class PolicyFixture(fixtures.Fixture):
+
+    def setUp(self):
+        super(PolicyFixture, self).setUp()
+        self.policy_dir = self.useFixture(fixtures.TempDir())
+        self.policy_file_name = os.path.join(self.policy_dir.path,
+                                             'policy.json')
+        with open(self.policy_file_name, 'w') as policy_file:
+            policy_file.write(fake_policy.policy_data)
+        cfg.CONF.set_override('policy_file', self.policy_file_name,
+                              group='oslo_policy')
+        policy.reset()
+        policy.init()
+        self.addCleanup(policy.reset)
+
+
 class TestCase(testscenarios.WithScenarios, base.BaseTestCase):
     """Test case base class for all unit tests.
 
@@ -60,6 +80,7 @@ class TestCase(testscenarios.WithScenarios, base.BaseTestCase):
         super(TestCase, self).setUp()
         self.context_mock = None
         cfg.CONF(args=[], project='blazar')
+        self.policy = self.useFixture(PolicyFixture())
 
     def patch(self, obj, attr):
         """Returns a Mocked object on the patched attribute."""

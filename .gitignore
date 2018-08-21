@@ -36,6 +36,3 @@ AUTHORS
 ChangeLog
 
 .testrepository
-
-# generated policy file
-etc/blazar/policy.yaml.sample

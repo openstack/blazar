@@ -126,7 +126,7 @@ class HostsController(extensions.BaseController):
                 for host in
                 pecan.request.hosts_rpcapi.list_computehosts()]
 
-    @policy.authorize('oshosts', 'post')
+    @policy.authorize('oshosts', 'create')
     @wsme_pecan.wsexpose(Host, body=Host, status_code=201)
     @trusts.use_trust_auth()
     def post(self, host):
@@ -144,7 +144,7 @@ class HostsController(extensions.BaseController):
         else:
             raise exceptions.BlazarException(_("Host can't be created"))
 
-    @policy.authorize('oshosts', 'put')
+    @policy.authorize('oshosts', 'update')
     @wsme_pecan.wsexpose(Host, types.IntegerType(), body=Host)
     def put(self, id, host):
         """Update an existing host.

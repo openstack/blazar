@@ -41,6 +41,9 @@ function configure_blazar {
     fi
     sudo chown $STACK_USER $BLAZAR_CONF_DIR
 
+    BLAZAR_POLICY_FILE=$BLAZAR_CONF_DIR/policy.json
+    cp $BLAZAR_DIR/etc/policy.json $BLAZAR_POLICY_FILE
+
     touch $BLAZAR_CONF_FILE
 
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_version v3
