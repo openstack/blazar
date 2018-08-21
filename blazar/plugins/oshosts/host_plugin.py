@@ -97,11 +97,16 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         self.monitor = PhysicalHostMonitorPlugin()
         self.monitor.register_healing_handler(self.heal_reservations)
         self.placement_client = placement.BlazarPlacementClient()
+        self.usage_enforcer = None
+
+    def set_usage_enforcer(self, usage_enforcer):
+        self.usage_enforcer = usage_enforcer
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
         self._check_params(values)
 
+        lease = db_api.lease_get(values['lease_id'])
         host_ids = self._matching_hosts(
             values['hypervisor_properties'],
             values['resource_properties'],
@@ -111,6 +116,16 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         )
         if not host_ids:
             raise manager_ex.NotEnoughHostsAvailable()
+
+        # NOTE(priteau): Check if we have enough available SUs for this
+        # reservation. This takes into account the su_factor of each allocated
+        # host, if present.
+        try:
+            self.usage_enforcer.check_usage_against_allocation(
+                lease, allocated_host_ids=host_ids)
+        except manager_ex.RedisConnectionError:
+            pass
+
         pool = nova.ReservationPool()
         pool_name = reservation_id
         az_name = "%s%s" % (CONF[self.resource_type].blazar_az_prefix,
@@ -144,6 +159,15 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             # Nothing to update
             return
 
+        # Check if we have enough available SUs for update
+        host_allocations = db_api.host_allocation_get_all_by_values(
+            reservation_id=reservation_id)
+        try:
+            self.usage_enforcer.check_usage_against_allocation_pre_update(
+                values, lease, host_allocations)
+        except manager_ex.RedisConnectionError:
+            pass
+
         dates_before = {'start_date': lease['start_date'],
                         'end_date': lease['end_date']}
         dates_after = {'start_date': values['start_date'],
@@ -152,7 +176,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             reservation['resource_id'])
         self._update_allocations(dates_before, dates_after, reservation_id,
                                  reservation['status'], host_reservation,
-                                 values)
+                                 values, lease)
 
         updates = {}
         if 'min' in values or 'max' in values:
@@ -220,6 +244,15 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         try:
             pool.delete(host_reservation['aggregate_id'])
         except manager_ex.AggregateNotFound:
+            pass
+
+        reservation = db_api.reservation_get(
+            host_reservation['reservation_id'])
+        lease = db_api.lease_get(reservation['lease_id'])
+        try:
+            self.usage_enforcer.release_encumbered(
+                lease, reservation, allocations)
+        except manager_ex.RedisConnectionError:
             pass
 
     def heal_reservations(self, failed_resources, interval_begin,
@@ -653,36 +686,59 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise manager_ex.NotEnoughHostsAvailable()
 
         kept_hosts = len(allocs) - len(allocs_to_remove)
+        host_ids_to_add = []
         if kept_hosts < max_hosts:
             min_hosts = min_hosts - kept_hosts \
                 if (min_hosts - kept_hosts) > 0 else 0
             max_hosts = max_hosts - kept_hosts
-            host_ids = self._matching_hosts(
+            host_ids_to_add = self._matching_hosts(
                 hypervisor_properties, resource_properties,
                 str(min_hosts) + '-' + str(max_hosts),
                 dates_after['start_date'], dates_after['end_date'])
-            if len(host_ids) >= min_hosts:
-                new_hosts = []
-                pool = nova.ReservationPool()
-                for host_id in host_ids:
-                    db_api.host_allocation_create(
-                        {'compute_host_id': host_id,
-                         'reservation_id': reservation_id})
-                    new_host = db_api.host_get(host_id)
-                    new_hosts.append(new_host['service_name'])
-                if reservation_status == status.reservation.ACTIVE:
-                    # Add new hosts into the aggregate.
-                    pool.add_computehost(host_reservation['aggregate_id'],
-                                         new_hosts)
-            else:
+
+            if len(host_ids_to_add) < min_hosts:
                 raise manager_ex.NotEnoughHostsAvailable()
 
+        self.usage_enforcer.check_su_factor_identical(
+            allocs, allocs_to_remove, host_ids_to_add)
+
+        allocs_to_keep = [a for a in allocs if a not in allocs_to_remove]
+        new_allocations = allocs_to_keep + host_ids_to_add
+
+        try:
+            self.usage_enforcer.check_usage_against_allocation_post_update(
+                values, lease,
+                allocs,
+                new_allocations)
+        except manager_ex.RedisConnectionError:
+            pass
+
+        new_hosts = []
+        pool = nova.ReservationPool()
+        for host_id in host_ids_to_add:
+            LOG.debug('Adding host {} to reservation {}'.format(
+                host_id, reservation_id))
+            db_api.host_allocation_create(
+                {'compute_host_id': host_id,
+                 'reservation_id': reservation_id})
+            new_host = db_api.host_get(host_id)
+            new_hosts.append(new_host['hypervisor_hostname'])
+
+        if reservation_status == status.reservation.ACTIVE:
+            # Add new hosts into the aggregate.
+            pool.add_computehost(
+                host_reservation['aggregate_id'],
+                new_hosts)
+
         for allocation in allocs_to_remove:
+            LOG.debug('Removing host {} from reservation {}'.format(
+                allocation['compute_host_id'], reservation_id))
             db_api.host_allocation_destroy(allocation['id'])
 
     def _allocations_to_remove(self, dates_before, dates_after, max_hosts,
                                hypervisor_properties, resource_properties,
                                allocs):
+        """Finds candidate compute host allocations to remove"""
         allocs_to_remove = []
         requested_host_ids = [host['id'] for host in
                               self._filter_hosts_by_properties(

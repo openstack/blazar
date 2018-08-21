@@ -137,6 +137,15 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_api = db_api
         self.db_utils = db_utils
 
+        self.usage_enforcer = self.patch(self.fake_phys_plugin,
+                                         'usage_enforcer')
+        self.check_usage_against_allocation = self.patch(
+            self.usage_enforcer, 'check_usage_against_allocation')
+        self.check_usage_against_allocation_pre_update = self.patch(
+            self.usage_enforcer, 'check_usage_against_allocation_pre_update')
+        self.release_encumbered = self.patch(
+            self.usage_enforcer, 'release_encumbered')
+
         self.db_host_get = self.patch(self.db_api, 'host_get')
         self.db_host_get.return_value = self.fake_host
         self.db_host_list = self.patch(self.db_api, 'host_list')
@@ -651,6 +660,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
     def test_create_reservation_no_hosts_available(self):
         now = datetime.datetime.utcnow()
+        lease = {
+            'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'user_id': '123',
+            'project_id': '456',
+        }
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
@@ -661,6 +675,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': now + datetime.timedelta(hours=1),
             'resource_type': plugin.RESOURCE_TYPE,
         }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = lease
         host_reservation_create = self.patch(self.db_api,
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
@@ -673,6 +689,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_reservation_create.assert_not_called()
 
     def test_create_reservation_hosts_available(self):
+        lease = {
+            'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'user_id': '123',
+            'project_id': '456',
+        }
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
@@ -684,6 +705,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_type': plugin.RESOURCE_TYPE,
         }
         self.rp_create.return_value = mock.MagicMock(id=1)
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = lease
         host_reservation_create = self.patch(self.db_api,
                                              'host_reservation_create')
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
@@ -704,6 +727,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'before_end': 'default'
         }
         host_reservation_create.assert_called_once_with(host_values)
+        self.check_usage_against_allocation.assert_called_once_with(
+            lease, allocated_host_ids=['host1', 'host2'])
         calls = [
             mock.call(
                 {'compute_host_id': 'host1',
@@ -1132,6 +1157,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.update_reservation(
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
+        self.check_usage_against_allocation_pre_update.assert_called_once_with(
+            values, lease_get.return_value,
+            host_allocation_get_all.return_value)
         host_reservation_get.assert_called_with(
             '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
         matching_hosts.assert_called_with(
@@ -1720,6 +1748,16 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
             'aggregate_id': 1
         }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'id': '10870923-6d56-45c9-b592-f788053f5baa',
+        }
         host_reservation_update = self.patch(
             self.db_api,
             'host_reservation_update')
@@ -1763,6 +1801,16 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
             'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
             'aggregate_id': 1
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'status': 'pending'
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'id': '10870923-6d56-45c9-b592-f788053f5baa',
         }
         host_reservation_update = self.patch(
             self.db_api,

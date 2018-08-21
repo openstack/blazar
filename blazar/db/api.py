@@ -414,6 +414,12 @@ def host_extra_capability_get_all_per_name(host_id,
                                                        extra_capability_name)
 
 
+def host_extra_capability_get_latest_per_name(host_id, extra_capability_name):
+    return IMPL.host_extra_capability_get_latest_per_name(
+        host_id, extra_capability_name
+    )
+
+
 # Host matching
 
 def host_get_all_by_queries_including_extracapabilities(queries):

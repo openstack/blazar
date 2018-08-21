@@ -109,6 +109,14 @@ class ServerDeletionTimeout(exceptions.BlazarException):
     msg_fmt = _("Timed out waiting for server deletion")
 
 
+class ConfigurationError(exceptions.BlazarException):
+    msg_fmt = _("Configuration error : %(error)s")
+
+
+class RedisConnectionError(exceptions.BlazarException):
+    msg_fmt = _("Cannot connect to Redis host %(host)s")
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.BlazarException):
