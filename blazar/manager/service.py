@@ -25,6 +25,7 @@ from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
 from blazar import exceptions as common_ex
 from blazar import manager
+from blazar.manager import enforcement
 from blazar.manager import exceptions
 from blazar import monitor
 from blazar.notification import api as notification_api
@@ -70,6 +71,11 @@ class ManagerService(service_utils.RPCServer):
         self.plugins = self._get_plugins()
         self.resource_actions = self._setup_actions()
         self.monitors = monitor.load_monitors(self.plugins)
+        self.usage_enforcer = enforcement.UsageEnforcer()
+        for plugin in self.plugins.values():
+            set_usage_enforcer = getattr(plugin, "set_usage_enforcer", None)
+            if callable(set_usage_enforcer):
+                plugin.set_usage_enforcer(self.usage_enforcer)
 
     def start(self):
         super(ManagerService, self).start()
@@ -327,6 +333,13 @@ class ManagerService(service_utils.RPCServer):
             lease_values['project_id'] = ctx.project_id
             lease_values['start_date'] = start_date
             lease_values['end_date'] = end_date
+
+            # NOTE(priteau): We call this function to check against the
+            # Chameleon lease duration policy
+            try:
+                self.usage_enforcer.check_lease_duration(lease_values)
+            except exceptions.RedisConnectionError:
+                pass
 
             events.append({'event_type': 'start_lease',
                            'time': start_date,

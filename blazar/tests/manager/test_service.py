@@ -122,6 +122,7 @@ class ServiceTestCase(tests.TestCase):
             reload_module(service)
         self.service = service
         self.manager = self.service.ManagerService()
+        self.usage_enforcer = self.patch(self.manager, 'usage_enforcer')
 
         self.lease_id = '11-22-33'
         self.user_id = '123'
@@ -433,6 +434,8 @@ class ServiceTestCase(tests.TestCase):
 
         lease = self.manager.create_lease(lease_values)
 
+        self.usage_enforcer.check_lease_duration.assert_called_once_with(
+            lease_values)
         self.trust_ctx.assert_called_once_with(trust_id)
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)
@@ -667,6 +670,8 @@ class ServiceTestCase(tests.TestCase):
         self.lease['events'][2]['time'] = '2026-11-14 10:13:00'
 
         lease = self.manager.create_lease(lease_values)
+        self.usage_enforcer.check_lease_duration.assert_called_once_with(
+            lease_values)
 
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)

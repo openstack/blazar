@@ -861,3 +861,14 @@ def host_extra_capability_get_all_per_name(host_id, capability_name):
     with session.begin():
         query = _host_extra_capability_get_all_per_host(session, host_id)
         return query.filter_by(capability_name=capability_name).all()
+
+
+def host_extra_capability_get_latest_per_name(host_id, capability_name):
+    session = get_session()
+
+    with session.begin():
+        query = _host_extra_capability_get_all_per_host(session, host_id)
+        return (
+            query.filter_by(capability_name=capability_name)
+                 .order_by(models.ComputeHostExtraCapability.created_at.desc())
+                 .first())

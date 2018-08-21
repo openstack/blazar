@@ -186,3 +186,11 @@ class CantUpdateParameter(exceptions.BlazarException):
 class InvalidPeriod(exceptions.BlazarException):
     code = 400
     msg_fmt = _('The end_date must be later than the start_date.')
+
+
+class ConfigurationError(exceptions.BlazarException):
+    msg_fmt = _("Configuration error : %(error)s")
+
+
+class RedisConnectionError(exceptions.BlazarException):
+    msg_fmt = _("Cannot connect to Redis host %(host)s")
