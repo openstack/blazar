@@ -44,10 +44,19 @@
     voting: false
 
 - project:
+    templates:
+      - openstack-python-jobs
+      - check-requirements
+      - openstack-python35-jobs
+      - publish-openstack-sphinx-docs
+      - release-notes-jobs
     check:
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
+        - openstack-tox-pylint:
+            voting: false
     gate:
+      queue: blazar
       jobs:
         - blazar-devstack-dsvm
