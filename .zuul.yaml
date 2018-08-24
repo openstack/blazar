@@ -47,6 +47,7 @@
       - openstack-python-jobs
       - check-requirements
       - openstack-python35-jobs
+      - openstack-python36-jobs
       - publish-openstack-docs-pti
       - release-notes-jobs-python3
     check:
