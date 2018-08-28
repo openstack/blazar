@@ -682,7 +682,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 raise manager_ex.NotEnoughHostsAvailable()
 
         allocs_to_keep = [a for a in allocs if a not in allocs_to_remove]
-        new_allocations = allocs_to_keep + host_ids_to_add
+        allocs_to_add = [{'compute_host_id': h} for h in host_ids_to_add]
+        new_allocations = allocs_to_keep + allocs_to_add
 
         try:
             self.usage_enforcer.check_usage_against_allocation_post_update(
