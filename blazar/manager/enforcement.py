@@ -371,9 +371,6 @@ class UsageEnforcer(object):
                      project_name, change_encumbered, change_hours,
                      new_su_factor))
 
-        if not isclose(new_su_factor, old_su_factor, rel_tol=1e-5):
-            LOG.warning('Violated assertion: new/old su_factor expected to be '
-                        'identical')
         try:
             self.redis.hincrbyfloat(
                 'encumbered', project_name, str(change_encumbered))
