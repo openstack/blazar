@@ -735,9 +735,6 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             if len(host_ids_to_add) < min_hosts:
                 raise manager_ex.NotEnoughHostsAvailable()
 
-        self.usage_enforcer.check_su_factor_identical(
-            allocs, allocs_to_remove, host_ids_to_add)
-
         allocs_to_keep = [a for a in allocs if a not in allocs_to_remove]
         new_allocations = allocs_to_keep + host_ids_to_add
 
