@@ -482,6 +482,15 @@ class ManagerService(service_utils.RPCServer):
             raise common_ex.InvalidInput(
                 'End date must be later than current and start date')
 
+        # NOTE(priteau): We call this function to check against the
+        # Chameleon lease duration policy
+        try:
+            values['user_id'] = lease['user_id']
+            values['project_id'] = lease['project_id']
+            self.usage_enforcer.check_lease_duration(values)
+        except exceptions.RedisConnectionError:
+            pass
+
         with trusts.create_ctx_from_trust(lease['trust_id']):
             if before_end_date:
                 try:
