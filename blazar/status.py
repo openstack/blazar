@@ -189,17 +189,18 @@ class LeaseStatus(BaseStatus):
                 # Update a lease status
                 lease_id = kwargs['lease_id']
                 l = db_api.lease_get(lease_id)
-                if cls.is_valid_transition(l['status'],
+                original_status = l['status']
+                if cls.is_valid_transition(original_status,
                                            transition,
                                            lease_id=lease_id):
                     db_api.lease_update(lease_id,
                                         {'status': transition})
                     LOG.debug('Status of lease %s changed from %s to %s.',
-                              lease_id, l['status'], transition)
+                              lease_id, original_status, transition)
                 else:
                     LOG.warn('Aborting %s. '
                              'Invalid lease status transition from %s to %s.',
-                             func.__name__, l['status'],
+                             func.__name__, original_status,
                              transition)
                     raise exceptions.InvalidStatus
 
@@ -208,27 +209,35 @@ class LeaseStatus(BaseStatus):
                     result = func(*args, **kwargs)
                 except Exception as e:
                     with excutils.save_and_reraise_exception():
-                        LOG.error('Lease %s went into ERROR status: %s',
-                                  lease_id, str(e))
-                        db_api.lease_update(lease_id,
-                                            {'status': cls.ERROR})
-
-                # Update a lease status if it exists
-                if db_api.lease_get(lease_id):
-                    next_status = cls.derive_stable_status(lease_id)
-                    if (next_status in result_in
-                            and cls.is_valid_transition(transition,
-                                                        next_status,
-                                                        lease_id=lease_id)):
-                        db_api.lease_update(lease_id,
-                                            {'status': next_status})
-                        LOG.debug('Status of lease %s changed from %s to %s.',
-                                  lease_id, transition, next_status)
-                    else:
-                        LOG.error('Lease %s went into ERROR status.',
-                                  lease_id)
-                        db_api.lease_update(lease_id, {'status': cls.ERROR})
-                        raise exceptions.InvalidStatus
+                        if e.restore_lease_status:
+                            LOG.debug('Non-fatal exception occured during '
+                                      'status transition, reverting status of '
+                                      'lease %s to %s.',
+                                      lease_id, original_status)
+                            db_api.lease_update(lease_id,
+                                                {'status': original_status})
+                        else:
+                            LOG.error('Lease %s went into ERROR status: %s',
+                                      lease_id, str(e))
+                            db_api.lease_update(lease_id,
+                                                {'status': cls.ERROR})
+                else:
+                    # Update a lease status if it exists
+                    if db_api.lease_get(lease_id):
+                        next_status = cls.derive_stable_status(lease_id)
+                        if (next_status in result_in
+                                and cls.is_valid_transition(transition,
+                                                            next_status,
+                                                            lease_id=lease_id)):
+                            db_api.lease_update(lease_id,
+                                                {'status': next_status})
+                            LOG.debug('Status of lease %s changed from %s to %s.',
+                                      lease_id, transition, next_status)
+                        else:
+                            LOG.error('Lease %s went into ERROR status.',
+                                      lease_id)
+                            db_api.lease_update(lease_id, {'status': cls.ERROR})
+                            raise exceptions.InvalidStatus
 
                 return result
             return wrapper

@@ -194,3 +194,8 @@ class ConfigurationError(exceptions.BlazarException):
 
 class RedisConnectionError(exceptions.BlazarException):
     msg_fmt = _("Cannot connect to Redis host %(host)s")
+
+class CantDeleteStartingLease(exceptions.BlazarException):
+    code = 409
+    restore_lease_status = True
+    msg_fmt = _("Can't delete lease %(id)s while it is being started")

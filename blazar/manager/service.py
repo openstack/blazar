@@ -573,6 +573,9 @@ class ManagerService(service_utils.RPCServer):
             if not start_event:
                 raise common_ex.BlazarException(
                     'start_lease event for lease %s not found' % lease_id)
+            if start_event['status'] == status.event.IN_PROGRESS:
+                raise exceptions.CantDeleteStartingLease(id=lease_id)
+
             end_event = db_api.event_get_first_sorted_by_filters(
                 'lease_id',
                 'asc',

@@ -30,6 +30,7 @@ class BlazarException(Exception):
     """
     msg_fmt = _("An unknown exception occurred")
     code = 500
+    restore_lease_status = False
 
     def __init__(self, message=None, **kwargs):
         self.kwargs = kwargs
