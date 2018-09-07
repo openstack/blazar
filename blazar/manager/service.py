@@ -487,7 +487,7 @@ class ManagerService(service_utils.RPCServer):
         try:
             values['user_id'] = lease['user_id']
             values['project_id'] = lease['project_id']
-            self.usage_enforcer.check_lease_duration(values)
+            self.usage_enforcer.check_lease_duration(values, lease=lease)
         except exceptions.RedisConnectionError:
             pass
 
