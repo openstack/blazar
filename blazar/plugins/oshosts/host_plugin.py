@@ -17,6 +17,7 @@
 import datetime
 import shlex
 import subprocess
+from random import shuffle
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -605,9 +606,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             ]:
                 allocated_host_ids.append(host['id'])
         if len(not_allocated_host_ids) >= int(min_host):
+            shuffle(not_allocated_host_ids)
             return not_allocated_host_ids[:int(max_host)]
         all_host_ids = allocated_host_ids + not_allocated_host_ids
         if len(all_host_ids) >= int(min_host):
+            shuffle(all_host_ids)
             return all_host_ids[:int(max_host)]
         else:
             return []
