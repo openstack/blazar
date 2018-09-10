@@ -2154,7 +2154,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             '[]', '[]', '1-3',
             datetime.datetime(2013, 12, 19, 20, 00),
             datetime.datetime(2013, 12, 19, 21, 00))
-        self.assertEqual(['host2', 'host3'], result)
+        self.assertEqual(set(['host2', 'host3']), set(result))
 
     def test_matching_hosts_allocated_hosts(self):
         def host_allocation_get_all_by_values(**kwargs):
@@ -2183,7 +2183,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             '[]', '[]', '3-3',
             datetime.datetime(2013, 12, 19, 20, 00),
             datetime.datetime(2013, 12, 19, 21, 00))
-        self.assertEqual(['host1', 'host2', 'host3'], result)
+        self.assertEqual(set(['host1', 'host2', 'host3']), set(result))
 
     def test_matching_hosts_allocated_hosts_with_cleaning_time(self):
         def host_allocation_get_all_by_values(**kwargs):
@@ -2215,7 +2215,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             '[]', '[]', '3-3',
             datetime.datetime(2013, 12, 19, 20, 00),
             datetime.datetime(2013, 12, 19, 21, 00))
-        self.assertEqual(['host1', 'host2', 'host3'], result)
+        self.assertEqual(set(['host1', 'host2', 'host3']), set(result))
 
     def test_matching_hosts_not_matching(self):
         host_get = self.patch(
