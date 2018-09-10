@@ -15,6 +15,7 @@
 # under the License.
 
 import datetime
+from random import Random
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -64,6 +65,9 @@ plugin_opts = [
                help='Interval (minutes) of reservation healing. '
                     'If 0 is specified, the interval is infinite and all the '
                     'reservations in the future is healed at one time.'),
+    cfg.BoolOpt('randomize_host_selection',
+                default=False,
+                help='Allocate hosts for reservations randomly.'),
 ]
 
 CONF = cfg.CONF
@@ -593,9 +597,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             ]:
                 allocated_host_ids.append(host['id'])
         if len(not_allocated_host_ids) >= int(min_host):
+            if CONF[self.resource_type].randomize_host_selection:
+                Random.shuffle(not_allocated_host_ids)
             return not_allocated_host_ids[:int(max_host)]
         all_host_ids = allocated_host_ids + not_allocated_host_ids
         if len(all_host_ids) >= int(min_host):
+            if CONF[self.resource_type].randomize_host_selection:
+                Random.shuffle(all_host_ids)
             return all_host_ids[:int(max_host)]
         else:
             return []
