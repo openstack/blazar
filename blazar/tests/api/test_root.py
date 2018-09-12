@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo_serialization import jsonutils
-
 from blazar.tests import api
 
 
 class TestRoot(api.APITest):
     def setUp(self):
         super(TestRoot, self).setUp()
-        self.versions = jsonutils.dump_as_bytes(
-            {"versions":
-             [{"status": "CURRENT",
-               "id": "v2.0",
-               "links": [{"href": "http://localhost/v2", "rel": "self"}]}]})
+        self.versions = {
+            "versions":
+            [{"status": "CURRENT",
+              "id": "v2.0",
+              "links": [{"href": "http://localhost/v2", "rel": "self"}]}]}
 
     def test_version_discovery_root(self):
         response = self.get_json('/',
@@ -33,7 +31,7 @@ class TestRoot(api.APITest):
                                  path_prefix='')
         self.assertEqual(300, response.status_int)
         self.assertEqual("application/json", response.content_type)
-        self.assertEqual(self.versions, response.body)
+        self.assertEqual(self.versions, response.json)
 
     def test_version_discovery_versions(self):
         response = self.get_json('/versions',
@@ -41,7 +39,7 @@ class TestRoot(api.APITest):
                                  path_prefix='')
         self.assertEqual(300, response.status_int)
         self.assertEqual("application/json", response.content_type)
-        self.assertEqual(self.versions, response.body)
+        self.assertEqual(self.versions, response.json)
 
     def test_bad_uri(self):
         response = self.get_json('/bad/path',
