@@ -48,7 +48,7 @@
           export PROJECTS="openstack/blazar-nova $PROJECTS"
           export PROJECTS="openstack/python-blazarclient $PROJECTS"
           export PROJECTS="openstack/blazar-tempest-plugin $PROJECTS"
-          export DEVSTACK_GATE_TEMPEST_REGEX="blazar_tempest_plugin"
+          export DEVSTACK_GATE_TEMPEST_REGEX='blazar_tempest_plugin\.tests\.(?!api)'
           cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
           ./safe-devstack-vm-gate-wrap.sh
         executable: /bin/bash
