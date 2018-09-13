@@ -28,6 +28,12 @@ def convert_requirements(requirements):
     # TODO(frossigneux) Support the "or" operator
     # Convert text to json
     if isinstance(requirements, six.string_types):
+        # Treat empty string as an empty JSON array, to avoid raising a
+        # ValueError exception while loading JSON
+        #
+        # TODO(priteau): Only persist valid JSON to the database
+        if requirements == '':
+            requirements = '[]'
         try:
             requirements = jsonutils.loads(requirements)
         except ValueError:
