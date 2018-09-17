@@ -35,6 +35,7 @@ def list_opts():
              blazar.cmd.api.opts,
              blazar.config.api_opts,
              blazar.config.cli_opts,
+             blazar.config.lease_opts,
              blazar.config.os_opts,
              blazar.db.base.db_driver_opts,
              blazar.db.migration.cli.command_opts,
