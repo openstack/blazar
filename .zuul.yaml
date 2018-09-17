@@ -1,3 +1,25 @@
+- job:
+    name: blazar-devstack-dsvm
+    parent: legacy-dsvm-base
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^blazar/tests/.*$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+      - ^test-requirements.txt$
+      - ^tools/.*$
+      - ^tox.ini$
+    run: playbooks/legacy/blazar-devstack-dsvm/run.yaml
+    post-run: playbooks/legacy/blazar-devstack-dsvm/post.yaml
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/blazar
+      - openstack/blazar-nova
+      - openstack/python-blazarclient
+      - openstack/blazar-tempest-plugin
+
 - project:
     templates:
       - openstack-python-jobs
@@ -7,6 +29,7 @@
       - release-notes-jobs
     check:
       jobs:
+        - blazar-devstack-dsvm
         - openstack-tox-pylint:
             voting: false
         - openstack-tox-py35:
@@ -16,3 +39,4 @@
       jobs:
         - openstack-tox-py35:
             voting: false
+        - blazar-devstack-dsvm
