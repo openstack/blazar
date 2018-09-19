@@ -225,18 +225,19 @@ class LeaseStatus(BaseStatus):
                     # Update a lease status if it exists
                     if db_api.lease_get(lease_id):
                         next_status = cls.derive_stable_status(lease_id)
-                        if (next_status in result_in
-                                and cls.is_valid_transition(transition,
-                                                            next_status,
-                                                            lease_id=lease_id)):
+                        if (next_status in result_in and
+                                cls.is_valid_transition(transition,
+                                                        next_status,
+                                                        lease_id=lease_id)):
                             db_api.lease_update(lease_id,
                                                 {'status': next_status})
-                            LOG.debug('Status of lease %s changed from %s to %s.',
-                                      lease_id, transition, next_status)
+                            LOG.debug('Status of lease %s changed from %s to '
+                                      '%s.', lease_id, transition, next_status)
                         else:
                             LOG.error('Lease %s went into ERROR status.',
                                       lease_id)
-                            db_api.lease_update(lease_id, {'status': cls.ERROR})
+                            db_api.lease_update(lease_id,
+                                                {'status': cls.ERROR})
                             raise exceptions.InvalidStatus
 
                 return result
