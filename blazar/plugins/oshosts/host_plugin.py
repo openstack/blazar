@@ -15,9 +15,9 @@
 # under the License.
 
 import datetime
+from random import shuffle
 import shlex
 import subprocess
-from random import shuffle
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
