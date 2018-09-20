@@ -149,6 +149,7 @@ class HypervisorNotFound(exceptions.BlazarException):
 
 
 class NotEnoughHostsAvailable(exceptions.BlazarException):
+    restore_lease_status = True
     msg_fmt = _("Not enough hosts available")
 
 
