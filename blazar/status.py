@@ -218,10 +218,20 @@ class LeaseStatus(BaseStatus):
                     result = func(*args, **kwargs)
                 except Exception as e:
                     with excutils.save_and_reraise_exception():
-                        LOG.error('Lease %s went into ERROR status: %s',
-                                  lease_id, str(e))
-                        db_api.lease_update(lease_id,
-                                            {'status': cls.ERROR})
+                        restore_lease_status = getattr(
+                            e, 'restore_lease_status', False)
+                        if restore_lease_status:
+                            LOG.debug('Non-fatal exception occured during '
+                                      'status transition, reverting status of '
+                                      'lease %s to %s.',
+                                      lease_id, original_status)
+                            db_api.lease_update(lease_id,
+                                                {'status': original_status})
+                        else:
+                            LOG.error('Lease %s went into ERROR status: %s',
+                                      lease_id, str(e))
+                            db_api.lease_update(lease_id,
+                                                {'status': cls.ERROR})
 
                 # Update a lease status if it exists
                 if db_api.lease_get(lease_id):
