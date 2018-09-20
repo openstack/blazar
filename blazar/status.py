@@ -209,7 +209,9 @@ class LeaseStatus(BaseStatus):
                     result = func(*args, **kwargs)
                 except Exception as e:
                     with excutils.save_and_reraise_exception():
-                        if e.restore_lease_status:
+                        restore_lease_status = getattr(
+                            e, 'restore_lease_status', False)
+                        if restore_lease_status:
                             LOG.debug('Non-fatal exception occured during '
                                       'status transition, reverting status of '
                                       'lease %s to %s.',
