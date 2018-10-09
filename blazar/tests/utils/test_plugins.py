@@ -29,6 +29,13 @@ class TestPluginsUtils(tests.TestCase):
         result = plugins_utils.convert_requirements(request)
         self.assertEqual([], result)
 
+    def test_convert_requirements_empty_string(self):
+        # NOTE(priteau): Currently, empty requirements can be persisted in the
+        # database as empty strings, which are not valid JSON objects.
+        request = ''
+        result = plugins_utils.convert_requirements(request)
+        self.assertEqual([], result)
+
     def test_convert_requirements_small(self):
         request = '["=", "$memory", "4096"]'
         result = plugins_utils.convert_requirements(request)
