@@ -132,8 +132,7 @@ class UsageEnforcer(object):
         except redis.exceptions.ConnectionError:
             LOG.exception('Cannot connect to Redis host %s',
                           CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+            return None
 
     def remove_lease_exception(self, user_name):
         LOG.info('Removing lease exception for user {}'.format(user_name))
