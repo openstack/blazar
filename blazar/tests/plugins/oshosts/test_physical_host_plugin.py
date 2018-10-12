@@ -186,13 +186,13 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_get.assert_called_once_with('1')
         expected = self.fake_host.copy()
         expected.update({'foo': 'bar', 'buzz': 'word'})
-        self.assertEqual(host, expected)
+        self.assertEqual(expected, host)
 
     def test_get_host_without_extracapabilities(self):
         self.get_extra_capabilities.return_value = {}
         host = self.fake_phys_plugin.get_computehost(self.fake_host_id)
         self.db_host_get.assert_called_once_with('1')
-        self.assertEqual(host, self.fake_host)
+        self.assertEqual(self.fake_host, host)
 
     @testtools.skip('incorrect decorator')
     def test_list_hosts(self):
@@ -204,7 +204,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.get_extra_capabilities.return_value = {}
         host = self.fake_phys_plugin.create_computehost(self.fake_host)
         self.db_host_create.assert_called_once_with(self.fake_host)
-        self.assertEqual(host, self.fake_host)
+        self.assertEqual(self.fake_host, host)
 
     def test_create_host_with_extra_capabilities(self):
         fake_host = self.fake_host.copy()
@@ -220,7 +220,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host = self.fake_phys_plugin.create_computehost(fake_request)
         self.db_host_create.assert_called_once_with(self.fake_host)
         self.db_host_extra_capability_create.assert_called_once_with(fake_capa)
-        self.assertEqual(host, fake_host)
+        self.assertEqual(fake_host, host)
 
     def test_create_host_with_capabilities_too_long(self):
         fake_host = self.fake_host.copy()

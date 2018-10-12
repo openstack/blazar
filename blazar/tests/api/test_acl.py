@@ -34,20 +34,20 @@ class TestACL(api.APITest):
 
     def test_non_authenticated(self):
         response = self.get_json(self.path, expect_errors=True)
-        self.assertEqual(response.status_int, 401)
+        self.assertEqual(401, response.status_int)
 
     def test_authenticated(self):
         response = self.get_json(self.path,
                                  headers={'X-Auth-Token': self.ADMIN_TOKEN})
 
-        self.assertEqual(response, [])
+        self.assertEqual([], response)
 
     def test_non_admin(self):
         response = self.get_json(self.path,
                                  headers={'X-Auth-Token': self.MEMBER_TOKEN},
                                  expect_errors=True)
 
-        self.assertEqual(response.status_int, 403)
+        self.assertEqual(403, response.status_int)
 
     def test_non_admin_with_admin_header(self):
         response = self.get_json(self.path,
@@ -55,4 +55,4 @@ class TestACL(api.APITest):
                                           'X-Roles': 'admin'},
                                  expect_errors=True)
 
-        self.assertEqual(response.status_int, 403)
+        self.assertEqual(403, response.status_int)

@@ -142,33 +142,33 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
                                                  start_date,
                                                  end_date,
                                                  duration)
-        self.assertEqual(len(free_periods), 3)
-        self.assertEqual(free_periods[0][0].strftime('%Y-%m-%d %H:%M'),
-                         '2028-01-01 08:00')
-        self.assertEqual(free_periods[0][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 09:00')
-        self.assertEqual(free_periods[1][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 10:30')
-        self.assertEqual(free_periods[1][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 13:00')
-        self.assertEqual(free_periods[2][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 14:00')
-        self.assertEqual(free_periods[2][1].strftime('%Y-%m-%d %H:%M'),
-                         '2099-01-01 00:00')
+        self.assertEqual(3, len(free_periods))
+        self.assertEqual('2028-01-01 08:00',
+                         free_periods[0][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 09:00',
+                         free_periods[0][1].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 10:30',
+                         free_periods[1][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 13:00',
+                         free_periods[1][1].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 14:00',
+                         free_periods[2][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2099-01-01 00:00',
+                         free_periods[2][1].strftime('%Y-%m-%d %H:%M'))
         duration = datetime.timedelta(hours=3)
         free_periods = db_utils.get_free_periods('r1',
                                                  start_date,
                                                  end_date,
                                                  duration)
-        self.assertEqual(len(free_periods), 2)
-        self.assertEqual(free_periods[0][0].strftime('%Y-%m-%d %H:%M'),
-                         '2028-01-01 08:00')
-        self.assertEqual(free_periods[0][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 09:00')
-        self.assertEqual(free_periods[1][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 14:00')
-        self.assertEqual(free_periods[1][1].strftime('%Y-%m-%d %H:%M'),
-                         '2099-01-01 00:00')
+        self.assertEqual(2, len(free_periods))
+        self.assertEqual('2028-01-01 08:00',
+                         free_periods[0][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 09:00',
+                         free_periods[0][1].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 14:00',
+                         free_periods[1][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2099-01-01 00:00',
+                         free_periods[1][1].strftime('%Y-%m-%d %H:%M'))
 
     def test_get_reserved_periods(self):
         """Find the reserved periods."""
@@ -182,25 +182,25 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
                                                          start_date,
                                                          end_date,
                                                          duration)
-        self.assertEqual(len(reserved_periods), 2)
-        self.assertEqual(reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 09:00')
-        self.assertEqual(reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 10:30')
-        self.assertEqual(reserved_periods[1][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 13:00')
-        self.assertEqual(reserved_periods[1][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 14:00')
+        self.assertEqual(2, len(reserved_periods))
+        self.assertEqual('2030-01-01 09:00',
+                         reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 10:30',
+                         reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 13:00',
+                         reserved_periods[1][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 14:00',
+                         reserved_periods[1][1].strftime('%Y-%m-%d %H:%M'))
         duration = datetime.timedelta(hours=3)
         reserved_periods = db_utils.get_reserved_periods('r1',
                                                          start_date,
                                                          end_date,
                                                          duration)
-        self.assertEqual(len(reserved_periods), 1)
-        self.assertEqual(reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 09:00')
-        self.assertEqual(reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'),
-                         '2030-01-01 14:00')
+        self.assertEqual(1, len(reserved_periods))
+        self.assertEqual('2030-01-01 09:00',
+                         reserved_periods[0][0].strftime('%Y-%m-%d %H:%M'))
+        self.assertEqual('2030-01-01 14:00',
+                         reserved_periods[0][1].strftime('%Y-%m-%d %H:%M'))
 
     def test_availability_time(self):
         """Find the total availability time."""
@@ -212,7 +212,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         availability_time = db_utils.availability_time('r1',
                                                        start_date,
                                                        end_date)
-        self.assertEqual(availability_time.seconds, 0 * 60)
+        self.assertEqual(0 * 60, availability_time.seconds)
         start_date = datetime.datetime.strptime('2030-01-01 09:15',
                                                 '%Y-%m-%d %H:%M')
         end_date = datetime.datetime.strptime('2030-01-01 13:45',
@@ -220,7 +220,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         availability_time = db_utils.availability_time('r1',
                                                        start_date,
                                                        end_date)
-        self.assertEqual(availability_time.seconds, 150 * 60)
+        self.assertEqual(150 * 60, availability_time.seconds)
         start_date = datetime.datetime.strptime('2030-01-01 08:00',
                                                 '%Y-%m-%d %H:%M')
         end_date = datetime.datetime.strptime('2030-01-01 15:00',
@@ -228,7 +228,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         availability_time = db_utils.availability_time('r1',
                                                        start_date,
                                                        end_date)
-        self.assertEqual(availability_time.seconds, 270 * 60)
+        self.assertEqual(270 * 60, availability_time.seconds)
 
     def test_reservation_time(self):
         """Find the total reserved time."""
@@ -240,7 +240,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         reservation_time = db_utils.reservation_time('r1',
                                                      start_date,
                                                      end_date)
-        self.assertEqual(reservation_time.seconds, 60 * 60)
+        self.assertEqual(60 * 60, reservation_time.seconds)
         start_date = datetime.datetime.strptime('2030-01-01 09:15',
                                                 '%Y-%m-%d %H:%M')
         end_date = datetime.datetime.strptime('2030-01-01 13:45',
@@ -248,7 +248,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         reservation_time = db_utils.reservation_time('r1',
                                                      start_date,
                                                      end_date)
-        self.assertEqual(reservation_time.seconds, 120 * 60)
+        self.assertEqual(120 * 60, reservation_time.seconds)
         start_date = datetime.datetime.strptime('2030-01-01 08:00',
                                                 '%Y-%m-%d %H:%M')
         end_date = datetime.datetime.strptime('2030-01-01 15:00',
@@ -256,7 +256,7 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         reservation_time = db_utils.reservation_time('r1',
                                                      start_date,
                                                      end_date)
-        self.assertEqual(reservation_time.seconds, 150 * 60)
+        self.assertEqual(150 * 60, reservation_time.seconds)
 
     def test_reservation_ratio(self):
         """Find the reservation ratio."""
@@ -290,8 +290,8 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         end_date = datetime.datetime.strptime('2030-01-01 14:30',
                                               '%Y-%m-%d %H:%M')
         self.assertEqual(
-            db_utils.number_of_reservations('r1', start_date, end_date),
-            2)
+            2,
+            db_utils.number_of_reservations('r1', start_date, end_date))
 
     def test_longest_lease(self):
         """Find the longest lease."""

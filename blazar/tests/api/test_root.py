@@ -45,5 +45,5 @@ class TestRoot(api.APITest):
         response = self.get_json('/bad/path',
                                  expect_errors=True,
                                  path_prefix='')
-        self.assertEqual(response.status_int, 404)
-        self.assertEqual(response.content_type, "text/plain")
+        self.assertEqual(404, response.status_int)
+        self.assertEqual("text/plain", response.content_type)

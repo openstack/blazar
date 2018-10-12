@@ -593,7 +593,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
                   'removed': set(['host-id1', 'host-id2', 'host-id3'])}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
-        self.assertEqual(len(ret['removed']), 2)
+        self.assertEqual(2, len(ret['removed']))
         self.assertTrue(all([h in expect['removed'] for h in ret['removed']]))
         query_params = {
             'cpus': 1, 'memory': 1024, 'disk': 10,

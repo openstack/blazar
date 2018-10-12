@@ -25,15 +25,15 @@ class TestContextCreate(tests.TestCase):
 
     def test_kwargs(self):
         ctx = TestContext(first=1, second=2)
-        self.assertEqual(ctx.to_dict(), {"first": 1, "second": 2})
+        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
 
     def test_dict(self):
         ctx = TestContext({"first": 1, "second": 2})
-        self.assertEqual(ctx.to_dict(), {"first": 1, "second": 2})
+        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
 
     def test_mix(self):
         ctx = TestContext({"first": 1}, second=2)
-        self.assertEqual(ctx.to_dict(), {"first": 1, "second": 2})
+        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
 
     def test_fail(self):
         ctx = TestContext({'first': 1, "forth": 4}, fifth=5)
@@ -48,7 +48,7 @@ class TestBaseContext(tests.TestCase):
 
     def tearDown(self):
         super(TestBaseContext, self).tearDown()
-        self.assertEqual(self.context.first, 1)
+        self.assertEqual(1, self.context.first)
 
     def test_get_default(self):
         self.assertIsNone(self.context.third)
@@ -95,11 +95,11 @@ class TestBlazarContext(tests.TestCase):
 
     def test_elevated_empty(self):
         ctx = context.BlazarContext.elevated()
-        self.assertEqual(ctx.is_admin, True)
+        self.assertTrue(ctx.is_admin)
 
     def test_elevated(self):
         with context.BlazarContext(user_id="user", project_id="project"):
             ctx = context.BlazarContext.elevated()
             self.assertEqual(ctx.user_id, "user")
             self.assertEqual(ctx.project_id, "project")
-            self.assertEqual(ctx.is_admin, True)
+            self.assertTrue(ctx.is_admin)
