@@ -51,6 +51,7 @@ def _get_leases_from_host_id(host_id, start_date, end_date):
     border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Lease).join(models.Reservation)
              .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.deleted.is_(None))
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(sa.and_(border0, border1)))
     for lease in query:
@@ -77,6 +78,7 @@ def get_reservations_by_host_id(host_id, start_date, end_date):
     border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Reservation).join(models.Lease)
              .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.deleted.is_(None))
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(sa.and_(border0, border1)))
     return query.all()
@@ -88,6 +90,7 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Reservation).join(models.Lease)
              .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.deleted.is_(None))
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
              .filter(sa.and_(border0, border1)))
@@ -285,6 +288,7 @@ def longest_lease(host_id, start_date, end_date):
     query = (api.model_query(models.Lease, session=session)
              .join(models.Reservation)
              .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.deleted.is_(None))
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)
              .filter(models.Lease.end_date <= end_date))
@@ -304,6 +308,7 @@ def shortest_lease(host_id, start_date, end_date):
     query = (api.model_query(models.Lease, session=session)
              .join(models.Reservation)
              .join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.deleted.is_(None))
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
              .filter(models.Lease.start_date >= start_date)
              .filter(models.Lease.end_date <= end_date))
