@@ -98,14 +98,18 @@ class BlazarPlacementClient(object):
         """Calls the placement API for a resource provider record.
 
         :param rp_name: Name of the resource provider
-        :return: A dict of resource provider information.
+        :return: A dict of resource provider information
+                 or None if the resource provider doesn't exist.
         :raise: ResourceProviderRetrievalFailed on error.
         """
         url = "/resource_providers?name=%s" % rp_name
         resp = self.get(url)
         if resp:
             json_resp = resp.json()
-            return json_resp['resource_providers'][0]
+            if json_resp['resource_providers']:
+                return json_resp['resource_providers'][0]
+            else:
+                return None
 
         msg = ("Failed to get resource provider %(name)s. "
                "Got %(status_code)d: %(err_text)s.")
@@ -192,6 +196,10 @@ class BlazarPlacementClient(object):
         """Delete the reservation provider, the child of the given host"""
         rp_name = "blazar_" + host_name
         rp = self.get_resource_provider(rp_name)
+        if rp is None:
+            # If the reservation provider doesn't exist,
+            # no operation will be performed.
+            return
         rp_uuid = rp['uuid']
         self.delete_resource_provider(rp_uuid)
 
@@ -319,6 +327,10 @@ class BlazarPlacementClient(object):
         # Get reservation provider uuid
         rp_name = "blazar_" + host_name
         rp = self.get_resource_provider(rp_name)
+        if rp is None:
+            # If the reservation provider is not created yet,
+            # this function creates it.
+            rp = self.create_reservation_provider(host_name)
         rp_uuid = rp['uuid']
 
         # Build inventory data
@@ -341,10 +353,15 @@ class BlazarPlacementClient(object):
 
         :param host_name: The name of the target host
         :param reserv_uuid: The reservation uuid
+        :raises: ResourceProviderNotFound if the reservation
+                 provider is not found
         """
         # Get reservation provider uuid
         rp_name = "blazar_" + host_name
         rp = self.get_resource_provider(rp_name)
+        if rp is None:
+            raise exceptions.ResourceProviderNotFound(
+                resource_provider=rp_name)
         rp_uuid = rp['uuid']
 
         # Convert reservation uuid to resource class name

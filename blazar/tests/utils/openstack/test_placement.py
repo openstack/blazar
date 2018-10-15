@@ -131,6 +131,28 @@ class TestPlacementClient(tests.TestCase):
         self.assertEqual(expected, result)
 
     @mock.patch('keystoneauth1.session.Session.request')
+    def test_get_resource_provider_no_rp(self, kss_req):
+        rp_name = 'blazar'
+
+        mock_json_data = {
+            'resource_providers': []
+        }
+
+        kss_req.return_value = fake_requests.FakeResponse(
+            200, content=json.dumps(mock_json_data))
+
+        result = self.client.get_resource_provider(rp_name)
+
+        expected_url = '/resource_providers?name=blazar'
+        kss_req.assert_called_once_with(
+            expected_url, 'GET',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self.assertEqual(None, result)
+
+    @mock.patch('keystoneauth1.session.Session.request')
     def test_get_resource_provider_fail(self, kss_req):
         rp_name = 'blazar'
         kss_req.return_value = fake_requests.FakeResponse(404)
@@ -287,6 +309,31 @@ class TestPlacementClient(tests.TestCase):
             microversion=PLACEMENT_MICROVERSION, raise_exc=False)
 
     @mock.patch('keystoneauth1.session.Session.request')
+    def test_delete_reservation_provider_no_rp(self, kss_req):
+        host_name = "compute-1"
+        rp_name = "blazar_compute-1"
+        get_json_mock = {
+            'resource_providers': []
+        }
+        mock_call1 = fake_requests.FakeResponse(
+            200, content=json.dumps(get_json_mock))
+        mock_call2 = fake_requests.FakeResponse(200)
+        kss_req.side_effect = [mock_call1, mock_call2]
+
+        self.client.delete_reservation_provider(host_name)
+
+        expected_url_get = "/resource_providers?name=%s" % rp_name
+        kss_req.assert_any_call(
+            expected_url_get, 'GET',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+        # Ensure that mock_call2 for delete is not called
+        self.assertEqual(kss_req.call_count, 1)
+
+    @mock.patch('keystoneauth1.session.Session.request')
     def test_create_reservation_class(self, kss_req):
         rc_name = 'abc-def'
         kss_req.return_value = fake_requests.FakeResponse(200)
@@ -431,6 +478,84 @@ class TestPlacementClient(tests.TestCase):
 
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get_resource_provider')
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.create_reservation_provider')
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get')
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_update_reservation_inventory_no_rp(
+            self, kss_req, client_get, create_rp, get_rp):
+        host_uuid = uuidutils.generate_uuid()
+        host_name = "compute-1"
+        rp_uuid = uuidutils.generate_uuid()
+        rp_name = "blazar_compute-1"
+
+        # Build the mock that there is no existing reservation provider
+        get_rp.return_value = None
+
+        # Build the mock of created resource provider
+        mock_post_rp_json = {'uuid': rp_uuid,
+                             'name': rp_name,
+                             'generation': 0,
+                             'parent_provider_uuid': host_uuid}
+        create_rp.return_value = mock_post_rp_json
+
+        # Build the mock of "current" inventory for get_inventory()
+        curr_gen = 0
+        mock_get_inv_json = {
+            'inventories': {},
+            "resource_provider_generation": curr_gen
+        }
+        client_get.return_value = fake_requests.FakeResponse(
+            200, content=json.dumps(mock_get_inv_json))
+
+        # Build the mock of "updated" inventory for update_inventory()
+        update_gen = 1
+        mock_put_json = {
+            'inventories': {
+                'CUSTOM_RESERVATION_ADD': {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": 3
+                },
+            },
+            "resource_provider_generation": update_gen
+        }
+        kss_req.return_value = fake_requests.FakeResponse(
+            200, content=json.dumps(mock_put_json))
+
+        result = self.client.update_reservation_inventory(host_name, 'add', 3)
+
+        # Ensure that the create_reservation_provider() is called.
+        create_rp.assert_called_once_with(host_name)
+
+        expected_data = {
+            'inventories': {
+                'CUSTOM_RESERVATION_ADD': {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": 3
+                },
+            },
+            "resource_provider_generation": curr_gen
+        }
+        expected_url = '/resource_providers/%s/inventories' % rp_uuid
+        kss_req.assert_called_once_with(
+            expected_url, 'PUT', json=expected_data,
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self.assertEqual(mock_put_json, result)
+
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get_resource_provider')
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_reservation_inventory(self, kss_req, get_rp):
         host_uuid = uuidutils.generate_uuid()
@@ -458,3 +583,14 @@ class TestPlacementClient(tests.TestCase):
                              'interface': 'public'},
             headers={'accept': 'application/json'},
             microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get_resource_provider')
+    def test_delete_reservation_inventory_no_rp(self, get_rp):
+        host_name = "compute-1"
+        # Build the mock that there is no existing reservation provider
+        get_rp.return_value = None
+
+        self.assertRaises(
+            exceptions.ResourceProviderNotFound,
+            self.client.delete_reservation_inventory, host_name, "curr1")
