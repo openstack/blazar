@@ -48,7 +48,8 @@ class AggregateHaveHost(exceptions.BlazarException):
 
 class AggregateAlreadyHasHost(exceptions.BlazarException):
     code = 409
-    msg_fmt = _("Aggregate %(pool)s already has host(s) %(host)s ")
+    msg_fmt = _("Conflict while adding host %(host)s to aggregate %(pool)s: "
+                "%(nova_exception)s")
 
 
 class AggregateNotFound(exceptions.NotFound):

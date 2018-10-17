@@ -365,9 +365,9 @@ class ReservationPool(NovaClientWrapper):
             return self.nova.aggregates.add_host(agg.id, host)
         except nova_exception.NotFound:
             raise manager_exceptions.HostNotFound(host=host)
-        except nova_exception.Conflict:
-            raise manager_exceptions.AggregateAlreadyHasHost(pool=pool,
-                                                             host=host)
+        except nova_exception.Conflict as e:
+            raise manager_exceptions.AggregateAlreadyHasHost(
+                pool=pool, host=host, nova_exception=str(e))
 
     def remove_all_computehosts(self, pool):
         """Remove all compute hosts attached to an aggregate."""
