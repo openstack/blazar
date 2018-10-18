@@ -262,7 +262,12 @@ class BlazarPlacementClient(object):
         # and "-"(hyphen) in its name. We should translate the uuid here.
         reservation_uuid = reservation_uuid.upper().replace("-", "_")
         rc_name = 'CUSTOM_RESERVATION_' + reservation_uuid
-        self.delete_resource_class(rc_name)
+        try:
+            self.delete_resource_class(rc_name)
+        except exceptions.ResourceClassDeletionFailed:
+            # We just log it and skip to keep the compatibility before Stein
+            LOG.info("Resource class %s doesn't exist. Skipped the deletion "
+                     "of the resource class", rc_name)
 
     def get_inventory(self, rp_uuid):
         """Calls the placement API to get resource inventory information.
@@ -367,4 +372,10 @@ class BlazarPlacementClient(object):
         # Convert reservation uuid to resource class name
         reserv_uuid = reserv_uuid.upper().replace("-", "_")
         rc_name = 'CUSTOM_RESERVATION_' + reserv_uuid
-        self.delete_inventory(rp_uuid, rc_name)
+        try:
+            self.delete_inventory(rp_uuid, rc_name)
+        except exceptions.InventoryUpdateFailed:
+            # We just log it and skip to keep the compatibility before Stein
+            LOG.info("Resource class %s doesn't exist or there is no "
+                     "inventory for that resource class on resource provider "
+                     "%s. Skipped the deletion", rc_name, rp_name)
