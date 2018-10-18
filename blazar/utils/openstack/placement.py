@@ -177,3 +177,20 @@ class BlazarPlacementClient(object):
         }
         LOG.error(msg, args)
         raise exceptions.ResourceProviderDeletionFailed(uuid=rp_uuid)
+
+    def create_reservation_provider(self, host_name):
+        """Create a reservation provider as a child of the given host"""
+        host_rp = self.get_resource_provider(host_name)
+        host_uuid = host_rp['uuid']
+        rp_name = "blazar_" + host_name
+
+        reservation_rp = self.create_resource_provider(
+            rp_name, parent_uuid=host_uuid)
+        return reservation_rp
+
+    def delete_reservation_provider(self, host_name):
+        """Delete the reservation provider, the child of the given host"""
+        rp_name = "blazar_" + host_name
+        rp = self.get_resource_provider(rp_name)
+        rp_uuid = rp['uuid']
+        self.delete_resource_provider(rp_uuid)
