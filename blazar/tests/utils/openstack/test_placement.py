@@ -285,3 +285,52 @@ class TestPlacementClient(tests.TestCase):
                              'interface': 'public'},
             headers={'accept': 'application/json'},
             microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_create_reservation_class(self, kss_req):
+        rc_name = 'abc-def'
+        kss_req.return_value = fake_requests.FakeResponse(200)
+
+        self.client.create_reservation_class(rc_name)
+
+        expected_url = '/resource_classes'
+        kss_req.assert_called_once_with(
+            expected_url, 'POST',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            json={'name': 'CUSTOM_RESERVATION_ABC_DEF'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_create_reservation_class_fail(self, kss_req):
+        rc_name = 'abc-def'
+        kss_req.return_value = fake_requests.FakeResponse(400)
+
+        self.assertRaises(
+            exceptions.ResourceClassCreationFailed,
+            self.client.create_reservation_class, rc_name)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_delete_reservation_class(self, kss_req):
+        rc_name = 'abc-def'
+        kss_req.return_value = fake_requests.FakeResponse(200)
+
+        self.client.delete_reservation_class(rc_name)
+
+        expected_url = '/resource_classes/CUSTOM_RESERVATION_ABC_DEF'
+        kss_req.assert_called_once_with(
+            expected_url, 'DELETE',
+            endpoint_filter={'service_type': 'placement',
+                             'interface': 'public'},
+            headers={'accept': 'application/json'},
+            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_delete_reservation_class_fail(self, kss_req):
+        rc_name = 'CUSTOM_RESERVATION_abc-def'
+        kss_req.return_value = fake_requests.FakeResponse(400)
+
+        self.assertRaises(
+            exceptions.ResourceClassDeletionFailed,
+            self.client.delete_reservation_class, rc_name)
