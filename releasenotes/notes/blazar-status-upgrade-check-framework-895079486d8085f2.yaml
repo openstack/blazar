@@ -1,0 +1,13 @@
+---
+prelude: >
+    Added new tool ``blazar-status upgrade check``.
+features:
+  - |
+    New framework for ``blazar-status upgrade check`` command is added.
+    This framework allows adding various checks which can be run before a
+    Blazar upgrade to ensure if the upgrade can be performed safely.
+upgrade:
+  - |
+    Operator can now use new CLI tool ``blazar-status upgrade check``
+    to check if Blazar deployment can be safely upgraded from
+    N-1 to N release.
