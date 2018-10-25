@@ -296,7 +296,8 @@ COMBINATIONS = {
         'reservation': (ReservationStatus.ACTIVE,
                         ReservationStatus.DELETED,
                         ReservationStatus.ERROR),
-        'start_lease': (EventStatus.DONE,),
+        'start_lease': (EventStatus.DONE,
+                        EventStatus.ERROR),
         'end_lease': (EventStatus.IN_PROGRESS,)
     },
     LeaseStatus.TERMINATED: {
