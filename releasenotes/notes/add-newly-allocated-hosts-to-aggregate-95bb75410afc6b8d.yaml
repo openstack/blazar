@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes an issue wherein increasing the number of hosts of an active host
+    reservation would fail to add newly allocated hosts to the host aggregate,
+    preventing instances from being deployed on them.

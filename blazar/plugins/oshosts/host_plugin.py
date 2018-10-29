@@ -696,12 +696,18 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         except manager_ex.RedisConnectionError:
             pass
 
+        pool = nova.ReservationPool()
         for host_id in host_ids_to_add:
             LOG.debug('Adding host {} to reservation {}'.format(
                 host_id, reservation_id))
             db_api.host_allocation_create(
                 {'compute_host_id': host_id,
                  'reservation_id': reservation_id})
+            if reservation_status == status.reservation.ACTIVE:
+                # Add new host into the aggregate.
+                new_host = db_api.host_get(host_id)
+                pool.add_computehost(host_reservation['aggregate_id'],
+                                     new_host['service_name'])
 
         for allocation in allocs_to_remove:
             LOG.debug('Removing host {} from reservation {}'.format(
