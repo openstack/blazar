@@ -412,16 +412,25 @@ class ManagerService(service_utils.RPCServer):
 
             # TODO(frossigneux) rollback if an exception is raised
             reservations = values.get('reservations', [])
-            for reservation in (
-                    db_api.reservation_get_all_by_lease_id(lease_id)):
+            reservations_db = db_api.reservation_get_all_by_lease_id(lease_id)
+            try:
+                invalid_ids = set([r['id'] for r in reservations]).difference(
+                    [r['id'] for r in reservations_db])
+            except KeyError:
+                raise exceptions.MissingParameter(param='reservation ID')
+
+            if invalid_ids:
+                raise common_ex.InvalidInput(
+                    'Please enter valid reservation IDs. Invalid reservation '
+                    'IDs are: %s' % ','.join([str(id) for id in invalid_ids]))
+
+            for reservation in (reservations_db):
                 v = {}
                 v['start_date'] = values['start_date']
                 v['end_date'] = values['end_date']
                 try:
                     v.update([r for r in reservations
                               if r['id'] == reservation['id']].pop())
-                except KeyError:
-                    raise exceptions.MissingParameter(param='reservation ID')
                 except IndexError:
                     pass
                 resource_type = v.get('resource_type',

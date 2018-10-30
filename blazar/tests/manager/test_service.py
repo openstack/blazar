@@ -15,6 +15,7 @@
 
 import datetime
 
+import ddt
 import eventlet
 import mock
 from oslo_config import cfg
@@ -84,6 +85,7 @@ class FakeLeaseStatus(object):
         return decorator
 
 
+@ddt.ddt
 class ServiceTestCase(tests.TestCase):
     def setUp(self):
         super(ServiceTestCase, self).setUp()
@@ -903,6 +905,38 @@ class ServiceTestCase(tests.TestCase):
             self.assertRaises(
                 manager_ex.MissingParameter, self.manager.update_lease,
                 lease_id=self.lease_id, values=lease_values)
+
+    @ddt.data('', None, '1234', '7085381b-45e0-4e5d-b24a-f965f5e6e5d7')
+    def test_update_reservations_with_invalid_reservation_id(self,
+                                                             reservation_id):
+        lease_values = {
+            'reservations': [
+                {
+                    'disk_gb': 30,
+                    'id': reservation_id,
+                }
+            ]
+        }
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
+        reservation_get_all.return_value = [
+            {
+                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+            },
+            {
+                'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+                'resource_type': 'virtual:instance',
+            }
+        ]
+        target = datetime.datetime(2013, 12, 15)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+        self.assertRaises(
+            exceptions.InvalidInput, self.manager.update_lease,
+            lease_id=self.lease_id, values=lease_values)
 
     def test_update_lease_started_modify_end_date_without_before_end(self):
         def fake_event_get(sort_key, sort_dir, filters):
