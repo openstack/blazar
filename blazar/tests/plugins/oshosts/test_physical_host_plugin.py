@@ -1184,7 +1184,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         matching_hosts = self.patch(self.fake_phys_plugin, '_matching_hosts')
         matching_hosts.return_value = ['host3']
         host_get = self.patch(self.db_api, 'host_get')
-        host_get.return_value = {'service_name': 'host3_hostname'}
+        host_get.return_value = {'hypervisor_hostname': 'host3_hostname'}
         add_computehost = self.patch(
             self.nova.ReservationPool, 'add_computehost')
         host_reservation_update = self.patch(self.db_api,

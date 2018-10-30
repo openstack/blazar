@@ -707,7 +707,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # Add new host into the aggregate.
                 new_host = db_api.host_get(host_id)
                 pool.add_computehost(host_reservation['aggregate_id'],
-                                     new_host['service_name'])
+                                     new_host['hypervisor_hostname'])
 
         for allocation in allocs_to_remove:
             LOG.debug('Removing host {} from reservation {}'.format(
