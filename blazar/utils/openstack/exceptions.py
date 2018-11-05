@@ -33,3 +33,12 @@ class ResourceClassCreationFailed(exceptions.BlazarException):
 
 class ResourceClassDeletionFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to delete resource class '%(resource_class)s'")
+
+
+class ResourceProviderNotFound(exceptions.BlazarException):
+    msg_fmt = _("No such resource provider %(resource_provider)s")
+
+
+class InventoryUpdateFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to update the inventory of resource provider "
+                "%(resource_provider)s")
