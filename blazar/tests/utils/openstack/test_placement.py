@@ -375,12 +375,11 @@ class TestPlacementClient(tests.TestCase):
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_reservation_class_fail(self, kss_req):
-        rc_name = 'CUSTOM_RESERVATION_abc-def'
-        kss_req.return_value = fake_requests.FakeResponse(400)
-
-        self.assertRaises(
-            exceptions.ResourceClassDeletionFailed,
-            self.client.delete_reservation_class, rc_name)
+        rc_name = 'abc-def'
+        # If no reservation class found, the placement API returns 404 error.
+        kss_req.return_value = fake_requests.FakeResponse(404)
+        # Ensure that no error is raised
+        self.client.delete_reservation_class(rc_name)
 
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get_resource_provider')
@@ -594,3 +593,25 @@ class TestPlacementClient(tests.TestCase):
         self.assertRaises(
             exceptions.ResourceProviderNotFound,
             self.client.delete_reservation_inventory, host_name, "curr1")
+
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get_resource_provider')
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_delete_reservation_inventory_no_rc(self, kss_req, get_rp):
+        host_uuid = uuidutils.generate_uuid()
+        host_name = "compute-1"
+        rp_uuid = uuidutils.generate_uuid()
+        rp_name = "blazar_compute-1"
+
+        # Build the mock of current resource provider
+        mock_get_rp_json = {'uuid': rp_uuid,
+                            'name': rp_name,
+                            'generation': 0,
+                            'parent_provider_uuid': host_uuid}
+        get_rp.return_value = mock_get_rp_json
+
+        # If no reservation class found or if no inventory found,
+        # then the placement API returns 404 error.
+        kss_req.return_value = fake_requests.FakeResponse(404)
+        # Ensure that no error is raised
+        self.client.delete_reservation_inventory(host_name, "curr1")
