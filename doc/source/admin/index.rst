@@ -9,3 +9,4 @@ Administrator Guide
     ../configuration/index
     ../cli/index
     ../restapi/index
+    blazar-status

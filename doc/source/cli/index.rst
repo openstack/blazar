@@ -6,4 +6,3 @@ Command-Line Interface Reference
 
    host-reservation
    instance-reservation
-   blazar-status
