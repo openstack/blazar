@@ -36,55 +36,47 @@ def get_backend():
 
 def _get_leases_from_resource_id(resource_id, start_date, end_date):
     session = get_session()
-    border0 = sa.and_(models.Lease.start_date < start_date,
-                      models.Lease.end_date < start_date)
-    border1 = sa.and_(models.Lease.start_date > end_date,
-                      models.Lease.end_date > end_date)
+    border0 = start_date <= models.Lease.end_date
+    border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Lease).join(models.Reservation)
              .filter(models.Reservation.resource_id == resource_id)
-             .filter(~sa.or_(border0, border1)))
+             .filter(sa.and_(border0, border1)))
     for lease in query:
         yield lease
 
 
 def _get_leases_from_host_id(host_id, start_date, end_date):
     session = get_session()
-    border0 = sa.and_(models.Lease.start_date < start_date,
-                      models.Lease.end_date < start_date)
-    border1 = sa.and_(models.Lease.start_date > end_date,
-                      models.Lease.end_date > end_date)
+    border0 = start_date <= models.Lease.end_date
+    border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Lease).join(models.Reservation)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
-             .filter(~sa.or_(border0, border1)))
+             .filter(sa.and_(border0, border1)))
     for lease in query:
         yield lease
 
 
 def get_reservations_by_host_id(host_id, start_date, end_date):
     session = get_session()
-    border0 = sa.and_(models.Lease.start_date < start_date,
-                      models.Lease.end_date < start_date)
-    border1 = sa.and_(models.Lease.start_date > end_date,
-                      models.Lease.end_date > end_date)
+    border0 = start_date <= models.Lease.end_date
+    border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Reservation).join(models.Lease)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id == host_id)
-             .filter(~sa.or_(border0, border1)))
+             .filter(sa.and_(border0, border1)))
     return query.all()
 
 
 def get_reservations_by_host_ids(host_ids, start_date, end_date):
     session = get_session()
-    border0 = sa.and_(models.Lease.start_date < start_date,
-                      models.Lease.end_date < start_date)
-    border1 = sa.and_(models.Lease.start_date > end_date,
-                      models.Lease.end_date > end_date)
+    border0 = start_date <= models.Lease.end_date
+    border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Reservation).join(models.Lease)
              .join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
-             .filter(~sa.or_(border0, border1)))
+             .filter(sa.and_(border0, border1)))
     return query.all()
 
 
@@ -92,13 +84,13 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
                                             lease_id=None,
                                             reservation_id=None):
     session = get_session()
-    border0 = models.Lease.end_date < start_date
-    border1 = models.Lease.start_date > end_date
+    border0 = start_date <= models.Lease.end_date
+    border1 = models.Lease.start_date <= end_date
     query = (session.query(models.Reservation, models.ComputeHostAllocation)
              .join(models.Lease).join(models.ComputeHostAllocation)
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
-             .filter(~sa.or_(border0, border1)))
+             .filter(sa.and_(border0, border1)))
     if lease_id:
         query = query.filter(models.Reservation.lease_id == lease_id)
     if reservation_id:
