@@ -46,10 +46,10 @@ class AggregateFake(object):
         self.hosts = hosts
 
 
-class PhysicalHostPlugingSetupOnlyTestCase(tests.TestCase):
+class PhysicalHostPluginSetupOnlyTestCase(tests.TestCase):
 
     def setUp(self):
-        super(PhysicalHostPlugingSetupOnlyTestCase, self).setUp()
+        super(PhysicalHostPluginSetupOnlyTestCase, self).setUp()
 
         self.cfg = self.useFixture(conf_fixture.Config(CONF))
         self.cfg.config(os_admin_username='fake-user')
