@@ -377,7 +377,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         following conditions.
         - If an instance reservation has not started yet
              - vcpus, memory_mb disk_gb and amount can be updateable unless
-               Blazar can accomodate the new request.
+               Blazar can accommodate the new request.
         - If an instance reservation has already started
              - only amount is increasable.
         """

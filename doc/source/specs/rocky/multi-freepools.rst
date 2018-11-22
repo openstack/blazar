@@ -61,7 +61,7 @@ before they call the create host API.
 ComputeExtraCapability approach
 ```````````````````````````````
 
-Operators define az infomation as ComputeExtraCapability to enable users can
+Operators define az information as ComputeExtraCapability to enable users can
 specify az when they create a reservation.
 
 The good point of this approach is there is no need to change Blazar's APIs

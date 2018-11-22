@@ -50,7 +50,7 @@ specs focuses only on supporting resource_properties matches to
 ComputeHostExtraCapability.
 
 When an user reserves instances with resource_properties, Blazar picks up
-hypervisors which can accomodate the requested flavor and the resource_properties.
+hypervisors which can accommodate the requested flavor and the resource_properties.
 
 When admins update ComputeHostExtraCapability, Blazar re-allocates reservations
 related to the updated ExtraCapability. The re-allocation strategy is the same
