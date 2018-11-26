@@ -33,6 +33,7 @@ from blazar.plugins.oshosts import host_plugin
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import nova
+from blazar.utils.openstack import placement
 from blazar.utils import trusts
 
 CONF = cfg.CONF
@@ -168,11 +169,24 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.get_servers_per_host.return_value = None
         self.get_extra_capabilities = self.patch(
             self.fake_phys_plugin, '_get_extra_capabilities')
-
         self.get_extra_capabilities.return_value = {
             'foo': 'bar',
             'buzz': 'word',
         }
+
+        self.placement = placement
+        self.prov_create = self.patch(self.placement.BlazarPlacementClient,
+                                      'create_reservation_provider')
+        self.prov_create.return_value = {
+            "generation": 0,
+            "name": "blazar_foo",
+            "uuid": "7d2590ae-fb85-4080-9306-058b4c915e3f",
+            "parent_provider_uuid": "542df8ed-9be2-49b9-b4db-6d3183ff8ec8",
+            "root_provider_uuid": "542df8ed-9be2-49b9-b4db-6d3183ff8ec8"
+        }
+        self.prov_delete = self.patch(self.placement.BlazarPlacementClient,
+                                      'delete_reservation_provider')
+
         self.fake_phys_plugin.setup(None)
 
         self.trusts = trusts
@@ -204,6 +218,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.get_extra_capabilities.return_value = {}
         host = self.fake_phys_plugin.create_computehost(self.fake_host)
         self.db_host_create.assert_called_once_with(self.fake_host)
+        self.prov_create.assert_called_once_with('foo')
         self.assertEqual(self.fake_host, host)
 
     def test_create_host_with_extra_capabilities(self):
@@ -219,6 +234,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_create.return_value = self.fake_host
         host = self.fake_phys_plugin.create_computehost(fake_request)
         self.db_host_create.assert_called_once_with(self.fake_host)
+        self.prov_create.assert_called_once_with('foo')
         self.db_host_extra_capability_create.assert_called_once_with(fake_capa)
         self.assertEqual(fake_host, host)
 
@@ -257,6 +273,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(db_exceptions.BlazarDBException,
                           self.fake_phys_plugin.create_computehost,
                           self.fake_host)
+        self.prov_create.assert_called_once_with('foo')
+        self.prov_delete.assert_called_once_with('foo')
 
     def test_create_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_create(*args, **kwargs):
@@ -362,6 +380,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.delete_computehost(self.fake_host_id)
 
         self.db_host_destroy.assert_called_once_with(self.fake_host_id)
+        self.prov_delete.assert_called_once_with('foo')
         self.get_servers_per_host.assert_called_once_with(
             self.fake_host["hypervisor_hostname"])
 
