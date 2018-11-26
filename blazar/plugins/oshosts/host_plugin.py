@@ -596,10 +596,16 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 str(min_hosts) + '-' + str(max_hosts),
                 dates_after['start_date'], dates_after['end_date'])
             if len(host_ids) >= min_hosts:
+                pool = nova.ReservationPool()
                 for host_id in host_ids:
                     db_api.host_allocation_create(
                         {'compute_host_id': host_id,
                          'reservation_id': reservation_id})
+                    if reservation_status == status.reservation.ACTIVE:
+                        # Add new host into the aggregate.
+                        new_host = db_api.host_get(host_id)
+                        pool.add_computehost(host_reservation['aggregate_id'],
+                                             new_host['service_name'])
             else:
                 raise manager_ex.NotEnoughHostsAvailable()
 
