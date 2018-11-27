@@ -13,6 +13,14 @@ User Guide
 
     user/index
 
+Admin Guide
+-----------
+
+.. toctree::
+    :maxdepth: 2
+
+    admin/index
+
 Installation Guide
 ------------------
 
