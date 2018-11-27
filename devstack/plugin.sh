@@ -56,7 +56,7 @@ function configure_blazar {
     # Keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
 
-    iniset $BLAZAR_CONF_FILE physical:host aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
+    iniset $BLAZAR_CONF_FILE nova aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
 
     iniset $BLAZAR_CONF_FILE DEFAULT host $HOST_IP
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
