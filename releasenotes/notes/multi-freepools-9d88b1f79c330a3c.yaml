@@ -9,5 +9,5 @@ features:
 upgrade:
   - |
     The availability zone information is stored only when cloud operators add
-    a new host to Blazar's freepool. If the operators needs the infomation,
+    a new host to Blazar's freepool. If the operators needs the information,
     please re-add hosts already registered in Blazar.
