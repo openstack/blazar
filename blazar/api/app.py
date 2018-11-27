@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from oslo_serialization import jsonutils
+import six
 
 from blazar.api.v1 import app as v1_app
 from blazar.api.v2 import app as v2_app
@@ -31,8 +32,13 @@ class VersionSelectorApplication(object):
     def _append_versions_from_app(self, versions, app, environ):
         tmp_versions = app(environ, self.internal_start_response)
         if self._status.startswith("300"):
-            tmp_versions = jsonutils.loads(tmp_versions.pop())
+            # In case of v1, app returns ClosingIterator generator object,
+            # whereas in case of v2, it returns list.
+            # So convert it to iterator to get the versions.
+            app_iter = iter(tmp_versions)
+            tmp_versions = jsonutils.loads(six.next(app_iter))
             versions['versions'].extend(tmp_versions['versions'])
+        return tmp_versions
 
     def internal_start_response(self, status, response_headers, exc_info=None):
         self._status = status
@@ -44,8 +50,16 @@ class VersionSelectorApplication(object):
 
         if environ['PATH_INFO'] == '/' or environ['PATH_INFO'] == '/versions':
             versions = {'versions': []}
-            self._append_versions_from_app(versions, self.v1, environ)
-            self._append_versions_from_app(versions, self.v2, environ)
+            tmp_versions = self._append_versions_from_app(versions, self.v1,
+                                                          environ)
+            # Both v1 and v2 apps run auth_token middleware. So simply
+            # validate token for v1. If it fails no need to call v2 app.
+            if self._status.startswith("401"):
+                start_response(self._status,
+                               [("Content-Type", "application/json")])
+                return tmp_versions
+            self._append_versions_from_app(versions, self.v2,
+                                           environ)
             if len(versions['versions']):
                 start_response("300 Multiple Choices",
                                [("Content-Type", "application/json")])
