@@ -55,10 +55,6 @@ def setup_app(pecan_config=None, extra_hooks=None):
         guess_content_type_from_ext=False
     )
 
-    # WSGI middleware for debugging
-    if CONF.log_exchange:
-        app = debug.Debug.factory(pecan_config)(app)
-
     # WSGI middleware for Keystone auth
     # NOTE(sbauza): ACLs are always active unless for unittesting where
     #               enable_acl could be set to False
@@ -78,4 +74,7 @@ def make_app():
     }
     # NOTE(sbauza): Fill Pecan config and call modules' path app.setup_app()
     app = pecan.load_app(config)
+    # WSGI middleware for debugging
+    if CONF.log_exchange:
+        app = debug.Debug.factory(config)(app)
     return app
