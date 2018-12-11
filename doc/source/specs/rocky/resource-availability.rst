@@ -66,7 +66,7 @@ API always has an impact for pythonclient, too.
 The drawback is the authentification and the authorization for the API call
 become more complex. The response body changes depending on the keystone token.
 If a token scopes admin role, the API needs to create its response with host
-information. If not, the API doesn't have to add the infomation.
+information. If not, the API doesn't have to add the information.
 
 Data model impact
 -----------------
