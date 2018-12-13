@@ -33,6 +33,7 @@ from blazar.plugins import oshosts as plugin
 from blazar import status
 from blazar.utils.openstack import keystone
 from blazar.utils.openstack import nova
+from blazar.utils.openstack import heat
 from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
 
@@ -133,7 +134,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             'hypervisor_properties': values['hypervisor_properties'],
             'count_range': values['count_range'],
             'status': 'pending',
-            'before_end': values['before_end']
+            'before_end': values['before_end'],
+            'on_start': values['on_start']
         }
         host_reservation = db_api.host_reservation_create(host_rsrv_values)
         for host_id in host_ids:
@@ -210,6 +212,18 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                         pool.remove_computehost(
                             host_reservation['aggregate_id'], host)
                 raise
+
+        action = host_reservation.get('on_start', None)
+
+        if 'launch_stack' in action:
+            heat_client = heat.BlazarHeatClient()
+            heat_client.heat.stacks.update(
+                stack_id=aciton.split(':')[-1],
+                data={
+                    "parameters": {
+                        "reservation_id": host_reservation['reservation_id']
+                        },
+                    "existing": True})
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""
