@@ -119,6 +119,7 @@ class Reservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
             d['hypervisor_properties'] = res['hypervisor_properties']
             d['resource_properties'] = res['resource_properties']
             d['before_end'] = res['before_end']
+            d['on_start'] = res['on_start']
 
             if res['count_range']:
                 try:
@@ -172,6 +173,7 @@ class ComputeHostReservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     count_range = sa.Column(sa.String(36))
     hypervisor_properties = sa.Column(MediumText())
     before_end = sa.Column(sa.String(36))
+    on_start = sa.Column(sa.String(50))
 
     def to_dict(self):
         return super(ComputeHostReservation, self).to_dict()
