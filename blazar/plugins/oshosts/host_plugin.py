@@ -56,9 +56,11 @@ plugin_opts = [
                      'of compute hosts by polling the Nova API.'),
     cfg.IntOpt('polling_interval',
                default=60,
+               min=1,
                help='Interval (seconds) of polling for health checking.'),
     cfg.IntOpt('healing_interval',
                default=60,
+               min=0,
                help='Interval (minutes) of reservation healing. '
                     'If 0 is specified, the interval is infinite and all the '
                     'reservations in the future is healed at one time.'),
