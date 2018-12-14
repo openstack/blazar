@@ -15,41 +15,35 @@
 
 import threading
 
+from oslo_context import context
 
-class BaseContext(object):
 
-    _elements = set()
+class BlazarContext(context.RequestContext):
+
     _context_stack = threading.local()
 
-    def __init__(self, __mapping=None, **kwargs):
-        if __mapping is None:
-            self.__values = dict(**kwargs)
-        else:
-            if isinstance(__mapping, BaseContext):
-                __mapping = __mapping.__values
-            self.__values = dict(__mapping)
-            self.__values.update(**kwargs)
-        not_supported_keys = set(self.__values) - self._elements
-        for k in not_supported_keys:
-            del self.__values[k]
+    def __init__(self, user_id=None, project_id=None, project_name=None,
+                 service_catalog=None, user_name=None, **kwargs):
+        # NOTE(neha-alhat): During serializing/deserializing context object
+        # over the RPC layer, below extra parameters which are passed by
+        # `oslo.messaging` are popped as these parameters are not required.
+        kwargs.pop('client_timeout', None)
+        kwargs.pop('user_identity', None)
+        kwargs.pop('project', None)
 
-    def __getattr__(self, name):
-        try:
-            return self.__values[name]
-        except KeyError:
-            if name in self._elements:
-                return None
-            else:
-                raise AttributeError(name)
+        if user_id:
+            kwargs['user_id'] = user_id
+        if project_id:
+            kwargs['project_id'] = project_id
 
-    def __setattr__(self, name, value):
-        # NOTE(yorik-sar): only the very first assignment for __values is
-        # allowed. All context arguments should be set at the time the context
-        # object is being created.
-        if not self.__dict__:
-            super(BaseContext, self).__setattr__(name, value)
-        else:
-            raise Exception(self.__dict__, name, value)
+        super(BlazarContext, self).__init__(**kwargs)
+
+        self.project_name = project_name
+        self.user_name = user_name
+        self.service_catalog = service_catalog or []
+
+        if self.is_admin and 'admin' not in self.roles:
+            self.roles.append('admin')
 
     def __enter__(self):
         try:
@@ -73,21 +67,13 @@ class BaseContext(object):
 
     # NOTE(yorik-sar): as long as oslo.rpc requires this
     def to_dict(self):
-        return self.__values
-
-
-class BlazarContext(BaseContext):
-
-    _elements = set([
-        "user_id",
-        "project_id",
-        "auth_token",
-        "service_catalog",
-        "user_name",
-        "project_name",
-        "roles",
-        "is_admin",
-    ])
+        result = super(BlazarContext, self).to_dict()
+        result['user_id'] = self.user_id
+        result['user_name'] = self.user_name
+        result['project_id'] = self.project_id
+        result['project_name'] = self.project_name
+        result['service_catalog'] = self.service_catalog
+        return result
 
     @classmethod
     def elevated(cls):

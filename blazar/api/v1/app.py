@@ -25,6 +25,8 @@ from oslo_middleware import debug
 from stevedore import enabled
 from werkzeug import exceptions as werkzeug_exceptions
 
+from blazar.api.v1 import request_id
+from blazar.api.v1 import request_log
 from blazar.api.v1 import utils as api_utils
 
 
@@ -92,6 +94,8 @@ def make_app():
     if cfg.CONF.log_exchange:
         app.wsgi_app = debug.Debug.factory(app.config)(app.wsgi_app)
 
+    app.wsgi_app = request_id.BlazarReqIdMiddleware(app.wsgi_app)
+    app.wsgi_app = request_log.RequestLog(app.wsgi_app)
     app.wsgi_app = auth_token.filter_factory(app.config)(app.wsgi_app)
 
     return app

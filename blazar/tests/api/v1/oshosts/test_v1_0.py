@@ -13,59 +13,175 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ddt
+import flask
+from oslo_utils import uuidutils
+import six
+from testtools import matchers
+
+from oslo_middleware import request_id as id
+
+from blazar.api import context as api_context
 from blazar.api.v1.oshosts import service as service_api
-from blazar.api.v1.oshosts import v1_0 as api
-from blazar.api.v1 import utils as utils_api
+from blazar.api.v1.oshosts import v1_0 as hosts_api_v1_0
+from blazar.api.v1 import request_id
+from blazar.api.v1 import request_log
+from blazar import context
 from blazar import tests
 
 
-class RESTApiTestCase(tests.TestCase):
+def make_app():
+    """App builder (wsgi).
+
+    Entry point for Blazar REST API server.
+    """
+    app = flask.Flask('blazar.api')
+
+    app.register_blueprint(hosts_api_v1_0.rest, url_prefix='/v1')
+    app.wsgi_app = request_id.BlazarReqIdMiddleware(app.wsgi_app)
+    app.wsgi_app = request_log.RequestLog(app.wsgi_app)
+
+    return app
+
+
+def fake_computehost(**kw):
+    return {
+        u'id': kw.get('id', u'1'),
+        u'hypervisor_hostname': kw.get('hypervisor_hostname', u'host01'),
+        u'hypervisor_type': kw.get('hypervisor_type', u'QEMU'),
+        u'vcpus': kw.get('vcpus', 1),
+        u'hypervisor_version': kw.get('hypervisor_version', 1000000),
+        u'trust_id': kw.get('trust_id',
+                            u'35b17138-b364-4e6a-a131-8f3099c5be68'),
+        u'memory_mb': kw.get('memory_mb', 8192),
+        u'local_gb': kw.get('local_gb', 50),
+        u'cpu_info': kw.get('cpu_info',
+                            u"{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                            "\"arch\": \"x86_64\", \"features\": [],"
+                            " \"topology\": {\"cores\": 1}}",
+                            ),
+        u'extra_capas': kw.get('extra_capas',
+                               {u'vgpus': 2, u'fruits': u'bananas'}),
+    }
+
+
+def fake_computehost_request_body(include=None, **kw):
+    computehost_body = fake_computehost(**kw)
+    computehost_body['name'] = kw.get('name',
+                                      computehost_body['hypervisor_hostname'])
+    default_include = set(['name', 'extra_capas'])
+    include = include or set()
+    include |= default_include
+    return dict((key, computehost_body[key])
+                for key in computehost_body if key in include)
+
+
+@ddt.ddt
+class OsHostAPITestCase(tests.TestCase):
+
     def setUp(self):
-        super(RESTApiTestCase, self).setUp()
-        self.api = api
-        self.u_api = utils_api
-        self.s_api = service_api
-
-        self.render = self.patch(self.u_api, "render")
-        self.get_computehosts = self.patch(self.s_api.API,
+        super(OsHostAPITestCase, self).setUp()
+        self.app = make_app()
+        self.headers = {'Accept': 'application/json'}
+        self.host_id = six.text_type('1')
+        self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
+        self.mock_ctx.return_value = context.BlazarContext(
+            user_id='fake', project_id='fake', roles=['member'])
+        self.get_computehosts = self.patch(service_api.API,
                                            'get_computehosts')
-        self.create_computehost = self.patch(self.s_api.API,
+        self.create_computehost = self.patch(service_api.API,
                                              'create_computehost')
-        self.get_computehost = self.patch(self.s_api.API, 'get_computehost')
-        self.update_computehost = self.patch(self.s_api.API,
+        self.get_computehost = self.patch(service_api.API, 'get_computehost')
+        self.update_computehost = self.patch(service_api.API,
                                              'update_computehost')
-        self.delete_computehost = self.patch(self.s_api.API,
+        self.delete_computehost = self.patch(service_api.API,
                                              'delete_computehost')
-        self.list_allocations = self.patch(self.s_api.API, 'list_allocations')
-        self.get_allocations = self.patch(self.s_api.API, 'get_allocations')
-        self.fake_id = '1'
+        self.list_allocations = self.patch(service_api.API,
+                                           'list_allocations')
+        self.get_allocations = self.patch(service_api.API, 'get_allocations')
 
-    def test_computehost_list(self):
-        self.api.computehosts_list(query={})
-        self.render.assert_called_once_with(
-            hosts=self.get_computehosts(query={}))
+    def _assert_response(self, actual_resp, expected_status_code,
+                         expected_resp_body, key='host'):
+        res_id = actual_resp.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
+        self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID,
+                      actual_resp.headers)
+        self.assertThat(res_id, matchers.StartsWith('req-'))
+        self.assertEqual(expected_status_code, actual_resp.status_code)
+        self.assertEqual(expected_resp_body, actual_resp.get_json()[key])
 
-    def test_computehosts_create(self):
-        self.api.computehosts_create(data=None)
-        self.render.assert_called_once_with(host=self.create_computehost())
+    def test_list(self):
+        with self.app.test_client() as c:
+            self.get_computehosts.return_value = []
+            res = c.get('/v1', headers=self.headers)
+            self._assert_response(res, 200, [], key='hosts')
 
-    def test_computehosts_get(self):
-        self.api.computehosts_get(host_id=self.fake_id)
-        self.render.assert_called_once_with(host=self.get_computehost())
+    def test_create(self):
+        with self.app.test_client() as c:
+            self.create_computehost.return_value = fake_computehost(
+                id=self.host_id)
+            res = c.post('/v1', json=fake_computehost_request_body(
+                id=self.host_id), headers=self.headers)
+            self._assert_response(res, 201, fake_computehost(
+                id=self.host_id))
 
-    def test_computehosts_update(self):
-        self.api.computehosts_update(host_id=self.fake_id, data=self.fake_id)
-        self.render.assert_called_once_with(host=self.update_computehost())
+    def test_get(self):
+        with self.app.test_client() as c:
+            self.get_computehost.return_value = fake_computehost(
+                id=self.host_id)
+            res = c.get('/v1/{0}'.format(self.host_id), headers=self.headers)
+            self._assert_response(res, 200, fake_computehost(id=self.host_id))
 
-    def test_computehosts_delete(self):
-        self.api.computehosts_delete(host_id=self.fake_id)
-        self.render.assert_called_once_with()
+    def test_update(self):
+        with self.app.test_client() as c:
+            self.fake_computehost = fake_computehost(id=self.host_id,
+                                                     name='updated')
+            self.fake_computehost_body = fake_computehost_request_body(
+                id=self.host_id,
+                name='updated'
+            )
+            self.update_computehost.return_value = self.fake_computehost
+
+            res = c.put('/v1/{0}'.format(self.host_id),
+                        json=self.fake_computehost_body, headers=self.headers)
+            self._assert_response(res, 200, self.fake_computehost, 'host')
+
+    def test_delete(self):
+        with self.app.test_client() as c:
+            self.get_computehosts.return_value = fake_computehost(
+                id=self.host_id)
+
+            res = c.delete('/v1/{0}'.format(self.host_id),
+                           headers=self.headers)
+            res_id = res.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
+            self.assertEqual(204, res.status_code)
+            self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID, res.headers)
+            self.assertThat(res_id, matchers.StartsWith('req-'))
 
     def test_allocation_list(self):
-        self.api.allocations_list(query={})
-        self.render.assert_called_once_with(
-            allocations=self.list_allocations())
+        with self.app.test_client() as c:
+            self.list_allocations.return_value = []
+            res = c.get('/v1/allocations', headers=self.headers)
+            self._assert_response(res, 200, [], key='allocations')
 
     def test_allocation_get(self):
-        self.api.allocations_get(host_id=self.fake_id, query={})
-        self.render.assert_called_once_with(allocation=self.get_allocations())
+        with self.app.test_client() as c:
+            self.get_allocations.return_value = {}
+            res = c.get('/v1/{0}/allocation'.format(self.host_id),
+                        headers=self.headers)
+            self._assert_response(res, 200, {}, key='allocation')
+
+    @ddt.data({'lease_id': six.text_type(uuidutils.generate_uuid()),
+               'reservation_id': six.text_type(uuidutils.generate_uuid())})
+    def test_allocation_list_with_query_params(self, query_params):
+        with self.app.test_client() as c:
+            res = c.get('/v1/allocations?{0}'.format(query_params),
+                        headers=self.headers)
+            self._assert_response(res, 200, {}, key='allocations')
+
+    @ddt.data({'lease_id': six.text_type(uuidutils.generate_uuid()),
+               'reservation_id': six.text_type(uuidutils.generate_uuid())})
+    def test_allocation_get_with_query_params(self, query_params):
+        with self.app.test_client() as c:
+            res = c.get('/v1/{0}/allocation?{1}'.format(
+                self.host_id, query_params), headers=self.headers)
+            self._assert_response(res, 200, {}, key='allocation')

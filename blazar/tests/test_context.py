@@ -13,93 +13,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_utils.fixture import uuidsentinel
+
 from blazar import context
 from blazar import tests
 
 
-class TestContext(context.BaseContext):
-    _elements = set(["first", "second", "third"])
-
-
-class TestContextCreate(tests.TestCase):
-
-    def test_kwargs(self):
-        ctx = TestContext(first=1, second=2)
-        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
-
-    def test_dict(self):
-        ctx = TestContext({"first": 1, "second": 2})
-        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
-
-    def test_mix(self):
-        ctx = TestContext({"first": 1}, second=2)
-        self.assertEqual({"first": 1, "second": 2}, ctx.to_dict())
-
-    def test_fail(self):
-        ctx = TestContext({'first': 1, "forth": 4}, fifth=5)
-        self.assertEqual(ctx.to_dict(), {"first": 1})
-
-
-class TestBaseContext(tests.TestCase):
-
-    def setUp(self):
-        super(TestBaseContext, self).setUp()
-        self.context = TestContext(first=1, second=2)
-
-    def tearDown(self):
-        super(TestBaseContext, self).tearDown()
-        self.assertEqual(1, self.context.first)
-
-    def test_get_default(self):
-        self.assertIsNone(self.context.third)
-
-    def test_get_unexpected(self):
-        self.assertRaises(AttributeError, getattr, self.context, 'forth')
-
-    def test_current_fails(self):
-        self.assertRaises(RuntimeError, TestContext.current)
-
-
-class TestContextManager(tests.TestCase):
-
-    def setUp(self):
-        super(TestContextManager, self).setUp()
-        self.context = TestContext(first=1, second=2)
-        self.context.__enter__()
-
-    def tearDown(self):
-        super(TestContextManager, self).tearDown()
-        self.context.__exit__(None, None, None)
-        try:
-            stack = TestContext._context_stack.stack
-        except AttributeError:
-            self.fail("Context stack have never been created")
-        else:
-            del TestContext._context_stack.stack
-            self.assertEqual(stack, [],
-                             "Context stack is not empty after test.")
-
-    def test_enter(self):
-        self.assertEqual(TestContext._context_stack.stack, [self.context])
-
-    def test_double_enter(self):
-        with self.context:
-            self.assertEqual(TestContext._context_stack.stack,
-                             [self.context, self.context])
-
-    def test_current(self):
-        self.assertIs(self.context, TestContext.current())
-
-
 class TestBlazarContext(tests.TestCase):
+
+    def test_to_dict(self):
+        ctx = context.BlazarContext(
+            user_id=111, project_id=222,
+            request_id='req-679033b7-1755-4929-bf85-eb3bfaef7e0b')
+        expected = {
+            'auth_token': None,
+            'domain': None,
+            'global_request_id': None,
+            'is_admin': False,
+            'is_admin_project': True,
+            'project': 222,
+            'project_domain': None,
+            'project_id': 222,
+            'project_name': None,
+            'read_only': False,
+            'request_id': 'req-679033b7-1755-4929-bf85-eb3bfaef7e0b',
+            'resource_uuid': None,
+            'roles': [],
+            'service_catalog': [],
+            'show_deleted': False,
+            'system_scope': None,
+            'tenant': 222,
+            'user': 111,
+            'user_domain': None,
+            'user_id': 111,
+            'user_identity': u'111 222 - - -',
+            'user_name': None}
+        self.assertEqual(expected, ctx.to_dict())
 
     def test_elevated_empty(self):
         ctx = context.BlazarContext.elevated()
         self.assertTrue(ctx.is_admin)
 
-    def test_elevated(self):
-        with context.BlazarContext(user_id="user", project_id="project"):
-            ctx = context.BlazarContext.elevated()
-            self.assertEqual(ctx.user_id, "user")
-            self.assertEqual(ctx.project_id, "project")
-            self.assertTrue(ctx.is_admin)
+    def test_service_catalog_default(self):
+        ctxt = context.BlazarContext(user_id=uuidsentinel.user_id,
+                                     project_id=uuidsentinel.project_id)
+        self.assertEqual([], ctxt.service_catalog)
+
+        ctxt = context.BlazarContext(user_id=uuidsentinel.user_id,
+                                     project_id=uuidsentinel.project_id,
+                                     service_catalog=[])
+        self.assertEqual([], ctxt.service_catalog)
+
+        ctxt = context.BlazarContext(user_id=uuidsentinel.user_id,
+                                     project_id=uuidsentinel.project_id,
+                                     service_catalog=None)
+        self.assertEqual([], ctxt.service_catalog)
+
+    def test_blazar_context_elevated(self):
+        user_context = context.BlazarContext(
+            user_id=uuidsentinel.user_id,
+            project_id=uuidsentinel.project_id, is_admin=False)
+        self.assertFalse(user_context.is_admin)
+
+        admin_context = user_context.elevated()
+        self.assertFalse(user_context.is_admin)
+        self.assertTrue(admin_context.is_admin)
+        self.assertNotIn('admin', user_context.roles)
+        self.assertIn('admin', admin_context.roles)

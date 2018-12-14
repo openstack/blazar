@@ -58,18 +58,28 @@ class TestTrusts(tests.TestCase):
     def test_create_ctx_from_trust(self):
         self.cfg.config(os_admin_project_name='admin')
         self.cfg.config(os_admin_username='admin')
-        fake_item = self.client().service_catalog.catalog.__getitem__()
-        fake_ctx_dict = {'_BaseContext__values': {
+        ctx = self.trusts.create_ctx_from_trust('1')
+        fake_ctx_dict = {
             'auth_token': self.client().auth_token,
-            'service_catalog': fake_item,
+            'domain': None,
+            'is_admin': False,
+            'is_admin_project': True,
+            'project': self.client().tenant_id,
+            'project_domain': None,
             'project_id': self.client().tenant_id,
             'project_name': 'admin',
-            'user_name': 'admin',
-        }}
-
-        ctx = self.trusts.create_ctx_from_trust('1')
-
-        self.assertEqual(fake_ctx_dict, ctx.__dict__)
+            'read_only': False,
+            'request_id': ctx.request_id,
+            'resource_uuid': None,
+            'roles': [],
+            'service_catalog': ctx.service_catalog,
+            'show_deleted': False,
+            'system_scope': None,
+            'tenant': self.client().tenant_id,
+            'user': None,
+            'user_domain': None,
+            'user_id': None}
+        self.assertDictContainsSubset(fake_ctx_dict, ctx.to_dict())
 
     def test_use_trust_auth_dict(self):
         def to_wrap(self, arg_to_update):

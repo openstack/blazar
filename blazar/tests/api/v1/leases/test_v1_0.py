@@ -13,44 +13,130 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import flask
+from oslo_utils import uuidutils
+import six
+from testtools import matchers
+
+from oslo_middleware import request_id as id
+
+from blazar.api import context as api_context
 from blazar.api.v1.leases import service as service_api
-from blazar.api.v1.leases import v1_0 as api
-from blazar.api.v1 import utils as utils_api
+from blazar.api.v1.leases import v1_0 as leases_api_v1_0
+from blazar.api.v1 import request_id
+from blazar.api.v1 import request_log
+from blazar import context
 from blazar import tests
 
 
-class RESTApiTestCase(tests.TestCase):
+def make_app():
+    """App builder (wsgi).
+
+    Entry point for Blazar REST API server.
+    """
+    app = flask.Flask('blazar.api')
+
+    app.register_blueprint(leases_api_v1_0.rest, url_prefix='/v1')
+    app.wsgi_app = request_id.BlazarReqIdMiddleware(app.wsgi_app)
+    app.wsgi_app = request_log.RequestLog(app.wsgi_app)
+
+    return app
+
+
+def fake_lease(**kw):
+    return {
+        u'id': kw.get('id', u'2bb8720a-0873-4d97-babf-0d906851a1eb'),
+        u'name': kw.get('name', u'lease_test'),
+        u'start_date': kw.get('start_date', u'2014-01-01 01:23'),
+        u'end_date': kw.get('end_date', u'2014-02-01 13:37'),
+        u'trust_id': kw.get('trust_id',
+                            u'35b17138b3644e6aa1318f3099c5be68'),
+        u'user_id': kw.get('user_id', u'efd8780712d24b389c705f5c2ac427ff'),
+        u'project_id': kw.get('project_id',
+                              u'bd9431c18d694ad3803a8d4a6b89fd36'),
+        u'reservations': kw.get('reservations', [
+            {
+                u'resource_id': u'1234',
+                u'resource_type': u'virtual:instance'
+            }
+        ]),
+        u'events': kw.get('events', []),
+        u'status': kw.get('status', 'ACTIVE'),
+    }
+
+
+def fake_lease_request_body(exclude=None, **kw):
+    default_exclude = set(['id', 'trust_id', 'user_id', 'project_id',
+                           'status'])
+    exclude = exclude or set()
+    exclude |= default_exclude
+    lease_body = fake_lease(**kw)
+    return dict((key, lease_body[key])
+                for key in lease_body if key not in exclude)
+
+
+class LeaseAPITestCase(tests.TestCase):
     def setUp(self):
-        super(RESTApiTestCase, self).setUp()
-        self.api = api
-        self.u_api = utils_api
-        self.s_api = service_api
+        super(LeaseAPITestCase, self).setUp()
+        self.app = make_app()
+        self.headers = {'Accept': 'application/json'}
+        self.lease_uuid = six.text_type(uuidutils.generate_uuid())
+        self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
+        self.mock_ctx.return_value = context.BlazarContext(
+            user_id='fake', project_id='fake', roles=['member'])
+        self.create_lease = self.patch(service_api.API, 'create_lease')
+        self.get_leases = self.patch(service_api.API, 'get_leases')
+        self.get_lease = self.patch(service_api.API, 'get_lease')
+        self.update_lease = self.patch(service_api.API, 'update_lease')
+        self.delete_lease = self.patch(service_api.API, 'delete_lease')
 
-        self.render = self.patch(self.u_api, "render")
-        self.get_leases = self.patch(self.s_api.API, 'get_leases')
-        self.create_lease = self.patch(self.s_api.API, 'create_lease')
-        self.get_lease = self.patch(self.s_api.API, 'get_lease')
-        self.update_lease = self.patch(self.s_api.API, 'update_lease')
-        self.delete_lease = self.patch(self.s_api.API, 'delete_lease')
+    def _assert_response(self, actual_resp, expected_status_code,
+                         expected_resp_body, key='lease'):
+        res_id = actual_resp.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
+        self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID, actual_resp.headers)
+        self.assertThat(res_id, matchers.StartsWith('req-'))
+        self.assertEqual(expected_status_code, actual_resp.status_code)
+        self.assertEqual(expected_resp_body, actual_resp.get_json()[key])
 
-        self.fake_id = '1'
+    def test_list(self):
+        with self.app.test_client() as c:
+            self.get_leases.return_value = []
+            res = c.get('/v1/leases', headers=self.headers)
+            self._assert_response(res, 200, [], key='leases')
 
-    def test_lease_list(self):
-        self.api.leases_list(query={})
-        self.render.assert_called_once_with(leases=self.get_leases(query={}))
+    def test_create(self):
+        with self.app.test_client() as c:
+            self.create_lease.return_value = fake_lease(id=self.lease_uuid)
+            res = c.post('/v1/leases', json=fake_lease_request_body(
+                id=self.lease_uuid), headers=self.headers)
+            self._assert_response(res, 201, fake_lease(id=self.lease_uuid))
 
-    def test_leases_create(self):
-        self.api.leases_create(data=None)
-        self.render.assert_called_once_with(lease=self.create_lease())
+    def test_get(self):
+        with self.app.test_client() as c:
+            self.get_lease.return_value = fake_lease(id=self.lease_uuid)
+            res = c.get('/v1/leases/{0}'.format(self.lease_uuid),
+                        headers=self.headers)
+            self._assert_response(res, 200, fake_lease(id=self.lease_uuid))
 
-    def test_leases_get(self):
-        self.api.leases_get(lease_id=self.fake_id)
-        self.render.assert_called_once_with(lease=self.get_lease())
+    def test_update(self):
+        with self.app.test_client() as c:
+            self.fake_lease = fake_lease(id=self.lease_uuid, name='updated')
+            self.fake_lease_body = fake_lease_request_body(
+                exclude=set(['reservations', 'events']),
+                id=self.lease_uuid,
+                name='updated'
+            )
+            self.update_lease.return_value = self.fake_lease
 
-    def test_leases_update(self):
-        self.api.leases_update(lease_id=self.fake_id, data=self.fake_id)
-        self.render.assert_called_once_with(lease=self.update_lease())
+            res = c.put('/v1/leases/{0}'.format(self.lease_uuid),
+                        json=self.fake_lease_body, headers=self.headers)
+            self._assert_response(res, 200, self.fake_lease)
 
-    def test_leases_delete(self):
-        self.api.leases_delete(lease_id=self.fake_id)
-        self.render.assert_called_once_with()
+    def test_delete(self):
+        with self.app.test_client() as c:
+            res = c.delete('/v1/leases/{0}'.format(self.lease_uuid),
+                           headers=self.headers)
+            res_id = res.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
+            self.assertEqual(204, res.status_code)
+            self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID, res.headers)
+            self.assertThat(res_id, matchers.StartsWith('req-'))

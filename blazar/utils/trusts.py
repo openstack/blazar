@@ -50,9 +50,12 @@ def delete_trust(lease):
 
 def create_ctx_from_trust(trust_id):
     """Return context built from given trust."""
+    ctx = context.current()
+
     ctx = context.BlazarContext(
         user_name=CONF.os_admin_username,
         project_name=CONF.os_admin_project_name,
+        request_id=ctx.request_id
     )
     auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
                                   CONF.os_auth_host,
@@ -67,10 +70,12 @@ def create_ctx_from_trust(trust_id):
 
     # use 'with ctx' statement in the place you need context from trust
     return context.BlazarContext(
-        ctx,
+        user_name=ctx.user_name,
+        project_name=ctx.project_name,
         auth_token=client.auth_token,
         service_catalog=client.service_catalog.catalog['catalog'],
         project_id=client.tenant_id,
+        request_id=ctx.request_id
     )
 
 

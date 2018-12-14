@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Blazar now uses oslo.middleware for request_id processing which will now
+    return a new `X-OpenStack-Request-ID`_ header in the response to each Restful API request.
+    Also, operators can see request_id, user_id and project_id by default in logs for better tracing
+    and it is configurable via the ``[DEFAULT]/logging_context_format_string`` `option`_.
+
+
+    .. _`X-OpenStack-Request-ID`:  https://developer.openstack.org/api-ref/reservation/v1/index.html#request-id
+    .. _`option`: https://docs.openstack.org/oslo.log/latest/configuration/index.html#DEFAULT.logging_context_format_string

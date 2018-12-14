@@ -1,3 +1,15 @@
+# variables in headers
+x-openstack-request-id_resp:
+  description: |
+    The local request ID, which is a unique ID generated automatically
+    for tracking each request to blazar.
+    It is associated with the request and appears in the log lines
+    for that request.
+  in: header
+  required: true
+  type: string
+
+
 # variables in path
 floatingip_id_path:
   description: |
