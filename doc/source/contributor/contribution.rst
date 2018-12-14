@@ -31,8 +31,9 @@ How to keep in touch with community
 * If you're not yet subscribed to the `OpenStack general mailing list
   <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack>`_ or to the
   `OpenStack development mailing list
-  <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev>`_, please
-  do. Blazar-related emails must be send with **[blazar]** in the subject.
+  <http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-discuss>`_,
+  please do. Blazar-related emails must be send with **[blazar]** in the
+  subject.
 * All questions may be asked on our IRC channel #openstack-blazar on
   `freenode <http://freenode.net>`_.
 * We also have weekly meetings on #openstack-meeting-alt. Please check
