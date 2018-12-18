@@ -35,7 +35,13 @@ class FakeWSGIApp(object):
 
     def __call__(self, environ, start_response):
         start_response(self.status_code, [])
-        return [jsonutils.dump_as_bytes(self.versions)]
+        if self.status_code == "300 Multiple Choices":
+            return [jsonutils.dump_as_bytes(self.versions)]
+        elif self.status_code == "401 Unauthorized":
+            return ['{"error": '
+                    '{"message": "The request you have '
+                    'made requires authentication.",'
+                    '"code": 401, "title": "Unauthorized"}}']
 
 
 class TestVersionDiscovery(tests.TestCase):
@@ -97,6 +103,22 @@ class TestVersionDiscovery(tests.TestCase):
         versions_raw = version_selector(environ, self.start_response)
         self.assertEqual([], versions_raw)
         self.start_response_mock.assert_called_with("204 No Content", [])
+
+    def test_unauthorized_token(self):
+        self.v1_make_app.return_value = FakeWSGIApp(1, "401 Unauthorized")
+        version_selector = api.VersionSelectorApplication()
+        environ = {'PATH_INFO': self.path}
+
+        versions_raw = version_selector(environ, self.start_response)
+        self.assertEqual(['{"error": '
+                          '{"message": "The request you have '
+                          'made requires authentication.",'
+                          '"code": 401, "title": "Unauthorized"}}'],
+                         versions_raw)
+
+        self.start_response_mock.assert_called_with(
+            "401 Unauthorized",
+            [("Content-Type", "application/json")])
 
 
 class TestVersionSelectorApplication(tests.TestCase):
