@@ -38,11 +38,13 @@ manager_opts = [
                      'support.)'),
     cfg.IntOpt('minutes_before_end_lease',
                default=60,
+               min=0,
                help='Minutes prior to the end of a lease in which actions '
                     'like notification and snapshot are taken. If this is '
                     'set to 0, then these actions are not taken.'),
     cfg.IntOpt('event_max_retries',
                default=1,
+               min=0,
                max=50,
                help='Number of times to retry an event action.')
 ]

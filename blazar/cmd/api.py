@@ -32,7 +32,10 @@ from blazar.utils import service as service_utils
 
 
 opts = [
-    cfg.IntOpt('port', default=1234,
+    cfg.IntOpt('port',
+               default=1234,
+               min=0,
+               max=65535,
                help='Port that will be used to listen on'),
 ]
 
