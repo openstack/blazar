@@ -44,8 +44,9 @@
 
 - project:
     templates:
-      - openstack-python-jobs
       - check-requirements
+      - openstack-lower-constraints-jobs
+      - openstack-python-jobs
       - openstack-python35-jobs
       - openstack-python36-jobs
       - publish-openstack-docs-pti
@@ -54,7 +55,6 @@
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
-        - openstack-tox-lower-constraints
         - openstack-tox-pylint:
             voting: false
     gate:
@@ -62,4 +62,3 @@
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
-        - openstack-tox-lower-constraints
