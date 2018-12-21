@@ -46,6 +46,9 @@ IMPL = db_api.DBAPI(cfg.CONF.database.backend,
                     backend_mapping=_BACKEND_MAPPING)
 LOG = logging.getLogger(__name__)
 
+# The maximum value a signed INT type may have
+DB_MAX_INT = 0x7FFFFFFF
+
 
 def get_instance():
     """Return a DB API instance."""

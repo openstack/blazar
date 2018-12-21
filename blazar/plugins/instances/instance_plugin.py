@@ -15,10 +15,12 @@
 import collections
 import datetime
 import retrying
+import six
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import strutils
 from oslo_utils.strutils import bool_from_string
 
 from blazar import context
@@ -381,7 +383,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                               "for reservation %s", reservation['id'])
                 raise mgr_exceptions.NovaClientError()
 
-    def validate_reservation_param(self, values):
+    def _check_missing_reservation_params(self, values):
         marshall_attributes = set(['vcpus', 'memory_mb', 'disk_gb',
                                    'amount', 'affinity',
                                    'resource_properties'])
@@ -389,8 +391,17 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         if missing_attr:
             raise mgr_exceptions.MissingParameter(param=','.join(missing_attr))
 
+    def _validate_reservation_params(self, values):
+        if 'amount' in values:
+            try:
+                values['amount'] = strutils.validate_integer(
+                    values['amount'], "amount", 1, db_api.DB_MAX_INT)
+            except ValueError as e:
+                raise mgr_exceptions.MalformedParameter(six.text_type(e))
+
     def reserve_resource(self, reservation_id, values):
-        self.validate_reservation_param(values)
+        self._check_missing_reservation_params(values)
+        self._validate_reservation_params(values)
 
         hosts = self.pickup_hosts(reservation_id, values)
 
@@ -457,6 +468,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         - If an instance reservation has already started
              - only amount is increasable.
         """
+        self._validate_reservation_params(new_values)
 
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])

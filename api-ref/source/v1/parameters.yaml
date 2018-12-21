@@ -402,13 +402,13 @@ reservation_allocation:
   type: array
 reservation_amount:
   description: |
-    The amount of instances to reserve.
+    The amount of instances to reserve. The value should be greater than 0.
   in: body
   required: true
   type: integer
 reservation_amount_optional:
   description: |
-    The amount of instances to reserve.
+    The amount of instances to reserve. The value should be greater than 0.
   in: body
   required: false
   type: integer
@@ -472,13 +472,13 @@ reservation_lease_id:
   type: string
 reservation_max:
   description: |
-    The maximum number of hosts to reserve.
+    The maximum number of hosts to reserve. The value should be greater than or equal to ``min`` value.
   in: body
   required: true
   type: integer
 reservation_max_optional:
   description: |
-    The maximum number of hosts to reserve.
+    The maximum number of hosts to reserve. The value should be greater than or equal to ``min``.
   in: body
   required: false
   type: integer
@@ -496,13 +496,13 @@ reservation_memory_mb_optional:
   type: integer
 reservation_min:
   description: |
-    The minimum number of hosts to reserve.
+    The minimum number of hosts to reserve. The value should be greater than 0.
   in: body
   required: true
   type: integer
 reservation_min_optional:
   description: |
-    The minimum number of hosts to reserve.
+    The minimum number of hosts to reserve. The value should be greater than 0.
   in: body
   required: false
   type: integer
