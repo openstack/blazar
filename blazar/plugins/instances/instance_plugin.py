@@ -354,9 +354,17 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         if reservation['status'] == 'active':
             pool = nova.ReservationPool()
+
+            # Dict of number of instances to reserve on a host keyed by the
+            # host id
+            allocation_map = collections.defaultdict(lambda: 0)
             for allocation in db_api.host_allocation_get_all_by_values(
                     reservation_id=reservation['id']):
-                host = db_api.host_get(allocation['compute_host_id'])
+                host_id = allocation['compute_host_id']
+                allocation_map[host_id] += 1
+
+            for host_id, num in allocation_map.items():
+                host = db_api.host_get(host_id)
                 try:
                     pool.add_computehost(
                         reservation['aggregate_id'],
@@ -368,7 +376,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                % (host, reservation['aggregate_id']))
                     raise mgr_exceptions.NovaClientError(err_msg)
                 self.placement_client.update_reservation_inventory(
-                    host['hypervisor_hostname'], reservation['id'], 1)
+                    host['hypervisor_hostname'], reservation['id'], num)
         else:
             try:
                 self.nova.nova.flavors.delete(reservation['id'])
@@ -529,13 +537,21 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise mgr_exceptions.EventError()
 
         pool = nova.ReservationPool()
+
+        # Dict of number of instances to reserve on a host keyed by the
+        # host id
+        allocation_map = collections.defaultdict(lambda: 0)
         for allocation in db_api.host_allocation_get_all_by_values(
                 reservation_id=reservation_id):
-            host = db_api.host_get(allocation['compute_host_id'])
+            host_id = allocation['compute_host_id']
+            allocation_map[host_id] += 1
+
+        for host_id, num in allocation_map.items():
+            host = db_api.host_get(host_id)
             pool.add_computehost(instance_reservation['aggregate_id'],
                                  host['service_name'], stay_in=True)
             self.placement_client.update_reservation_inventory(
-                host['hypervisor_hostname'], reservation_id, 1)
+                host['hypervisor_hostname'], reservation_id, num)
 
     def on_end(self, resource_id):
         instance_reservation = db_api.instance_reservation_get(resource_id)

@@ -893,7 +893,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                     'host_allocation_get_all_by_values')
         mock_alloc_get.return_value = [
             {'compute_host_id': 'host-id1'}, {'compute_host_id': 'host-id2'},
-            {'compute_host_id': 'host-id3'}]
+            {'compute_host_id': 'host-id3'}, {'compute_host_id': 'host-id3'}]
 
         mock_host_get = self.patch(db_api, 'host_get')
         mock_host_get.side_effect = fake_host_get
@@ -904,8 +904,13 @@ class TestVirtualInstancePlugin(tests.TestCase):
         for i in range(3):
             fake_pool.add_computehost.assert_any_call(
                 'aggregate-1', 'host' + str(i + 1), stay_in=True)
-            mock_update_reservation_inventory.assert_any_call(
-                'host' + str(i + 1), 'reservation-id1', 1)
+
+        mock_update_reservation_inventory.assert_any_call(
+            'host1', 'reservation-id1', 1)
+        mock_update_reservation_inventory.assert_any_call(
+            'host2', 'reservation-id1', 1)
+        mock_update_reservation_inventory.assert_any_call(
+            'host3', 'reservation-id1', 2)
 
     def test_update_reservation(self):
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -1073,7 +1078,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                     'host_allocation_get_all_by_values')
         mock_alloc_get.return_value = [
             {'compute_host_id': 'host-id1'}, {'compute_host_id': 'host-id2'},
-            {'compute_host_id': 'host-id3'}]
+            {'compute_host_id': 'host-id3'}, {'compute_host_id': 'host-id3'}]
 
         mock_host_get = self.patch(db_api, 'host_get')
         mock_host_get.side_effect = fake_host_get
@@ -1085,8 +1090,13 @@ class TestVirtualInstancePlugin(tests.TestCase):
         for i in range(3):
             fake_pool.add_computehost.assert_any_call(
                 'aggregate-id1', 'host' + str(i + 1), stay_in=True)
-            mock_update_reservation_inventory.assert_any_call(
-                'host' + str(i + 1), 'reservation-id1', 1)
+
+        mock_update_reservation_inventory.assert_any_call(
+            'host1', 'reservation-id1', 1)
+        mock_update_reservation_inventory.assert_any_call(
+            'host2', 'reservation-id1', 1)
+        mock_update_reservation_inventory.assert_any_call(
+            'host3', 'reservation-id1', 2)
 
     def test_on_end(self):
         self.set_context(context.BlazarContext(project_id='fake-project-id'))
