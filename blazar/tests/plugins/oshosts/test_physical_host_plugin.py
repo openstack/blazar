@@ -493,7 +493,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'count_range': '1-1',
             'status': 'pending',
-            'before_end': 'default'
+            'before_end': 'default',
+            'on_start': 'default'
         }
         host_reservation_create.assert_called_once_with(host_values)
         self.check_usage_against_allocation.assert_called_once_with(

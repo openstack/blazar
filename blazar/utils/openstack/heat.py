@@ -1,6 +1,5 @@
 from keystoneauth1 import session
 from heatclient import client as heat_client
-from heatclient import exceptions as heat_exception
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -41,7 +40,6 @@ class BlazarHeatClient(object):
 
         self.heat = heat_client.Client(
             CONF.heat.heat_client_version, session=sess)
-        self.exceptions = heat_exceptions
 
     def __getattr_(self, name):
         return getattr(self.heat, name)

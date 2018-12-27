@@ -36,3 +36,4 @@ SQLAlchemy<1.1.0,>=1.0.10 # MIT
 stevedore>=1.17.1 # Apache-2.0
 WebOb>=1.6.0 # MIT
 WSME>=0.8 # MIT
+python-heatclient==1.16.2

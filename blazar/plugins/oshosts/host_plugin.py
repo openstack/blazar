@@ -75,7 +75,7 @@ LOG = logging.getLogger(__name__)
 
 
 before_end_options = ['', 'snapshot', 'default', 'email']
-on_start_options = ['', 'orchestration']
+on_start_options = ['', 'default', 'orchestration']
 
 
 class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
@@ -217,10 +217,10 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         action = host_reservation.get('on_start', None)
 
-        if 'launch_stack' in action:
+        if self._is_valid_on_start_option(action):
             heat_client = heat.BlazarHeatClient()
             heat_client.heat.stacks.update(
-                stack_id=aciton.split(':')[-1],
+                stack_id=action,
                 data={
                     "parameters": {
                         "reservation_id": host_reservation['reservation_id']
