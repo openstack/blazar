@@ -18,6 +18,7 @@ import datetime
 from random import shuffle
 import shlex
 import subprocess
+from uuid import UUID
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -74,6 +75,7 @@ LOG = logging.getLogger(__name__)
 
 
 before_end_options = ['', 'snapshot', 'default', 'email']
+on_start_options = ['', 'orchestration']
 
 
 class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
@@ -657,6 +659,18 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             values['before_end'] = 'default'
         if values['before_end'] not in before_end_options:
             raise manager_ex.MalformedParameter(param='before_end')
+
+        if 'on_start' not in values:
+            values['on_start'] = 'default'
+        if not self._is_valid_on_start_option(values['on_start']):
+            raise manager_ex.MalformedParameter(param='on_start')
+
+    def _is_valid_on_start_option(self, value):
+        try:
+            UUID(value)
+            return True
+        except Exception:
+            return value in on_start_options
 
     def _update_allocations(self, dates_before, dates_after, reservation_id,
                             reservation_status, host_reservation, values,
