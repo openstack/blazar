@@ -42,3 +42,7 @@ class ResourceProviderNotFound(exceptions.BlazarException):
 class InventoryUpdateFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to update the inventory of resource provider "
                 "%(resource_provider)s")
+
+
+class FloatingIPNetworkNotFound(exceptions.InvalidInput):
+    msg_fmt = _("Failed to find network %(network)s")
