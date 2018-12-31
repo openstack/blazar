@@ -1,0 +1,24 @@
+features:
+  - |
+    For instance reservation, the reservation parameter ``affinity`` now
+    supports ``True`` and ``None`` and defaults to ``None``
+
+    - ``affinity = True``
+
+        * Blazar picks up the same host for the instances for the reservation.
+          Using the reservation flavor, users don't need to set additional
+          specs such as "server_group" to schedule the instances to the host.
+
+    - ``affinity = False``
+
+        * Blazar picks up different hosts for the instances for the
+          reservation. Using the reservation flavor, users don't need to set
+          additional specs such as "server_group" to schedule to the hosts.
+
+    - ``affinity = None`` (default)
+
+        * The picked up hosts can be different or same.
+
+    ``AggregateInstanceExtraSpecsFilter``, ``AggregateMultiTenancyIsolation``,
+    or ``ServerGroupAffinityFilte`` is not needed any more for blazar's
+    instance reservation.

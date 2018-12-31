@@ -139,16 +139,6 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                                   'server_group_id': 2,
                                                   'aggregate_id': 3})
 
-    def test_error_with_affinity(self):
-        plugin = instance_plugin.VirtualInstancePlugin()
-        inputs = self.get_input_values(2, 4018, 10, 1, True,
-                                       '2030-01-01 08:00', '2030-01-01 08:00',
-                                       'lease-1', '')
-        self.assertRaises(mgr_exceptions.MalformedParameter,
-                          plugin.reserve_resource, 'reservation_id', inputs)
-        self.assertRaises(mgr_exceptions.MalformedParameter,
-                          plugin.update_reservation, 'reservation_id', inputs)
-
     def test_filter_hosts_by_reservation_with_exclude(self):
         def fake_get_reservation_by_host(host_id, start, end):
             if host_id == 'host-1':
