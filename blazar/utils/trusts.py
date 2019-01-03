@@ -38,7 +38,7 @@ def create_trust():
                                  impersonation=True,
                                  role_names=ctx.roles,
                                  project=ctx.project_id,
-				 allow_redelegation=True)
+                                 allow_redelegation=True)
     return trust
 
 

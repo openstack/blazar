@@ -32,9 +32,9 @@ from blazar.manager import exceptions as manager_ex
 from blazar.plugins import base
 from blazar.plugins import oshosts as plugin
 from blazar import status
+from blazar.utils.openstack import heat
 from blazar.utils.openstack import keystone
 from blazar.utils.openstack import nova
-from blazar.utils.openstack import heat
 from blazar.utils import plugins as plugins_utils
 from blazar.utils import trusts
 
@@ -220,10 +220,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         if action != 'default' and self._is_valid_on_start_option(action):
             heat_client = heat.BlazarHeatClient()
             heat_client.heat.stacks.update(
-                    stack_id=action,
-		    existing=True,
-		    converge=True,
-		    parameters=dict(reservation_id=reservation_id))
+                stack_id=action,
+                existing=True,
+                converge=True,
+                parameters=dict(
+                    reservation_id=host_reservation['reservation_id']))
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""

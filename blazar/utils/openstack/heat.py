@@ -1,12 +1,25 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from heatclient import client as heat_client
 from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
-from heatclient import client as heat_client
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from blazar import context
 from blazar.utils.openstack import base
-from blazar.utils.trusts import create_ctx_from_trust
+
 
 heat_opts = [
     cfg.StrOpt(
@@ -47,5 +60,3 @@ class BlazarHeatClient(object):
 
     def __getattr_(self, name):
         return getattr(self.heat, name)
-
-
