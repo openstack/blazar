@@ -159,7 +159,7 @@ class ComputeHostReservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     count_range = sa.Column(sa.String(36))
     hypervisor_properties = sa.Column(MediumText())
     before_end = sa.Column(sa.String(36))
-    on_start = sa.Column(sa.String(36))
+    on_start = sa.Column(sa.String(50))
 
     def to_dict(self):
         return super(ComputeHostReservation, self).to_dict()
