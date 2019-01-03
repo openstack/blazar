@@ -1,14 +1,17 @@
 from keystoneauth1 import session
+from keystoneauth1 import token_endpoint
 from heatclient import client as heat_client
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from blazar import context
+from blazar.utils.openstack import base
+from blazar.utils.trusts import create_ctx_from_trust
 
 heat_opts = [
     cfg.StrOpt(
         'heat_client_version',
-        default='2',
+        default='1',
         deprecated_group='DEFAULT',
         help='Heatclient version'),
     cfg.StrOpt(
@@ -19,7 +22,7 @@ heat_opts = [
 ]
 
 CONF = cfg.CONF
-CONF.register_opts(heat_opts, group='nova')
+CONF.register_opts(heat_opts, group='heat')
 CONF.import_opt('identity_service', 'blazar.utils.openstack.keystone')
 LOG = logging.getLogger(__name__)
 
@@ -30,6 +33,7 @@ class BlazarHeatClient(object):
 
         if ctx is None:
             ctx = context.current()
+
         endpoint_override = base.url_for(
             ctx.service_catalog,
             CONF.heat.orchestration_service,
@@ -43,3 +47,5 @@ class BlazarHeatClient(object):
 
     def __getattr_(self, name):
         return getattr(self.heat, name)
+
+

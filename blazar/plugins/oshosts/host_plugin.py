@@ -217,15 +217,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         action = host_reservation.get('on_start', None)
 
-        if self._is_valid_on_start_option(action):
+        if action != 'default' and self._is_valid_on_start_option(action):
             heat_client = heat.BlazarHeatClient()
             heat_client.heat.stacks.update(
-                stack_id=action,
-                data={
-                    "parameters": {
-                        "reservation_id": host_reservation['reservation_id']
-                        },
-                    "existing": True})
+                    stack_id=action,
+		    existing=True,
+		    converge=True,
+		    parameters=dict(reservation_id=reservation_id))
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""

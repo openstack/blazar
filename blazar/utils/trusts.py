@@ -35,9 +35,10 @@ def create_trust():
     ctx = context.current()
     trust = client.trusts.create(trustor_user=ctx.user_id,
                                  trustee_user=trustee_id,
-                                 impersonation=False,
+                                 impersonation=True,
                                  role_names=ctx.roles,
-                                 project=ctx.project_id)
+                                 project=ctx.project_id,
+				 allow_redelegation=True)
     return trust
 
 
