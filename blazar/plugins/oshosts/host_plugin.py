@@ -215,12 +215,13 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                             host_reservation['aggregate_id'], host)
                 raise
 
-        action = host_reservation.get('on_start', None)
+        action = host_reservation.get('on_start', 'default')
 
-        if action != 'default' and self._is_valid_on_start_option(action):
+        if 'orchestration' in action:
+            stack_id = action.split(':')[-1]
             heat_client = heat.BlazarHeatClient()
             heat_client.heat.stacks.update(
-                stack_id=action,
+                stack_id=stack_id,
                 existing=True,
                 converge=True,
                 parameters=dict(
@@ -665,10 +666,15 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             raise manager_ex.MalformedParameter(param='on_start')
 
     def _is_valid_on_start_option(self, value):
-        try:
-            UUID(value)
-            return True
-        except Exception:
+
+        if 'orchestration' in value:
+            stack = value.split(':')[-1]
+            try:
+                UUID(stack)
+                return True
+            except Exception:
+                return False
+        else:
             return value in on_start_options
 
     def _update_allocations(self, dates_before, dates_after, reservation_id,

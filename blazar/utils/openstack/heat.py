@@ -23,10 +23,10 @@ from blazar.utils.openstack import base
 
 heat_opts = [
     cfg.StrOpt(
-        'heat_client_version',
+        'heat_api_version',
         default='1',
         deprecated_group='DEFAULT',
-        help='Heatclient version'),
+        help='Heat API version'),
     cfg.StrOpt(
         'orchestration_service',
         default='orchestration',
@@ -56,7 +56,7 @@ class BlazarHeatClient(object):
         sess = session.Session(auth=auth)
 
         self.heat = heat_client.Client(
-            CONF.heat.heat_client_version, session=sess)
+            CONF.heat.heat_api_version, session=sess)
 
     def __getattr_(self, name):
         return getattr(self.heat, name)
