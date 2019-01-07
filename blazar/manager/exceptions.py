@@ -235,3 +235,33 @@ class CantUpdateFloatingIPReservation(exceptions.BlazarException):
 
 class NeutronClientError(exceptions.BlazarException):
     msg_fmt = _("Failed to create Neutron resources for the reservation")
+
+
+# Network plugin related exceptions
+
+class CantDeleteNetwork(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("Can't delete network %(network)s. %(msg)s")
+
+
+class NetworkNotFound(exceptions.NotFound):
+    msg_fmt = _("Network '%(network)s' not found!")
+
+
+class InvalidNetwork(exceptions.NotAuthorized):
+    msg_fmt = _("Invalid values for network %(network)s")
+
+
+class NotEnoughNetworksAvailable(exceptions.BlazarException):
+    restore_lease_status = True
+    msg_fmt = _("Not enough networks available")
+
+
+class NetworkCreationFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to create network %(name)s for reservation %(id)s. "
+                "%(msg)s")
+
+
+class NetworkDeletionFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to delete network %(network_id)s for reservation "
+                "%(reservation_id)s")

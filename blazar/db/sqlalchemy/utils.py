@@ -45,6 +45,22 @@ def _get_leases_from_resource_id(resource_id, start_date, end_date):
         yield lease
 
 
+def _get_leases_from_network_id(network_id, start_date, end_date):
+    session = get_session()
+    border0 = sa.and_(models.Lease.start_date < start_date,
+                      models.Lease.end_date < start_date)
+    border1 = sa.and_(models.Lease.start_date > end_date,
+                      models.Lease.end_date > end_date)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
+             .join(models.NetworkAllocation)
+             .filter(models.NetworkAllocation.deleted.is_(None))
+             .filter(models.NetworkAllocation.network_id == network_id)
+             .filter(~sa.or_(border0, border1)))
+    for lease in query:
+        yield lease
+
+
 def _get_leases_from_host_id(host_id, start_date, end_date):
     session = get_session()
     border0 = start_date <= models.Lease.end_date
@@ -94,6 +110,21 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
              .filter(sa.and_(border0, border1)))
+    return query.all()
+
+
+def get_reservations_by_network_id(network_id, start_date, end_date):
+    session = get_session()
+    border0 = sa.and_(models.Lease.start_date < start_date,
+                      models.Lease.end_date < start_date)
+    border1 = sa.and_(models.Lease.start_date > end_date,
+                      models.Lease.end_date > end_date)
+    query = (api.model_query(models.Reservation, session=session)
+             .join(models.Lease)
+             .join(models.NetworkAllocation)
+             .filter(models.NetworkAllocation.deleted.is_(None))
+             .filter(models.NetworkAllocation.network_id == network_id)
+             .filter(~sa.or_(border0, border1)))
     return query.all()
 
 
@@ -162,6 +193,8 @@ def _get_events(resource_id, start_date, end_date, resource_type):
         leases = _get_leases_from_host_id(resource_id, start_date, end_date)
     elif resource_type == 'floatingip':
         leases = _get_leases_from_fip_id(resource_id, start_date, end_date)
+    elif resource_type == 'network':
+        leases = _get_leases_from_network_id(resource_id, start_date, end_date)
     else:
         mgr_exceptions.UnsupportedResourceType(resource_type)
 

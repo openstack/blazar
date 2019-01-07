@@ -531,3 +531,139 @@ def reservable_fip_get_all_by_queries(queries):
 def floatingip_destroy(floatingip_id):
     """Delete specific floating ip."""
     IMPL.floatingip_destroy(floatingip_id)
+
+# Networks
+
+def network_create(values):
+    """Create a network from the values."""
+    return IMPL.network_create(values)
+
+
+@to_dict
+def network_get(network_id):
+    """Return a specific network."""
+    return IMPL.network_get(network_id)
+
+
+@to_dict
+def network_list():
+    """Return a list of networks."""
+    return IMPL.network_list()
+
+
+@to_dict
+def network_get_all_by_filters(filters):
+    """Returns Compute networks filtered by name of the field."""
+    return IMPL.network_get_all_by_filters(filters)
+
+
+@to_dict
+def network_get_all_by_queries(queries):
+    """Returns networks filtered by an array of queries."""
+    return IMPL.network_get_all_by_queries(queries)
+
+
+@to_dict
+def reservable_network_get_all_by_queries(queries):
+    """Returns reservable networks filtered by an array of queries."""
+    return IMPL.reservable_network_get_all_by_queries(queries)
+
+
+@to_dict
+def unreservable_network_get_all_by_queries(queries):
+    """Returns unreservable networks filtered by an array of queries."""
+    return IMPL.unreservable_network_get_all_by_queries(queries)
+
+
+def network_destroy(network_id):
+    """Delete specific network."""
+    IMPL.network_destroy(network_id)
+
+
+def network_update(network_id, values):
+    """Update network."""
+    IMPL.network_update(network_id, values)
+
+
+# Network allocations
+
+def network_allocation_create(allocation_values):
+    """Create an allocation from the values."""
+    return IMPL.network_allocation_create(allocation_values)
+
+
+@to_dict
+def network_allocation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    return IMPL.network_allocation_get_all_by_values(**kwargs)
+
+
+def network_allocation_destroy(allocation_id):
+    """Delete specific allocation."""
+    IMPL.network_allocation_destroy(allocation_id)
+
+
+# network reservation
+
+def network_reservation_create(network_reservation_values):
+    """Create a network reservation from the values."""
+    return IMPL.network_reservation_create(network_reservation_values)
+
+
+def network_reservation_get(network_reservation_id):
+    """Return specific network reservation."""
+    return IMPL.network_reservation_get(network_reservation_id)
+
+
+def network_reservation_update(network_reservation_id,
+                               network_reservation_values):
+    """Update network reservation."""
+    return IMPL.network_reservation_update(network_reservation_id,
+                                           network_reservation_values)
+
+
+def network_reservation_destroy(network_reservation_id):
+    """Delete specific network reservation."""
+    return IMPL.network_reservation_destroy(network_reservation_id)
+
+
+# NetworkSegmentExtraCapabilities
+
+def network_extra_capability_create(values):
+    """Create a network ExtraCapability from the values."""
+    return IMPL.network_extra_capability_create(values)
+
+
+@to_dict
+def network_extra_capability_get(network_extra_capability_id):
+    """Return a specific network Extracapability."""
+    return IMPL.network_extra_capability_get(network_extra_capability_id)
+
+
+@to_dict
+def network_extra_capability_get_all_per_network(network_id):
+    """Return all extra_capabilities belonging to a specific network."""
+    return IMPL.network_extra_capability_get_all_per_network(network_id)
+
+
+def network_extra_capability_destroy(network_extra_capability_id):
+    """Delete specific network ExtraCapability."""
+    IMPL.network_extra_capability_destroy(network_extra_capability_id)
+
+
+def network_extra_capability_update(network_extra_capability_id, values):
+    """Update specific network ExtraCapability."""
+    IMPL.network_extra_capability_update(network_extra_capability_id, values)
+
+
+def network_extra_capability_get_all_per_name(network_id,
+                                              extra_capability_name):
+    return IMPL.network_extra_capability_get_all_per_name(
+        network_id, extra_capability_name)
+
+
+def network_extra_capability_get_latest_per_name(network_id,
+                                                 extra_capability_name):
+    return IMPL.network_extra_capability_get_latest_per_name(
+        network_id, extra_capability_name
+    )

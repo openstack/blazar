@@ -111,6 +111,11 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     return IMPL.get_reservations_by_host_ids(host_ids, start_date, end_date)
 
 
+def get_reservations_by_network_id(network_id, start_date, end_date):
+    return IMPL.get_reservations_by_network_id(
+        network_id, start_date, end_date)
+
+    
 def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
                                             lease_id=None,
                                             reservation_id=None):

@@ -21,6 +21,7 @@ import redis
 
 from blazar import exceptions as common_ex
 from blazar.manager import exceptions
+from blazar.plugins.networks import billrate as network_billrate
 from blazar.plugins.oshosts import billrate
 from blazar.utils.openstack import keystone
 
@@ -261,12 +262,13 @@ class UsageEnforcer(object):
                 host=CONF.enforcement.usage_db_host)
 
     def check_usage_against_allocation(self, lease_values,
-                                       allocated_host_ids=None):
+                                       allocated_host_ids=None,
+                                       allocated_network_ids=None):
         """Check if we have enough available SUs for this reservation
 
         Raises a BillingError if we don't have enough available SUs. If
-        allocated_host_ids is set and there are enough SUs, it increases the
-        encumbered value in Redis.
+        allocated_host_ids or allocated_network_ids is set and there are enough
+        SUs, it increases the encumbered value in Redis.
         """
         if not CONF.enforcement.usage_enforcement:
             pass
@@ -279,6 +281,10 @@ class UsageEnforcer(object):
             total_su_factor = sum(
                 billrate.computehost_billrate(host_id)
                 for host_id in allocated_host_ids)
+        elif allocated_network_ids is not None:
+            total_su_factor = sum(
+                network_billrate.network_billrate(network_id)
+                for network_id in allocated_network_ids)
         else:
             total_su_factor = lease_values['max']
         try:
@@ -291,7 +297,7 @@ class UsageEnforcer(object):
                 raise BillingError(
                     'Reservation for project {} would spend {:.2f} SUs, '
                     'only {:.2f} left'.format(project_name, requested, left))
-            if allocated_host_ids:
+            if allocated_host_ids or allocated_network_ids:
                 LOG.info('Increasing encumbered for project {} by {:.2f} '
                          '({:.2f} hours @ {:.2f} SU/hr)'.format(
                              project_name, requested, dt_hours(duration),
@@ -309,7 +315,7 @@ class UsageEnforcer(object):
                 host=CONF.enforcement.usage_db_host)
 
     def check_usage_against_allocation_pre_update(self, reservation_values,
-                                                  lease, host_allocations):
+                                                  lease, allocations):
         """Check if we have enough available SUs for update"""
         if not CONF.enforcement.usage_enforcement:
             pass
@@ -317,7 +323,7 @@ class UsageEnforcer(object):
         project_name = self._get_project_name(lease['project_id'])
         self.setup_usage_enforcement(project_name)
 
-        old_su_factor = self._total_billrate(host_allocations)
+        old_su_factor = self._total_billrate(allocations)
         try:
             balance = self.get_balance(project_name)
             encumbered = self.get_encumbered(project_name)
@@ -338,8 +344,8 @@ class UsageEnforcer(object):
                 host=CONF.enforcement.usage_db_host)
 
     def check_usage_against_allocation_post_update(self, reservation_values,
-                                                   lease, old_host_allocations,
-                                                   new_host_allocations):
+                                                   lease, old_allocations,
+                                                   new_allocations):
         """Check if we have enough available SUs for update"""
         if not CONF.enforcement.usage_enforcement:
             pass
@@ -348,8 +354,8 @@ class UsageEnforcer(object):
         project_name = self._get_project_name(lease['project_id'])
         self.setup_usage_enforcement(project_name)
 
-        old_su_factor = self._total_billrate(old_host_allocations)
-        new_su_factor = self._total_billrate(new_host_allocations)
+        old_su_factor = self._total_billrate(old_allocations)
+        new_su_factor = self._total_billrate(new_allocations)
 
         balance = self.get_balance(project_name)
         encumbered = self.get_encumbered(project_name)
@@ -384,14 +390,13 @@ class UsageEnforcer(object):
                  .format(project_name, self.get_encumbered(project_name)))
 
     def check_su_factor_identical(self, allocs, allocs_to_remove,
-                                  host_ids_to_add):
+                                  ids_to_add):
         old_su_factor = self._total_billrate(allocs)
+
         new_su_factor = old_su_factor
-        for allocation in allocs_to_remove:
-            new_su_factor -= billrate.computehost_billrate(
-                allocation['compute_host_id'])
-        for host_id in host_ids_to_add:
-            new_su_factor += billrate.computehost_billrate(host_id)
+        new_su_factor -= self._total_billrate(allocs_to_remove)
+        new_su_factor += self._total_billrate(ids_to_add)
+
         if not isclose(new_su_factor, old_su_factor, rel_tol=1e-5):
             LOG.warning("SU factor changing from {} to {}"
                         .format(old_su_factor, new_su_factor))
@@ -429,8 +434,20 @@ class UsageEnforcer(object):
                      .format(project_name,
                              self.get_encumbered(project_name)))
 
-    def _total_billrate(self, host_allocations):
-        return sum(
-            billrate.computehost_billrate(h['compute_host_id'])
-            for h in host_allocations
-        )
+    def _total_billrate(self, allocations):
+        if not allocations:
+            return 0
+
+        if 'compute_host_id' in allocations[0]:
+            return sum(
+                billrate.computehost_billrate(a['compute_host_id'])
+                for a in allocations
+            )
+        elif 'network_id' in allocations[0]:
+            return sum(
+                network_billrate.network_billrate(a['network_id'])
+                for a in allocations
+            )
+        else:
+            raise Exception("Allocation list not in an expected format: %s",
+                            allocations)
