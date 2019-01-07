@@ -111,19 +111,27 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     return IMPL.get_reservations_by_host_ids(host_ids, start_date, end_date)
 
 
+def get_reservations_by_network_id(network_id, start_date, end_date):
+    return IMPL.get_reservations_by_network_id(
+        network_id, start_date, end_date)
+
+
 def get_plugin_reservation(resource_type, resource_id):
     return IMPL.get_plugin_reservation(resource_type, resource_id)
 
 
-def get_free_periods(resource_id, start_date, end_date, duration):
+def get_free_periods(resource_id, start_date, end_date, duration,
+                     resource_type='host'):
     """Returns a list of free periods."""
-    return IMPL.get_free_periods(resource_id, start_date, end_date, duration)
+    return IMPL.get_free_periods(resource_id, start_date, end_date, duration,
+                                 resource_type=resource_type)
 
 
-def get_reserved_periods(resource_id, start_date, end_date, duration):
+def get_reserved_periods(resource_id, start_date, end_date, duration,
+                         resource_type='host'):
     """Returns a list of reserved periods."""
     return IMPL.get_reserved_periods(resource_id, start_date, end_date,
-                                     duration)
+                                     duration, resource_type=resource_type)
 
 
 def reservation_ratio(resource_id, start_date, end_date):

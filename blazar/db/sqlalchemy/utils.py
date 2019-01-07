@@ -48,6 +48,22 @@ def _get_leases_from_resource_id(resource_id, start_date, end_date):
         yield lease
 
 
+def _get_leases_from_network_id(network_id, start_date, end_date):
+    session = get_session()
+    border0 = sa.and_(models.Lease.start_date < start_date,
+                      models.Lease.end_date < start_date)
+    border1 = sa.and_(models.Lease.start_date > end_date,
+                      models.Lease.end_date > end_date)
+    query = (api.model_query(models.Lease, session=session)
+             .join(models.Reservation)
+             .join(models.NetworkAllocation)
+             .filter(models.NetworkAllocation.deleted.is_(None))
+             .filter(models.NetworkAllocation.network_id == network_id)
+             .filter(~sa.or_(border0, border1)))
+    for lease in query:
+        yield lease
+
+
 def _get_leases_from_host_id(host_id, start_date, end_date):
     session = get_session()
     border0 = sa.and_(models.Lease.start_date < start_date,
@@ -95,6 +111,21 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     return query.all()
 
 
+def get_reservations_by_network_id(network_id, start_date, end_date):
+    session = get_session()
+    border0 = sa.and_(models.Lease.start_date < start_date,
+                      models.Lease.end_date < start_date)
+    border1 = sa.and_(models.Lease.start_date > end_date,
+                      models.Lease.end_date > end_date)
+    query = (api.model_query(models.Reservation, session=session)
+             .join(models.Lease)
+             .join(models.NetworkAllocation)
+             .filter(models.NetworkAllocation.deleted.is_(None))
+             .filter(models.NetworkAllocation.network_id == network_id)
+             .filter(~sa.or_(border0, border1)))
+    return query.all()
+
+
 def get_plugin_reservation(resource_type, resource_id):
     if resource_type == host_plugin.RESOURCE_TYPE:
         return api.host_reservation_get(resource_id)
@@ -104,12 +135,14 @@ def get_plugin_reservation(resource_type, resource_id):
         raise mgr_exceptions.UnsupportedResourceType(resource_type)
 
 
-def get_free_periods(resource_id, start_date, end_date, duration):
+def get_free_periods(resource_id, start_date, end_date, duration,
+                     resource_type='host'):
     """Returns a list of free periods."""
     reserved_periods = get_reserved_periods(resource_id,
                                             start_date,
                                             end_date,
-                                            duration)
+                                            duration,
+                                            resource_type=resource_type)
     free_periods = []
     previous = (start_date, start_date)
     if len(reserved_periods) >= 1:
@@ -126,10 +159,17 @@ def get_free_periods(resource_id, start_date, end_date, duration):
     return free_periods
 
 
-def _get_events(host_id, start_date, end_date):
+def _get_events(resource_id, start_date, end_date, resource_type):
     """Create a list of events."""
     events = {}
-    for lease in _get_leases_from_host_id(host_id, start_date, end_date):
+    if resource_type == 'host':
+        leases = _get_leases_from_host_id(resource_id, start_date, end_date)
+    elif resource_type == 'network':
+        leases = _get_leases_from_network_id(resource_id, start_date, end_date)
+    else:
+        raise mgr_exceptions.UnsupportedResourceType(resource_type)
+
+    for lease in leases:
         if lease.start_date < start_date:
             min_date = start_date
         else:
@@ -191,7 +231,8 @@ def _merge_periods(reserved_periods, start_date, end_date, duration):
     return merged_reserved_periods
 
 
-def get_reserved_periods(host_id, start_date, end_date, duration):
+def get_reserved_periods(host_id, start_date, end_date, duration,
+                         resource_type='host'):
     """Returns a list of reserved periods for a host.
 
     The get_reserved_periods function returns a list of periods during which
@@ -210,7 +251,7 @@ def get_reserved_periods(host_id, start_date, end_date, duration):
     quantity = 1  # One reservation per host at the same time
     if end_date - start_date < duration:
         return [(start_date, end_date)]
-    events = _get_events(host_id, start_date, end_date)
+    events = _get_events(host_id, start_date, end_date, resource_type)
     reserved_periods = _find_reserved_periods(events, quantity, capacity)
     return _merge_periods(reserved_periods, start_date, end_date, duration)
 

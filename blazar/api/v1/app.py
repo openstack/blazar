@@ -25,6 +25,7 @@ from oslo_middleware import debug
 from werkzeug import exceptions as werkzeug_exceptions
 
 from blazar.api.v1.leases import v1_0 as leases_api_v1_0
+from blazar.api.v1.networks import v1_0 as network_api_v1_0
 from blazar.api.v1.oshosts import v1_0 as host_api_v1_0
 from blazar.api.v1 import utils as api_utils
 
@@ -74,9 +75,13 @@ def make_app():
     LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)
     # TODO(sbauza) : Change this whole crap by removing hardcoded values and
     #   maybe using stevedore for achieving this
-    if (cfg.CONF.manager.plugins
-            and 'physical.host.plugin' in cfg.CONF.manager.plugins):
-        app.register_blueprint(host_api_v1_0.rest, url_prefix='/v1/os-hosts')
+    if cfg.CONF.manager.plugins:
+        if 'physical.host.plugin' in cfg.CONF.manager.plugins:
+            app.register_blueprint(host_api_v1_0.rest,
+                                   url_prefix='/v1/os-hosts')
+        if 'network.plugin' in cfg.CONF.manager.plugins:
+            app.register_blueprint(network_api_v1_0.rest,
+                                   url_prefix='/v1/networks')
 
     for code in werkzeug_exceptions.default_exceptions:
         app.register_error_handler(code, make_json_error)
