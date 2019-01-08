@@ -984,7 +984,7 @@ class NetworkPluginTestCase(tests.TestCase):
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
             'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'trust_id': 'exxee111qwwwwe'
+            'project_id': '456'
         }
         reservation_get = self.patch(
             self.db_api, 'reservation_get')
@@ -1031,6 +1031,7 @@ class NetworkPluginTestCase(tests.TestCase):
                 'network': {
                     'provider:segmentation_id': 1234,
                     'name': 'foo-net',
+                    'project_id': '456',
                     'provider:physical_network': 'physnet1',
                     'provider:network_type': 'vlan'}})
         network_reservation_update.assert_called_with(
@@ -1041,7 +1042,7 @@ class NetworkPluginTestCase(tests.TestCase):
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
             'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'trust_id': 'exxee111qwwwwe'
+            'project_id': '456'
         }
         reservation_get = self.patch(
             self.db_api, 'reservation_get')
