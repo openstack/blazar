@@ -287,7 +287,7 @@ class NetworkPlugin(base.BasePlugin):
         network_description = network_reservation['network_description']
         reservation_id = network_reservation['reservation_id']
 
-        # We need the lease to get to the trust_id
+        # We need the lease to get to the project_id
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
 
@@ -297,12 +297,13 @@ class NetworkPlugin(base.BasePlugin):
             network_type = network_segment['network_type']
             physical_network = network_segment['physical_network']
             segment_id = network_segment['segment_id']
-            neutron = self.neutron(trust_id=lease['trust_id'])
+            neutron = self.neutron()
             network_body = {
                 "network": {
                     "name": network_name,
                     "provider:network_type": network_type,
                     "provider:segmentation_id": segment_id,
+                    "project_id": lease['project_id']
                 }
             }
 
