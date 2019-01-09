@@ -76,7 +76,7 @@ None.
 REST API impact
 ---------------
 
-* URL: GET /v1/os-hosts/reservations
+* URL: GET /v1/os-hosts/allocations
 
   * The API replies the all allocations between reservations and hosts.
   * Nomal response code: 200
@@ -88,10 +88,10 @@ Response Example:
   .. sourcecode:: json
 
      {
-       "reservations": [
+       "allocations": [
            {
-                "id": "host-id1",
-                "allocations": [
+                "resource_id": "host-id1",
+                "reservations": [
                   {
                     "id": "reservation-id1",
                     "lease_id": "lease-id1"
@@ -107,7 +107,7 @@ Response Example:
      }
 
 
-* URL: GET /v1/os-hosts/{host-id}/reservations
+* URL: GET /v1/os-hosts/{host-id}/allocation
 
   * The API replies the all allocations only for the host.
   * Nomal response code: 200
@@ -119,9 +119,9 @@ Response Example:
   .. sourcecode:: json
 
      {
-       "reservation": {
-           "id": "host-id1",
-           "allocations": [
+       "allocation": {
+           "resource_id": "host-id1",
+           "reservations": [
              {
                "id": "reservation-id1",
                "lease_id": "lease-id1"
@@ -159,7 +159,7 @@ The pythonclient will support the allocation APIs.
 Performance Impact
 ------------------
 
-List all allocations API, GET /v1/os-hosts/reservations, returns all
+List all allocations API, GET /v1/os-hosts/allocations, returns all
 allocations. When the number of hosts and reservations are huge, the
 DB query and response body could become huge, too.
 
