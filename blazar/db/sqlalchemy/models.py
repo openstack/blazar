@@ -244,3 +244,20 @@ class ComputeHostExtraCapability(mb.BlazarBase):
 
     def to_dict(self):
         return super(ComputeHostExtraCapability, self).to_dict()
+
+
+# Floating IP
+
+class FloatingIP(mb.BlazarBase):
+    """A table for Floating IP resource."""
+
+    __tablename__ = 'floatingips'
+
+    id = _id_column()
+    floating_network_id = sa.Column(sa.String(255), nullable=False)
+    subnet_id = sa.Column(sa.String(255), nullable=False)
+    floating_ip_address = sa.Column(sa.String(255), nullable=False)
+    reservable = sa.Column(sa.Boolean, nullable=False,
+                           server_default=sa.true())
+
+    __table_args__ = (sa.UniqueConstraint('subnet_id', 'floating_ip_address'),)
