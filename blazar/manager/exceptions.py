@@ -191,3 +191,14 @@ class CantUpdateParameter(exceptions.BlazarException):
 class InvalidPeriod(exceptions.BlazarException):
     code = 400
     msg_fmt = _('The end_date must be later than the start_date.')
+
+
+# floating ip plugin related exceptions
+
+class FloatingIPNotFound(exceptions.NotFound):
+    msg_fmt = _("Floating IP %(floatingip)s not found.")
+
+
+class CantDeleteFloatingIP(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("Can't delete floating IP %(floatingip)s. %(msg)s")

@@ -15,6 +15,7 @@
 
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
+import netaddr
 from neutronclient.common import exceptions as neutron_exceptions
 from neutronclient.v2_0 import client as neutron_client
 
@@ -72,3 +73,31 @@ class FloatingIPPool(BlazarNeutronClient):
             raise exceptions.FloatingIPNetworkNotFound(network=network_id)
 
         self.network_id = network_id
+
+    def fetch_subnet(self, floatingip):
+        fip = netaddr.IPAddress(floatingip)
+        network = self.neutron.show_network(self.network_id)['network']
+        subnet_ids = network['subnets']
+
+        for sub_id in subnet_ids:
+            subnet = self.neutron.show_subnet(sub_id)['subnet']
+            cidr = netaddr.IPNetwork(subnet['cidr'])
+
+            # skip the subnet because it has not valid cidr for the floating ip
+            if fip not in cidr:
+                continue
+
+            allocated_ip = netaddr.IPSet()
+
+            allocated_ip.add(netaddr.IPAddress(subnet['gateway_ip']))
+            for alloc in subnet['allocation_pools']:
+                allocated_ip.add(netaddr.IPRange(alloc['start'], alloc['end']))
+
+            if fip in allocated_ip:
+                raise exceptions.NeutronUsesFloatingIP(floatingip=fip,
+                                                       subnet=subnet['id'])
+            else:
+                self.subnet_id = subnet['id']
+                return subnet
+
+        raise exceptions.FloatingIPSubnetNotFound(fip=floatingip)

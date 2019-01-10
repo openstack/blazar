@@ -46,3 +46,12 @@ class InventoryUpdateFailed(exceptions.BlazarException):
 
 class FloatingIPNetworkNotFound(exceptions.InvalidInput):
     msg_fmt = _("Failed to find network %(network)s")
+
+
+class FloatingIPSubnetNotFound(exceptions.NotFound):
+    msg_fmt = _("Valid subnet for the floating IP %(fip)s is not found.")
+
+
+class NeutronUsesFloatingIP(exceptions.InvalidInput):
+    msg_fmt = _("The floating IP %(floatingip)s is used in allocation_pools "
+                "or gateway_ip in subnet %(subnet)s .")

@@ -416,3 +416,27 @@ def host_extra_capability_get_all_per_name(host_id,
 def host_get_all_by_queries_including_extracapabilities(queries):
     """Returns hosts filtered by an array of queries."""
     return IMPL.host_get_all_by_queries_including_extracapabilities(queries)
+
+
+# Floating ip
+
+def floatingip_create(values):
+    """Create a floating ip from the values."""
+    return IMPL.floatingip_create(values)
+
+
+@to_dict
+def floatingip_get(floatingip_id):
+    """Return a specific floating ip."""
+    return IMPL.floatingip_get(floatingip_id)
+
+
+@to_dict
+def floatingip_list():
+    """Return a list of floating ip."""
+    return IMPL.floatingip_list()
+
+
+def floatingip_destroy(floatingip_id):
+    """Delete specific floating ip."""
+    IMPL.floatingip_destroy(floatingip_id)
