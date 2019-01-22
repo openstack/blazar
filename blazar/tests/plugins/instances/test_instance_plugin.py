@@ -17,6 +17,7 @@ import datetime
 import uuid
 
 import mock
+from novaclient import exceptions as nova_exceptions
 import six
 
 from blazar import context
@@ -920,7 +921,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         self.patch(db_api, 'host_allocation_destroy')
 
-        fake_servers = [mock.MagicMock(method='delete') for i in range(5)]
+        fake_servers = [mock.MagicMock() for i in range(5)]
         mock_nova = mock.MagicMock()
         type(plugin).nova = mock_nova
         # First, we return the fake servers to delete. Second, on the check in
@@ -929,6 +930,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_nova.servers.list.side_effect = [fake_servers, fake_servers, []]
 
         mock_cleanup_resources = self.patch(plugin, 'cleanup_resources')
+
+        mock_log = self.patch(instance_plugin, 'LOG')
+        mock_nova.servers.delete.side_effect = [nova_exceptions.NotFound(
+            404, "The server doesn't exist in Nova"), Exception('Unknown'),
+            None, None, None]
 
         plugin.on_end('resource-id1')
 
@@ -939,8 +945,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
             search_opts={'flavor': 'reservation-id1', 'all_tenants': 1},
             detailed=False)
         mock_nova.servers.list.call_count = 3
-        for fake in fake_servers:
-            fake.delete.assert_called_once()
+        self.assertEqual(5, mock_nova.servers.delete.call_count)
+        mock_log.info.assert_any_call(
+            "Could not find server '%s', may have been deleted concurrently.",
+            fake_servers[0].id)
+        mock_log.exception.assert_called_with(
+            "Failed to delete server '%s': %s.", fake_servers[1].id, 'Unknown')
         for i in range(2):
             mock_delete_reservation_inventory.assert_any_call(
                 'host' + str(i + 1), 'reservation-id1')

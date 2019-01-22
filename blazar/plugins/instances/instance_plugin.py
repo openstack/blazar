@@ -498,7 +498,14 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         for server in self.nova.servers.list(search_opts={
                 'flavor': reservation_id,
                 'all_tenants': 1}, detailed=False):
-            server.delete()
+            try:
+                self.nova.servers.delete(server=server)
+            except nova_exceptions.NotFound:
+                LOG.info("Could not find server '%s', may have been deleted "
+                         "concurrently.", server.id)
+            except Exception as e:
+                LOG.exception("Failed to delete server '%s': %s.", server.id,
+                              str(e))
 
         # We need to check the deletion is complete before deleting the
         # reservation inventory. See the bug #1813252 for details.
