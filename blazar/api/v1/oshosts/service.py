@@ -23,9 +23,9 @@ class API(object):
         self.manager_rpcapi = manager_rpcapi.ManagerRPCAPI()
 
     @policy.authorize('oshosts', 'get')
-    def get_computehosts(self):
+    def get_computehosts(self, query):
         """List all existing computehosts."""
-        return self.manager_rpcapi.list_computehosts()
+        return self.manager_rpcapi.list_computehosts(query=query)
 
     @policy.authorize('oshosts', 'post')
     @trusts.use_trust_auth()

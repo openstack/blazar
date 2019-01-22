@@ -30,9 +30,9 @@ class ManagerRPCAPI(service.RPCClient):
         """Get detailed info about some lease."""
         return self.call('get_lease', lease_id=lease_id)
 
-    def list_leases(self, project_id=None):
+    def list_leases(self, project_id=None, query=None):
         """List all leases."""
-        return self.call('list_leases', project_id=project_id)
+        return self.call('list_leases', project_id=project_id, query=query)
 
     def create_lease(self, lease_values):
         """Create lease with specified parameters."""

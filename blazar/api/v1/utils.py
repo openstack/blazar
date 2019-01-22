@@ -33,8 +33,12 @@ LOG = logging.getLogger(__name__)
 class Rest(flask.Blueprint):
     """REST helper class."""
 
-    def get(self, rule, status_code=200):
-        return self._mroute('GET', rule, status_code)
+    def __init__(self, *args, **kwargs):
+        super(Rest, self).__init__(*args, **kwargs)
+        self.routes_with_query_support = []
+
+    def get(self, rule, status_code=200, query=False):
+        return self._mroute('GET', rule, status_code, query=query)
 
     def post(self, rule, status_code=201):
         return self._mroute('POST', rule, status_code)
@@ -55,13 +59,13 @@ class Rest(flask.Blueprint):
         """Routes REST method and its params to the actual request."""
         status = options.pop('status_code', None)
         file_upload = options.pop('file_upload', False)
+        query = options.pop('query', False)
 
         def decorator(func):
             endpoint = options.pop('endpoint', func.__name__)
 
             def handler(**kwargs):
                 LOG.debug("Rest.route.decorator.handler, kwargs=%s", kwargs)
-
                 _init_resp_type(file_upload)
 
                 # update status code
@@ -70,6 +74,10 @@ class Rest(flask.Blueprint):
 
                 if flask.request.method in ['POST', 'PUT']:
                     kwargs['data'] = request_data()
+
+                if flask.request.endpoint in self.routes_with_query_support:
+                    params = {k: v for k, v in get_request_args().items()}
+                    kwargs['query'] = params
 
                 with context.ctx_from_headers(flask.request.headers):
                     try:
@@ -103,6 +111,9 @@ class Rest(flask.Blueprint):
                     except Exception as e:
                         return internal_error(500, 'Internal Server Error', e)
 
+            if query:
+                self.routes_with_query_support.append(
+                    '.'.join([self.name, endpoint]))
             self.add_url_rule(rule, endpoint, handler, **options)
             self.add_url_rule(rule + '.json', endpoint, handler, **options)
 

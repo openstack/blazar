@@ -40,8 +40,9 @@ class RESTApiTestCase(tests.TestCase):
         self.fake_id = '1'
 
     def test_computehost_list(self):
-        self.api.computehosts_list()
-        self.render.assert_called_once_with(hosts=self.get_computehosts())
+        self.api.computehosts_list(query={})
+        self.render.assert_called_once_with(
+            hosts=self.get_computehosts(query={}))
 
     def test_computehosts_create(self):
         self.api.computehosts_create(data=None)

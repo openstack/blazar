@@ -36,8 +36,8 @@ class RESTApiTestCase(tests.TestCase):
         self.fake_id = '1'
 
     def test_lease_list(self):
-        self.api.leases_list()
-        self.render.assert_called_once_with(leases=self.get_leases())
+        self.api.leases_list(query={})
+        self.render.assert_called_once_with(leases=self.get_leases(query={}))
 
     def test_leases_create(self):
         self.api.leases_create(data=None)

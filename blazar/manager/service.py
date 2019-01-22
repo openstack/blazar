@@ -215,7 +215,7 @@ class ManagerService(service_utils.RPCServer):
     def get_lease(self, lease_id):
         return db_api.lease_get(lease_id)
 
-    def list_leases(self, project_id=None):
+    def list_leases(self, project_id=None, query=None):
         return db_api.lease_list(project_id)
 
     def create_lease(self, lease_values):
