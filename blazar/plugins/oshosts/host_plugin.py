@@ -499,6 +499,55 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 # they have to rerun
                 raise manager_ex.CantDeleteHost(host=host_id, msg=str(e))
 
+    def list_allocations(self, query):
+        hosts_id_list = [h['id'] for h in db_api.host_list()]
+
+        hosts_allocations = self.query_host_allocations(hosts_id_list)
+        return [{"resource_id": host, "reservations": allocs}
+                for host, allocs in hosts_allocations.items()]
+
+    def get_allocations(self, host_id, query):
+        host_allocations = self.query_host_allocations([host_id])
+        if host_id not in host_allocations:
+            raise manager_ex.HostNotFound(host=host_id)
+        allocs = host_allocations[host_id]
+        return {"resource_id": host_id, "reservations": allocs}
+
+    def query_host_allocations(self, hosts):
+        """Return dict of host and its allocations.
+
+        The list element forms
+        {
+          'host-id': [
+                       {
+                         'lease_id': lease_id,
+                         'id': reservation_id
+                       },
+                     ]
+        }.
+        """
+        start = datetime.datetime.utcnow()
+        end = datetime.date.max
+
+        # To reduce overhead, this method only executes one query
+        # to get the allocation information
+        allocs = db_utils.get_reservation_allocations_by_host_ids(
+            hosts, start, end)
+
+        hosts_allocs = {}
+        for reservation, alloc in allocs:
+            if alloc['compute_host_id'] in hosts_allocs:
+                hosts_allocs[alloc['compute_host_id']].append({
+                    'lease_id': reservation['lease_id'],
+                    'id': reservation['id']
+                })
+            else:
+                hosts_allocs[alloc['compute_host_id']] = [{
+                    'lease_id': reservation['lease_id'],
+                    'id': reservation['id']
+                }]
+        return hosts_allocs
+
     def _matching_hosts(self, hypervisor_properties, resource_properties,
                         count_range, start_date, end_date):
         """Return the matching hosts (preferably not allocated)

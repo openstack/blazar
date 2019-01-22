@@ -407,6 +407,36 @@ class SQLAlchemyDBUtilsTestCase(tests.DBTestCase):
         self.check_reservation([], ['r4'],
                                '2030-01-01 07:00', '2030-01-01 15:00')
 
+    def test_get_reservation_allocations_by_host_ids(self):
+        def create_allocation_tuple(lease_id):
+            reservation = db_api.reservation_get_all_by_lease_id(lease_id)[0]
+            allocation = db_api.host_allocation_get_all_by_values(
+                reservation_id=reservation['id'])[0]
+            return (reservation['id'], allocation['id'])
+
+        self._setup_leases()
+
+        # query all allocations of lease1, lease2 and lease3
+        expected = [
+            create_allocation_tuple('lease1'),
+            create_allocation_tuple('lease2'),
+            create_allocation_tuple('lease3'),
+        ]
+        ret = db_utils.get_reservation_allocations_by_host_ids(
+            ['r1', 'r2'], '2030-01-01 08:00', '2030-01-01 15:00')
+
+        self.assertListEqual(expected, [(r['id'], a['id']) for r, a in ret])
+
+        # query allocations of lease2 and lease3
+        expected = [
+            create_allocation_tuple('lease2'),
+            create_allocation_tuple('lease3'),
+        ]
+        ret = db_utils.get_reservation_allocations_by_host_ids(
+            ['r1', 'r2'], '2030-01-01 11:30', '2030-01-01 15:00')
+
+        self.assertListEqual(expected, [(r['id'], a['id']) for r, a in ret])
+
     def test_get_plugin_reservation_with_host(self):
         patch_host_reservation_get = self.patch(db_api, 'host_reservation_get')
         patch_host_reservation_get.return_value = {

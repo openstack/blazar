@@ -88,6 +88,18 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     return query.all()
 
 
+def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date):
+    session = get_session()
+    border0 = models.Lease.end_date < start_date
+    border1 = models.Lease.start_date > end_date
+    query = (session.query(models.Reservation, models.ComputeHostAllocation)
+             .join(models.Lease).join(models.ComputeHostAllocation)
+             .filter(models.ComputeHostAllocation.compute_host_id
+                     .in_(host_ids))
+             .filter(~sa.or_(border0, border1)))
+    return query.all()
+
+
 def get_plugin_reservation(resource_type, resource_id):
     if resource_type == host_plugin.RESOURCE_TYPE:
         return api.host_reservation_get(resource_id)
