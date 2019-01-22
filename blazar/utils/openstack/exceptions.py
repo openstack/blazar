@@ -23,6 +23,11 @@ class ResourceProviderCreationFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to create resource provider %(name)s")
 
 
+class ResourceProviderCreationConflict(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("Conflict on creating resource provider %(name)s ")
+
+
 class ResourceProviderDeletionFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to delete resource provider %(uuid)s")
 

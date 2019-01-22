@@ -26,6 +26,7 @@ from blazar.db import exceptions as db_exceptions
 from blazar import exceptions as ex
 from blazar.i18n import _
 from blazar.manager import exceptions as manager_exceptions
+from blazar.utils.openstack import exceptions as opst_exceptions
 
 LOG = logging.getLogger(__name__)
 
@@ -88,6 +89,8 @@ class Rest(flask.Blueprint):
                         # Get the exception from manager and common exceptions
                         cls = getattr(manager_exceptions, e.exc_type,
                                       getattr(ex, e.exc_type, None))
+                        cls = cls or getattr(opst_exceptions, e.exc_type,
+                                             getattr(ex, e.exc_type, None))
                         if cls is not None:
                             return render_error_message(cls.code, e.value,
                                                         cls.code)

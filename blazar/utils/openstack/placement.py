@@ -148,6 +148,17 @@ class BlazarPlacementClient(object):
             LOG.info(msg, args)
             return resp.json()
 
+        if resp.status_code == 409:
+            msg = ("Conflict on creating resource provider %(name)s in "
+                   "placement API. Got %(status_code)d: %(err_text)s.")
+            args = {
+                'name': rp_name,
+                'status_code': resp.status_code,
+                'err_text': resp.text,
+            }
+            LOG.error(msg, args)
+            raise exceptions.ResourceProviderCreationConflict(name=rp_name)
+
         msg = ("Failed to create resource provider record in placement API "
                "for resource provider %(name)s. "
                "Got %(status_code)d: %(err_text)s.")
