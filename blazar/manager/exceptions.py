@@ -202,3 +202,17 @@ class FloatingIPNotFound(exceptions.NotFound):
 class CantDeleteFloatingIP(exceptions.BlazarException):
     code = 409
     msg_fmt = _("Can't delete floating IP %(floatingip)s. %(msg)s")
+
+
+class InvalidIPFormat(exceptions.InvalidInput):
+    msg_fmt = _("IP address %(ip)s is invalid form.")
+
+
+class TooLongFloatingIPs(exceptions.InvalidInput):
+    msg_fmt = _("Invalid values for required_floatingips and amount. "
+                "The amount must be equal to or longer than length of "
+                "required_floatingips.")
+
+
+class NotEnoughFloatingIPAvailable(exceptions.InvalidInput):
+    msg_fmt = _("Not enough floating IPs available")

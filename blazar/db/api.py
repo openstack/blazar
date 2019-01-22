@@ -418,6 +418,77 @@ def host_get_all_by_queries_including_extracapabilities(queries):
     return IMPL.host_get_all_by_queries_including_extracapabilities(queries)
 
 
+# FloatingIP reservation
+
+def fip_reservation_create(fip_reservation_values):
+    """Create a floating IP reservation from the values."""
+    return IMPL.fip_reservation_create(fip_reservation_values)
+
+
+@to_dict
+def fip_reservation_get(fip_reservation_id):
+    """Return specific floating IP reservation."""
+    return IMPL.fip_reservation_get(fip_reservation_id)
+
+
+def fip_reservation_update(fip_reservation_id, fip_reservation_values):
+    """Update floating IP reservation."""
+    return IMPL.fip_reservation_update(fip_reservation_id,
+                                       fip_reservation_values)
+
+
+def fip_reservation_destroy(fip_reservation_id):
+    """Delete specific floating ip reservation."""
+    return IMPL.fip_reservation_destroy(fip_reservation_id)
+
+
+# Required FloatingIP
+
+def required_fip_create(required_fip_values):
+    """Create a required FIP address from the values."""
+    return IMPL.required_fip_create(required_fip_values)
+
+
+@to_dict
+def required_fip_get(required_fip_id):
+    """Return specific required FIP."""
+    return IMPL.required_fip_get(required_fip_id)
+
+
+def required_fip_update(required_fip_id, required_fip_values):
+    """Update required FIP."""
+    return IMPL.required_fip_update(required_fip_id,
+                                    required_fip_values)
+
+
+def required_fip_destroy(required_fip_id):
+    """Delete specific required FIP."""
+    return IMPL.required_fip_destroy(required_fip_id)
+
+
+# FloatingIP Allocation
+
+def fip_allocation_create(allocation_values):
+    """Create a floating ip allocation from the values."""
+    return IMPL.fip_allocation_create(allocation_values)
+
+
+@to_dict
+def fip_allocation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    return IMPL.fip_allocation_get_all_by_values(**kwargs)
+
+
+def fip_allocation_destroy(allocation_id):
+    """Delete specific floating ip allocation."""
+    IMPL.fip_allocation_destroy(allocation_id)
+
+
+def fip_allocation_update(allocation_id, allocation_values):
+    """Update floating ip allocation."""
+    IMPL.fip_allocation_update(allocation_id, allocation_values)
+
+
 # Floating ip
 
 def floatingip_create(values):
@@ -435,6 +506,12 @@ def floatingip_get(floatingip_id):
 def floatingip_list():
     """Return a list of floating ip."""
     return IMPL.floatingip_list()
+
+
+@to_dict
+def reservable_fip_get_all_by_queries(queries):
+    """Returns reservable fips filtered by an array of queries."""
+    return IMPL.reservable_fip_get_all_by_queries(queries)
 
 
 def floatingip_destroy(floatingip_id):

@@ -830,6 +830,172 @@ def host_extra_capability_get_all_per_name(host_id, capability_name):
         return query.filter_by(capability_name=capability_name).all()
 
 
+# FloatingIP reservation
+
+def fip_reservation_create(fip_reservation_values):
+    values = fip_reservation_values.copy()
+    fip_reservation = models.FloatingIPReservation()
+    fip_reservation.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            fip_reservation.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.BlazarDBDuplicateEntry(
+                model=fip_reservation.__class__.__name__, columns=e.columns)
+
+    return fip_reservation_get(fip_reservation.id)
+
+
+def _fip_reservation_get(session, fip_reservation_id):
+    query = model_query(models.FloatingIPReservation, session)
+    return query.filter_by(id=fip_reservation_id).first()
+
+
+def fip_reservation_get(fip_reservation_id):
+    return _fip_reservation_get(get_session(), fip_reservation_id)
+
+
+def fip_reservation_update(fip_reservation_id, fip_reservation_values):
+    session = get_session()
+
+    with session.begin():
+        fip_reservation = _fip_reservation_get(session, fip_reservation_id)
+        fip_reservation.update(fip_reservation_values)
+        fip_reservation.save(session=session)
+
+    return fip_reservation_get(fip_reservation_id)
+
+
+def fip_reservation_destroy(fip_reservation_id):
+    session = get_session()
+    with session.begin():
+        fip_reservation = _fip_reservation_get(session, fip_reservation_id)
+
+        if not fip_reservation:
+            # raise not found error
+            raise db_exc.BlazarDBNotFound(
+                id=fip_reservation_id, model='FloatingIPReservation')
+
+        session.delete(fip_reservation)
+
+
+# Required FIP
+
+def required_fip_create(required_fip_values):
+    values = required_fip_values.copy()
+    required_fip = models.RequiredFloatingIP()
+    required_fip.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            required_fip.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.BlazarDBDuplicateEntry(
+                model=required_fip.__class__.__name__, columns=e.columns)
+
+    return required_fip_get(required_fip.id)
+
+
+def _required_fip_get(session, required_fip_id):
+    query = model_query(models.RequiredFloatingIP, session)
+    return query.filter_by(id=required_fip_id).first()
+
+
+def required_fip_get(required_fip_id):
+    return _required_fip_get(get_session(), required_fip_id)
+
+
+def required_fip_update(required_fip_id, required_fip_values):
+    session = get_session()
+
+    with session.begin():
+        required_fip = _required_fip_get(session, required_fip_id)
+        required_fip.update(required_fip_values)
+        required_fip.save(session=session)
+
+    return required_fip_get(required_fip_id)
+
+
+def required_fip_destroy(required_fip_id):
+    session = get_session()
+    with session.begin():
+        required_fip = _required_fip_get(session, required_fip_id)
+
+        if not required_fip:
+            # raise not found error
+            raise db_exc.BlazarDBNotFound(
+                id=required_fip_id, model='RequiredFloatingIP')
+
+        session.delete(required_fip)
+
+
+# FloatingIP Allocation
+
+def _fip_allocation_get(session, fip_allocation_id):
+    query = model_query(models.FloatingIPAllocation, session)
+    return query.filter_by(id=fip_allocation_id).first()
+
+
+def fip_allocation_get(fip_allocation_id):
+    return _fip_allocation_get(get_session(), fip_allocation_id)
+
+
+def fip_allocation_create(allocation_values):
+    values = allocation_values.copy()
+    fip_allocation = models.FloatingIPAllocation()
+    fip_allocation.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            fip_allocation.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.BlazarDBDuplicateEntry(
+                model=fip_allocation.__class__.__name__, columns=e.columns)
+
+    return fip_allocation_get(fip_allocation.id)
+
+
+def fip_allocation_get_all_by_values(**kwargs):
+    """Returns all entries filtered by col=value."""
+    allocation_query = model_query(models.FloatingIPAllocation, get_session())
+    for name, value in kwargs.items():
+        column = getattr(models.FloatingIPAllocation, name, None)
+        if column:
+            allocation_query = allocation_query.filter(column == value)
+    return allocation_query.all()
+
+
+def fip_allocation_destroy(allocation_id):
+    session = get_session()
+    with session.begin():
+        fip_allocation = _fip_allocation_get(session, allocation_id)
+
+        if not fip_allocation:
+            # raise not found error
+            raise db_exc.BlazarDBNotFound(
+                id=allocation_id, model='FloatingIPAllocation')
+
+        session.delete(fip_allocation)
+
+
+def fip_allocation_update(allocation_id, allocation_values):
+    session = get_session()
+
+    with session.begin():
+        fip_allocation = _fip_allocation_get(session, allocation_id)
+        fip_allocation.update(allocation_values)
+        fip_allocation.save(session=session)
+
+    return fip_allocation_get(allocation_id)
+
+
 # Floating IP
 def _floatingip_get(session, floatingip_id):
     query = model_query(models.FloatingIP, session)
@@ -839,6 +1005,69 @@ def _floatingip_get(session, floatingip_id):
 def _floatingip_get_all(session):
     query = model_query(models.FloatingIP, session)
     return query
+
+
+def fip_get_all_by_queries(queries):
+    """Returns Floating IPs filtered by an array of queries.
+
+    :param queries: array of queries "key op value" where op can be
+        http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
+            #sqlalchemy.sql.operators.ColumnOperators
+
+    """
+    fips_query = model_query(models.FloatingIP, get_session())
+
+    oper = {
+        '<': ['lt', lambda a, b: a >= b],
+        '>': ['gt', lambda a, b: a <= b],
+        '<=': ['le', lambda a, b: a > b],
+        '>=': ['ge', lambda a, b: a < b],
+        '==': ['eq', lambda a, b: a != b],
+        '!=': ['ne', lambda a, b: a == b],
+    }
+
+    for query in queries:
+        try:
+            key, op, value = query.split(' ', 2)
+        except ValueError:
+            raise db_exc.BlazarDBInvalidFilter(query_filter=query)
+
+        column = getattr(models.FloatingIP, key, None)
+        if column is not None:
+            if op == 'in':
+                filt = column.in_(value.split(','))
+            else:
+                if op in oper:
+                    op = oper[op][0]
+                try:
+                    attr = [e for e in ['%s', '%s_', '__%s__']
+                            if hasattr(column, e % op)][0] % op
+                except IndexError:
+                    raise db_exc.BlazarDBInvalidFilterOperator(
+                        filter_operator=op)
+
+                if value == 'null':
+                    value = None
+
+                filt = getattr(column, attr)(value)
+
+            fips_query = fips_query.filter(filt)
+        else:
+            raise db_exc.BlazarDBInvalidFilter(query_filter=query)
+
+    return fips_query.all()
+
+
+def reservable_fip_get_all_by_queries(queries):
+    """Returns reservable fips filtered by an array of queries.
+
+    :param queries: array of queries "key op value" where op can be
+        http://docs.sqlalchemy.org/en/rel_0_7/core/expression_api.html
+            #sqlalchemy.sql.operators.ColumnOperators
+
+    """
+    queries.append('reservable == 1')
+    return fip_get_all_by_queries(queries)
 
 
 def floatingip_get(floatingip_id):
