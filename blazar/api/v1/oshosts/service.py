@@ -66,3 +66,23 @@ class API(object):
         :type host_id: str
         """
         self.manager_rpcapi.delete_computehost(host_id)
+
+    @policy.authorize('oshosts', 'get_allocations')
+    def list_allocations(self, query):
+        """List all allocations on all computehosts.
+
+        :param query: parameters to query allocations
+        :type query: dict
+        """
+        return self.manager_rpcapi.list_allocations(query)
+
+    @policy.authorize('oshosts', 'get_allocations')
+    def get_allocations(self, host_id, query):
+        """List all allocations on a specified computehost.
+
+        :param host_id: ID of the computehost in Blazar DB.
+        :type host_id: str
+        :param query: parameters to query allocations
+        :type query: dict
+        """
+        return self.manager_rpcapi.get_allocations(host_id, query)

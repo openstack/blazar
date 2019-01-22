@@ -36,7 +36,8 @@ class RESTApiTestCase(tests.TestCase):
                                              'update_computehost')
         self.delete_computehost = self.patch(self.s_api.API,
                                              'delete_computehost')
-
+        self.list_allocations = self.patch(self.s_api.API, 'list_allocations')
+        self.get_allocations = self.patch(self.s_api.API, 'get_allocations')
         self.fake_id = '1'
 
     def test_computehost_list(self):
@@ -59,3 +60,12 @@ class RESTApiTestCase(tests.TestCase):
     def test_computehosts_delete(self):
         self.api.computehosts_delete(host_id=self.fake_id)
         self.render.assert_called_once_with()
+
+    def test_allocation_list(self):
+        self.api.allocations_list(query={})
+        self.render.assert_called_once_with(
+            allocations=self.list_allocations())
+
+    def test_allocation_get(self):
+        self.api.allocations_get(host_id=self.fake_id, query={})
+        self.render.assert_called_once_with(allocation=self.get_allocations())

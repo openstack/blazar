@@ -64,6 +64,21 @@ oshosts_policies = [
                 'method': 'DELETE'
             }
         ]
+    ),
+    policy.DocumentedRuleDefault(
+        name=POLICY_ROOT % 'get_allocations',
+        check_str=base.RULE_ADMIN,
+        description='Policy rule for List/Get Host(s) Allocations API.',
+        operations=[
+            {
+                'path': '/{api_version}/os-hosts/allocations',
+                'method': 'GET'
+            },
+            {
+                'path': '/{api_version}/os-hosts/{host_id}/allocation',
+                'method': 'GET'
+            }
+        ]
     )
 ]
 

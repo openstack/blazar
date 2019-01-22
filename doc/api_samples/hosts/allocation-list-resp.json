@@ -1,0 +1,26 @@
+{
+    "allocations": [
+        {
+            "resource_id": "1",
+            "reservations": [
+                {
+                    "id": "3504fbac-fdb2-458e-a43f-34d27fbd0b86",
+                    "lease_id": "0ec2bed6-75f9-4959-8198-9d9717dde4cb"
+                },
+                {
+                    "id": "4f4743a2-d8c7-44c2-ba39-300eb7659bb9",
+                    "lease_id": "6050288d-5535-4e3c-93d5-083184b86c61"
+                }
+            ]
+        },
+        {
+            "resource_id": "2",
+            "reservations": [
+                {
+                    "id": "b2475424-6872-43ec-857d-f4b50b403e97",
+                    "lease_id": "e92b9d47-9078-47ec-a35c-27e67f7b8429"
+                }
+            ]
+        }
+    ]
+}

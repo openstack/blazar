@@ -13,6 +13,19 @@ lease_id_path:
   type: string
 
 # variables in body
+allocation:
+  description: |
+    An ``allocation`` object. This object describes a mapping
+    between resource_id and reservations.
+  in: body
+  required: true
+  type: array
+allocations:
+  description: |
+    A list of ``allocation`` objects.
+  in: body
+  required: true
+  type: array
 created_at:
   description: |
     The date and time when the object was created.
@@ -300,6 +313,13 @@ reservation_aggregate_id:
   in: body
   required: true
   type: integer
+reservation_allocation:
+  description: |
+    A list of ``reservation allocation`` objects. The object consists of
+    reservation id and its lease_id.
+  in: body
+  required: true
+  type: array
 reservation_amount:
   description: |
     The amount of instances to reserve.
