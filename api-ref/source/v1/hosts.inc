@@ -268,6 +268,7 @@ Request
 .. rest_parameters:: parameters.yaml
 
   - lease_id: allocation_lease_id_query
+  - reservation_id: allocation_reservation_id_query
 
 Response
 --------
@@ -306,6 +307,7 @@ Request
 
   - host_id: host_id_path
   - lease_id: allocation_lease_id_query
+  - reservation_id: allocation_reservation_id_query
 
 Response
 --------
