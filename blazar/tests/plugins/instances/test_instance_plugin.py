@@ -686,7 +686,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
     def test_update_resources_in_active(self):
         def fake_host_get(host_id):
-            return {'service_name': 'host' + host_id[-1]}
+            return {'service_name': 'host' + host_id[-1],
+                    'hypervisor_hostname': 'host' + host_id[-1]}
 
         reservation = {
             'id': 'reservation-id1',
@@ -851,7 +852,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
     def test_on_start(self):
         def fake_host_get(host_id):
-            return {'service_name': 'host' + host_id[-1]}
+            return {'service_name': 'host' + host_id[-1],
+                    'hypervisor_hostname': 'host' + host_id[-1]}
 
         self.set_context(context.BlazarContext(project_id='fake-project'))
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -907,7 +909,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         mock_host_get = self.patch(db_api, 'host_get')
         mock_host_get.side_effect = [
-            {'service_name': 'host1'}, {'service_name': 'host2'}
+            {'service_name': 'host1', 'hypervisor_hostname': 'host1'},
+            {'service_name': 'host2', 'hypervisor_hostname': 'host2'}
         ]
 
         mock_delete_reservation_inventory = self.patch(
@@ -1133,9 +1136,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
     def test_reallocate_active(self):
         plugin = instance_plugin.VirtualInstancePlugin()
         failed_host = {'id': '1',
-                       'service_name': 'compute-1'}
+                       'service_name': 'compute-1',
+                       'hypervisor_hostname': 'compute-1'}
         new_host = {'id': '2',
-                    'service_name': 'compute-2'}
+                    'service_name': 'compute-2',
+                    'hypervisor_hostname': 'compute-2'}
         dummy_allocation = {
             'id': 'alloc-1',
             'compute_host_id': failed_host['id'],

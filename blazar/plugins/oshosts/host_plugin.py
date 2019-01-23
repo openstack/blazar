@@ -362,7 +362,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 raise manager_ex.ExtraCapabilityTooLong()
 
             self.placement_client.create_reservation_provider(
-                host_details['service_name'])
+                host_details['hypervisor_hostname'])
 
             pool = nova.ReservationPool()
             pool.add_computehost(self.freepool_name,
@@ -381,7 +381,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 pool.remove_computehost(self.freepool_name,
                                         host_details['service_name'])
                 self.placement_client.delete_reservation_provider(
-                    host_details['service_name'])
+                    host_details['hypervisor_hostname'])
                 raise e
             for key in extra_capabilities:
                 values = {'computehost_id': host['id'],
@@ -495,7 +495,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 pool.remove_computehost(self.freepool_name,
                                         host['service_name'])
                 self.placement_client.delete_reservation_provider(
-                    host['service_name'])
+                    host['hypervisor_hostname'])
                 # NOTE(sbauza): Extracapabilities will be destroyed thanks to
                 #  the DB FK.
                 db_api.host_destroy(host_id)

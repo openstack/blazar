@@ -301,7 +301,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                % (host, reservation['aggregate_id']))
                     raise mgr_exceptions.NovaClientError(err_msg)
                 self.placement_client.update_reservation_inventory(
-                    host['service_name'], reservation['id'], 1)
+                    host['hypervisor_hostname'], reservation['id'], 1)
         else:
             try:
                 self.nova.nova.flavors.delete(reservation['id'])
@@ -472,7 +472,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             pool.add_computehost(instance_reservation['aggregate_id'],
                                  host['service_name'], stay_in=True)
             self.placement_client.update_reservation_inventory(
-                host['service_name'], reservation_id, 1)
+                host['hypervisor_hostname'], reservation_id, 1)
 
     def on_end(self, resource_id):
         instance_reservation = db_api.instance_reservation_get(resource_id)
@@ -492,7 +492,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             db_api.host_allocation_destroy(allocation['id'])
             try:
                 self.placement_client.delete_reservation_inventory(
-                    host['service_name'], reservation_id)
+                    host['hypervisor_hostname'], reservation_id)
             except openstack_ex.ResourceProviderNotFound:
                 pass
 
@@ -559,7 +559,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                     host['service_name'])
             try:
                 self.placement_client.delete_reservation_inventory(
-                    host['service_name'], reservation['id'])
+                    host['hypervisor_hostname'], reservation['id'])
             except openstack_ex.ResourceProviderNotFound:
                 pass
 
@@ -590,7 +590,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                      new_host['service_name'],
                                      stay_in=True)
                 self.placement_client.update_reservation_inventory(
-                    new_host['service_name'], reservation['id'], 1)
+                    new_host['hypervisor_hostname'], reservation['id'], 1)
             LOG.warn('Resource changed for reservation %s (lease: %s).',
                      reservation['id'], lease['name'])
 
