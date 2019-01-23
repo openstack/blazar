@@ -265,7 +265,9 @@ Internal Server Error(500)
 Request
 -------
 
-No body content, path, nor query option.
+.. rest_parameters:: parameters.yaml
+
+  - lease_id: allocation_lease_id_query
 
 Response
 --------
@@ -303,6 +305,7 @@ Request
 .. rest_parameters:: parameters.yaml
 
   - host_id: host_id_path
+  - lease_id: allocation_lease_id_query
 
 Response
 --------

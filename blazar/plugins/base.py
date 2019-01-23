@@ -32,6 +32,7 @@ class BasePlugin(object):
     title = None
     description = None
     monitor = None
+    query_options = None
 
     def get_plugin_opts(self):
         """Plugin can expose some options that should be specified in conf file
@@ -98,6 +99,15 @@ class BasePlugin(object):
                        {'missing_resources': True}}
         """
         raise NotImplementedError
+
+    def get_query_options(self, params, index_type):
+        options = {k: params[k] for k in params
+                   if k in self.query_options[index_type]}
+        unsupported = set(params) - set(options)
+        if unsupported:
+            LOG.debug('Unsupported query key is specified in API request: %s',
+                      unsupported)
+        return options
 
 
 @six.add_metaclass(abc.ABCMeta)

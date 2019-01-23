@@ -72,6 +72,8 @@ LOG = logging.getLogger(__name__)
 
 before_end_options = ['', 'snapshot', 'default']
 
+QUERY_TYPE_ALLOCATION = 'allocation'
+
 
 class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for physical host resource."""
@@ -80,6 +82,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
     description = 'This plugin starts and shutdowns the hosts.'
     freepool_name = CONF.nova.aggregate_freepool_name
     pool = None
+    query_options = {
+        QUERY_TYPE_ALLOCATION: ['lease_id']
+    }
 
     def __init__(self):
         super(PhysicalHostPlugin, self).__init__(
@@ -501,19 +506,22 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def list_allocations(self, query):
         hosts_id_list = [h['id'] for h in db_api.host_list()]
+        options = self.get_query_options(query, QUERY_TYPE_ALLOCATION)
 
-        hosts_allocations = self.query_host_allocations(hosts_id_list)
+        hosts_allocations = self.query_host_allocations(hosts_id_list,
+                                                        **options)
         return [{"resource_id": host, "reservations": allocs}
                 for host, allocs in hosts_allocations.items()]
 
     def get_allocations(self, host_id, query):
-        host_allocations = self.query_host_allocations([host_id])
+        options = self.get_query_options(query, QUERY_TYPE_ALLOCATION)
+        host_allocations = self.query_host_allocations([host_id], **options)
         if host_id not in host_allocations:
-            raise manager_ex.HostNotFound(host=host_id)
+            host_allocations = {host_id: []}
         allocs = host_allocations[host_id]
         return {"resource_id": host_id, "reservations": allocs}
 
-    def query_host_allocations(self, hosts):
+    def query_host_allocations(self, hosts, lease_id=None):
         """Return dict of host and its allocations.
 
         The list element forms
@@ -532,7 +540,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         # To reduce overhead, this method only executes one query
         # to get the allocation information
         allocs = db_utils.get_reservation_allocations_by_host_ids(
-            hosts, start, end)
+            hosts, start, end, lease_id)
 
         hosts_allocs = {}
         for reservation, alloc in allocs:
