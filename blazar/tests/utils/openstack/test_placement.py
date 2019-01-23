@@ -428,6 +428,81 @@ class TestPlacementClient(tests.TestCase):
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get_resource_provider')
     @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get')
+    @mock.patch('keystoneauth1.session.Session.request')
+    def test_add_reservation_inventory(self, kss_req, client_get, get_rp):
+        host_uuid = uuidutils.generate_uuid()
+        host_name = "compute-1"
+        rp_uuid = uuidutils.generate_uuid()
+        rp_name = "blazar_compute-1"
+
+        # Build the mock of current resource provider
+        mock_get_rp_json = {'uuid': rp_uuid,
+                            'name': rp_name,
+                            'generation': 0,
+                            'parent_provider_uuid': host_uuid}
+        get_rp.return_value = mock_get_rp_json
+
+        # Build the mock of "current" inventory for get_inventory()
+        curr_gen = 11
+        mock_get_inv_json = {
+            'inventories': {
+                'CUSTOM_RESERVATION_CURR': {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": 1
+                },
+            },
+            "resource_provider_generation": curr_gen
+        }
+        client_get.return_value = fake_requests.FakeResponse(
+            200, content=jsonutils.dumps(mock_get_inv_json))
+
+        # Build the mock of "updated" inventory for update_inventory()
+        update_gen = 12
+        mock_put_json = {
+            'inventories': {
+                'CUSTOM_RESERVATION_CURR': {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": 3
+                },
+            },
+            "resource_provider_generation": update_gen
+        }
+        kss_req.return_value = fake_requests.FakeResponse(
+            200, content=jsonutils.dumps(mock_put_json))
+
+        result = self.client.update_reservation_inventory(
+            host_name, 'curr', 2, additional=True)
+
+        expected_data = {
+            'inventories': {
+                'CUSTOM_RESERVATION_CURR': {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": 3
+                }
+            },
+            "resource_provider_generation": curr_gen
+        }
+        expected_url = '/resource_providers/%s/inventories' % rp_uuid
+        self._assert_keystone_called_once(kss_req, expected_url, 'PUT',
+                                          json=expected_data)
+        self.assertEqual(mock_put_json, result)
+
+    @mock.patch('blazar.utils.openstack.placement.'
+                'BlazarPlacementClient.get_resource_provider')
+    @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.create_reservation_provider')
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get')

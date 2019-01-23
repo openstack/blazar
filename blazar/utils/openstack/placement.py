@@ -283,18 +283,35 @@ class BlazarPlacementClient(object):
             return resp.json()
         raise exceptions.ResourceProviderNotFound(resource_provider=rp_uuid)
 
-    def update_inventory(self, rp_uuid, inv_data):
+    def update_inventory(self, rp_uuid, rc_name, num, additional):
         """Update the inventory for the resource provider.
 
         :param rp_uuid: The resource provider UUID for the operation
-        :param inv_data: The new inventory for the resource provider
+        :param rc_name: The resource class name of the inventory to update
+        :param num: The total inventory to add/update
+        :param additional: Add the given number amounts to the existing if
+                           True, else just overwrite the total value
         :raises: ResourceProviderNotFound or InventoryUpdateFailed error.
         """
         curr = self.get_inventory(rp_uuid)
         inventories = curr['inventories']
         generation = curr['resource_provider_generation']
 
-        inventories.update(inv_data)
+        if additional and rc_name in inventories:
+            inventories[rc_name]["total"] += num
+
+        else:
+            inv_data = {
+                rc_name: {
+                    "allocation_ratio": 1.0,
+                    "max_unit": 1,
+                    "min_unit": 1,
+                    "reserved": 0,
+                    "step_size": 1,
+                    "total": num
+                },
+            }
+            inventories.update(inv_data)
 
         payload = {
             'inventories': inventories,
@@ -324,7 +341,8 @@ class BlazarPlacementClient(object):
 
         raise exceptions.InventoryUpdateFailed(resource_provider=rp_uuid)
 
-    def update_reservation_inventory(self, host_name, reserv_uuid, num):
+    def update_reservation_inventory(self, host_name, reserv_uuid, num,
+                                     additional=False):
         """Update the reservation inventory for the reservation provider.
 
         :param host_name: The name of the target host
@@ -341,20 +359,11 @@ class BlazarPlacementClient(object):
             rp = self.create_reservation_provider(host_name)
         rp_uuid = rp['uuid']
 
-        # Build inventory data
+        # Get resource class name
         reserv_uuid = reserv_uuid.upper().replace("-", "_")
         rc_name = 'CUSTOM_RESERVATION_' + reserv_uuid
-        inv_data = {
-            rc_name: {
-                "allocation_ratio": 1.0,
-                "max_unit": 1,
-                "min_unit": 1,
-                "reserved": 0,
-                "step_size": 1,
-                "total": num
-            },
-        }
-        return self.update_inventory(rp_uuid, inv_data)
+
+        return self.update_inventory(rp_uuid, rc_name, num, additional)
 
     def delete_reservation_inventory(self, host_name, reserv_uuid):
         """Delete the reservation inventory for the reservation provider.
