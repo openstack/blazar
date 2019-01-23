@@ -99,6 +99,16 @@ class Reservation(mb.BlazarBase):
                                            cascade="all,delete",
                                            backref='reservation',
                                            lazy='joined')
+    floatingip_reservation = relationship('FloatingIPReservation',
+                                          uselist=False,
+                                          cascade="all,delete",
+                                          backref='reservation',
+                                          lazy='joined')
+    floatingip_allocations = relationship('FloatingIPAllocation',
+                                          uselist=True,
+                                          cascade="all,delete",
+                                          backref='reservation',
+                                          lazy='joined')
 
     def to_dict(self):
         d = super(Reservation, self).to_dict()
@@ -123,6 +133,10 @@ class Reservation(mb.BlazarBase):
                        'flavor_id', 'aggregate_id', 'server_group_id',
                        'resource_properties']
             d.update(self.instance_reservation.to_dict(include=ir_keys))
+
+        if self.floatingip_reservation:
+            fip_keys = ['network_id', 'amount']
+            d.update(self.floatingip_reservation.to_dict(include=fip_keys))
 
         return d
 
@@ -247,6 +261,55 @@ class ComputeHostExtraCapability(mb.BlazarBase):
 
 
 # Floating IP
+class FloatingIPReservation(mb.BlazarBase):
+    """Description
+
+    Specifies resources asked by reservation from
+    Floating IP Reservation API.
+    """
+
+    __tablename__ = 'floatingip_reservations'
+
+    id = _id_column()
+    reservation_id = sa.Column(sa.String(36), sa.ForeignKey('reservations.id'))
+    network_id = sa.Column(sa.String(255), nullable=False)
+    amount = sa.Column(sa.Integer, nullable=False)
+    required_fips = relationship('RequiredFloatingIP',
+                                 cascade='all,delete',
+                                 backref='floatingip_reservation',
+                                 lazy='joined')
+
+    def to_dict(self, include=None):
+        d = super(FloatingIPReservation, self).to_dict(include=include)
+        d['required_floatingips'] = [ip['address'] for ip in
+                                     self.required_fips]
+        return d
+
+
+class RequiredFloatingIP(mb.BlazarBase):
+    """A table for a requested Floating IP.
+
+    Keeps an user requested floating IP address in a floating IP reservation.
+    """
+    __tablename__ = 'required_floatingips'
+
+    id = _id_column()
+    address = sa.Column(sa.String(255), nullable=False)
+    floatingip_reservation_id = sa.Column(
+        sa.String(36), sa.ForeignKey('floatingip_reservations.id'))
+
+
+class FloatingIPAllocation(mb.BlazarBase):
+    """Mapping between FloatingIP, FloatingIPReservation and Reservation."""
+
+    __tablename__ = 'floatingip_allocations'
+
+    id = _id_column()
+    floatingip_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('floatingips.id'))
+    reservation_id = sa.Column(sa.String(36),
+                               sa.ForeignKey('reservations.id'))
+
 
 class FloatingIP(mb.BlazarBase):
     """A table for Floating IP resource."""
