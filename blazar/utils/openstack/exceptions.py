@@ -49,6 +49,12 @@ class InventoryUpdateFailed(exceptions.BlazarException):
                 "%(resource_provider)s")
 
 
+class InventoryConflict(exceptions.BlazarException):
+    code = 409
+    msg_fmt = _("Conflict on updating inventory on resource provider "
+                "%(resource_provider)s")
+
+
 class FloatingIPNetworkNotFound(exceptions.InvalidInput):
     msg_fmt = _("Failed to find network %(network)s")
 

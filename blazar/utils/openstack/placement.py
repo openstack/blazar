@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import retrying
+
 from keystoneauth1 import adapter
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
@@ -294,6 +296,9 @@ class BlazarPlacementClient(object):
             return resp.json()
         raise exceptions.ResourceProviderNotFound(resource_provider=rp_uuid)
 
+    @retrying.retry(stop_max_attempt_number=5,
+                    retry_on_exception=lambda e: isinstance(
+                        e, exceptions.InventoryConflict))
     def update_inventory(self, rp_uuid, rc_name, num, additional):
         """Update the inventory for the resource provider.
 
@@ -334,7 +339,21 @@ class BlazarPlacementClient(object):
         if resp:
             return resp.json()
 
-        # TODO(tetsuro): Try again on 409 conflict errors
+        if resp.status_code == 409:
+            err = resp.json()['errors'][0]
+            if err['code'] == 'placement.concurrent_update':
+                # NOTE(tetsuro): Another thread updated the inventory of the
+                # same rp during the get_inventory() and the put(). We simply
+                # retry it for this case.
+                msg = ("Conflict on updating inventory in placement. "
+                       "Got %(status_code)d: %(err_text)s. ")
+                args = {
+                    'status_code': resp.status_code,
+                    'err_text': resp.text,
+                }
+                LOG.error(msg, args)
+                raise exceptions.InventoryConflict(resource_provider=rp_uuid)
+
         raise exceptions.InventoryUpdateFailed(resource_provider=rp_uuid)
 
     def delete_inventory(self, rp_uuid, rc_name):
