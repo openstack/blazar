@@ -105,6 +105,10 @@ class NovaClientError(exceptions.BlazarException):
     msg_fmt = _("Failed to create Nova resources for the reservation")
 
 
+class ServerDeletionTimeout(exceptions.BlazarException):
+    msg_fmt = _("Timed out waiting for server deletion")
+
+
 # oshost plugin related exceptions
 
 class CantAddExtraCapability(exceptions.BlazarException):

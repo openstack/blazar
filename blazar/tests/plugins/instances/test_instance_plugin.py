@@ -923,7 +923,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
         fake_servers = [mock.MagicMock(method='delete') for i in range(5)]
         mock_nova = mock.MagicMock()
         type(plugin).nova = mock_nova
-        mock_nova.servers.list.return_value = fake_servers
+        # First, we return the fake servers to delete. Second, on the check in
+        # _check_server_deletion(), we mock they are still in nova DB to
+        # exercise retry and at last we mock they are deleted completely.
+        mock_nova.servers.list.side_effect = [fake_servers, fake_servers, []]
 
         mock_cleanup_resources = self.patch(plugin, 'cleanup_resources')
 
@@ -932,9 +935,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_nova.flavor_access.remove_tenant_access.assert_called_once_with(
             'reservation-id1', 'fake-project-id')
 
-        mock_nova.servers.list.assert_called_once_with(
+        mock_nova.servers.list.assert_called_with(
             search_opts={'flavor': 'reservation-id1', 'all_tenants': 1},
             detailed=False)
+        mock_nova.servers.list.call_count = 3
         for fake in fake_servers:
             fake.delete.assert_called_once()
         for i in range(2):

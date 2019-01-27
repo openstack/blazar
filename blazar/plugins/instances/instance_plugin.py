@@ -13,6 +13,7 @@
 # under the License.
 
 import datetime
+import retrying
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -37,6 +38,7 @@ LOG = logging.getLogger(__name__)
 
 RESERVATION_PREFIX = 'reservation'
 FLAVOR_EXTRA_SPEC = "aggregate_instance_extra_specs:" + RESERVATION_PREFIX
+INSTANCE_DELETION_TIMEOUT = 10 * 60 * 1000  # 10 minutes
 
 
 class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
@@ -485,24 +487,46 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         except nova_exceptions.NotFound:
             pass
 
+        hostnames = []
         allocations = db_api.host_allocation_get_all_by_values(
             reservation_id=reservation_id)
         for allocation in allocations:
             host = db_api.host_get(allocation['compute_host_id'])
             db_api.host_allocation_destroy(allocation['id'])
-            try:
-                self.placement_client.delete_reservation_inventory(
-                    host['hypervisor_hostname'], reservation_id)
-            except openstack_ex.ResourceProviderNotFound:
-                pass
+            hostnames.append(host['hypervisor_hostname'])
 
         for server in self.nova.servers.list(search_opts={
                 'flavor': reservation_id,
                 'all_tenants': 1}, detailed=False):
             server.delete()
 
+        # We need to check the deletion is complete before deleting the
+        # reservation inventory. See the bug #1813252 for details.
+        if not self._check_server_deletion(reservation_id):
+            LOG.error('Timed out while deleting servers on reservation %s',
+                      reservation_id)
+            raise mgr_exceptions.ServerDeletionTimeout()
+
         self.cleanup_resources(instance_reservation)
+
+        for host_name in hostnames:
+            try:
+                self.placement_client.delete_reservation_inventory(
+                    host_name, reservation_id)
+            except openstack_ex.ResourceProviderNotFound:
+                pass
         self.placement_client.delete_reservation_class(reservation_id)
+
+    @retrying.retry(stop_max_delay=INSTANCE_DELETION_TIMEOUT,
+                    wait_fixed=5000,  # 5 seconds interval
+                    retry_on_result=lambda x: x is False)
+    def _check_server_deletion(self, reservation_id):
+        servers = self.nova.servers.list(search_opts={
+            'flavor': reservation_id, 'all_tenants': 1}, detailed=False)
+        if servers:
+            LOG.info('Waiting to delete servers: %s ', servers)
+            return False
+        return True
 
     def heal_reservations(self, failed_resources, interval_begin,
                           interval_end):
