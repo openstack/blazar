@@ -35,6 +35,7 @@ class Rest(flask.Blueprint):
 
     def __init__(self, *args, **kwargs):
         super(Rest, self).__init__(*args, **kwargs)
+        self.url_prefix = kwargs.get('url_prefix', None)
         self.routes_with_query_support = []
 
     def get(self, rule, status_code=200, query=False):

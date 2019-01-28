@@ -1,0 +1,23 @@
+{
+    "floatingips": [
+        {
+           "id": "84c4d37e-1f8b-45ce-897b-16ad7f49b0e9",
+           "floating_network_id": "1e17587e-a7ed-4b82-a17b-4beb32523e28",
+           "subnet_id": "a2fa9b7e-8451-4868-85f4-92ee7c77eed6",
+           "floating_ip_address": "172.24.4.101",
+           "reservable": true,
+           "created_at": "2019-01-28 08:01:46",
+           "updated_at": null
+
+         },
+        {
+            "id": "f180cf4c-f886-4dd1-8c36-854d17fbefb5",
+            "floating_network_id": "1e17587e-a7ed-4b82-a17b-4beb32523e28",
+            "subnet_id": "a2fa9b7e-8451-4868-85f4-92ee7c77eed6",
+            "floating_ip_address": "172.24.4.102",
+            "reservable": true,
+            "created_at": "2019-01-28 08:08:22",
+            "updated_at": null,
+        }
+    ]
+}

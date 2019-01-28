@@ -22,7 +22,13 @@ from blazar import utils
 
 LOG = logging.getLogger(__name__)
 
-rest = api_utils.Rest('v1_0', __name__)
+
+def get_rest():
+    """Return Rest app"""
+    return rest
+
+
+rest = api_utils.Rest('v1_0', __name__, url_prefix='/v1')
 _api = utils.LazyProxy(service.API)
 
 
