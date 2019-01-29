@@ -144,13 +144,41 @@ class FloatingIpPluginTest(tests.TestCase):
         }
         patch_fip_get = self.patch(db_api, 'floatingip_get')
         patch_fip_get.return_value = fip_row
+        patch_fip_alloc = self.patch(db_api,
+                                     'fip_allocation_get_all_by_values')
+        patch_fip_alloc.return_value = []
         patch_fip_destroy = self.patch(db_api, 'floatingip_destroy')
 
         fip_plugin = floatingip_plugin.FloatingIpPlugin()
         fip_plugin.delete_floatingip('fip-id')
 
         patch_fip_get.assert_called_once_with('fip-id')
+        patch_fip_alloc.assert_called_once_with(floatingip_id='fip-id')
         patch_fip_destroy.assert_called_once_with('fip-id')
+
+    def test_delete_floatingip_with_reservations(self):
+        fip_row = {
+            'id': 'fip-id',
+            'network_id': 'net-id',
+            'subnet_id': 'subnet-id',
+            'floating_ip_address': '172.24.4.100',
+            'reservable': True
+        }
+        patch_fip_get = self.patch(db_api, 'floatingip_get')
+        patch_fip_get.return_value = fip_row
+        patch_fip_alloc = self.patch(db_api,
+                                     'fip_allocation_get_all_by_values')
+        patch_fip_alloc.return_value = [
+            {
+                'id': 'alloc-id1',
+                'floatingip_id': 'fip-id',
+                'reservation_id': 'reservations-id1'
+            }
+        ]
+        fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        self.assertRaises(mgr_exceptions.CantDeleteFloatingIP,
+                          fip_plugin.delete_floatingip,
+                          'fip-id1')
 
     def test_delete_floatingip_with_no_exist(self):
         patch_fip_get = self.patch(db_api, 'floatingip_get')

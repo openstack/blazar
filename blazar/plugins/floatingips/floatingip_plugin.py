@@ -215,9 +215,12 @@ class FloatingIpPlugin(base.BasePlugin):
         if fip is None:
             raise manager_ex.FloatingIPNotFound(floatingip=fip_id)
 
-        # TODO(masahito): Check no allocation exists for the floating ip here
-        # once this plugin supports reserve_resource method.
-
+        allocations = db_api.fip_allocation_get_all_by_values(
+            floatingip_id=fip_id)
+        if allocations:
+            msg = 'Floating IP id %s is allocated by reservations.' % fip_id
+            LOG.info(msg)
+            raise manager_ex.CantDeleteFloatingIP(floatingip=fip_id, msg=msg)
         try:
             db_api.floatingip_destroy(fip_id)
         except db_ex.BlazarDBException as e:
