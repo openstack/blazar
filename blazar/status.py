@@ -203,8 +203,8 @@ class LeaseStatus(BaseStatus):
                 try:
                     result = func(*args, **kwargs)
                 except Exception as e:
-                    LOG.error('Lease %s went into ERROR status. %s',
-                              lease_id, str(e))
+                    LOG.exception('Lease %s went into ERROR status. %s',
+                                  lease_id, str(e))
                     db_api.lease_update(lease_id,
                                         {'status': cls.ERROR})
                     raise e
