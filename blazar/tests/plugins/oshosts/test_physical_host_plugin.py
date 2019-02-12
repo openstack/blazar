@@ -1423,8 +1423,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                 'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672'
             }
         )
-        add_computehost.assert_called_with(
-            1, 'host3_hostname')
+        add_computehost.assert_called_with(1, ['host3_hostname'])
         host_reservation_update.assert_called_with(
             '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
             {'count_range': '1-3'}
@@ -1685,8 +1684,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         self.fake_phys_plugin.on_start(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
-        add_computehost.assert_called_with(
-            1, 'host1_hostname')
+        add_computehost.assert_called_with(1, ['host1_hostname'])
 
     def test_before_end_with_no_action(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
