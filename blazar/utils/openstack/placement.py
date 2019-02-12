@@ -185,6 +185,9 @@ class BlazarPlacementClient(object):
     def create_reservation_provider(self, host_name):
         """Create a reservation provider as a child of the given host"""
         host_rp = self.get_resource_provider(host_name)
+        if host_rp is None:
+            raise exceptions.ResourceProviderNotFound(
+                resource_provider=host_name)
         host_uuid = host_rp['uuid']
         rp_name = "blazar_" + host_name
 

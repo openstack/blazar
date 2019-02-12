@@ -270,6 +270,16 @@ class TestPlacementClient(tests.TestCase):
             microversion=PLACEMENT_MICROVERSION, raise_exc=False)
 
     @mock.patch('keystoneauth1.session.Session.request')
+    def test_create_reservation_provider_fail(self, kss_req):
+        host_name = "compute-1"
+        get_json_mock = {'resource_providers': []}
+        kss_req.return_value = fake_requests.FakeResponse(
+            200, content=json.dumps(get_json_mock))
+        self.assertRaises(
+            exceptions.ResourceProviderNotFound,
+            self.client.create_reservation_provider, host_name)
+
+    @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_reservation_provider(self, kss_req):
         host_uuid = uuidutils.generate_uuid()
         host_name = "compute-1"
