@@ -307,8 +307,12 @@ COMBINATIONS = {
     },
     LeaseStatus.DELETING: {
         'reservation': ReservationStatus.ALL,
-        'start_lease': EventStatus.ALL,
-        'end_lease': EventStatus.ALL
+        'start_lease': (EventStatus.UNDONE,
+                        EventStatus.DONE,
+                        EventStatus.ERROR),
+        'end_lease': (EventStatus.UNDONE,
+                      EventStatus.DONE,
+                      EventStatus.ERROR)
     },
     LeaseStatus.UPDATING: {
         'reservation': ReservationStatus.ALL,
