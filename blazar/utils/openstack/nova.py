@@ -56,7 +56,9 @@ nova_opts = [
                help='Aggregate metadata key for knowing owner project_id'),
     cfg.BoolOpt('az_aware',
                 default=True,
-                help='A flag to store original availability zone')
+                help='A flag to store original availability zone'),
+    cfg.StrOpt('endpoint_override',
+                help='Nova endpoint URL to use')
 ]
 
 
@@ -200,7 +202,8 @@ class NovaClientWrapper(object):
                                 password=self.password,
                                 user_domain_name=self.user_domain_name,
                                 project_name=self.project_name,
-                                project_domain_name=self.project_domain_name)
+                                project_domain_name=self.project_domain_name,
+                                endpoint_override=CONF.nova.endpoint_override)
         return nova
 
 
