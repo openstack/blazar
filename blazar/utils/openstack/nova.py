@@ -199,7 +199,8 @@ class NovaClientWrapper(object):
                                 password=self.password,
                                 user_domain_name=self.user_domain_name,
                                 project_name=self.project_name,
-                                project_domain_name=self.project_domain_name)
+                                project_domain_name=self.project_domain_name,
+                                endpoint_override=CONF.nova.endpoint_override)
         return nova
 
 
