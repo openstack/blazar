@@ -186,11 +186,14 @@ class ManagerService(service_utils.RPCServer):
             else:
                 db_api.event_update(event['id'],
                                     {'status': status.event.ERROR})
-                LOG.exception('Error occurred while handling event.')
+                LOG.exception('Error occurred while handling %s event for '
+                              'lease %s.', event['event_type'],
+                              event['lease_id'])
         except Exception:
             db_api.event_update(event['id'],
                                 {'status': status.event.ERROR})
-            LOG.exception('Error occurred while handling event.')
+            LOG.exception('Error occurred while handling %s event for '
+                          'lease %s.', event['event_type'], event['lease_id'])
         else:
             lease = db_api.lease_get(event['lease_id'])
             with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
