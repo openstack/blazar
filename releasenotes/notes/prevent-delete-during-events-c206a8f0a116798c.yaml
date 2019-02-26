@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Blazar now prevents leases from being deleted while their start_lease or
+    end_lease events are in progress, to avoid concurrently accessing shared
+    objects. For more details, see `bug 1791741
+    <https://bugs.launchpad.net/blazar/+bug/1791741>`_.
