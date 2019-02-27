@@ -53,7 +53,10 @@ enforcement_opts = [
     cfg.FloatOpt('usage_default_allocated',
                  default=20000.0,
                  help='Default allocation if project is missing from usage '
-                      'DB.')
+                      'DB.'),
+    cfg.StrOpt('project_enforcement_id',
+                 help='Unique identifier to use for projects. '
+                      'Default is name.')
 ]
 
 CONF = cfg.CONF
@@ -61,7 +64,6 @@ CONF.register_opts(enforcement_opts, 'enforcement')
 LOG = logging.getLogger(__name__)
 
 BillingError = common_ex.NotAuthorized
-
 
 def dt_hours(dt):
     return dt.total_seconds() / 3600.0
@@ -169,7 +171,9 @@ class UsageEnforcer(object):
         lease_duration = end_date - start_date
 
         user_name = self._get_user_name(lease_values['user_id'])
-        project_name = self._get_project_name(lease_values['project_id'])
+        
+        #Use charge_code as UID to free _project_name for nicknames
+        project_enforcement_id = self._get_project_enforcement_id(lease_values['project_id'])
 
         if lease is not None:
             if lease['start_date'] < now and now < lease['end_date']:
@@ -198,16 +202,16 @@ class UsageEnforcer(object):
                     'Requested lease to last %d seconds, which is longer than '
                     'maximum allowed of %d seconds for user %s' %
                     (lease_exception, user_name))
-        elif project_name in self.project_max_lease_durations:
+        elif project_enforcement_id in self.project_max_lease_durations:
             project_max_lease_duration = self.project_max_lease_durations.get(
-                project_name)
+                project_enforcement_id)
             if project_max_lease_duration != -1:
                 if (lease_duration) > project_max_lease_duration:
                     raise common_ex.NotAuthorized(
                         'Requested lease to last %d seconds, which is longer '
                         'than maximum allowed of %d seconds for project %s' %
                         (lease_duration, project_max_lease_duration,
-                         project_name))
+                         project_enforcement_id))
         elif CONF.enforcement.default_max_lease_duration != -1:
             if (lease_duration) > CONF.enforcement.default_max_lease_duration:
                 raise common_ex.NotAuthorized(
@@ -234,27 +238,50 @@ class UsageEnforcer(object):
         project = self.keystone_client.projects.get(project_id)
         return project.name
 
-    def get_balance(self, project_name):
+    def _get_project_enforcement_id(self, project_id):                                          
+        """Get project name or charge_code from Keystone"""                                    
+        self.keystone_client = keystone.BlazarKeystoneClient(                                  
+            username=CONF.os_admin_username,                                                    
+            password=CONF.os_admin_password,                                                    
+            tenant_name=CONF.os_admin_project_name)                                            
+        project = self.keystone_client.projects.get(project_id)                                
         try:
-            return float(self.redis.hget('balance', project_name))
+            enforcement_attribute = getattr(project,CONF.enforcement.project_enforcement_id)
+            LOG.info('Trying enforcemet_attribute: '+CONF.enforcement.project_enforcement_id+'. Project: '+enforcement_attribute)
+            if not enforcement_attribute:
+                msg = 'Enforcement attribute project_enforcement_id {} is empty in keystone.'
+                msg.format(CONF.enforcement.project_enforcement_id)    
+                LOG.info(msg)
+                raise ValueError(msg)
+        except AttributeError:
+            LOG.info('/etc/blazar/blazar.conf: [enforcement] The project_enforcement_id parameter is missing or unsupported. Using project_name.')
+            enforcement_attribute = project.name
+        except TypeError:
+            LOG.info('/etc/blazar/blazar.conf: [enforcement] The project_enforcement_id is missing. Using project_name.')
+            enforcement_attribute = project.name
+        return enforcement_attribute
+        
+    def get_balance(self, project_enforcement_id):
+        try:
+            return float(self.redis.hget('balance', project_enforcement_id))
         except redis.exceptions.ConnectionError:
             LOG.exception('Cannot connect to Redis host %s',
                           CONF.enforcement.usage_db_host)
             raise exceptions.RedisConnectionError(
                 host=CONF.enforcement.usage_db_host)
 
-    def get_encumbered(self, project_name):
+    def get_encumbered(self, project_enforcement_id):
         try:
-            return float(self.redis.hget('encumbered', project_name))
+            return float(self.redis.hget('encumbered', project_enforcement_id))
         except redis.exceptions.ConnectionError:
             LOG.exception('Cannot connect to Redis host %s',
                           CONF.enforcement.usage_db_host)
             raise exceptions.RedisConnectionError(
                 host=CONF.enforcement.usage_db_host)
 
-    def increase_encumbered(self, project_name, amount):
+    def increase_encumbered(self, project_enforcement_id, amount):
         try:
-            self.redis.hincrbyfloat('encumbered', project_name, str(amount))
+            self.redis.hincrbyfloat('encumbered', project_enforcement_id, str(amount))
         except redis.exceptions.ConnectionError:
             LOG.exception('Cannot connect to Redis host %s',
                           CONF.enforcement.usage_db_host)
@@ -274,8 +301,11 @@ class UsageEnforcer(object):
             pass
 
         user_name = self._get_user_name(lease_values['user_id'])
-        project_name = self._get_project_name(lease_values['project_id'])
-        self.setup_usage_enforcement(project_name)
+
+        #Use charge_code as UID to free _project_name for nicknames                             
+        project_enforcement_id = self._get_project_enforcement_id(lease_values['project_id'])
+
+        self.setup_usage_enforcement(project_enforcement_id)
 
         if allocated_host_ids is not None:
             total_su_factor = sum(
@@ -288,24 +318,24 @@ class UsageEnforcer(object):
         else:
             total_su_factor = lease_values['max']
         try:
-            balance = self.get_balance(project_name)
-            encumbered = self.get_encumbered(project_name)
+            balance = self.get_balance(project_enforcement_id)
+            encumbered = self.get_encumbered(project_enforcement_id)
             duration = lease_values['end_date'] - lease_values['start_date']
             requested = dt_hours(duration) * total_su_factor
             left = balance - encumbered
             if left - requested < 0:
                 raise BillingError(
                     'Reservation for project {} would spend {:.2f} SUs, '
-                    'only {:.2f} left'.format(project_name, requested, left))
+                    'only {:.2f} left'.format(project_enforcement_id, requested, left))
             if allocated_host_ids or allocated_network_ids:
                 LOG.info('Increasing encumbered for project {} by {:.2f} '
                          '({:.2f} hours @ {:.2f} SU/hr)'.format(
-                             project_name, requested, dt_hours(duration),
+                             project_enforcement_id, requested, dt_hours(duration),
                              total_su_factor))
-                self.increase_encumbered(project_name, requested)
+                self.increase_encumbered(project_enforcement_id, requested)
                 LOG.info('Encumbered usage for project {} now {:.2f}'
-                         .format(project_name,
-                                 self.get_encumbered(project_name)))
+                         .format(project_enforcement_id,
+                                 self.get_encumbered(project_enforcement_id)))
                 if self.get_lease_exception(user_name):
                     self.remove_lease_exception(user_name)
         except redis.exceptions.ConnectionError:
@@ -320,13 +350,16 @@ class UsageEnforcer(object):
         if not CONF.enforcement.usage_enforcement:
             pass
 
-        project_name = self._get_project_name(lease['project_id'])
-        self.setup_usage_enforcement(project_name)
+        user_name = self._get_user_name(lease['user_id'])
+        #Use charge_code as UID to free _project_name for nicknames                             
+        project_enforcement_id = self._get_project_enforcement_id(lease['project_id'])
+
+        self.setup_usage_enforcement(project_enforcement_id)
 
         old_su_factor = self._total_billrate(allocations)
         try:
-            balance = self.get_balance(project_name)
-            encumbered = self.get_encumbered(project_name)
+            balance = self.get_balance(project_enforcement_id)
+            encumbered = self.get_encumbered(project_enforcement_id)
             old_duration = lease['end_date'] - lease['start_date']
             new_duration = (reservation_values['end_date'] -
                             reservation_values['start_date'])
@@ -351,14 +384,17 @@ class UsageEnforcer(object):
             pass
 
         user_name = self._get_user_name(lease['user_id'])
-        project_name = self._get_project_name(lease['project_id'])
-        self.setup_usage_enforcement(project_name)
+
+        #Use charge_code as UID to free _project_name for nicknames                             
+        project_enforcement_id = self._get_project_enforcement_id(lease['project_id'])
+
+        self.setup_usage_enforcement(project_enforcement_id)
 
         old_su_factor = self._total_billrate(old_allocations)
         new_su_factor = self._total_billrate(new_allocations)
 
-        balance = self.get_balance(project_name)
-        encumbered = self.get_encumbered(project_name)
+        balance = self.get_balance(project_enforcement_id)
+        encumbered = self.get_encumbered(project_enforcement_id)
         left = balance - encumbered
 
         old_hours = dt_hours(lease['end_date'] - lease['start_date'])
@@ -373,12 +409,12 @@ class UsageEnforcer(object):
                                    change_encumbered, left))
         LOG.info('Increasing encumbered for project {} by {:.2f} ({:.2f} '
                  'hours @ {:.2f} SU/hr)'.format(
-                     project_name, change_encumbered, change_hours,
+                     project_enforcement_id, change_encumbered, change_hours,
                      new_su_factor))
 
         try:
             self.redis.hincrbyfloat(
-                'encumbered', project_name, str(change_encumbered))
+                'encumbered', project_enforcement_id, str(change_encumbered))
             if self.get_lease_exception(user_name):
                 self.remove_lease_exception(user_name)
         except redis.exceptions.ConnectionError:
@@ -387,7 +423,7 @@ class UsageEnforcer(object):
             raise exceptions.RedisConnectionError(
                 host=CONF.enforcement.usage_db_host)
         LOG.info('Encumbered usage for project {} now {:.2f}'
-                 .format(project_name, self.get_encumbered(project_name)))
+                 .format(project_enforcement_id, self.get_encumbered(charge_code)))
 
     def check_su_factor_identical(self, allocs, allocs_to_remove,
                                   ids_to_add):
@@ -411,8 +447,10 @@ class UsageEnforcer(object):
         if not CONF.enforcement.usage_enforcement:
             pass
 
-        project_name = self._get_project_name(lease['project_id'])
-        self.setup_usage_enforcement(project_name)
+        #Use charge_code as UID to free _project_name for nicknames                             
+        project_enforcement_id = self._get_project_enforcement_id(lease['project_id'])
+
+        self.setup_usage_enforcement(project_enforcement_id)
 
         total_su_factor = self._total_billrate(allocations)
         status = reservation['status']
@@ -427,12 +465,12 @@ class UsageEnforcer(object):
             change_encumbered = dt_hours(change) * total_su_factor
             LOG.info('Decreasing encumbered for project {} by {:.2f} '
                      '({:.2f} hours @ {:.2f} SU/hr)'.format(
-                         project_name, -change_encumbered,
+                         project_enforcement_id, -change_encumbered,
                          dt_hours(change), total_su_factor))
-            self.increase_encumbered(project_name, change_encumbered)
+            self.increase_encumbered(project_enforcement_id, change_encumbered)
             LOG.info('Encumbered usage for project {} now {:.2f}'
-                     .format(project_name,
-                             self.get_encumbered(project_name)))
+                     .format(project_enforcement_id,
+                             self.get_encumbered(project_enforcement_id)))
 
     def _total_billrate(self, allocations):
         if not allocations:
@@ -451,3 +489,5 @@ class UsageEnforcer(object):
         else:
             raise Exception("Allocation list not in an expected format: %s",
                             allocations)
+
+
