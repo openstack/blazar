@@ -19,6 +19,7 @@ import ddt
 import eventlet
 import mock
 from oslo_config import cfg
+import oslo_messaging as messaging
 from six.moves import reload_module
 from stevedore import enabled
 import testtools
@@ -1561,3 +1562,15 @@ class ServiceTestCase(tests.TestCase):
         self.manager.plugins = {'physical:host': None}
         self.assertRaises(AttributeError, getattr, self.manager,
                           'physical:host:method_not_present')
+
+    @mock.patch.object(messaging, 'get_rpc_server')
+    def test_rpc_server(self, mock_get_rpc_server):
+        server = service.ManagerService()
+        server.start()
+        for m in server.monitors:
+            m.start_monitoring.assert_called_once()
+        server.stop()
+        server._server.stop.assert_called_once()
+        server.wait()
+        server._server.wait.assert_called_once()
+        self.assertEqual(1, mock_get_rpc_server.call_count)

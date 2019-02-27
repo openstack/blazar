@@ -58,6 +58,10 @@ class RPCServer(service.Service):
         super(RPCServer, self).start()
         self.tg.add_thread(self._server.start)
 
+    def wait(self):
+        super(RPCServer, self).wait()
+        self._server.wait()
+
     def stop(self):
         super(RPCServer, self).stop()
         self._server.stop()
