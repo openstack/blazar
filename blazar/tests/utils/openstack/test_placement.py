@@ -41,18 +41,29 @@ class TestPlacementClient(tests.TestCase):
         self.assertEqual("http://foofoo:8080/identity/v3",
                          self.client._client.session.auth.auth_url)
 
+    def _add_default_kwargs(self, kwargs):
+        kwargs['endpoint_filter'] = {'service_type': 'placement',
+                                     'interface': 'public'}
+        kwargs['headers'] = {'accept': 'application/json'}
+        kwargs['microversion'] = PLACEMENT_MICROVERSION
+        kwargs['raise_exc'] = False
+        kwargs['rate_semaphore'] = mock.ANY
+
+    def _assert_keystone_called_once(self, kss_req, url, method, **kwargs):
+        self._add_default_kwargs(kwargs)
+        kss_req.assert_called_once_with(url, method, **kwargs)
+
+    def _assert_keystone_called_any(self, kss_req, url, method, **kwargs):
+        self._add_default_kwargs(kwargs)
+        kss_req.assert_any_call(url, method, **kwargs)
+
     @mock.patch('keystoneauth1.session.Session.request')
     def test_get(self, kss_req):
         kss_req.return_value = fake_requests.FakeResponse(200)
         url = '/resource_providers'
         resp = self.client.get(url)
         self.assertEqual(200, resp.status_code)
-        kss_req.assert_called_once_with(
-            url, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, url, 'GET')
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_post(self, kss_req):
@@ -61,12 +72,7 @@ class TestPlacementClient(tests.TestCase):
         data = {'name': 'unicorn'}
         resp = self.client.post(url, data)
         self.assertEqual(200, resp.status_code)
-        kss_req.assert_called_once_with(
-            url, 'POST', json=data,
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, url, 'POST', json=data)
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_put(self, kss_req):
@@ -75,12 +81,7 @@ class TestPlacementClient(tests.TestCase):
         data = {'name': 'unicorn'}
         resp = self.client.put(url, data)
         self.assertEqual(200, resp.status_code)
-        kss_req.assert_called_once_with(
-            url, 'PUT', json=data,
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, url, 'PUT', json=data)
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete(self, kss_req):
@@ -88,12 +89,7 @@ class TestPlacementClient(tests.TestCase):
         url = '/resource_providers'
         resp = self.client.delete(url)
         self.assertEqual(200, resp.status_code)
-        kss_req.assert_called_once_with(
-            url, 'DELETE',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, url, 'DELETE')
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_get_resource_provider(self, kss_req):
@@ -118,12 +114,7 @@ class TestPlacementClient(tests.TestCase):
         result = self.client.get_resource_provider(rp_name)
 
         expected_url = '/resource_providers?name=blazar'
-        kss_req.assert_called_once_with(
-            expected_url, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'GET')
         expected = {'uuid': rp_uuid,
                     'name': rp_name,
                     'generation': 0,
@@ -144,12 +135,7 @@ class TestPlacementClient(tests.TestCase):
         result = self.client.get_resource_provider(rp_name)
 
         expected_url = '/resource_providers?name=blazar'
-        kss_req.assert_called_once_with(
-            expected_url, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'GET')
         self.assertEqual(None, result)
 
     @mock.patch('keystoneauth1.session.Session.request')
@@ -179,15 +165,11 @@ class TestPlacementClient(tests.TestCase):
             rp_name, rp_uuid=rp_uuid, parent_uuid=parent_uuid)
 
         expected_url = '/resource_providers'
-        kss_req.assert_called_once_with(
-            expected_url, 'POST',
-            json={'uuid': rp_uuid,
-                  'name': rp_name,
-                  'parent_provider_uuid': parent_uuid},
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        expected_data = {'uuid': rp_uuid,
+                         'name': rp_name,
+                         'parent_provider_uuid': parent_uuid}
+        self._assert_keystone_called_once(kss_req, expected_url, 'POST',
+                                          json=expected_data)
         self.assertEqual(mock_json_data, result)
 
     @mock.patch('keystoneauth1.session.Session.request')
@@ -207,12 +189,7 @@ class TestPlacementClient(tests.TestCase):
         self.client.delete_resource_provider(rp_uuid)
 
         expected_url = '/resource_providers/' + str(rp_uuid)
-        kss_req.assert_called_once_with(
-            expected_url, 'DELETE',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'DELETE')
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_resource_provider_fail(self, kss_req):
@@ -252,22 +229,13 @@ class TestPlacementClient(tests.TestCase):
         self.client.create_reservation_provider(host_name)
 
         expected_url_get = "/resource_providers?name=%s" % host_name
-        kss_req.assert_any_call(
-            expected_url_get, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_any(kss_req, expected_url_get, 'GET')
 
         expected_url_post = "/resource_providers"
-        kss_req.assert_any_call(
-            expected_url_post, 'POST',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            json={'name': 'blazar_compute-1',
-                  'parent_provider_uuid': host_uuid},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        expected_data = {'name': 'blazar_compute-1',
+                         'parent_provider_uuid': host_uuid}
+        self._assert_keystone_called_any(kss_req, expected_url_post, 'POST',
+                                         json=expected_data)
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_create_reservation_provider_fail(self, kss_req):
@@ -303,20 +271,10 @@ class TestPlacementClient(tests.TestCase):
         self.client.delete_reservation_provider(host_name)
 
         expected_url_get = "/resource_providers?name=%s" % rp_name
-        kss_req.assert_any_call(
-            expected_url_get, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_any(kss_req, expected_url_get, 'GET')
 
         expected_url_post = "/resource_providers/%s" % rp_uuid
-        kss_req.assert_any_call(
-            expected_url_post, 'DELETE',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_any(kss_req, expected_url_post, 'DELETE')
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_reservation_provider_no_rp(self, kss_req):
@@ -333,12 +291,7 @@ class TestPlacementClient(tests.TestCase):
         self.client.delete_reservation_provider(host_name)
 
         expected_url_get = "/resource_providers?name=%s" % rp_name
-        kss_req.assert_any_call(
-            expected_url_get, 'GET',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_any(kss_req, expected_url_get, 'GET')
 
         # Ensure that mock_call2 for delete is not called
         self.assertEqual(kss_req.call_count, 1)
@@ -351,13 +304,9 @@ class TestPlacementClient(tests.TestCase):
         self.client.create_reservation_class(rc_name)
 
         expected_url = '/resource_classes'
-        kss_req.assert_called_once_with(
-            expected_url, 'POST',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            json={'name': 'CUSTOM_RESERVATION_ABC_DEF'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        expected_data = {'name': 'CUSTOM_RESERVATION_ABC_DEF'}
+        self._assert_keystone_called_once(kss_req, expected_url, 'POST',
+                                          json=expected_data)
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_create_reservation_class_fail(self, kss_req):
@@ -376,12 +325,7 @@ class TestPlacementClient(tests.TestCase):
         self.client.delete_reservation_class(rc_name)
 
         expected_url = '/resource_classes/CUSTOM_RESERVATION_ABC_DEF'
-        kss_req.assert_called_once_with(
-            expected_url, 'DELETE',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'DELETE')
 
     @mock.patch('keystoneauth1.session.Session.request')
     def test_delete_reservation_class_fail(self, kss_req):
@@ -477,12 +421,8 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": curr_gen
         }
         expected_url = '/resource_providers/%s/inventories' % rp_uuid
-        kss_req.assert_called_once_with(
-            expected_url, 'PUT', json=expected_data,
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'PUT',
+                                          json=expected_data)
         self.assertEqual(mock_put_json, result)
 
     @mock.patch('blazar.utils.openstack.placement.'
@@ -555,12 +495,8 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": curr_gen
         }
         expected_url = '/resource_providers/%s/inventories' % rp_uuid
-        kss_req.assert_called_once_with(
-            expected_url, 'PUT', json=expected_data,
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'PUT',
+                                          json=expected_data)
         self.assertEqual(mock_put_json, result)
 
     @mock.patch('blazar.utils.openstack.placement.'
@@ -586,12 +522,7 @@ class TestPlacementClient(tests.TestCase):
         expected_url = ('/resource_providers/%s/inventories'
                         '/CUSTOM_RESERVATION_CURR1' % rp_uuid)
 
-        kss_req.assert_called_once_with(
-            expected_url, 'DELETE',
-            endpoint_filter={'service_type': 'placement',
-                             'interface': 'public'},
-            headers={'accept': 'application/json'},
-            microversion=PLACEMENT_MICROVERSION, raise_exc=False)
+        self._assert_keystone_called_once(kss_req, expected_url, 'DELETE')
 
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get_resource_provider')
