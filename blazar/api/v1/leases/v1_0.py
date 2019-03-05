@@ -35,34 +35,34 @@ _api = utils.LazyProxy(service.API)
 # Leases operations
 
 @rest.get('/leases', query=True)
-def leases_list(query):
+def leases_list(req, query):
     """List all existing leases."""
     return api_utils.render(leases=_api.get_leases(query))
 
 
 @rest.post('/leases')
-def leases_create(data):
+def leases_create(req, data):
     """Create new lease."""
     return api_utils.render(lease=_api.create_lease(data))
 
 
 @rest.get('/leases/<lease_id>')
 @validation.check_exists(_api.get_lease, lease_id='lease_id')
-def leases_get(lease_id):
+def leases_get(req, lease_id):
     """Get lease by its ID."""
     return api_utils.render(lease=_api.get_lease(lease_id))
 
 
 @rest.put('/leases/<lease_id>')
 @validation.check_exists(_api.get_lease, lease_id='lease_id')
-def leases_update(lease_id, data):
+def leases_update(req, lease_id, data):
     """Update lease."""
     return api_utils.render(lease=_api.update_lease(lease_id, data))
 
 
 @rest.delete('/leases/<lease_id>')
 @validation.check_exists(_api.get_lease, lease_id='lease_id')
-def leases_delete(lease_id):
+def leases_delete(req, lease_id):
     """Delete specified lease."""
     _api.delete_lease(lease_id)
     return api_utils.render()

@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Blazar now supports API microversions. All API changes should be made while
+    keeping backward compatibility. The API version is specified in the
+    ``OpenStack-API-Version`` HTTP header. To view the mininum and maximum
+    supported versions by API, access the ``/`` and ``/versions`` resources.
+    The Blazar API will include supported versions in the response data.

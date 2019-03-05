@@ -21,7 +21,7 @@ class TestRoot(api.APITest):
         super(TestRoot, self).setUp()
         self.versions = {
             "versions":
-            [{"status": "CURRENT",
+            [{"status": "DEPRECATED",
               "id": "v2.0",
               "links": [{"href": "http://localhost/v2", "rel": "self"}]}]}
 

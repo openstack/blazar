@@ -25,6 +25,7 @@ from oslo_middleware import debug
 from stevedore import enabled
 from werkzeug import exceptions as werkzeug_exceptions
 
+from blazar.api.v1 import api_version_request
 from blazar.api.v1 import request_id
 from blazar.api.v1 import request_log
 from blazar.api.v1 import utils as api_utils
@@ -55,7 +56,9 @@ def version_list():
             {"id": "v1.0",
              "status": "CURRENT",
              "links": [{"href": "{0}v1".format(flask.request.host_url),
-                        "rel": "self"}]
+                        "rel": "self"}],
+             "min_version": api_version_request.MIN_API_VERSION,
+             "max_version": api_version_request.MAX_API_VERSION,
              },
         ],
     }, status="300 Multiple Choices")

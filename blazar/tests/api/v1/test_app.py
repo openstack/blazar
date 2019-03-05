@@ -62,6 +62,7 @@ class AppTestCase(tests.TestCase):
                 "versions": [
                     {"id": "v1.0",
                      "status": "CURRENT",
+                     'min_version': '1.0', 'max_version': '1.0',
                      "links": [{"href": "{0}v1".format(flask.request.host_url),
                                 "rel": "self"}]
                      },

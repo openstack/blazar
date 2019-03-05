@@ -104,3 +104,8 @@ class UnsupportedAPIVersion(BlazarException):
 
 class InvalidStatus(BlazarException):
     msg_fmt = _("Invalid lease status.")
+
+
+class InvalidAPIVersionString(BlazarException):
+    message = _("API Version String %(version)s is of invalid format. Must "
+                "be of format MajorNum.MinorNum.")

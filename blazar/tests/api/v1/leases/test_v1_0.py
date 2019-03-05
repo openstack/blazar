@@ -21,6 +21,7 @@ from testtools import matchers
 from oslo_middleware import request_id as id
 
 from blazar.api import context as api_context
+from blazar.api.v1 import api_version_request
 from blazar.api.v1.leases import service as service_api
 from blazar.api.v1.leases import v1_0 as leases_api_v1_0
 from blazar.api.v1 import request_id
@@ -79,7 +80,8 @@ class LeaseAPITestCase(tests.TestCase):
     def setUp(self):
         super(LeaseAPITestCase, self).setUp()
         self.app = make_app()
-        self.headers = {'Accept': 'application/json'}
+        self.headers = {'Accept': 'application/json',
+                        'OpenStack-API-Version': 'reservation 1.0'}
         self.lease_uuid = six.text_type(uuidutils.generate_uuid())
         self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
         self.mock_ctx.return_value = context.BlazarContext(
@@ -91,18 +93,35 @@ class LeaseAPITestCase(tests.TestCase):
         self.delete_lease = self.patch(service_api.API, 'delete_lease')
 
     def _assert_response(self, actual_resp, expected_status_code,
-                         expected_resp_body, key='lease'):
+                         expected_resp_body, key='lease',
+                         expected_api_version='reservation 1.0'):
         res_id = actual_resp.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
-        self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID, actual_resp.headers)
+        api_version = actual_resp.headers.get(
+            api_version_request.API_VERSION_REQUEST_HEADER)
+        self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID,
+                      actual_resp.headers)
+        self.assertIn(api_version_request.API_VERSION_REQUEST_HEADER,
+                      actual_resp.headers)
+        self.assertIn(api_version_request.VARY_HEADER, actual_resp.headers)
         self.assertThat(res_id, matchers.StartsWith('req-'))
         self.assertEqual(expected_status_code, actual_resp.status_code)
         self.assertEqual(expected_resp_body, actual_resp.get_json()[key])
+        self.assertEqual(expected_api_version, api_version)
+        self.assertEqual('OpenStack-API-Version', actual_resp.headers.get(
+            api_version_request.VARY_HEADER))
 
     def test_list(self):
         with self.app.test_client() as c:
             self.get_leases.return_value = []
             res = c.get('/v1/leases', headers=self.headers)
             self._assert_response(res, 200, [], key='leases')
+
+    def test_list_with_non_acceptable_api_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation 1.2'}
+        with self.app.test_client() as c:
+            res = c.get('/v1/leases', headers=headers)
+            self.assertEqual(406, res.status_code)
 
     def test_create(self):
         with self.app.test_client() as c:
@@ -111,6 +130,14 @@ class LeaseAPITestCase(tests.TestCase):
                 id=self.lease_uuid), headers=self.headers)
             self._assert_response(res, 201, fake_lease(id=self.lease_uuid))
 
+    def test_create_with_bad_api_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation 1.a'}
+        with self.app.test_client() as c:
+            res = c.post('/v1/leases', json=fake_lease_request_body(
+                id=self.lease_uuid), headers=headers)
+            self.assertEqual(400, res.status_code)
+
     def test_get(self):
         with self.app.test_client() as c:
             self.get_lease.return_value = fake_lease(id=self.lease_uuid)
@@ -118,7 +145,18 @@ class LeaseAPITestCase(tests.TestCase):
                         headers=self.headers)
             self._assert_response(res, 200, fake_lease(id=self.lease_uuid))
 
+    def test_get_with_latest_api_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation latest'}
+        with self.app.test_client() as c:
+            self.get_lease.return_value = fake_lease(id=self.lease_uuid)
+            res = c.get('/v1/leases/{0}'.format(self.lease_uuid),
+                        headers=headers)
+            self._assert_response(res, 200, fake_lease(id=self.lease_uuid),
+                                  expected_api_version='reservation 1.0')
+
     def test_update(self):
+        headers = {'Accept': 'application/json'}
         with self.app.test_client() as c:
             self.fake_lease = fake_lease(id=self.lease_uuid, name='updated')
             self.fake_lease_body = fake_lease_request_body(
@@ -129,7 +167,23 @@ class LeaseAPITestCase(tests.TestCase):
             self.update_lease.return_value = self.fake_lease
 
             res = c.put('/v1/leases/{0}'.format(self.lease_uuid),
-                        json=self.fake_lease_body, headers=self.headers)
+                        json=self.fake_lease_body, headers=headers)
+            self._assert_response(res, 200, self.fake_lease)
+
+    def test_update_with_no_service_type_in_header(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': '1.0'}
+        with self.app.test_client() as c:
+            self.fake_lease = fake_lease(id=self.lease_uuid, name='updated')
+            self.fake_lease_body = fake_lease_request_body(
+                exclude=set(['reservations', 'events']),
+                id=self.lease_uuid,
+                name='updated'
+            )
+            self.update_lease.return_value = self.fake_lease
+
+            res = c.put('/v1/leases/{0}'.format(self.lease_uuid),
+                        json=self.fake_lease_body, headers=headers)
             self._assert_response(res, 200, self.fake_lease)
 
     def test_delete(self):

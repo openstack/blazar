@@ -40,7 +40,7 @@ CONF.register_opts(api_opts, 'api')
 class V2Controller(rest.RestController):
     """Version 2 API controller root."""
 
-    versions = [{"id": "v2.0", "status": "CURRENT"}]
+    versions = [{"id": "v2.0", "status": "DEPRECATED"}]
     _routes = {}
 
     def _log_missing_plugins(self, names):

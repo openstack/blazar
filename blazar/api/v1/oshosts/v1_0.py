@@ -31,27 +31,27 @@ _api = utils.LazyProxy(service.API)
 # Computehosts operations
 
 @rest.get('', query=True)
-def computehosts_list(query=None):
+def computehosts_list(req, query=None):
     """List all existing computehosts."""
     return api_utils.render(hosts=_api.get_computehosts(query))
 
 
 @rest.post('')
-def computehosts_create(data):
+def computehosts_create(req, data):
     """Create new computehost."""
     return api_utils.render(host=_api.create_computehost(data))
 
 
 @rest.get('/<host_id>')
 @validation.check_exists(_api.get_computehost, host_id='host_id')
-def computehosts_get(host_id):
+def computehosts_get(req, host_id):
     """Get computehost by its ID."""
     return api_utils.render(host=_api.get_computehost(host_id))
 
 
 @rest.put('/<host_id>')
 @validation.check_exists(_api.get_computehost, host_id='host_id')
-def computehosts_update(host_id, data):
+def computehosts_update(req, host_id, data):
     """Update computehost. Only name changing may be proceeded."""
     if len(data) == 0:
         return api_utils.internal_error(status_code=400,
@@ -62,20 +62,20 @@ def computehosts_update(host_id, data):
 
 @rest.delete('/<host_id>')
 @validation.check_exists(_api.get_computehost, host_id='host_id')
-def computehosts_delete(host_id):
+def computehosts_delete(req, host_id):
     """Delete specified computehost."""
     _api.delete_computehost(host_id)
     return api_utils.render()
 
 
 @rest.get('/allocations', query=True)
-def allocations_list(query):
+def allocations_list(req, query):
     """List all allocations on all computehosts."""
     return api_utils.render(allocations=_api.list_allocations(query))
 
 
 @rest.get('/<host_id>/allocation', query=True)
 @validation.check_exists(_api.get_computehost, host_id='host_id')
-def allocations_get(host_id, query):
+def allocations_get(req, host_id, query):
     """List all allocations on a specific host."""
     return api_utils.render(allocation=_api.get_allocations(host_id, query))

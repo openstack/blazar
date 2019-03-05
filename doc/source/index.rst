@@ -61,6 +61,11 @@ For Contributors
 
    contributor/index
 
+.. toctree::
+   :maxdepth: 2
+
+   reference/index
+
 Specs
 -----
 

@@ -16,12 +16,14 @@
 import traceback
 
 import flask
+import microversion_parse
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
 from werkzeug import datastructures
 
 from blazar.api import context
+from blazar.api.v1 import api_version_request as api_version
 from blazar.db import exceptions as db_exceptions
 from blazar import exceptions as ex
 from blazar.i18n import _
@@ -36,6 +38,8 @@ class Rest(flask.Blueprint):
 
     def __init__(self, *args, **kwargs):
         super(Rest, self).__init__(*args, **kwargs)
+        self.before_request(set_api_version_request)
+        self.after_request(add_vary_header)
         self.url_prefix = kwargs.get('url_prefix', None)
         self.routes_with_query_support = []
 
@@ -83,7 +87,7 @@ class Rest(flask.Blueprint):
 
                 with context.ctx_from_headers(flask.request.headers):
                     try:
-                        return func(**kwargs)
+                        return func(flask.request, **kwargs)
                     except ex.BlazarException as e:
                         return bad_request(e)
                     except messaging.RemoteError as e:
@@ -127,6 +131,74 @@ class Rest(flask.Blueprint):
 
 
 RT_JSON = datastructures.MIMEAccept([("application/json", 1)])
+
+
+def set_api_version_request():
+    requested_version = get_requested_microversion()
+
+    try:
+        api_version_request = api_version.APIVersionRequest(requested_version)
+    except ex.InvalidAPIVersionString:
+        flask.request.api_version_request = None
+        bad_request_microversion(requested_version)
+
+    if not api_version_request.matches(
+            api_version.min_api_version(),
+            api_version.max_api_version()):
+        flask.request.api_version_request = None
+        not_acceptable_microversion(requested_version)
+
+    flask.request.api_version_request = api_version_request
+
+
+def get_requested_microversion():
+    requested_version = microversion_parse.get_version(
+        flask.request.headers,
+        api_version.RESERVATION_SERVICE_TYPE
+    )
+    if requested_version is None:
+        requested_version = api_version.MIN_API_VERSION
+    elif requested_version == api_version.LATEST:
+        requested_version = api_version.MAX_API_VERSION
+
+    return requested_version
+
+
+def add_vary_header(response):
+    if flask.request.api_version_request:
+        response.headers[
+            api_version.VARY_HEADER] = api_version.API_VERSION_REQUEST_HEADER
+        response.headers[
+            api_version.API_VERSION_REQUEST_HEADER] = "{} {}".format(
+            api_version.RESERVATION_SERVICE_TYPE,
+            get_requested_microversion())
+    return response
+
+
+def not_acceptable_microversion(requested_version):
+    message = ("Version {} is not supported by the API. "
+               "Minimum is {} and maximum is {}.".format(
+                   requested_version,
+                   api_version.MIN_API_VERSION,
+                   api_version.MAX_API_VERSION))
+
+    resp = render_error_message(
+        api_version.NOT_ACCEPTABLE_STATUS_CODE,
+        message,
+        api_version.NOT_ACCEPTABLE_STATUS_NAME,
+    )
+    abort_and_log(resp.status_code, message)
+
+
+def bad_request_microversion(requested_version):
+    message = ("API Version String {} is of invalid format. Must be of format"
+               " MajorNum.MinorNum.").format(requested_version)
+    resp = render_error_message(
+        api_version.BAD_REQUEST_STATUS_CODE,
+        message,
+        api_version.BAD_REQUEST_STATUS_NAME
+    )
+    abort_and_log(resp.status_code, message)
 
 
 def _init_resp_type(file_upload):

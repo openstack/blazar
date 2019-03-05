@@ -22,6 +22,7 @@ from testtools import matchers
 from oslo_middleware import request_id as id
 
 from blazar.api import context as api_context
+from blazar.api.v1 import api_version_request
 from blazar.api.v1.oshosts import service as service_api
 from blazar.api.v1.oshosts import v1_0 as hosts_api_v1_0
 from blazar.api.v1 import request_id
@@ -61,7 +62,7 @@ def fake_computehost(**kw):
                             " \"topology\": {\"cores\": 1}}",
                             ),
         u'extra_capas': kw.get('extra_capas',
-                               {u'vgpus': 2, u'fruits': u'bananas'}),
+                               {u'vgpus': 2, u'fruits': u'bananas'})
     }
 
 
@@ -82,7 +83,8 @@ class OsHostAPITestCase(tests.TestCase):
     def setUp(self):
         super(OsHostAPITestCase, self).setUp()
         self.app = make_app()
-        self.headers = {'Accept': 'application/json'}
+        self.headers = {'Accept': 'application/json',
+                        'OpenStack-API-Version': 'reservation 1.0'}
         self.host_id = six.text_type('1')
         self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
         self.mock_ctx.return_value = context.BlazarContext(
@@ -101,19 +103,35 @@ class OsHostAPITestCase(tests.TestCase):
         self.get_allocations = self.patch(service_api.API, 'get_allocations')
 
     def _assert_response(self, actual_resp, expected_status_code,
-                         expected_resp_body, key='host'):
+                         expected_resp_body, key='host',
+                         expected_api_version='reservation 1.0'):
         res_id = actual_resp.headers.get(id.HTTP_RESP_HEADER_REQUEST_ID)
+        api_version = actual_resp.headers.get(
+            api_version_request.API_VERSION_REQUEST_HEADER)
         self.assertIn(id.HTTP_RESP_HEADER_REQUEST_ID,
                       actual_resp.headers)
+        self.assertIn(api_version_request.API_VERSION_REQUEST_HEADER,
+                      actual_resp.headers)
+        self.assertIn(api_version_request.VARY_HEADER, actual_resp.headers)
         self.assertThat(res_id, matchers.StartsWith('req-'))
         self.assertEqual(expected_status_code, actual_resp.status_code)
         self.assertEqual(expected_resp_body, actual_resp.get_json()[key])
+        self.assertEqual(expected_api_version, api_version)
+        self.assertEqual('OpenStack-API-Version', actual_resp.headers.get(
+            api_version_request.VARY_HEADER))
 
     def test_list(self):
         with self.app.test_client() as c:
             self.get_computehosts.return_value = []
             res = c.get('/v1', headers=self.headers)
             self._assert_response(res, 200, [], key='hosts')
+
+    def test_list_with_non_acceptable_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation 1.2'}
+        with self.app.test_client() as c:
+            res = c.get('/v1', headers=headers)
+            self.assertEqual(406, res.status_code)
 
     def test_create(self):
         with self.app.test_client() as c:
@@ -124,6 +142,14 @@ class OsHostAPITestCase(tests.TestCase):
             self._assert_response(res, 201, fake_computehost(
                 id=self.host_id))
 
+    def test_create_with_bad_api_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation 1.a'}
+        with self.app.test_client() as c:
+            res = c.post('/v1', json=fake_computehost_request_body(
+                id=self.host_id), headers=headers)
+            self.assertEqual(400, res.status_code)
+
     def test_get(self):
         with self.app.test_client() as c:
             self.get_computehost.return_value = fake_computehost(
@@ -131,7 +157,18 @@ class OsHostAPITestCase(tests.TestCase):
             res = c.get('/v1/{0}'.format(self.host_id), headers=self.headers)
             self._assert_response(res, 200, fake_computehost(id=self.host_id))
 
+    def test_get_with_latest_api_version(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': 'reservation latest'}
+        with self.app.test_client() as c:
+            self.get_computehost.return_value = fake_computehost(
+                id=self.host_id)
+            res = c.get('/v1/{0}'.format(self.host_id), headers=headers)
+            self._assert_response(res, 200, fake_computehost(id=self.host_id),
+                                  expected_api_version='reservation 1.0')
+
     def test_update(self):
+        headers = {'Accept': 'application/json'}
         with self.app.test_client() as c:
             self.fake_computehost = fake_computehost(id=self.host_id,
                                                      name='updated')
@@ -142,7 +179,23 @@ class OsHostAPITestCase(tests.TestCase):
             self.update_computehost.return_value = self.fake_computehost
 
             res = c.put('/v1/{0}'.format(self.host_id),
-                        json=self.fake_computehost_body, headers=self.headers)
+                        json=self.fake_computehost_body, headers=headers)
+            self._assert_response(res, 200, self.fake_computehost, 'host')
+
+    def test_update_with_no_service_type_in_header(self):
+        headers = {'Accept': 'application/json',
+                   'OpenStack-API-Version': '1.0'}
+        with self.app.test_client() as c:
+            self.fake_computehost = fake_computehost(id=self.host_id,
+                                                     name='updated')
+            self.fake_computehost_body = fake_computehost_request_body(
+                id=self.host_id,
+                name='updated'
+            )
+            self.update_computehost.return_value = self.fake_computehost
+
+            res = c.put('/v1/{0}'.format(self.host_id),
+                        json=self.fake_computehost_body, headers=headers)
             self._assert_response(res, 200, self.fake_computehost, 'host')
 
     def test_delete(self):
