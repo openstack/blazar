@@ -33,7 +33,6 @@ class FakeResponse(requests.Response):
         super(FakeResponse, self).__init__()
         self.status_code = status_code
         if content:
-            self._content = content.encode('utf-8')
-            self.encoding = 'utf-8'
+            self._content = content
         if headers:
             self.headers = headers

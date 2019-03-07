@@ -109,7 +109,7 @@ class TestPlacementClient(tests.TestCase):
         }
 
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_json_data))
+            200, content=jsonutils.dump_as_bytes(mock_json_data))
 
         result = self.client.get_resource_provider(rp_name)
 
@@ -130,7 +130,7 @@ class TestPlacementClient(tests.TestCase):
         }
 
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_json_data))
+            200, content=jsonutils.dump_as_bytes(mock_json_data))
 
         result = self.client.get_resource_provider(rp_name)
 
@@ -159,7 +159,7 @@ class TestPlacementClient(tests.TestCase):
                           'parent_provider_uuid': parent_uuid}
 
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_json_data))
+            200, content=jsonutils.dump_as_bytes(mock_json_data))
 
         result = self.client.create_resource_provider(
             rp_name, rp_uuid=rp_uuid, parent_uuid=parent_uuid)
@@ -221,9 +221,9 @@ class TestPlacementClient(tests.TestCase):
                           'generation': 0,
                           'parent_provider_uuid': host_uuid}
         mock_call1 = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(get_json_mock))
+            200, content=jsonutils.dump_as_bytes(get_json_mock))
         mock_call2 = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(post_json_mock))
+            200, content=jsonutils.dump_as_bytes(post_json_mock))
         kss_req.side_effect = [mock_call1, mock_call2]
 
         self.client.create_reservation_provider(host_name)
@@ -242,7 +242,7 @@ class TestPlacementClient(tests.TestCase):
         host_name = "compute-1"
         get_json_mock = {'resource_providers': []}
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(get_json_mock))
+            200, content=jsonutils.dump_as_bytes(get_json_mock))
         self.assertRaises(
             exceptions.ResourceProviderNotFound,
             self.client.create_reservation_provider, host_name)
@@ -264,7 +264,7 @@ class TestPlacementClient(tests.TestCase):
             ]
         }
         mock_call1 = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(get_json_mock))
+            200, content=jsonutils.dump_as_bytes(get_json_mock))
         mock_call2 = fake_requests.FakeResponse(200)
         kss_req.side_effect = [mock_call1, mock_call2]
 
@@ -284,7 +284,7 @@ class TestPlacementClient(tests.TestCase):
             'resource_providers': []
         }
         mock_call1 = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(get_json_mock))
+            200, content=jsonutils.dump_as_bytes(get_json_mock))
         mock_call2 = fake_requests.FakeResponse(200)
         kss_req.side_effect = [mock_call1, mock_call2]
 
@@ -369,7 +369,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": curr_gen
         }
         client_get.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_get_inv_json))
+            200, content=jsonutils.dump_as_bytes(mock_get_inv_json))
 
         # Build the mock of "updated" inventory for update_inventory()
         update_gen = 12
@@ -395,7 +395,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": update_gen
         }
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_put_json))
+            200, content=jsonutils.dump_as_bytes(mock_put_json))
 
         result = self.client.update_reservation_inventory(host_name, 'add', 3)
 
@@ -459,7 +459,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": curr_gen
         }
         client_get.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_get_inv_json))
+            200, content=jsonutils.dump_as_bytes(mock_get_inv_json))
 
         # Build the mock of "updated" inventory for update_inventory()
         update_gen = 12
@@ -477,7 +477,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": update_gen
         }
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_put_json))
+            200, content=jsonutils.dump_as_bytes(mock_put_json))
 
         result = self.client.update_reservation_inventory(
             host_name, 'curr', 2, additional=True)
@@ -531,7 +531,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": curr_gen
         }
         client_get.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_get_inv_json))
+            200, content=jsonutils.dump_as_bytes(mock_get_inv_json))
 
         # Build the mock of "updated" inventory for update_inventory()
         update_gen = 1
@@ -549,7 +549,7 @@ class TestPlacementClient(tests.TestCase):
             "resource_provider_generation": update_gen
         }
         kss_req.return_value = fake_requests.FakeResponse(
-            200, content=jsonutils.dumps(mock_put_json))
+            200, content=jsonutils.dump_as_bytes(mock_put_json))
 
         result = self.client.update_reservation_inventory(host_name, 'add', 3)
 
