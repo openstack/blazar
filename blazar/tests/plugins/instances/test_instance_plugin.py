@@ -1019,28 +1019,33 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_alloc_get.return_value = [
             {'id': 'id10', 'compute_host_id': 'host-id10'},
             {'id': 'id11', 'compute_host_id': 'host-id11'},
-            {'id': 'id12', 'compute_host_id': 'host-id12'}]
+            {'id': 'id12', 'compute_host_id': 'host-id11'},
+            {'id': 'id13', 'compute_host_id': 'host-id11'},
+            {'id': 'id14', 'compute_host_id': 'host-id12'}]
 
         mock_alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
         mock_alloc_create = self.patch(db_api, 'host_allocation_create')
 
         plugin = instance_plugin.VirtualInstancePlugin()
 
-        added_host = ['host-id1', 'host-id2']
-        removed_host = ['host-id10', 'host-id11']
+        added_host = ['host-id1', 'host-id1', 'host-id2']
+        removed_host = ['host-id10', 'host-id11', 'host-id11']
 
-        removed_calls = [mock.call('id10'), mock.call('id11')]
+        plugin.update_host_allocations(added_host, removed_host,
+                                       'reservation-id1')
+
+        removed_calls = [
+            mock.call('id10'), mock.call('id11')]
+        mock_alloc_destroy.assert_has_calls(removed_calls)
+        self.assertEqual(3, mock_alloc_destroy.call_count)
+
         added_calls = [
             mock.call({'compute_host_id': 'host-id1',
                        'reservation_id': 'reservation-id1'}),
             mock.call({'compute_host_id': 'host-id2',
                        'reservation_id': 'reservation-id1'})]
-
-        plugin.update_host_allocations(added_host, removed_host,
-                                       'reservation-id1')
-
-        mock_alloc_destroy.assert_has_calls(removed_calls)
         mock_alloc_create.assert_has_calls(added_calls)
+        self.assertEqual(3, mock_alloc_create.call_count)
 
     def test_on_start(self):
         def fake_host_get(host_id):

@@ -432,10 +432,18 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         allocations = db_api.host_allocation_get_all_by_values(
             reservation_id=reservation_id)
 
-        removed_allocs = [a for a in allocations
-                          if a['compute_host_id'] in removed]
-        for alloc in removed_allocs:
-            db_api.host_allocation_destroy(alloc['id'])
+        removed_allocs = []
+        for host_id in removed:
+            for allocation in allocations:
+                if allocation['compute_host_id'] == host_id:
+                    removed_allocs.append(allocation['id'])
+                    break
+
+        # TODO(tetsuro): It would be nice to have something like
+        # db_api.host_allocation_replace() to process the following
+        # deletion and addition in *one* DB transaction.
+        for alloc_id in removed_allocs:
+            db_api.host_allocation_destroy(alloc_id)
 
         for added_host in added:
             db_api.host_allocation_create({'compute_host_id': added_host,
