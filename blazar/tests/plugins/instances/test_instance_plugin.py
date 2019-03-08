@@ -165,9 +165,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                            'get_reservations_by_host_id')
 
         mock_get_reservations.side_effect = fake_get_reservation_by_host
-        free = [{'host': hosts_list[0], 'reservations': None},
-                {'host': hosts_list[1], 'reservations': None},
-                {'host': hosts_list[2], 'reservations': None}]
+        free = [{'host': hosts_list[0], 'reservations': []},
+                {'host': hosts_list[1], 'reservations': []},
+                {'host': hosts_list[2], 'reservations': []}]
         non_free = []
 
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -218,11 +218,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'affinity': False,
             'resource_properties': '',
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
-        expected = {'added': set(['host-2', 'host-3']), 'removed': set([])}
+        expected = {'added': ['host-2', 'host-3'], 'removed': []}
         ret = plugin.pickup_hosts('reservation-id1', values)
 
         self.assertEqual(expected, ret)
@@ -260,11 +261,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'affinity': False,
             'resource_properties': '',
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00),
             }
-        expected = {'added': set(['host-1', 'host-2']), 'removed': set([])}
+        expected = {'added': ['host-1', 'host-2'], 'removed': []}
         ret = plugin.pickup_hosts('reservation-id1', values)
 
         self.assertEqual(expected, ret)
@@ -314,16 +316,121 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'affinity': False,
             'resource_properties': '',
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
 
-        expected = {'added': set(['host-1', 'host-3']), 'removed': set([])}
+        expected = {'added': ['host-1', 'host-3'], 'removed': []}
         ret = plugin.pickup_hosts('reservation-id1', params)
 
         self.assertEqual(expected, ret)
         expected_query = ['vcpus >= 1', 'memory_mb >= 1024', 'local_gb >= 20']
+        mock_host_get_query.assert_called_once_with(expected_query)
+
+    def test_pickup_host_with_affinity(self):
+        def fake_get_reservation_by_host(host_id, start, end):
+            if host_id in ['host-1', 'host-3']:
+                return [
+                    {'id': '1',
+                     'resource_type': instances.RESOURCE_TYPE},
+                    {'id': '2',
+                     'resource_type': instances.RESOURCE_TYPE}
+                    ]
+            else:
+                return []
+
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        mock_host_allocation_get = self.patch(
+            db_api, 'host_allocation_get_all_by_values')
+        mock_host_allocation_get.return_value = []
+
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
+        hosts_list = [self.generate_host_info('host-1', 8, 8192, 1000),
+                      self.generate_host_info('host-2', 2, 2048, 500),
+                      self.generate_host_info('host-3', 2, 2048, 500)]
+        mock_host_get_query.return_value = hosts_list
+
+        mock_get_reservations = self.patch(db_utils,
+                                           'get_reservations_by_host_id')
+
+        mock_get_reservations.side_effect = fake_get_reservation_by_host
+
+        mock_max_usages = self.patch(plugin, 'max_usages')
+        mock_max_usages.return_value = (0, 0, 0)
+
+        mock_reservation_get = self.patch(db_api, 'reservation_get')
+        mock_reservation_get.return_value = {
+            'status': 'pending'
+            }
+
+        params = {
+            'vcpus': 2,
+            'memory_mb': 2048,
+            'disk_gb': 100,
+            'amount': 2,
+            'affinity': True,
+            'resource_properties': '',
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
+            }
+
+        expected = {'added': ['host-1', 'host-1'], 'removed': []}
+        ret = plugin.pickup_hosts('reservation-id1', params)
+
+        self.assertEqual(expected, ret)
+        expected_query = ['vcpus >= 2', 'memory_mb >= 2048', 'local_gb >= 100']
+        mock_host_get_query.assert_called_once_with(expected_query)
+
+    def test_pickup_host_with_no_affinity(self):
+        def fake_get_reservation_by_host(host_id, start, end):
+            return []
+
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        mock_host_allocation_get = self.patch(
+            db_api, 'host_allocation_get_all_by_values')
+        mock_host_allocation_get.return_value = []
+
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
+        hosts_list = [self.generate_host_info('host-1', 8, 8192, 1000),
+                      self.generate_host_info('host-2', 2, 2048, 500),
+                      self.generate_host_info('host-3', 2, 2048, 500)]
+        mock_host_get_query.return_value = hosts_list
+
+        mock_get_reservations = self.patch(db_utils,
+                                           'get_reservations_by_host_id')
+
+        mock_get_reservations.side_effect = fake_get_reservation_by_host
+
+        mock_max_usages = self.patch(plugin, 'max_usages')
+        mock_max_usages.return_value = (0, 0, 0)
+
+        mock_reservation_get = self.patch(db_api, 'reservation_get')
+        mock_reservation_get.return_value = {
+            'status': 'pending'
+            }
+
+        params = {
+            'vcpus': 4,
+            'memory_mb': 4096,
+            'disk_gb': 200,
+            'amount': 2,
+            'affinity': None,
+            'resource_properties': '',
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
+            }
+
+        expected = {'added': ['host-1', 'host-1'], 'removed': []}
+        ret = plugin.pickup_hosts('reservation-id1', params)
+
+        self.assertEqual(expected, ret)
+        expected_query = ['vcpus >= 4', 'memory_mb >= 4096', 'local_gb >= 200']
         mock_host_get_query.assert_called_once_with(expected_query)
 
     def test_pickup_host_from_less_hosts(self):
@@ -360,6 +467,21 @@ class TestVirtualInstancePlugin(tests.TestCase):
             db_api, 'host_allocation_get_all_by_values')
         mock_host_allocation_get.return_value = []
 
+        old_reservation = {
+            'id': 'reservation-id1',
+            'status': 'pending',
+            'lease_id': 'lease-id1',
+            'resource_id': 'instance-reservation-id1',
+            'vcpus': 2, 'memory_mb': 1024, 'disk_gb': 100,
+            'amount': 2, 'affinity': False,
+            'resource_properties': ''}
+        mock_reservation_get = self.patch(db_api, 'reservation_get')
+        mock_reservation_get.return_value = old_reservation
+
+        mock_lease_get = self.patch(db_api, 'lease_get')
+        mock_lease_get.return_value = {'start_date': '2030-01-01 8:00',
+                                       'end_date': '2030-01-01 12:00'}
+
         mock_max_usages = self.patch(plugin, 'max_usages')
         mock_max_usages.return_value = (1, 1024, 100)
 
@@ -368,14 +490,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 1024,
             'disk_gb': 20,
             'amount': 2,
+            'affinity': False,
             'resource_properties': '',
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)
             }
 
-        hosts = plugin.pickup_hosts('reservation-id1', values)
-        self.assertTrue((len(hosts['added']) - len(hosts['removed']))
-                        < values['amount'])
+        self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
+                          plugin.update_reservation, 'reservation-id1',
+                          values)
 
     def test_max_usage_with_serial_reservation(self):
         def fake_event_get(sort_key, sort_dir, filters):
@@ -573,6 +696,32 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_create_reservation_class.assert_called_once_with(
             'reservation-id1')
 
+    def test_query_available_hosts(self):
+        mock_host_get_query = self.patch(db_api,
+                                         'reservable_host_get_all_by_queries')
+        host1, host2, host3 = (self.generate_host_info(host_id, 4, 4096, 1000)
+                               for host_id in ['host-1', 'host-2', 'host-3'])
+        hosts_list = [host1, host2, host3]
+        mock_host_get_query.return_value = hosts_list
+
+        get_reservations = self.patch(db_utils,
+                                      'get_reservations_by_host_id')
+        get_reservations.return_value = []
+
+        plugin = instance_plugin.VirtualInstancePlugin()
+
+        query_params = {
+            'cpus': 1, 'memory': 1024, 'disk': 10,
+            'resource_properties': '',
+            'start_date': datetime.datetime(2020, 7, 7, 18, 0),
+            'end_date': datetime.datetime(2020, 7, 7, 19, 0)
+        }
+
+        ret = plugin.query_available_hosts(**query_params)
+
+        expected = [host1] * 4 + [host2] * 4 + [host3] * 4
+        self.assertEqual(expected, ret)
+
     def test_pickup_hosts_for_update(self):
         reservation = {'id': 'reservation-id1', 'status': 'pending'}
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -595,8 +744,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
         values = self.get_input_values(1, 1024, 10, 1, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
                                        'lease-1', '')
-        expect = {'added': set([]),
-                  'removed': set(['host-id1', 'host-id2', 'host-id3'])}
+        expect = {'added': [],
+                  'removed': ['host-id1', 'host-id2', 'host-id3']}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(2, len(ret['removed']))
@@ -614,7 +763,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         values = self.get_input_values(1, 1024, 10, 3, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
                                        'lease-1', '["==", "key1", "value1"]')
-        expect = {'added': set(['host-id4']), 'removed': set(['host-id1'])}
+        expect = {'added': ['host-id4'], 'removed': ['host-id1']}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
@@ -628,16 +777,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_query_available.assert_called_with(**query_params)
 
         # case: new amount is greater than old amount
+        host_ids = ('host-id1', 'host-id2', 'host-id3', 'host-id4')
         mock_query_available.return_value = [
-            self.generate_host_info('host-id1', 2, 2024, 1000),
-            self.generate_host_info('host-id2', 2, 2024, 1000),
-            self.generate_host_info('host-id3', 2, 2024, 1000),
-            self.generate_host_info('host-id4', 2, 2024, 1000)]
+            self.generate_host_info(host_id, 2, 2024, 1000)
+            for host_id in host_ids]
 
         values = self.get_input_values(1, 1024, 10, 4, False,
                                        '2020-07-01 10:00', '2020-07-01 11:00',
                                        'lease-1', '')
-        expect = {'added': set(['host-id4']), 'removed': set([])}
+        expect = {'added': ['host-id4'], 'removed': []}
         ret = plugin.pickup_hosts(reservation['id'], values)
         self.assertEqual(expect['added'], ret['added'])
         self.assertEqual(expect['removed'], ret['removed'])
@@ -648,6 +796,40 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'end_date': '2020-07-01 11:00',
             'excludes_res': ['reservation-id1']
             }
+        mock_query_available.assert_called_with(**query_params)
+
+        # case: affinity is changed to True
+        mock_query_available.return_value = [
+            self.generate_host_info(host_id, 8, 8192, 1000)
+            for host_id in host_ids * 8]
+
+        values = self.get_input_values(1, 1024, 10, 4, True,
+                                       '2020-07-01 10:00', '2020-07-01 11:00',
+                                       'lease-1', '')
+        ret = plugin.pickup_hosts(reservation['id'], values)
+
+        # We don't care which host id (1-3) is picked up
+        # Just make sure the same host is returned three times in "added"
+        added = ret['added']
+        self.assertEqual(3, len(added))
+        self.assertEqual(1, len(set(added)))
+        self.assertIn(added[0], ('host-id1', 'host-id2', 'host-id3'))
+
+        # and make sure the other two hosts are removed
+        removed = ret['removed']
+        self.assertEqual(2, len(removed))
+        self.assertEqual(2, len(set(removed)))
+        expect_removed = set(host_ids) - set(added)
+        for host_id in removed:
+            self.assertIn(host_id, expect_removed)
+
+        query_params = {
+            'cpus': 1, 'memory': 1024, 'disk': 10,
+            'resource_properties': '',
+            'start_date': '2020-07-01 10:00',
+            'end_date': '2020-07-01 11:00',
+            'excludes_res': ['reservation-id1']
+        }
         mock_query_available.assert_called_with(**query_params)
 
     def test_update_resources(self):
@@ -790,11 +972,21 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_lease_get.return_value = {'start_date': '2020-07-07 18:00',
                                        'end_date': '2020-07-07 19:00'}
 
-        mock_pickup_hosts = self.patch(plugin, 'pickup_hosts')
-        mock_pickup_hosts.return_value = {
-            'added': set(), 'removed': set(['host-id2'])}
+        # Mock that we have at least two hosts for (2 vcpus + 100 disk_gb),
+        # but we have only one for (4 vcpus and 200 disk_gb)
+        mock_alloc_get = self.patch(db_api,
+                                    'host_allocation_get_all_by_values')
+        mock_alloc_get.return_value = [{'compute_host_id': 'host-id1'},
+                                       {'compute_host_id': 'host-id2'}]
 
-        new_values = {'vcpus': 4, 'disk_gb': 200}
+        mock_query_available = self.patch(plugin, 'query_available_hosts')
+        mock_query_available.return_value = [
+            self.generate_host_info('host-id1', 4, 2048, 1000)]
+
+        new_values = {'vcpus': 4, 'disk_gb': 200,
+                      'start_date': datetime.datetime(2020, 7, 7, 18, 0),
+                      'end_date': datetime.datetime(2020, 7, 7, 19, 0),
+                      'id': '00ee4f12-77c8-44d5-abca-06a543210a50'}
         self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
                           plugin.update_reservation, 'reservation-id1',
                           new_values)

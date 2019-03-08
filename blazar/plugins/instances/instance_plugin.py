@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import collections
 import datetime
 import retrying
 
@@ -60,6 +61,15 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         self.monitor.register_healing_handler(self.heal_reservations)
         self.placement_client = placement.BlazarPlacementClient()
 
+    # TODO(tetsuro) Remove this with a release note when all the support
+    # for True/None affinity is ready
+    def _check_affinity(self, affinity):
+        # TODO(masahito) the instance reservation plugin only supports
+        # anti-affinity rule in short-term goal.
+        if bool_from_string(affinity):
+            raise mgr_exceptions.MalformedParameter(
+                param='affinity (only affinity = False is supported)')
+
     def filter_hosts_by_reservation(self, hosts, start_date, end_date,
                                     excludes):
         free = []
@@ -75,7 +85,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                                 if r['id'] not in excludes]
 
             if reservations == []:
-                free.append({'host': host, 'reservations': None})
+                free.append({'host': host, 'reservations': []})
             elif not [r for r in reservations
                       if r['resource_type'] == oshosts.RESOURCE_TYPE]:
                 non_free.append({'host': host, 'reservations': reservations})
@@ -117,13 +127,37 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         return max_vcpus, max_memory, max_disk
 
+    def get_hosts_list(self, host_info, cpus, memory, disk):
+        hosts_list = []
+        host = host_info['host']
+        reservations = host_info['reservations']
+        max_cpus, max_memory, max_disk = self.max_usages(host,
+                                                         reservations)
+        used_cpus, used_memory, used_disk = (cpus, memory, disk)
+        while (max_cpus + used_cpus <= host['vcpus'] and
+               max_memory + used_memory <= host['memory_mb'] and
+               max_disk + used_disk <= host['local_gb']):
+            hosts_list.append(host)
+            used_cpus += cpus
+            used_memory += memory
+            used_disk += disk
+        return hosts_list
+
     def query_available_hosts(self, cpus=None, memory=None, disk=None,
                               resource_properties=None,
                               start_date=None, end_date=None,
                               excludes_res=None):
-        """Query hosts that are available for a reservation.
+        """Returns a list of available hosts for a reservation.
 
-        Its return value is in the order of reserved hosts to free hosts now.
+        The list is in the order of reserved hosts to free hosts.
+
+        1. filter hosts that have a spec enough to accommodate the flavor
+        2. categorize hosts into hosts with and without allocation
+           at the reservation time frame
+        3. filter out hosts used by physical host reservation from
+           allocate_host
+        4. filter out hosts that can't accommodate the flavor at the
+           time frame because of other reservations
         """
         flavor_definitions = [
             'and',
@@ -145,34 +179,28 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             excludes_res)
 
         available_hosts = []
-        for host_info in reserved_hosts:
-            host = host_info['host']
-            reservations = host_info['reservations']
-            max_cpus, max_memory, max_disk = self.max_usages(host,
-                                                             reservations)
+        for host_info in (reserved_hosts + free_hosts):
+            hosts_list = self.get_hosts_list(host_info, cpus, memory, disk)
+            available_hosts.extend(hosts_list)
 
-            if not (max_cpus + cpus > host['vcpus'] or
-                    max_memory + memory > host['memory_mb'] or
-                    max_disk + disk > host['local_gb']):
-                available_hosts.append(host)
-
-        available_hosts.extend([h['host'] for h in free_hosts])
         return available_hosts
 
     def pickup_hosts(self, reservation_id, values):
-        """Checks whether Blazar can accommodate the request.
+        """Returns lists of host ids to add/remove.
 
-        This method filters and pick up hosts for this reservation
-        with following steps.
+        This function picks up available hosts, calculates the difference from
+        old reservations and returns a dict of a list of host ids to add
+        and remove keyed by "added" or "removed".
 
-        1. filter hosts that have a spec enough to accommodate the flavor
-        2. categorize hosts allocated_hosts and not_allocated_hosts
-           at the reservation time frame
-        3. filter out hosts used by physical host reservation from
-           allocate_host
-        4. filter out hosts that can't accommodate the flavor at the
-           time frame because of others reservations
+        Note that the lists allow duplicated host ids for `affinity=True`
+        cases.
+
+        :raises: NotEnoughHostsAvailable exception if there are not enough
+                 hosts available for the request
         """
+        req_amount = values['amount']
+        affinity = bool_from_string(values['affinity'], default=None)
+
         query_params = {
             'cpus': values['vcpus'],
             'memory': values['memory_mb'],
@@ -182,32 +210,69 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'end_date': values['end_date']
             }
 
-        # add the specific query param for reservation update
         old_allocs = db_api.host_allocation_get_all_by_values(
             reservation_id=reservation_id)
         if old_allocs:
+            # This is a path for *update* reservation. Add the specific
+            # query param not to consider resources reserved by existing
+            # reservations to update
             query_params['excludes_res'] = [reservation_id]
 
         new_hosts = self.query_available_hosts(**query_params)
 
-        old_host_ids = {h['compute_host_id'] for h in old_allocs}
-        candidate_ids = {h['id'] for h in new_hosts}
+        old_host_id_list = [h['compute_host_id'] for h in old_allocs]
+        candidate_id_list = [h['id'] for h in new_hosts]
 
-        kept_host_ids = old_host_ids & candidate_ids
-        removed_host_ids = old_host_ids - candidate_ids
-        extra_host_ids = candidate_ids - old_host_ids
-        added_host_ids = set([])
+        # Build `new_host_id_list`. Note that we'd like to pick up hosts in
+        # the following order of priority:
+        #  1. hosts reserved by the reservation to update
+        #  2. hosts with reservations followed by hosts without reservations
+        # Note that the `candidate_id_list` has already been ordered
+        # satisfying the second requirement.
+        if affinity:
+            host_id_map = collections.Counter(candidate_id_list)
+            available = {k for k, v in host_id_map.items() if v >= req_amount}
+            if not available:
+                raise mgr_exceptions.NotEnoughHostsAvailable()
+            new_host_ids = set(old_host_id_list) & available
+            if new_host_ids:
+                # (priority 1) This is a path for update reservation. We pick
+                # up a host from hosts reserved by the reservation to update.
+                new_host_id = new_host_ids.pop()
+            else:
+                # (priority 2) This is a path both for update and for new
+                # reservation. We pick up hosts with some other reservations
+                # if possible and otherwise pick up hosts without any
+                # reservation. We can do so by considering the order of the
+                # `candidate_id_list`.
+                for host_id in candidate_id_list:
+                    if host_id in available:
+                        new_host_id = host_id
+                        break
+            new_host_id_list = [new_host_id] * req_amount
+        else:
+            # Hosts that can accommodate but don't satisfy priority 1
+            _, possible_host_list = plugins_utils.list_difference(
+                old_host_id_list, candidate_id_list)
+            # Hosts that satisfy priority 1
+            new_host_id_list, _ = plugins_utils.list_difference(
+                candidate_id_list, possible_host_list)
+            if affinity is False:
+                # Eliminate the duplication
+                new_host_id_list = list(set(new_host_id_list))
+            for host_id in possible_host_list:
+                if (affinity is False) and (host_id in new_host_id_list):
+                    # Eliminate the duplication
+                    continue
+                new_host_id_list.append(host_id)
+            if len(new_host_id_list) < req_amount:
+                raise mgr_exceptions.NotEnoughHostsAvailable()
+            while len(new_host_id_list) > req_amount:
+                new_host_id_list.pop()
 
-        if len(kept_host_ids) > values['amount']:
-            extra = len(kept_host_ids) - values['amount']
-            for i in range(extra):
-                removed_host_ids.add(kept_host_ids.pop())
-        elif len(kept_host_ids) < values['amount']:
-            less = values['amount'] - len(kept_host_ids)
-            ordered_extra_host_ids = [h['id'] for h in new_hosts
-                                      if h['id'] in extra_host_ids]
-            for i in range(min(less, len(extra_host_ids))):
-                added_host_ids.add(ordered_extra_host_ids[i])
+        # Calculate the difference from the existing reserved host
+        removed_host_ids, added_host_ids = plugins_utils.list_difference(
+            old_host_id_list, new_host_id_list)
 
         return {'added': added_host_ids, 'removed': removed_host_ids}
 
@@ -328,18 +393,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     def reserve_resource(self, reservation_id, values):
         self.validate_reservation_param(values)
 
-        # TODO(masahito) the instance reservation plugin only supports
-        # anti-affinity rule in short-term goal.
-        if bool_from_string(values['affinity']):
-            raise mgr_exceptions.MalformedParameter(
-                param='affinity (only affinity = False is supported)')
+        self._check_affinity(values['affinity'])
 
         hosts = self.pickup_hosts(reservation_id, values)
-
-        if len(hosts['added']) < values['amount']:
-            raise mgr_exceptions.HostNotFound("The reservation can't be "
-                                              "accommodate because of less "
-                                              "capacity.")
 
         instance_reservation_val = {
             'reservation_id': reservation_id,
@@ -347,7 +403,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             'memory_mb': values['memory_mb'],
             'disk_gb': values['disk_gb'],
             'amount': values['amount'],
-            'affinity': bool_from_string(values['affinity']),
+            'affinity': bool_from_string(values['affinity'], default=None),
             'resource_properties': values['resource_properties']
             }
         instance_reservation = db_api.instance_reservation_create(
@@ -396,11 +452,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         - If an instance reservation has already started
              - only amount is increasable.
         """
-        # TODO(masahito) the instance reservation plugin only supports
-        # anti-affinity rule in short-term goal.
-        if bool_from_string(new_values.get('affinity', None)):
-            raise mgr_exceptions.MalformedParameter(
-                param='affinity (only affinity = False is supported)')
+        affinity = new_values.get('affinity', None)
+        self._check_affinity(affinity)
 
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
@@ -422,6 +475,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             msg = "An error reservation doesn't accept an updating request."
             raise mgr_exceptions.InvalidStateUpdate(msg)
 
+        if new_values.get('affinity', None):
+            new_values['affinity'] = bool_from_string(new_values['affinity'],
+                                                      default=None)
+
         for key in updatable:
             if key not in new_values:
                 new_values[key] = reservation[key]
@@ -434,10 +491,6 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                        "reserved instance slots when the reservation is in "
                        "active status.")
             raise mgr_exceptions.CantUpdateParameter(err_msg)
-
-        if (new_values['amount'] - reservation['amount'] !=
-           (len(changed_hosts['added']) - len(changed_hosts['removed']))):
-            raise mgr_exceptions.NotEnoughHostsAvailable()
 
         db_api.instance_reservation_update(
             reservation['resource_id'],

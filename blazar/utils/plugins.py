@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from oslo_serialization import jsonutils
 import six
 
@@ -76,3 +77,27 @@ def _requirements_with_and_keyword(requirements):
             isinstance(requirements[0], six.string_types) and
             requirements[0] == 'and' and
             all(convert_requirements(x) for x in requirements[1:]))
+
+
+def list_difference(list1, list2):
+    """Return a tuple that shows the differences between lists.
+
+       Example:
+         list1 = [1, 1, 2, 3, 4, 4, 4, 5]  # old list
+         list2 = [1, 2, 3, 4, 7, 8, 8]     # new list
+             -> ([1, 4, 4, 5], [7, 8, 8])  # (to_remove, to_add)
+
+    """
+    def list_subtract(list_a, list_b):
+        result = copy.copy(list_a)
+        for value in list_b:
+            if value in result:
+                try:
+                    result.remove(value)
+                except ValueError:
+                    pass
+        return result
+
+    result1 = list_subtract(list1, list2)
+    result2 = list_subtract(list2, list1)
+    return result1, result2

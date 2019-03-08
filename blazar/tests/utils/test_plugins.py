@@ -77,3 +77,25 @@ class TestPluginsUtils(tests.TestCase):
         self.assertRaises(
             manager_exceptions.MalformedRequirements,
             plugins_utils.convert_requirements, 'something')
+
+    def test_list_difference(self):
+        old_list = [1, 1, 2, 3, 4, 4, 4, 5]
+        new_list = [1, 2, 3, 4, 7, 8, 8]
+
+        result = plugins_utils.list_difference(old_list, new_list)
+
+        to_remove = [1, 4, 4, 5]
+        to_add = [7, 8, 8]
+
+        self.assertEqual((to_remove, to_add), result)
+
+    def test_list_difference_empty(self):
+        old_list = []
+        new_list = [1, 2, 2, 2, 3, 4, 7, 8, 8]
+
+        result = plugins_utils.list_difference(old_list, new_list)
+
+        to_remove = []
+        to_add = [1, 2, 2, 2, 3, 4, 7, 8, 8]
+
+        self.assertEqual((to_remove, to_add), result)
