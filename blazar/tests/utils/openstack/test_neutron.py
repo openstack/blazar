@@ -33,11 +33,13 @@ class TestBlazarNeutronClient(tests.TestCase):
 
     def test_client_from_kwargs(self):
         kwargs = {
-            'auth_url': 'http://foo:8080/identity/v3'
+            'auth_url': 'http://foo:8080/identity/v3',
+            'region_name': 'RegionTwo'
         }
         client = neutron.BlazarNeutronClient(**kwargs)
         self.assertEqual("http://foo:8080/identity/v3",
                          client.neutron.httpclient.session.auth.auth_url)
+        self.assertEqual("RegionTwo", client.neutron.httpclient.region_name)
 
 
 class TestFloatingIPPool(tests.TestCase):

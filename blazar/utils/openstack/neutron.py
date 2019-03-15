@@ -43,6 +43,7 @@ class BlazarNeutronClient(object):
         project_domain_name = kwargs.pop('project_domain_name',
                                          CONF.os_admin_project_domain_name)
         auth_url = kwargs.pop('auth_url', None)
+        region_name = kwargs.pop('region_name', CONF.os_region_name)
 
         if auth_url is None:
             auth_url = "%s://%s:%s/%s/%s" % (CONF.os_auth_protocol,
@@ -58,7 +59,8 @@ class BlazarNeutronClient(object):
                            user_domain_name=user_domain_name,
                            project_domain_name=project_domain_name)
         sess = session.Session(auth=auth)
-        self.neutron = neutron_client.Client(session=sess)
+        self.neutron = neutron_client.Client(
+            session=sess, region_name=region_name)
 
 
 class FloatingIPPool(BlazarNeutronClient):
