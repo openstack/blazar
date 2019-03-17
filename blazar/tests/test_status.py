@@ -154,6 +154,21 @@ class LeaseStatusTestCase(tests.TestCase):
 
         self.assertFalse(result)
 
+    def test_is_stable(self):
+        lease_id = self.lease_id
+        lease_pending = {'id': lease_id,
+                         'status': status.LeaseStatus.PENDING}
+        lease_creating = {'id': lease_id,
+                          'status': status.LeaseStatus.CREATING}
+
+        self.patch(self.db_api, 'lease_get').return_value = lease_pending
+        result = self.status.LeaseStatus.is_stable(lease_id)
+        self.assertTrue(result)
+
+        self.patch(self.db_api, 'lease_get').return_value = lease_creating
+        result = self.status.LeaseStatus.is_stable(lease_id)
+        self.assertFalse(result)
+
     def test_lease_status(self):
         lease = {
             'status': status.LeaseStatus.PENDING

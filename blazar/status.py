@@ -169,6 +169,16 @@ class LeaseStatus(BaseStatus):
         return True
 
     @classmethod
+    def is_stable(cls, lease_id):
+        """Check if the lease status is stable
+
+        :param lease_id: Lease ID
+        :return: True if the status is in (PENDING, ACTIVE, TERMINATED, ERROR)
+        """
+        lease = db_api.lease_get(lease_id)
+        return (lease['status'] in cls.STABLE)
+
+    @classmethod
     def lease_status(cls, transition, result_in):
         """Decorator for managing a lease status.
 

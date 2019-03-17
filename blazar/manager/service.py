@@ -155,6 +155,10 @@ class ManagerService(service_utils.RPCServer):
 
         LOG.info("Trying to execute events: %s", events)
         for event in events:
+            if not status.LeaseStatus.is_stable(event['lease_id']):
+                LOG.info("Skip event %s because the status of the lease %s "
+                         "is still transitional", event, event['lease_id'])
+                continue
             db_api.event_update(event['id'],
                                 {'status': status.event.IN_PROGRESS})
             try:

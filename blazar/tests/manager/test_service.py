@@ -145,6 +145,7 @@ class ServiceTestCase(tests.TestCase):
                                         'resource_id': '111',
                                         'resource_type': 'virtual:instance',
                                         'status': 'FAKE PROGRESS'}],
+                      'status': status.LeaseStatus.PENDING,
                       'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                       'end_date': datetime.datetime(2013, 12, 20, 15, 00),
                       'trust_id': 'exxee111qwwwwe'}
@@ -231,8 +232,12 @@ class ServiceTestCase(tests.TestCase):
     def test_event_success(self):
         events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date},
-                               {'id': '444-555-666', 'time': self.good_date}]
+        events.return_value = [{'id': '111-222-333',
+                                'lease_id': 'lease_id1',
+                                'time': self.good_date},
+                               {'id': '444-555-666',
+                                'lease_id': 'lease_id2',
+                                'time': self.good_date}]
         self.patch(eventlet, 'spawn_n')
 
         self.manager._event()
@@ -245,13 +250,32 @@ class ServiceTestCase(tests.TestCase):
         events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         event_update = self.patch(self.db_api, 'event_update')
         self.patch(eventlet, 'spawn_n').side_effect = Exception
-        events.return_value = [{'id': '111-222-333', 'time': self.good_date}]
+        events.return_value = [{'id': '111-222-333',
+                                'lease_id': self.lease_id,
+                                'time': self.good_date}]
 
         self.manager._event()
 
         event_update.assert_has_calls([
             mock.call('111-222-333', {'status': status.event.IN_PROGRESS}),
             mock.call('111-222-333', {'status': status.event.ERROR})])
+
+    def test_event_pass(self):
+        events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
+        events.return_value = [{'id': '111-222-333',
+                                'lease_id': self.lease_id,
+                                'time': self.good_date}]
+
+        self.lease_get = self.patch(self.db_api, 'lease_get')
+        lease = self.lease.copy()
+        lease.update({'status': status.LeaseStatus.CREATING})
+        self.lease_get.return_value = lease
+
+        event_update = self.patch(self.db_api, 'event_update')
+
+        self.manager._event()
+
+        event_update.assert_not_called()
 
     def test_exec_event_success(self):
         event = {'id': '111-222-333',
