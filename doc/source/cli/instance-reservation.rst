@@ -13,9 +13,6 @@ The following packages should be installed:
 
 The following four scheduler filters should be configured in nova.conf:
 
-* AggregateInstanceExtraSpecsFilter
-* AggregateMultiTenancyIsolation
-* ServerGroupAffinityFilter
 * BlazarFilter
 
 1. Add hosts into the freepool
@@ -56,7 +53,7 @@ Result:
 
 .. sourcecode:: console
 
-    blazar lease-create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1,affinity=False --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
+    blazar lease-create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1 --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
 
 ..
 
@@ -84,7 +81,7 @@ Result:
     | project_id    | 6f6f9b596d47441294eb40f565063833                                                                                         |
     | reservations  | {"status": "pending", "memory_mb": 1024, "lease_id": "becf2f3b-0177-4c0f-a7e7-0123370849a3", "disk_gb": 20,              |
     |               | "resource_id": "061198b0-53e4-4545-9d85-405ca93a7bdf", "created_at": "2017-07-31 07:55:59", "updated_at": "2017-07-31    |
-    |               | 07:55:59", "aggregate_id": 3, "server_group_id": "ba03ebb4-e55c-4da4-9d39-87e13354f3b7", "amount": 1, "affinity": false, |
+    |               | 07:55:59", "aggregate_id": 3, "server_group_id": "ba03ebb4-e55c-4da4-9d39-87e13354f3b7", "amount": 1, "affinity": null,  |
     |               | "flavor_id": "db83d6fd-c69c-4259-92cf-012db2e55a58", "id": "db83d6fd-c69c-4259-92cf-012db2e55a58", "vcpus": 1,           |
     |               | "resource_type": "virtual:instance"}                                                                                     |
     | start_date    | 2020-07-24T20:00:00.000000                                                                                               |
@@ -150,10 +147,10 @@ Result:
 
 ..
 
-1. Create a server: Please specify the flavor of the reservation and group_id as a scheduler hint.
+1. Create a server: Please specify the flavor of the reservation.
 
 .. sourcecode:: console
 
-    openstack server create --flavor db83d6fd-c69c-4259-92cf-012db2e55a58 --image <image> --network <network> --hint group=ba03ebb4-e55c-4da4-9d39-87e13354f3b7 <server-name>
+    openstack server create --flavor db83d6fd-c69c-4259-92cf-012db2e55a58 --image <image> --network <network> <server-name>
 
 ..

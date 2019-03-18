@@ -61,15 +61,6 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         self.monitor.register_healing_handler(self.heal_reservations)
         self.placement_client = placement.BlazarPlacementClient()
 
-    # TODO(tetsuro) Remove this with a release note when all the support
-    # for True/None affinity is ready
-    def _check_affinity(self, affinity):
-        # TODO(masahito) the instance reservation plugin only supports
-        # anti-affinity rule in short-term goal.
-        if bool_from_string(affinity):
-            raise mgr_exceptions.MalformedParameter(
-                param='affinity (only affinity = False is supported)')
-
     def filter_hosts_by_reservation(self, hosts, start_date, end_date,
                                     excludes):
         free = []
@@ -401,8 +392,6 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     def reserve_resource(self, reservation_id, values):
         self.validate_reservation_param(values)
 
-        self._check_affinity(values['affinity'])
-
         hosts = self.pickup_hosts(reservation_id, values)
 
         instance_reservation_val = {
@@ -468,8 +457,6 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         - If an instance reservation has already started
              - only amount is increasable.
         """
-        affinity = new_values.get('affinity', None)
-        self._check_affinity(affinity)
 
         reservation = db_api.reservation_get(reservation_id)
         lease = db_api.lease_get(reservation['lease_id'])
