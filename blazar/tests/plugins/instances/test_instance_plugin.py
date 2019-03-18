@@ -1039,8 +1039,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
         plugin.update_host_allocations(added_host, removed_host,
                                        'reservation-id1')
 
-        removed_calls = [
-            mock.call('id10'), mock.call('id11')]
+        removed_calls = [mock.call('id10'), mock.call('id11')]
         mock_alloc_destroy.assert_has_calls(removed_calls)
         self.assertEqual(3, mock_alloc_destroy.call_count)
 
@@ -1179,15 +1178,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         get_reservations = self.patch(db_utils,
                                       'get_reservations_by_host_ids')
         get_reservations.return_value = [dummy_reservation]
-        reallocate = self.patch(plugin, '_reallocate')
-        reallocate.return_value = True
+        heal_reservation = self.patch(plugin, '_heal_reservation')
+        heal_reservation.return_value = True
 
         result = plugin.heal_reservations(
             [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
             datetime.datetime(2020, 1, 1, 13, 00))
-        reallocate.assert_called_once_with(
-            dummy_reservation['computehost_allocations'][0])
+        heal_reservation.assert_called_once_with(
+            dummy_reservation, list(failed_host.values()))
         self.assertEqual({}, result)
 
     def test_heal_reservations_before_start_and_missing_resources(self):
@@ -1213,15 +1212,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         get_reservations = self.patch(db_utils,
                                       'get_reservations_by_host_ids')
         get_reservations.return_value = [dummy_reservation]
-        reallocate = self.patch(plugin, '_reallocate')
-        reallocate.return_value = False
+        heal_reservation = self.patch(plugin, '_heal_reservation')
+        heal_reservation.return_value = False
 
         result = plugin.heal_reservations(
             [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
             datetime.datetime(2020, 1, 1, 13, 00))
-        reallocate.assert_called_once_with(
-            dummy_reservation['computehost_allocations'][0])
+        heal_reservation.assert_called_once_with(
+            dummy_reservation, list(failed_host.values()))
         self.assertEqual(
             {dummy_reservation['id']: {'missing_resources': True}},
             result)
@@ -1248,15 +1247,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         get_reservations = self.patch(db_utils,
                                       'get_reservations_by_host_ids')
         get_reservations.return_value = [dummy_reservation]
-        reallocate = self.patch(plugin, '_reallocate')
-        reallocate.return_value = True
+        heal_reservation = self.patch(plugin, '_heal_reservation')
+        heal_reservation.return_value = True
 
         result = plugin.heal_reservations(
             [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
             datetime.datetime(2020, 1, 1, 13, 00))
-        reallocate.assert_called_once_with(
-            dummy_reservation['computehost_allocations'][0])
+        heal_reservation.assert_called_once_with(
+            dummy_reservation, list(failed_host.values()))
         self.assertEqual(
             {dummy_reservation['id']: {'resources_changed': True}},
             result)
@@ -1283,15 +1282,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
         get_reservations = self.patch(db_utils,
                                       'get_reservations_by_host_ids')
         get_reservations.return_value = [dummy_reservation]
-        reallocate = self.patch(plugin, '_reallocate')
-        reallocate.return_value = False
+        heal_reservation = self.patch(plugin, '_heal_reservation')
+        heal_reservation.return_value = False
 
         result = plugin.heal_reservations(
             [failed_host],
             datetime.datetime(2020, 1, 1, 12, 00),
             datetime.datetime(2020, 1, 1, 13, 00))
-        reallocate.assert_called_once_with(
-            dummy_reservation['computehost_allocations'][0])
+        heal_reservation.assert_called_once_with(
+            dummy_reservation, list(failed_host.values()))
         self.assertEqual(
             {dummy_reservation['id']: {'missing_resources': True}},
             result)
@@ -1300,11 +1299,6 @@ class TestVirtualInstancePlugin(tests.TestCase):
         plugin = instance_plugin.VirtualInstancePlugin()
         failed_host = {'id': '1'}
         new_host = {'id': '2'}
-        dummy_allocation = {
-            'id': 'alloc-1',
-            'compute_host_id': failed_host['id'],
-            'reservation_id': 'rsrv-1'
-        }
         dummy_reservation = {
             'id': 'rsrv-1',
             'resource_type': instances.RESOURCE_TYPE,
@@ -1316,7 +1310,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'aggregate_id': 'agg-1',
             'affinity': False,
             'amount': 3,
-            'resource_properties': ''
+            'resource_properties': '',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'}]
         }
         dummy_lease = {
             'name': 'lease-name',
@@ -1324,8 +1321,6 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'end_date': datetime.datetime(2020, 1, 2, 12, 00),
             'trust_id': 'trust-1'
         }
-        reservation_get = self.patch(db_api, 'reservation_get')
-        reservation_get.return_value = dummy_reservation
         lease_get = self.patch(db_api, 'lease_get')
         lease_get.return_value = dummy_lease
         pickup_hosts = self.patch(plugin, 'pickup_hosts')
@@ -1336,12 +1331,12 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = datetime.datetime(
                 2020, 1, 1, 11, 00)
-            result = plugin._reallocate(dummy_allocation)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
 
         pickup_hosts.assert_called_once()
         alloc_update.assert_called_once_with(
-            dummy_allocation['id'],
-            {'compute_host_id': new_host['id']})
+            'alloc-1', {'compute_host_id': new_host['id']})
         self.assertEqual(True, result)
 
     def test_reallocate_active(self):
@@ -1352,11 +1347,6 @@ class TestVirtualInstancePlugin(tests.TestCase):
         new_host = {'id': '2',
                     'service_name': 'compute-2',
                     'hypervisor_hostname': 'compute-2'}
-        dummy_allocation = {
-            'id': 'alloc-1',
-            'compute_host_id': failed_host['id'],
-            'reservation_id': 'rsrv-1'
-        }
         dummy_reservation = {
             'id': 'rsrv-1',
             'resource_type': instances.RESOURCE_TYPE,
@@ -1368,7 +1358,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'aggregate_id': 'agg-1',
             'affinity': False,
             'amount': 3,
-            'resource_properties': ''}
+            'resource_properties': '',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'}]
+        }
         dummy_lease = {
             'name': 'lease-name',
             'start_date': datetime.datetime(2020, 1, 1, 12, 00),
@@ -1396,15 +1390,15 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = datetime.datetime(
                 2020, 1, 1, 13, 00)
-            result = plugin._reallocate(dummy_allocation)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
 
         fake_pool.remove_computehost.assert_called_once_with(
             dummy_reservation['aggregate_id'],
             failed_host['service_name'])
         pickup_hosts.assert_called_once()
         alloc_update.assert_called_once_with(
-            dummy_allocation['id'],
-            {'compute_host_id': new_host['id']})
+            'alloc-1', {'compute_host_id': new_host['id']})
         fake_pool.add_computehost.assert_called_once_with(
             dummy_reservation['aggregate_id'],
             new_host['service_name'],
@@ -1412,18 +1406,13 @@ class TestVirtualInstancePlugin(tests.TestCase):
         mock_delete_reservation_inventory.assert_called_once_with(
             'compute-1', 'rsrv-1')
         mock_update_reservation_inventory.assert_called_once_with(
-            'compute-2', 'rsrv-1', 1)
+            'compute-2', 'rsrv-1', 1, additional=True)
         self.assertEqual(True, result)
 
     def test_reallocate_missing_resources(self):
         plugin = instance_plugin.VirtualInstancePlugin()
         failed_host = {'id': '1',
                        'service_name': 'compute-1'}
-        dummy_allocation = {
-            'id': 'alloc-1',
-            'compute_host_id': failed_host['id'],
-            'reservation_id': 'rsrv-1'
-        }
         dummy_reservation = {
             'id': 'rsrv-1',
             'resource_type': instances.RESOURCE_TYPE,
@@ -1435,7 +1424,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'aggregate_id': 'agg-1',
             'affinity': False,
             'amount': 3,
-            'resource_properties': ''
+            'resource_properties': '',
+            'computehost_allocations': [{
+                'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                'reservation_id': 'rsrv-1'}]
         }
         dummy_lease = {
             'name': 'lease-name',
@@ -1448,15 +1440,187 @@ class TestVirtualInstancePlugin(tests.TestCase):
         lease_get = self.patch(db_api, 'lease_get')
         lease_get.return_value = dummy_lease
         pickup_hosts = self.patch(plugin, 'pickup_hosts')
-        pickup_hosts.return_value = {'added': [], 'removed': []}
+        pickup_hosts.side_effect = mgr_exceptions.NotEnoughHostsAvailable
         alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
 
         with mock.patch.object(datetime, 'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = datetime.datetime(
                 2020, 1, 1, 11, 00)
-            result = plugin._reallocate(dummy_allocation)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
 
         pickup_hosts.assert_called_once()
-        alloc_destroy.assert_called_once_with(dummy_allocation['id'])
+        alloc_destroy.assert_called_once_with('alloc-1')
+        self.assertEqual(False, result)
+
+    def test_reallocate_before_start_affinity(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_host = {'id': '1'}
+        new_host = {'id': '2'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': instances.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': True,
+            'amount': 3,
+            'resource_properties': '',
+            'computehost_allocations': [
+                {'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+                {'id': 'alloc-2', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+            ]
+        }
+        dummy_lease = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
+            'trust_id': 'trust-1'
+        }
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': [new_host['id']], 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 11, 00)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
+
+        pickup_hosts.assert_called_once()
+        update_calls = [mock.call('alloc-1', {'compute_host_id': '2'}),
+                        mock.call('alloc-2', {'compute_host_id': '2'})]
+        alloc_update.assert_has_calls(update_calls)
+        self.assertEqual(True, result)
+
+    def test_reallocate_active_affinity(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_host = {'id': '1',
+                       'service_name': 'compute-1',
+                       'hypervisor_hostname': 'compute-1'}
+        new_host = {'id': '2',
+                    'service_name': 'compute-2',
+                    'hypervisor_hostname': 'compute-2'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': instances.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'active',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': True,
+            'amount': 3,
+            'resource_properties': '',
+            'computehost_allocations': [
+                {'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+                {'id': 'alloc-2', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+            ]
+        }
+        dummy_lease = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
+            'trust_id': 'trust-1'
+        }
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = dummy_reservation
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
+        host_get = self.patch(db_api, 'host_get')
+        host_get.side_effect = [failed_host, new_host]
+        fake_pool = mock.MagicMock()
+        mock_pool = self.patch(nova, 'ReservationPool')
+        mock_pool.return_value = fake_pool
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.return_value = {'added': [new_host['id']], 'removed': []}
+        alloc_update = self.patch(db_api, 'host_allocation_update')
+        mock_delete_reservation_inventory = self.patch(
+            plugin.placement_client, 'delete_reservation_inventory')
+        mock_update_reservation_inventory = self.patch(
+            plugin.placement_client, 'update_reservation_inventory')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 13, 00)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
+
+        fake_pool.remove_computehost.assert_called_once_with(
+            dummy_reservation['aggregate_id'],
+            failed_host['service_name'])
+        pickup_hosts.assert_called_once()
+        update_calls = [mock.call('alloc-1', {'compute_host_id': '2'}),
+                        mock.call('alloc-2', {'compute_host_id': '2'})]
+        alloc_update.assert_has_calls(update_calls)
+        fake_pool.add_computehost.assert_called_once_with(
+            dummy_reservation['aggregate_id'],
+            new_host['service_name'],
+            stay_in=True)
+        mock_delete_reservation_inventory.assert_called_once_with(
+            'compute-1', 'rsrv-1')
+        mock_update_reservation_inventory.assert_called_once_with(
+            'compute-2', 'rsrv-1', 2, additional=True)
+        self.assertEqual(True, result)
+
+    def test_reallocate_missing_resources_with_affinity(self):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        failed_host = {'id': '1',
+                       'service_name': 'compute-1'}
+        dummy_reservation = {
+            'id': 'rsrv-1',
+            'resource_type': instances.RESOURCE_TYPE,
+            'lease_id': 'lease-1',
+            'status': 'pending',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 256,
+            'aggregate_id': 'agg-1',
+            'affinity': True,
+            'amount': 3,
+            'resource_properties': '',
+            'computehost_allocations': [
+                {'id': 'alloc-1', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+                {'id': 'alloc-2', 'compute_host_id': failed_host['id'],
+                 'reservation_id': 'rsrv-1'},
+            ]
+        }
+        dummy_lease = {
+            'name': 'lease-name',
+            'start_date': datetime.datetime(2020, 1, 1, 12, 00),
+            'end_date': datetime.datetime(2020, 1, 2, 12, 00),
+            'trust_id': 'trust-1'
+        }
+        reservation_get = self.patch(db_api, 'reservation_get')
+        reservation_get.return_value = dummy_reservation
+        lease_get = self.patch(db_api, 'lease_get')
+        lease_get.return_value = dummy_lease
+        pickup_hosts = self.patch(plugin, 'pickup_hosts')
+        pickup_hosts.side_effect = mgr_exceptions.NotEnoughHostsAvailable
+        alloc_destroy = self.patch(db_api, 'host_allocation_destroy')
+
+        with mock.patch.object(datetime, 'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = datetime.datetime(
+                2020, 1, 1, 11, 00)
+            result = plugin._heal_reservation(
+                dummy_reservation, list(failed_host.values()))
+
+        pickup_hosts.assert_called_once()
+        destroy_calls = [mock.call('alloc-1'), mock.call('alloc-2')]
+        alloc_destroy.assert_has_calls(destroy_calls)
         self.assertEqual(False, result)
