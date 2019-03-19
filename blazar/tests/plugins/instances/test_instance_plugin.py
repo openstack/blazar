@@ -860,7 +860,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
     def test_update_resources_in_active(self):
         def fake_host_get(host_id):
             return {'service_name': 'host' + host_id[-1],
-                    'hypervisor_hostname': 'host' + host_id[-1]}
+                    'hypervisor_hostname': 'hypvsr' + host_id[-1]}
 
         reservation = {
             'id': 'reservation-id1',
@@ -897,11 +897,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
                 'aggregate-1', 'host' + str(i + 1), stay_in=True)
 
         mock_update_reservation_inventory.assert_any_call(
-            'host1', 'reservation-id1', 1)
+            'hypvsr1', 'reservation-id1', 1)
         mock_update_reservation_inventory.assert_any_call(
-            'host2', 'reservation-id1', 1)
+            'hypvsr2', 'reservation-id1', 1)
         mock_update_reservation_inventory.assert_any_call(
-            'host3', 'reservation-id1', 2)
+            'hypvsr3', 'reservation-id1', 2)
 
     def test_update_reservation(self):
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -1045,7 +1045,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
     def test_on_start(self):
         def fake_host_get(host_id):
             return {'service_name': 'host' + host_id[-1],
-                    'hypervisor_hostname': 'host' + host_id[-1]}
+                    'hypervisor_hostname': 'hypvsr' + host_id[-1]}
 
         self.set_context(context.BlazarContext(project_id='fake-project'))
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -1082,11 +1082,11 @@ class TestVirtualInstancePlugin(tests.TestCase):
                 'aggregate-id1', 'host' + str(i + 1), stay_in=True)
 
         mock_update_reservation_inventory.assert_any_call(
-            'host1', 'reservation-id1', 1)
+            'hypvsr1', 'reservation-id1', 1)
         mock_update_reservation_inventory.assert_any_call(
-            'host2', 'reservation-id1', 1)
+            'hypvsr2', 'reservation-id1', 1)
         mock_update_reservation_inventory.assert_any_call(
-            'host3', 'reservation-id1', 2)
+            'hypvsr3', 'reservation-id1', 2)
 
     def test_on_end(self):
         self.set_context(context.BlazarContext(project_id='fake-project-id'))
@@ -1106,8 +1106,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
 
         mock_host_get = self.patch(db_api, 'host_get')
         mock_host_get.side_effect = [
-            {'service_name': 'host1', 'hypervisor_hostname': 'host1'},
-            {'service_name': 'host2', 'hypervisor_hostname': 'host2'}
+            {'service_name': 'host1', 'hypervisor_hostname': 'hypvsr1'},
+            {'service_name': 'host2', 'hypervisor_hostname': 'hypvsr2'}
         ]
 
         mock_delete_reservation_inventory = self.patch(
@@ -1149,7 +1149,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             "Failed to delete server '%s': %s.", fake_servers[1].id, 'Unknown')
         for i in range(2):
             mock_delete_reservation_inventory.assert_any_call(
-                'host' + str(i + 1), 'reservation-id1')
+                'hypvsr' + str(i + 1), 'reservation-id1')
         mock_cleanup_resources.assert_called_once_with(
             fake_instance_reservation)
         mock_delete_reservation_class.assert_called_once_with(
@@ -1343,10 +1343,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
         plugin = instance_plugin.VirtualInstancePlugin()
         failed_host = {'id': '1',
                        'service_name': 'compute-1',
-                       'hypervisor_hostname': 'compute-1'}
+                       'hypervisor_hostname': 'hypvsr-1'}
         new_host = {'id': '2',
                     'service_name': 'compute-2',
-                    'hypervisor_hostname': 'compute-2'}
+                    'hypervisor_hostname': 'hypvsr-2'}
         dummy_reservation = {
             'id': 'rsrv-1',
             'resource_type': instances.RESOURCE_TYPE,
@@ -1404,9 +1404,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
             new_host['service_name'],
             stay_in=True)
         mock_delete_reservation_inventory.assert_called_once_with(
-            'compute-1', 'rsrv-1')
+            'hypvsr-1', 'rsrv-1')
         mock_update_reservation_inventory.assert_called_once_with(
-            'compute-2', 'rsrv-1', 1, additional=True)
+            'hypvsr-2', 'rsrv-1', 1, additional=True)
         self.assertEqual(True, result)
 
     def test_reallocate_missing_resources(self):
@@ -1506,10 +1506,10 @@ class TestVirtualInstancePlugin(tests.TestCase):
         plugin = instance_plugin.VirtualInstancePlugin()
         failed_host = {'id': '1',
                        'service_name': 'compute-1',
-                       'hypervisor_hostname': 'compute-1'}
+                       'hypervisor_hostname': 'hypvsr-1'}
         new_host = {'id': '2',
                     'service_name': 'compute-2',
-                    'hypervisor_hostname': 'compute-2'}
+                    'hypervisor_hostname': 'hypvsr-2'}
         dummy_reservation = {
             'id': 'rsrv-1',
             'resource_type': instances.RESOURCE_TYPE,
@@ -1571,9 +1571,9 @@ class TestVirtualInstancePlugin(tests.TestCase):
             new_host['service_name'],
             stay_in=True)
         mock_delete_reservation_inventory.assert_called_once_with(
-            'compute-1', 'rsrv-1')
+            'hypvsr-1', 'rsrv-1')
         mock_update_reservation_inventory.assert_called_once_with(
-            'compute-2', 'rsrv-1', 2, additional=True)
+            'hypvsr-2', 'rsrv-1', 2, additional=True)
         self.assertEqual(True, result)
 
     def test_reallocate_missing_resources_with_affinity(self):

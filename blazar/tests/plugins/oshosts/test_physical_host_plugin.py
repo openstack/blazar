@@ -118,8 +118,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_host_id = '1'
         self.fake_host = {
             'id': self.fake_host_id,
-            'hypervisor_hostname': 'foo',
-            'service_name': 'foo',
+            'hypervisor_hostname': 'hypvsr1',
+            'service_name': 'compute1',
             'vcpus': 4,
             'cpu_info': 'foo',
             'hypervisor_type': 'xen',
@@ -218,7 +218,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.get_extra_capabilities.return_value = {}
         host = self.fake_phys_plugin.create_computehost(self.fake_host)
         self.db_host_create.assert_called_once_with(self.fake_host)
-        self.prov_create.assert_called_once_with('foo')
+        self.prov_create.assert_called_once_with('hypvsr1')
         self.assertEqual(self.fake_host, host)
 
     def test_create_host_with_extra_capabilities(self):
@@ -234,7 +234,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_host_create.return_value = self.fake_host
         host = self.fake_phys_plugin.create_computehost(fake_request)
         self.db_host_create.assert_called_once_with(self.fake_host)
-        self.prov_create.assert_called_once_with('foo')
+        self.prov_create.assert_called_once_with('hypvsr1')
         self.db_host_extra_capability_create.assert_called_once_with(fake_capa)
         self.assertEqual(fake_host, host)
 
@@ -273,8 +273,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(db_exceptions.BlazarDBException,
                           self.fake_phys_plugin.create_computehost,
                           self.fake_host)
-        self.prov_create.assert_called_once_with('foo')
-        self.prov_delete.assert_called_once_with('foo')
+        self.prov_create.assert_called_once_with('hypvsr1')
+        self.prov_delete.assert_called_once_with('hypvsr1')
 
     def test_create_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_create(*args, **kwargs):
@@ -380,7 +380,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.delete_computehost(self.fake_host_id)
 
         self.db_host_destroy.assert_called_once_with(self.fake_host_id)
-        self.prov_delete.assert_called_once_with('foo')
+        self.prov_delete.assert_called_once_with('hypvsr1')
         self.get_servers_per_host.assert_called_once_with(
             self.fake_host["hypervisor_hostname"])
 
@@ -2240,7 +2240,7 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
                          self.host_monitor_plugin.project_domain_name)
 
     def test_notification_callback_disabled_true(self):
-        failed_host = {'hypervisor_hostname': 'compute-1'}
+        failed_host = {'hypervisor_hostname': 'hypvsr1'}
         event_type = 'service.update'
         payload = {
             'nova_object.namespace': 'nova',
@@ -2307,7 +2307,7 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
         self.assertEqual({}, result)
 
     def test_notification_callback_recover(self):
-        recovered_host = {'hypervisor_hostname': 'compute-1', 'id': 1}
+        recovered_host = {'hypervisor_hostname': 'hypvsr1', 'id': 1}
         event_type = 'service.update'
         payload = {
             'nova_object.namespace': 'nova',
@@ -2346,10 +2346,10 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_poll_resource_failures_state_down(self):
         hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1',
+             'hypervisor_hostname': 'hypvsr1',
              'reservable': True},
             {'id': '2',
-             'hypervisor_hostname': 'compute-2',
+             'hypervisor_hostname': 'hypvsr2',
              'reservable': True},
         ]
 
@@ -2368,10 +2368,10 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_poll_resource_failures_status_disabled(self):
         hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1',
+             'hypervisor_hostname': 'hypvsr1',
              'reservable': True},
             {'id': '2',
-             'hypervisor_hostname': 'compute-2',
+             'hypervisor_hostname': 'hypvsr2',
              'reservable': True},
         ]
 
@@ -2390,10 +2390,10 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_poll_resource_failures_nothing(self):
         hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1',
+             'hypervisor_hostname': 'hypvsr1',
              'reservable': True},
             {'id': '2',
-             'hypervisor_hostname': 'compute-2',
+             'hypervisor_hostname': 'hypvsr2',
              'reservable': True},
         ]
 
@@ -2412,10 +2412,10 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_poll_resource_failures_recover(self):
         hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1',
+             'hypervisor_hostname': 'hypvsr1',
              'reservable': False},
             {'id': '2',
-             'hypervisor_hostname': 'compute-2',
+             'hypervisor_hostname': 'hypvsr2',
              'reservable': False},
         ]
 
@@ -2434,7 +2434,7 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_handle_failures(self):
         failed_hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1'}
+             'hypervisor_hostname': 'hypvsr1'}
         ]
         host_update = self.patch(db_api, 'host_update')
         heal = self.patch(self.host_monitor_plugin, 'heal')
@@ -2447,7 +2447,7 @@ class PhysicalHostMonitorPluginTestCase(tests.TestCase):
     def test_heal(self):
         failed_hosts = [
             {'id': '1',
-             'hypervisor_hostname': 'compute-1'}
+             'hypervisor_hostname': 'hypvsr1'}
         ]
         reservation_flags = {
             'rsrv-1': {'missing_resources': True}
