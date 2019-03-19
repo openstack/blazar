@@ -15,10 +15,13 @@
 
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
+from neutronclient.common import exceptions as neutron_exceptions
 from neutronclient.v2_0 import client as neutron_client
 
 from oslo_config import cfg
 from oslo_log import log as logging
+
+from blazar.utils.openstack import exceptions
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -55,3 +58,17 @@ class BlazarNeutronClient(object):
                            project_domain_name=project_domain_name)
         sess = session.Session(auth=auth)
         self.neutron = neutron_client.Client(session=sess)
+
+
+class FloatingIPPool(BlazarNeutronClient):
+
+    def __init__(self, network_id, **kwargs):
+        super(FloatingIPPool, self).__init__(**kwargs)
+
+        try:
+            self.neutron.show_network(network_id)
+        except neutron_exceptions.NotFound:
+            LOG.info('Failed to find network %s.', network_id)
+            raise exceptions.FloatingIPNetworkNotFound(network=network_id)
+
+        self.network_id = network_id
