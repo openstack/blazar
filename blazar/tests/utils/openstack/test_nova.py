@@ -16,6 +16,7 @@ import uuid as uuidgen
 
 from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
+import mock
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from novaclient.v2 import availability_zones
@@ -158,7 +159,7 @@ class ReservationPoolTestCase(tests.TestCase):
 
     def _patch_get_aggregate_from_name_or_id(self):
         def get_fake_aggregate(*args):
-            if self.freepool_name in args:
+            if self.freepool_name in args or self.fake_freepool.id in args:
                 return self.fake_freepool
             else:
                 return self.fake_aggregate
@@ -286,7 +287,7 @@ class ReservationPoolTestCase(tests.TestCase):
         check0 = self.nova.aggregates.add_host
         check0.assert_any_call(self.fake_aggregate.id, 'host3')
         check1 = self.nova.aggregates.remove_host
-        check1.assert_any_call(self.fake_aggregate.id, 'host3')
+        check1.assert_any_call(self.fake_freepool.id, 'host3')
 
     def test_add_computehost_with_host_id(self):
         # NOTE(sbauza): Freepool.hosts only contains names of hosts, not UUIDs
@@ -334,6 +335,24 @@ class ReservationPoolTestCase(tests.TestCase):
         self.pool.add_computehost(self.freepool_name, 'host2')
         check = self.nova.aggregates.add_host
         check.assert_called_once_with(self.fake_freepool.id, 'host2')
+
+    def test_add_computehost_revert(self):
+        self._patch_get_aggregate_from_name_or_id()
+        self.fake_freepool.hosts = ['host1', 'host2']
+        self.assertRaises(manager_exceptions.HostNotInFreePool,
+                          self.pool.add_computehost,
+                          'pool', ['host1', 'host2', 'host3'])
+
+        check0 = self.nova.aggregates.add_host
+        check0.assert_has_calls([mock.call(self.fake_aggregate.id, 'host1'),
+                                 mock.call(self.fake_aggregate.id, 'host2'),
+                                 mock.call('freepool', 'host1'),
+                                 mock.call('freepool', 'host2')])
+        check1 = self.nova.aggregates.remove_host
+        check1.assert_has_calls([mock.call(self.fake_freepool.id, 'host1'),
+                                 mock.call(self.fake_freepool.id, 'host2'),
+                                 mock.call(self.fake_aggregate.id, 'host1'),
+                                 mock.call(self.fake_aggregate.id, 'host2')])
 
     def test_remove_computehost_from_freepool(self):
         self._patch_get_aggregate_from_name_or_id()

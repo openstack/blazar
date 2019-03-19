@@ -174,11 +174,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         """Add the hosts in the pool."""
         host_reservation = db_api.host_reservation_get(resource_id)
         pool = nova.ReservationPool()
+        hosts = []
         for allocation in db_api.host_allocation_get_all_by_values(
                 reservation_id=host_reservation['reservation_id']):
             host = db_api.host_get(allocation['compute_host_id'])
-            pool.add_computehost(host_reservation['aggregate_id'],
-                                 host['service_name'])
+            hosts.append(host['service_name'])
+        pool.add_computehost(host_reservation['aggregate_id'], hosts)
 
     def before_end(self, resource_id):
         """Take an action before the end of a lease."""
@@ -665,16 +666,18 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 str(min_hosts) + '-' + str(max_hosts),
                 dates_after['start_date'], dates_after['end_date'])
             if len(host_ids) >= min_hosts:
+                new_hosts = []
                 pool = nova.ReservationPool()
                 for host_id in host_ids:
                     db_api.host_allocation_create(
                         {'compute_host_id': host_id,
                          'reservation_id': reservation_id})
-                    if reservation_status == status.reservation.ACTIVE:
-                        # Add new host into the aggregate.
-                        new_host = db_api.host_get(host_id)
-                        pool.add_computehost(host_reservation['aggregate_id'],
-                                             new_host['service_name'])
+                    new_host = db_api.host_get(host_id)
+                    new_hosts.append(new_host['service_name'])
+                if reservation_status == status.reservation.ACTIVE:
+                    # Add new hosts into the aggregate.
+                    pool.add_computehost(host_reservation['aggregate_id'],
+                                         new_hosts)
             else:
                 raise manager_ex.NotEnoughHostsAvailable()
 

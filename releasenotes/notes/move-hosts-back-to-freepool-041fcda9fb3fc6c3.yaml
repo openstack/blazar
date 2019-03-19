@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    If a host fails to be moved to a host aggregate while starting a
+    reservation, any host previously moved into the same aggregate is now moved
+    back to the freepool. This helps to prevent failures to start future leases
+    allocating the same hosts.
