@@ -828,3 +828,51 @@ def host_extra_capability_get_all_per_name(host_id, capability_name):
     with session.begin():
         query = _host_extra_capability_get_all_per_host(session, host_id)
         return query.filter_by(capability_name=capability_name).all()
+
+
+# Floating IP
+def _floatingip_get(session, floatingip_id):
+    query = model_query(models.FloatingIP, session)
+    return query.filter_by(id=floatingip_id).first()
+
+
+def _floatingip_get_all(session):
+    query = model_query(models.FloatingIP, session)
+    return query
+
+
+def floatingip_get(floatingip_id):
+    return _floatingip_get(get_session(), floatingip_id)
+
+
+def floatingip_list():
+    return model_query(models.FloatingIP, get_session()).all()
+
+
+def floatingip_create(values):
+    values = values.copy()
+    floatingip = models.FloatingIP()
+    floatingip.update(values)
+
+    session = get_session()
+    with session.begin():
+        try:
+            floatingip.save(session=session)
+        except common_db_exc.DBDuplicateEntry as e:
+            # raise exception about duplicated columns (e.columns)
+            raise db_exc.BlazarDBDuplicateEntry(
+                model=floatingip.__class__.__name__, columns=e.columns)
+
+    return floatingip_get(floatingip.id)
+
+
+def floatingip_destroy(floatingip_id):
+    session = get_session()
+    with session.begin():
+        floatingip = _floatingip_get(session, floatingip_id)
+
+        if not floatingip:
+            # raise not found error
+            raise db_exc.BlazarDBNotFound(id=floatingip_id, model='FloatingIP')
+
+        session.delete(floatingip)
