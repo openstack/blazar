@@ -9,3 +9,4 @@ Blazar project.
 
 .. include:: leases.inc
 .. include:: hosts.inc
+.. include:: floatingips.inc

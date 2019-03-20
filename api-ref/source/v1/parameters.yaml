@@ -1,4 +1,10 @@
 # variables in path
+floatingip_id_path:
+  description: |
+    The ID of the floating IP.
+  in: path
+  required: true
+  type: string
 host_id_path:
   description: |
     The ID of the host.
@@ -96,6 +102,61 @@ events_optional:
   in: body
   required: false
   type: array
+
+## parameters for floating IP
+
+floating_ip_address:
+  description:
+    The floating IP address.
+  in: body
+  required: true
+  type: string
+floating_ip_address_create:
+  description:
+    The floating IP address. The IP must be the out side of allocation_pools
+    and within its subnet's CIDR network.
+  in: body
+  required: true
+  type: string
+floating_network_id:
+  description:
+    An external network ID the floating IP belongs to.
+  in: body
+  required: true
+  type: string
+floating_subnet_id:
+  description: |
+    An external subnet ID the floating IP belongs to.
+  in: body
+  required: true
+  type: boolean
+floatingip:
+  description: |
+    A ``floatingip`` object.
+  in: body
+  required: true
+  type: object
+floatingip_id:
+  description:
+    The ID of the floating ip resources.
+  in: body
+  required: true
+  type: string
+floatingip_reservable:
+  description: |
+    The flag which represents whether the floating IP is reservable or not.
+  in: body
+  required: true
+  type: boolean
+floatingips:
+  description: |
+    A list of ``floatingip`` objects.
+  in: body
+  required: true
+  type: array
+
+## parameters for host
+
 host:
   description: |
     A ``host`` object.
@@ -197,6 +258,9 @@ hosts:
   in: body
   required: true
   type: array
+
+## parameters for leases
+
 lease:
   description: |
     A ``lease`` object.

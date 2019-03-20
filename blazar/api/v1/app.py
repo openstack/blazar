@@ -22,10 +22,9 @@ from keystonemiddleware import auth_token
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import debug
+from stevedore import enabled
 from werkzeug import exceptions as werkzeug_exceptions
 
-from blazar.api.v1.leases import v1_0 as leases_api_v1_0
-from blazar.api.v1.oshosts import v1_0 as host_api_v1_0
 from blazar.api.v1 import utils as api_utils
 
 
@@ -69,14 +68,19 @@ def make_app():
 
     app.route('/', methods=['GET'])(version_list)
     app.route('/versions', methods=['GET'])(version_list)
-    app.register_blueprint(leases_api_v1_0.rest, url_prefix='/v1')
 
     LOG.debug("List of plugins: %s", cfg.CONF.manager.plugins)
-    # TODO(sbauza) : Change this whole crap by removing hardcoded values and
-    #   maybe using stevedore for achieving this
-    if (cfg.CONF.manager.plugins
-            and 'physical.host.plugin' in cfg.CONF.manager.plugins):
-        app.register_blueprint(host_api_v1_0.rest, url_prefix='/v1/os-hosts')
+
+    plugins = cfg.CONF.manager.plugins + ['leases']
+    extension_manager = enabled.EnabledExtensionManager(
+        check_func=lambda ext: ext.name in plugins,
+        namespace='blazar.api.v1.extensions',
+        invoke_on_load=False
+        )
+
+    for ext in extension_manager.extensions:
+        bp = ext.plugin()
+        app.register_blueprint(bp, url_prefix=bp.url_prefix)
 
     for code in werkzeug_exceptions.default_exceptions:
         app.register_error_handler(code, make_json_error)
