@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from oslo_utils import netutils
 from oslo_utils import strutils
 
+from blazar import context
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
 from blazar.db import utils as db_utils
@@ -95,10 +96,27 @@ class FloatingIpPlugin(base.BasePlugin):
         return fip_reservation['id']
 
     def on_start(self, resource_id):
-        raise NotImplementedError
+        fip_reservation = db_api.fip_reservation_get(resource_id)
+        allocations = db_api.fip_allocation_get_all_by_values(
+            reservation_id=fip_reservation['reservation_id'])
+
+        ctx = context.current()
+        fip_pool = neutron.FloatingIPPool(fip_reservation['network_id'])
+        for alloc in allocations:
+            fip = db_api.floatingip_get(alloc['floatingip_id'])
+            fip_pool.create_reserved_floatingip(
+                fip['subnet_id'], fip['floating_ip_address'],
+                ctx.project_id, fip_reservation['reservation_id'])
 
     def on_end(self, resource_id):
-        raise NotImplementedError
+        fip_reservation = db_api.fip_reservation_get(resource_id)
+        allocations = db_api.fip_allocation_get_all_by_values(
+            reservation_id=fip_reservation['reservation_id'])
+
+        fip_pool = neutron.FloatingIPPool(fip_reservation['network_id'])
+        for alloc in allocations:
+            fip = db_api.floatingip_get(alloc['floatingip_id'])
+            fip_pool.delete_reserved_floatingip(fip['floating_ip_address'])
 
     def _matching_fips(self, network_id, fip_addresses, amount,
                        start_date, end_date):

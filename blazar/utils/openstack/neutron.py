@@ -101,3 +101,43 @@ class FloatingIPPool(BlazarNeutronClient):
                 return subnet
 
         raise exceptions.FloatingIPSubnetNotFound(fip=floatingip)
+
+    def create_reserved_floatingip(self, subnet_id, address, project_id,
+                                   reservation_id):
+        body = {
+            'floatingip': {
+                'floating_network_id': self.network_id,
+                'subnet_id': subnet_id,
+                'floating_ip_address': address,
+                'project_id': project_id
+            }
+        }
+        fip = self.neutron.create_floatingip(body)['floatingip']
+        body = {
+            'tags': ['blazar', 'reservation:%s' % reservation_id]
+        }
+        self.neutron.replace_tag('floatingips', fip['id'], body)
+
+    def delete_reserved_floatingip(self, address):
+        query = {
+            'floating_ip_address': address,
+            'floating_network_id': self.network_id
+        }
+        fips = self.neutron.list_floatingips(**query)['floatingips']
+        if not fips:
+            # The floating ip address already deleted by the user.
+            return None
+
+        fip = next(iter(fips))
+        if fip['port_id']:
+            # Deassociate the floating ip from the attached port because
+            # the delete floatingip API deletes both the floating ip and
+            # associated port.
+            body = {
+                'floatingip': {
+                    'port_id': None,
+                }
+            }
+            self.neutron.update_floatingip(fip['id'], body)
+
+        self.neutron.delete_floatingip(fip['id'])

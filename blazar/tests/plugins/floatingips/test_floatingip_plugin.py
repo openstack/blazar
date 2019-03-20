@@ -17,6 +17,7 @@ import datetime
 import mock
 from oslo_config import cfg
 
+from blazar import context
 from blazar.db import api as db_api
 from blazar.db import utils as db_utils
 from blazar.manager import exceptions as mgr_exceptions
@@ -290,6 +291,65 @@ class FloatingIpPluginTest(tests.TestCase):
             fip_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
+
+    def test_on_start(self):
+        fip_reservation_get = self.patch(self.db_api, 'fip_reservation_get')
+        fip_reservation_get.return_value = {
+            'reservation_id': 'reservation-id1',
+            'network_id': 'network-id1'
+        }
+        fip_allocation_get_all_by_values = self.patch(
+            self.db_api, 'fip_allocation_get_all_by_values'
+        )
+        fip_allocation_get_all_by_values.return_value = [{
+            'floatingip_id': 'fip-id',
+        }]
+        fip_get = self.patch(self.db_api, 'floatingip_get')
+        fip_get.return_value = {
+            'network_id': 'net-id',
+            'subnet_id': 'subnet-id',
+            'floating_ip_address': '172.2.24.100'
+        }
+        self.set_context(context.BlazarContext(project_id='fake-project-id'))
+        m = mock.MagicMock()
+        self.fip_pool.return_value = m
+
+        fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        fip_plugin.on_start('resource-id1')
+
+        self.fip_pool.assert_called_once_with('network-id1')
+        m.create_reserved_floatingip.assert_called_once_with('subnet-id',
+                                                             '172.2.24.100',
+                                                             'fake-project-id',
+                                                             'reservation-id1')
+
+    def test_on_end(self):
+        fip_reservation_get = self.patch(self.db_api, 'fip_reservation_get')
+        fip_reservation_get.return_value = {
+            'reservation_id': 'reservation-id1',
+            'network_id': 'network-id1'
+        }
+        fip_allocation_get_all_by_values = self.patch(
+            self.db_api, 'fip_allocation_get_all_by_values'
+        )
+        fip_allocation_get_all_by_values.return_value = [{
+            'floatingip_id': 'fip-id',
+        }]
+        fip_get = self.patch(self.db_api, 'floatingip_get')
+        fip_get.return_value = {
+            'network_id': 'net-id',
+            'subnet_id': 'subnet-id',
+            'floating_ip_address': '172.2.24.100'
+        }
+        self.set_context(context.BlazarContext(project_id='fake-project-id'))
+        m = mock.MagicMock()
+        self.fip_pool.return_value = m
+
+        fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        fip_plugin.on_end('resource-id1')
+
+        self.fip_pool.assert_called_once_with('network-id1')
+        m.delete_reserved_floatingip.assert_called_once_with('172.2.24.100')
 
     def test_matching_fips_not_allocated_fips(self):
         def fip_allocation_get_all_by_values(**kwargs):
