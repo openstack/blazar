@@ -1,0 +1,16 @@
+---
+features:
+  - |
+    Added a new resource plugin supporting floating IPs. This plugin enables
+    users to reserve floating IPs from Neutron. To try the plugin, add
+    ``virtual:floatingip`` to the ``[manager]/plugins`` configuration option in
+    ``blazar.conf``. For the API schema, see details of the APIs in the `Lease
+    API reference`_ and `Floating IP API reference`_.
+
+    Note that this feature is available as a preview but is not yet complete.
+    The Blazar CLI does not yet support it, documentation is incomplete, and
+    the Update Lease API is not implemented. Floating IP reservation will be
+    fully completed in the next release.
+
+    .. _`Lease API reference`: https://developer.openstack.org/api-ref/reservation/v1/index.html#leases
+    .. _`Floating IP API reference`: https://developer.openstack.org/api-ref/reservation/v1/index.html#floating-ips
