@@ -27,7 +27,7 @@ class API(object):
         """List all existing networks."""
         return self.manager_rpcapi.list_networks()
 
-    @policy.authorize('networks', 'create')
+    @policy.authorize('networks', 'post')
     @trusts.use_trust_auth()
     def create_network(self, data):
         """Create new network.
@@ -47,7 +47,7 @@ class API(object):
         """
         return self.manager_rpcapi.get_network(network_id)
 
-    @policy.authorize('networks', 'update')
+    @policy.authorize('networks', 'put')
     def update_network(self, network_id, data):
         """Update network. Only name changing may be proceeded.
 
