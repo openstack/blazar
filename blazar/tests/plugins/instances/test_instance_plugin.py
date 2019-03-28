@@ -142,6 +142,17 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                                   'server_group_id': 2,
                                                   'aggregate_id': 3})
 
+    @ddt.data("abc", 2, "2")
+    def test_affinity_error(self, value):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        inputs = self.get_input_values(2, 4018, 10, 1, value,
+                                       '2030-01-01 08:00', '2030-01-01 08:00',
+                                       'lease-1', '')
+        self.assertRaises(mgr_exceptions.MalformedParameter,
+                          plugin.reserve_resource, 'reservation_id', inputs)
+        self.assertRaises(mgr_exceptions.MalformedParameter,
+                          plugin.update_reservation, 'reservation_id', inputs)
+
     @ddt.data(-1, 0, '0', 'one')
     def test_error_with_amount(self, value):
         plugin = instance_plugin.VirtualInstancePlugin()
@@ -400,7 +411,8 @@ class TestVirtualInstancePlugin(tests.TestCase):
         expected_query = ['vcpus >= 2', 'memory_mb >= 2048', 'local_gb >= 100']
         mock_host_get_query.assert_called_once_with(expected_query)
 
-    def test_pickup_host_with_no_affinity(self):
+    @ddt.data('None', 'none', None)
+    def test_pickup_host_with_no_affinity(self, value):
         def fake_get_reservation_by_host(host_id, start, end):
             return []
 
@@ -435,7 +447,7 @@ class TestVirtualInstancePlugin(tests.TestCase):
             'memory_mb': 4096,
             'disk_gb': 200,
             'amount': 2,
-            'affinity': None,
+            'affinity': value,
             'resource_properties': '',
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)

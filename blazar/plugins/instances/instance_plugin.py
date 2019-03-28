@@ -43,6 +43,8 @@ RESERVATION_PREFIX = 'reservation'
 FLAVOR_EXTRA_SPEC = "aggregate_instance_extra_specs:" + RESERVATION_PREFIX
 INSTANCE_DELETION_TIMEOUT = 10 * 60 * 1000  # 10 minutes
 
+NONE_VALUES = ('None', 'none', None)
+
 
 class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     """Plugin for virtual instance resources."""
@@ -398,6 +400,12 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                     values['amount'], "amount", 1, db_api.DB_MAX_INT)
             except ValueError as e:
                 raise mgr_exceptions.MalformedParameter(six.text_type(e))
+
+        if 'affinity' in values:
+            if (values['affinity'] not in NONE_VALUES and
+                    not strutils.is_valid_boolstr(values['affinity'])):
+                raise mgr_exceptions.MalformedParameter(
+                    param='affinity (must be a bool value or None)')
 
     def reserve_resource(self, reservation_id, values):
         self._check_missing_reservation_params(values)
