@@ -58,7 +58,7 @@ nova_opts = [
                 default=True,
                 help='A flag to store original availability zone'),
     cfg.StrOpt('endpoint_override',
-                help='Nova endpoint URL to use')
+               help='Nova endpoint URL to use')
 ]
 
 
