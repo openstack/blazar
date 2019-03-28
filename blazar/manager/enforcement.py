@@ -21,6 +21,7 @@ import redis
 
 from blazar import exceptions as common_ex
 from blazar.manager import exceptions
+from blazar.plugins.floatingips import billrate as floatingip_billrate
 from blazar.plugins.networks import billrate as network_billrate
 from blazar.plugins.oshosts import billrate
 from blazar.utils.openstack import keystone
@@ -292,12 +293,14 @@ class UsageEnforcer(object):
 
     def check_usage_against_allocation(self, lease_values,
                                        allocated_host_ids=None,
-                                       allocated_network_ids=None):
+                                       allocated_network_ids=None,
+                                       allocated_floatingip_ids=None):
         """Check if we have enough available SUs for this reservation
 
         Raises a BillingError if we don't have enough available SUs. If
-        allocated_host_ids or allocated_network_ids is set and there are enough
-        SUs, it increases the encumbered value in Redis.
+        allocated_host_ids, allocated_network_ids, or allocated_floatingip_ids
+        is set and there are enough SUs, it increases the encumbered value in
+        Redis.
         """
         if not CONF.enforcement.usage_enforcement:
             pass
@@ -317,6 +320,10 @@ class UsageEnforcer(object):
             total_su_factor = sum(
                 network_billrate.network_billrate(network_id)
                 for network_id in allocated_network_ids)
+        elif allocated_floatingip_ids is not None:
+            total_su_factor = sum(
+                floatingip_billrate.floatingip_billrate(floatingip_id)
+                for floatingip_id in allocated_floatingip_ids)
         else:
             total_su_factor = lease_values['max']
         try:
@@ -330,7 +337,8 @@ class UsageEnforcer(object):
                     'Reservation for project {} would spend {:.2f} SUs, '
                     'only {:.2f} left'.format(
                         project_enforcement_id, requested, left))
-            if allocated_host_ids or allocated_network_ids:
+            if (allocated_host_ids or allocated_network_ids or
+                    allocated_floatingip_ids):
                 LOG.info('Increasing encumbered for project {} by {:.2f} '
                          '({:.2f} hours @ {:.2f} SU/hr)'.format(
                              project_enforcement_id, requested,
@@ -487,6 +495,11 @@ class UsageEnforcer(object):
         elif 'network_id' in allocations[0]:
             return sum(
                 network_billrate.network_billrate(a['network_id'])
+                for a in allocations
+            )
+        elif 'floatingip_id' in allocations[0]:
+            return sum(
+                floatingip_billrate.floatingip_billrate(a['floatingip_id'])
                 for a in allocations
             )
         else:

@@ -45,6 +45,13 @@ class FloatingIpPluginTest(tests.TestCase):
         self.db_utils = db_utils
         self.fip_pool = self.patch(neutron, 'FloatingIPPool')
 
+        self.fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        self.usage_enforcer = self.patch(self.fip_plugin, 'usage_enforcer')
+        self.check_usage_against_allocation = self.patch(
+            self.usage_enforcer, 'check_usage_against_allocation')
+        self.release_encumbered = self.patch(
+            self.usage_enforcer, 'release_encumbered')
+
     def test_create_floatingip(self):
         m = mock.MagicMock()
         m.fetch_subnet.return_value = {'id': 'subnet-id'}
@@ -65,8 +72,7 @@ class FloatingIpPluginTest(tests.TestCase):
         }
         expected = fip_row
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        ret = fip_plugin.create_floatingip(data)
+        ret = self.fip_plugin.create_floatingip(data)
 
         self.assertDictEqual(expected, ret)
         m.fetch_subnet.assert_called_once_with('172.24.4.100')
@@ -80,9 +86,8 @@ class FloatingIpPluginTest(tests.TestCase):
         m.fetch_subnet.side_effect = opst_exceptions.NeutronUsesFloatingIP()
         self.fip_pool.return_value = m
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(opst_exceptions.NeutronUsesFloatingIP,
-                          fip_plugin.create_floatingip,
+                          self.fip_plugin.create_floatingip,
                           {'floating_ip_address': 'invalid-ip',
                            'floating_network_id': 'id'})
 
@@ -99,8 +104,7 @@ class FloatingIpPluginTest(tests.TestCase):
 
         expected = fip_row
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        ret = fip_plugin.get_floatingip('fip-id')
+        ret = self.fip_plugin.get_floatingip('fip-id')
 
         self.assertDictEqual(expected, ret)
         patch_fip_get.assert_called_once_with('fip-id')
@@ -109,9 +113,8 @@ class FloatingIpPluginTest(tests.TestCase):
         patch_fip_get = self.patch(db_api, 'floatingip_get')
         patch_fip_get.return_value = None
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(mgr_exceptions.FloatingIPNotFound,
-                          fip_plugin.get_floatingip, 'fip-id')
+                          self.fip_plugin.get_floatingip, 'fip-id')
 
         patch_fip_get.assert_called_once_with('fip-id')
 
@@ -128,8 +131,7 @@ class FloatingIpPluginTest(tests.TestCase):
 
         expected = fip_rows
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        ret = fip_plugin.list_floatingip()
+        ret = self.fip_plugin.list_floatingip()
 
         self.assertListEqual(expected, ret)
         patch_fip_list.assert_called_once_with()
@@ -149,8 +151,7 @@ class FloatingIpPluginTest(tests.TestCase):
         patch_fip_alloc.return_value = []
         patch_fip_destroy = self.patch(db_api, 'floatingip_destroy')
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        fip_plugin.delete_floatingip('fip-id')
+        self.fip_plugin.delete_floatingip('fip-id')
 
         patch_fip_get.assert_called_once_with('fip-id')
         patch_fip_alloc.assert_called_once_with(floatingip_id='fip-id')
@@ -175,22 +176,26 @@ class FloatingIpPluginTest(tests.TestCase):
                 'reservation_id': 'reservations-id1'
             }
         ]
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(mgr_exceptions.CantDeleteFloatingIP,
-                          fip_plugin.delete_floatingip,
+                          self.fip_plugin.delete_floatingip,
                           'fip-id1')
 
     def test_delete_floatingip_with_no_exist(self):
         patch_fip_get = self.patch(db_api, 'floatingip_get')
         patch_fip_get.return_value = None
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(mgr_exceptions.FloatingIPNotFound,
-                          fip_plugin.delete_floatingip,
+                          self.fip_plugin.delete_floatingip,
                           'non-exists-id')
 
     def test_create_reservation_fips_available(self):
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        lease = {
+            'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'user_id': 'fake-user-id',
+            'project_id': 'fake-project-id',
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = lease
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
@@ -199,13 +204,13 @@ class FloatingIpPluginTest(tests.TestCase):
             'resource_type': plugin.RESOURCE_TYPE,
             'amount': 2
         }
-        matching_fips = self.patch(fip_plugin, '_matching_fips')
+        matching_fips = self.patch(self.fip_plugin, '_matching_fips')
         matching_fips.return_value = ['fip1', 'fip2']
         fip_reservation_create = self.patch(self.db_api,
                                             'fip_reservation_create')
         fip_allocation_create = self.patch(
             self.db_api, 'fip_allocation_create')
-        fip_plugin.reserve_resource(
+        self.fip_plugin.reserve_resource(
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_values = {
@@ -227,7 +232,13 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_allocation_create.assert_has_calls(calls)
 
     def test_create_reservation_fips_with_required(self):
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
+        lease = {
+            'id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'user_id': 'fake-user-id',
+            'project_id': 'fake-project-id',
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = lease
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
             'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
@@ -237,7 +248,7 @@ class FloatingIpPluginTest(tests.TestCase):
             'amount': 2,
             'required_floatingips': ['172.24.4.100']
         }
-        matching_fips = self.patch(fip_plugin, '_matching_fips')
+        matching_fips = self.patch(self.fip_plugin, '_matching_fips')
         matching_fips.return_value = ['fip1', 'fip2']
         fip_reservation_create = self.patch(self.db_api,
                                             'fip_reservation_create')
@@ -245,7 +256,7 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_allocation_create = self.patch(
             self.db_api, 'fip_allocation_create')
         required_addr_create = self.patch(self.db_api, 'required_fip_create')
-        fip_plugin.reserve_resource(
+        self.fip_plugin.reserve_resource(
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_values = {
@@ -279,10 +290,9 @@ class FloatingIpPluginTest(tests.TestCase):
             'end_date': datetime.datetime(2017, 3, 2, 20, 0),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(
             mgr_exceptions.MissingParameter,
-            fip_plugin.reserve_resource,
+            self.fip_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
@@ -296,10 +306,9 @@ class FloatingIpPluginTest(tests.TestCase):
             'end_date': datetime.datetime(2017, 3, 2, 20, 0),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(
             mgr_exceptions.InvalidIPFormat,
-            fip_plugin.reserve_resource,
+            self.fip_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
@@ -313,10 +322,9 @@ class FloatingIpPluginTest(tests.TestCase):
             'end_date': datetime.datetime(2017, 3, 2, 20, 0),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         self.assertRaises(
             mgr_exceptions.TooLongFloatingIPs,
-            fip_plugin.reserve_resource,
+            self.fip_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
@@ -753,8 +761,7 @@ class FloatingIpPluginTest(tests.TestCase):
         m = mock.MagicMock()
         self.fip_pool.return_value = m
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        fip_plugin.on_start('resource-id1')
+        self.fip_plugin.on_start('resource-id1')
 
         self.fip_pool.assert_called_once_with('network-id1')
         m.create_reserved_floatingip.assert_called_once_with('subnet-id',
@@ -763,6 +770,17 @@ class FloatingIpPluginTest(tests.TestCase):
                                                              'reservation-id1')
 
     def test_on_end(self):
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = {
+            'id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'trust_id': 'exxee111qwwwwe'
+        }
+        reservation_get = self.patch(self.db_api, 'reservation_get')
+        reservation_get.return_value = {
+            'id': 'reservation-id1',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'status': 'active'
+        }
         fip_reservation_get = self.patch(self.db_api, 'fip_reservation_get')
         fip_reservation_get.return_value = {
             'reservation_id': 'reservation-id1',
@@ -784,8 +802,7 @@ class FloatingIpPluginTest(tests.TestCase):
         m = mock.MagicMock()
         self.fip_pool.return_value = m
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        fip_plugin.on_end('resource-id1')
+        self.fip_plugin.on_end('resource-id1')
 
         self.fip_pool.assert_called_once_with('network-id1')
         m.delete_reserved_floatingip.assert_called_once_with('172.2.24.100')
@@ -795,7 +812,6 @@ class FloatingIpPluginTest(tests.TestCase):
             if kwargs['floatingip_id'] == 'fip1':
                 return [{'id': 'allocation-id1'}]
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         fip_get = self.patch(self.db_api, 'reservable_fip_get_all_by_queries')
         fip_get.return_value = [
             {'id': 'fip1', 'floating_ip_address': '172.24.4.101'},
@@ -809,7 +825,7 @@ class FloatingIpPluginTest(tests.TestCase):
             (datetime.datetime(2013, 12, 19, 20, 0),
              datetime.datetime(2013, 12, 19, 21, 0)),
         ]
-        result = fip_plugin._matching_fips(
+        result = self.fip_plugin._matching_fips(
             'network-id', [], 2,
             datetime.datetime(2013, 12, 19, 20, 0),
             datetime.datetime(2013, 12, 19, 21, 0))
@@ -819,7 +835,6 @@ class FloatingIpPluginTest(tests.TestCase):
         def fip_allocation_get_all_by_values(**kwargs):
             return [{'id': kwargs['floatingip_id']}]
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         fip_get = self.patch(self.db_api, 'reservable_fip_get_all_by_queries')
         fip_get.return_value = [
             {'id': 'fip1', 'floating_ip_address': '172.24.4.101'},
@@ -833,7 +848,7 @@ class FloatingIpPluginTest(tests.TestCase):
             (datetime.datetime(2013, 12, 19, 20, 0),
              datetime.datetime(2013, 12, 19, 21, 0)),
         ]
-        result = fip_plugin._matching_fips(
+        result = self.fip_plugin._matching_fips(
             'network-id', [], 3,
             datetime.datetime(2013, 12, 19, 20, 0),
             datetime.datetime(2013, 12, 19, 21, 0))
@@ -844,7 +859,6 @@ class FloatingIpPluginTest(tests.TestCase):
             if kwargs['floatingip_id'] == 'fip1':
                 return [{'id': 'allocation-id1'}]
 
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         fip_get = self.patch(self.db_api, 'reservable_fip_get_all_by_queries')
         fip_get.return_value = [
             {'id': 'fip1', 'floating_ip_address': '172.24.4.101'},
@@ -859,7 +873,7 @@ class FloatingIpPluginTest(tests.TestCase):
             (datetime.datetime(2013, 12, 19, 20, 0),
              datetime.datetime(2013, 12, 19, 21, 0)),
         ]
-        result = fip_plugin._matching_fips(
+        result = self.fip_plugin._matching_fips(
             'network-id', ['172.24.4.102'], 4,
             datetime.datetime(2013, 12, 19, 20, 0),
             datetime.datetime(2013, 12, 19, 21, 0))
@@ -893,8 +907,7 @@ class FloatingIpPluginTest(tests.TestCase):
              datetime.datetime(2013, 12, 19, 21, 0)
              + datetime.timedelta(minutes=5))
         ]
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
-        result = fip_plugin._matching_fips(
+        result = self.fip_plugin._matching_fips(
             'network-id', [], 3,
             datetime.datetime(2013, 12, 19, 20, 0),
             datetime.datetime(2013, 12, 19, 21, 0))
@@ -910,13 +923,12 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_get.assert_has_calls(calls)
 
     def test_matching_fips_not_matching(self):
-        fip_plugin = floatingip_plugin.FloatingIpPlugin()
         fip_get = self.patch(
             self.db_api,
             'reservable_fip_get_all_by_queries')
         fip_get.return_value = []
         self.assertRaises(mgr_exceptions.NotEnoughFloatingIPAvailable,
-                          fip_plugin._matching_fips,
+                          self.fip_plugin._matching_fips,
                           'network-id', [], 2,
                           datetime.datetime(2013, 12, 19, 20, 0),
                           datetime.datetime(2013, 12, 19, 21, 0))

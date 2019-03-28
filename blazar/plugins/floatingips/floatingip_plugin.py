@@ -32,7 +32,14 @@ from blazar.utils.openstack import neutron
 from blazar.utils import plugins as plugins_utils
 
 
+plugin_opts = [
+    cfg.FloatOpt('billrate',
+                 default=1.0,
+                 help='Bill rate for all floating IPs'),
+]
+
 CONF = cfg.CONF
+CONF.register_opts(plugin_opts, group=plugin.RESOURCE_TYPE)
 LOG = logging.getLogger(__name__)
 
 
@@ -42,6 +49,13 @@ class FloatingIpPlugin(base.BasePlugin):
     resource_type = plugin.RESOURCE_TYPE
     title = 'Floating IP Plugin'
     description = 'This plugin creates and assigns floating IPs.'
+
+    def __init__(self):
+        super(FloatingIpPlugin, self).__init__()
+        self.usage_enforcer = None
+
+    def set_usage_enforcer(self, usage_enforcer):
+        self.usage_enforcer = usage_enforcer
 
     def check_params(self, values):
         if 'network_id' not in values:
@@ -177,6 +191,16 @@ class FloatingIpPlugin(base.BasePlugin):
                                              values['start_date'],
                                              values['end_date'])
 
+        # NOTE(priteau): Check if we have enough available SUs for this
+        # reservation. This takes into account the su_factor of each allocated
+        # network, if present.
+        lease = db_api.lease_get(values['lease_id'])
+        try:
+            self.usage_enforcer.check_usage_against_allocation(
+                lease, allocated_floatingip_ids=floatingip_ids)
+        except manager_ex.RedisConnectionError:
+            pass
+
         floatingip_rsrv_values = {
             'reservation_id': reservation_id,
             'network_id': values['network_id'],
@@ -261,6 +285,15 @@ class FloatingIpPlugin(base.BasePlugin):
         for alloc in allocations:
             fip = db_api.floatingip_get(alloc['floatingip_id'])
             fip_pool.delete_reserved_floatingip(fip['floating_ip_address'])
+
+        reservation = db_api.reservation_get(
+            fip_reservation['reservation_id'])
+        lease = db_api.lease_get(reservation['lease_id'])
+        try:
+            self.usage_enforcer.release_encumbered(
+                lease, reservation, allocations)
+        except manager_ex.RedisConnectionError:
+            pass
 
     def _matching_fips(self, network_id, fip_addresses, amount,
                        start_date, end_date):
