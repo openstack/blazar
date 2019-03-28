@@ -529,6 +529,9 @@ class ManagerService(service_utils.RPCServer):
                 if resource_type != reservation['resource_type']:
                     raise exceptions.CantUpdateParameter(
                         param='resource_type')
+
+                if reservation['resource_type'] == 'virtual:floatingip':
+                    raise exceptions.CantUpdateFloatingIPReservation()
                 self.plugins[resource_type].update_reservation(
                     reservation['id'], v)
 
