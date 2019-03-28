@@ -194,9 +194,23 @@ def _reservation_destroy(session, reservation):
     if reservation.computehost_reservation:
         reservation.computehost_reservation.soft_delete(session=session)
 
+    if reservation.network_reservation:
+        reservation.network_reservation.soft_delete(session=session)
+
+    if reservation.floatingip_reservation:
+        reservation.floatingip_reservation.soft_delete(session=session)
+
     if reservation.computehost_allocations:
         for computehost_allocation in reservation.computehost_allocations:
             computehost_allocation.soft_delete(session=session)
+
+    if reservation.network_allocations:
+        for network_allocation in reservation.network_allocations:
+            network_allocation.soft_delete(session=session)
+
+    if reservation.floatingip_allocations:
+        for floatingip_allocation in reservation.floatingip_allocations:
+            floatingip_allocation.soft_delete(session=session)
 
     reservation.soft_delete(session=session)
 

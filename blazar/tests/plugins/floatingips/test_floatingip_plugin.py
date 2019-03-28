@@ -790,6 +790,7 @@ class FloatingIpPluginTest(tests.TestCase):
             self.db_api, 'fip_allocation_get_all_by_values'
         )
         fip_allocation_get_all_by_values.return_value = [{
+            'id': 'alloc-id1',
             'floatingip_id': 'fip-id',
         }]
         fip_get = self.patch(self.db_api, 'floatingip_get')
@@ -801,11 +802,14 @@ class FloatingIpPluginTest(tests.TestCase):
         self.set_context(context.BlazarContext(project_id='fake-project-id'))
         m = mock.MagicMock()
         self.fip_pool.return_value = m
+        patch_fip_allocation_destroy = self.patch(
+            db_api, 'fip_allocation_destroy')
 
         self.fip_plugin.on_end('resource-id1')
 
         self.fip_pool.assert_called_once_with('network-id1')
         m.delete_reserved_floatingip.assert_called_once_with('172.2.24.100')
+        patch_fip_allocation_destroy.assert_called_once_with('alloc-id1')
 
     def test_matching_fips_not_allocated_fips(self):
         def fip_allocation_get_all_by_values(**kwargs):
