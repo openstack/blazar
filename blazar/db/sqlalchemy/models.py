@@ -272,7 +272,7 @@ class ComputeHostExtraCapability(mb.BlazarBase):
 
 
 # Floating IP
-class FloatingIPReservation(mb.BlazarBase):
+class FloatingIPReservation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Description
 
     Specifies resources asked by reservation from
@@ -297,7 +297,7 @@ class FloatingIPReservation(mb.BlazarBase):
         return d
 
 
-class RequiredFloatingIP(mb.BlazarBase):
+class RequiredFloatingIP(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """A table for a requested Floating IP.
 
     Keeps an user requested floating IP address in a floating IP reservation.
@@ -310,7 +310,7 @@ class RequiredFloatingIP(mb.BlazarBase):
         sa.String(36), sa.ForeignKey('floatingip_reservations.id'))
 
 
-class FloatingIPAllocation(mb.BlazarBase):
+class FloatingIPAllocation(mb.BlazarBase, mb.SoftDeleteMixinWithUuid):
     """Mapping between FloatingIP, FloatingIPReservation and Reservation."""
 
     __tablename__ = 'floatingip_allocations'
