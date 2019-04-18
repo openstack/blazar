@@ -126,7 +126,8 @@ def get_plugin_reservation(resource_type, resource_id):
     elif resource_type == instance_plugin.RESOURCE_TYPE:
         return api.instance_reservation_get(resource_id)
     else:
-        raise mgr_exceptions.UnsupportedResourceType(resource_type)
+        raise mgr_exceptions.UnsupportedResourceType(
+            resource_type=resource_type)
 
 
 def get_free_periods(resource_id, start_date, end_date, duration,
