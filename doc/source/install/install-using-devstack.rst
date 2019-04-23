@@ -9,7 +9,7 @@ DevStack configures both the host reservation and the instance reservation.
 
 .. sourcecode:: console
 
-    git clone https://git.openstack.org/openstack-dev/devstack.git
+    git clone https://opendev.org/openstack/devstack.git
 
 ..
 
@@ -26,9 +26,9 @@ DevStack configures both the host reservation and the instance reservation.
     DEST=/opt/stack/
     LOGFILE=$DEST/logs/stack.sh.log
     HOST_IP=127.0.0.1
-    GIT_BASE=https://git.openstack.org/
+    GIT_BASE=https://opendev.org/
     RECLONE=yes
-    enable_plugin blazar https://git.openstack.org/openstack/blazar
+    enable_plugin blazar https://opendev.org/openstack/blazar
 
 ..
 
