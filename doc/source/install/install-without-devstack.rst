@@ -10,9 +10,9 @@ Download all Blazar related repos:
 
 .. sourcecode:: console
 
-   git clone https://git.openstack.org/openstack/blazar
-   git clone https://git.openstack.org/openstack/blazar-nova
-   git clone https://git.openstack.org/openstack/python-blazarclient
+   git clone https://opendev.org/openstack/blazar
+   git clone https://opendev.org/openstack/blazar-nova
+   git clone https://opendev.org/openstack/python-blazarclient
 
 ..
 

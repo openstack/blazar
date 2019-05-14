@@ -43,10 +43,10 @@ Other Resources
 
 * Source code:
 
-  * `Blazar <https://git.openstack.org/cgit/openstack/blazar>`__
-  * `Nova scheduler filter <https://git.openstack.org/cgit/openstack/blazar-nova>`__
-  * `Client tools <https://git.openstack.org/cgit/openstack/python-blazarclient>`__
-  * `Dashboard (Horizon plugin) <https://git.openstack.org/cgit/openstack/blazar-dashboard>`__
+  * `Blazar <https://opendev.org/openstack/blazar>`__
+  * `Nova scheduler filter <https://opendev.org/openstack/blazar-nova>`__
+  * `Client tools <https://opendev.org/openstack/python-blazarclient>`__
+  * `Dashboard (Horizon plugin) <https://opendev.org/openstack/blazar-dashboard>`__
 
 * Blueprints/Bugs: https://launchpad.net/blazar
 * Documentation: https://docs.openstack.org/blazar/latest/

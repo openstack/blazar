@@ -45,10 +45,10 @@ Your first commit to Blazar
 * Read the `OpenStack development workflow documentation
   <https://docs.openstack.org/infra/manual/developers.html#development-workflow>`_
 * Clone the corresponding Blazar repository:
-  `blazar <https://git.openstack.org/openstack/blazar>`_,
-  `blazar-nova <https://git.openstack.org/openstack/blazar-nova>`_,
-  `client <https://git.openstack.org/openstack/python-blazarclient>`_,
-  `blazar-dashboard <https://git.openstack.org/openstack/blazar-dashboard>`_
+  `blazar <https://opendev.org/openstack/blazar>`_,
+  `blazar-nova <https://opendev.org/openstack/blazar-nova>`_,
+  `client <https://opendev.org/openstack/python-blazarclient>`_,
+  `blazar-dashboard <https://opendev.org/openstack/blazar-dashboard>`_
 * Apply and commit your changes
 * Make sure all code checks and tests have passed
 * Send your patch for review
