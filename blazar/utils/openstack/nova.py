@@ -480,7 +480,7 @@ class NovaInventory(NovaClientWrapper):
             except nova_exception.NotFound:
                 raise manager_exceptions.HostNotFound(host=host)
             if len(hypervisors_list) > 1:
-                raise manager_exceptions.MultipleHostsFound(host)
+                raise manager_exceptions.MultipleHostsFound(host=host)
             else:
                 hypervisor_id = hypervisors_list[0].id
                 # NOTE(sbauza): No need to catch the exception as we're sure
@@ -523,7 +523,7 @@ class NovaInventory(NovaClientWrapper):
         except nova_exception.NotFound:
             raise manager_exceptions.HostNotFound(host=host)
         if len(hypervisors_list) > 1:
-            raise manager_exceptions.MultipleHostsFound(host)
+            raise manager_exceptions.MultipleHostsFound(host=host)
         else:
             try:
                 return hypervisors_list[0].servers

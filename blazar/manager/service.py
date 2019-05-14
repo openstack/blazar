@@ -597,7 +597,8 @@ class ManagerService(service_utils.RPCServer):
     def _create_reservation(self, values):
         resource_type = values['resource_type']
         if resource_type not in self.plugins:
-            raise exceptions.UnsupportedResourceType(resource_type)
+            raise exceptions.UnsupportedResourceType(
+                resource_type=resource_type)
         reservation_values = {
             'lease_id': values['lease_id'],
             'resource_type': resource_type,
@@ -677,7 +678,8 @@ class ManagerService(service_utils.RPCServer):
             except KeyError:
                 LOG.error("Plugin with resource type %s not found",
                           resource_type)
-                raise exceptions.UnsupportedResourceType(resource_type)
+                raise exceptions.UnsupportedResourceType(
+                    resource_type=resource_type)
         except AttributeError:
             LOG.error("Plugin %s doesn't include method %s",
                       self.plugins[resource_type], method)
