@@ -532,6 +532,7 @@ def floatingip_destroy(floatingip_id):
     """Delete specific floating ip."""
     IMPL.floatingip_destroy(floatingip_id)
 
+
 # Networks
 
 def network_create(values):

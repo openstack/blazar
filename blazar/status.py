@@ -199,6 +199,7 @@ class LeaseStatus(BaseStatus):
                 # Update a lease status
                 lease_id = kwargs['lease_id']
                 l = db_api.lease_get(lease_id)
+
                 if cls.is_valid_transition(l['status'],
                                            transition,
                                            lease_id=lease_id):
@@ -224,9 +225,9 @@ class LeaseStatus(BaseStatus):
                             LOG.debug('Non-fatal exception occured during '
                                       'status transition, reverting status of '
                                       'lease %s to %s.',
-                                      lease_id, original_status)
+                                      lease_id, l['status'])
                             db_api.lease_update(lease_id,
-                                                {'status': original_status})
+                                                {'status': l['status']})
                         else:
                             LOG.error('Lease %s went into ERROR status: %s',
                                       lease_id, str(e))
