@@ -22,9 +22,9 @@ from blazar import utils
 def get_rest():
     """Return Rest app"""
     return rest
-    
 
-rest = api_utils.Rest('network_v1_0', __name__)
+
+rest = api_utils.Rest('network_v1_0', __name__, url_prefix='/v1/networks')
 _api = utils.LazyProxy(service.API)
 
 

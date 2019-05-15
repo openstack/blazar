@@ -331,7 +331,8 @@ class ServiceTestCase(tests.TestCase):
         events = self.patch(self.db_api, 'event_get_all_sorted_by_filters')
         events.return_value = [{'id': '111-222-333',
                                 'lease_id': self.lease_id,
-                                'time': self.good_date}]
+                                'time': self.good_date,
+                                'event_type': 'start_lease'}]
 
         self.lease_get = self.patch(self.db_api, 'lease_get')
         lease = self.lease.copy()
@@ -340,7 +341,7 @@ class ServiceTestCase(tests.TestCase):
 
         event_update = self.patch(self.db_api, 'event_update')
 
-        self.manager._event()
+        self.manager._process_events()
 
         event_update.assert_not_called()
 

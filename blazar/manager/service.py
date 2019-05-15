@@ -754,6 +754,7 @@ class ManagerService(service_utils.RPCServer):
         try:
             resource_type, method = name.rsplit(':', 1)
         except ValueError:
+            LOG.error(name)
             # NOTE(sbauza) : the dispatcher needs to know which plugin to use,
             #  raising error if consequently not
             raise AttributeError(name)

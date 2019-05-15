@@ -93,8 +93,8 @@ class AppTestCaseForHostsPlugin(tests.TestCase):
         self.app.make_app()
         self.fake_blueprint.assert_any_call(self.lease_api_v1_0.rest,
                                             url_prefix='/v1')
-        self.fake_blueprint.assert_called_with(self.host_api_v1_0.rest,
-                                               url_prefix='/v1/os-hosts')
+        self.fake_blueprint.assert_any_call(self.host_api_v1_0.rest,
+                                            url_prefix='/v1/os-hosts')
 
 
 class AppTestCaseForNetworksPlugin(tests.TestCase):
@@ -112,5 +112,5 @@ class AppTestCaseForNetworksPlugin(tests.TestCase):
 
     def test_make_app_with_network_plugin(self):
         self.app.make_app()
-        self.fake_blueprint.assert_called_with(self.network_api_v1_0.rest,
-                                               url_prefix='/v1/networks')
+        self.fake_blueprint.assert_any_call(self.network_api_v1_0.rest,
+                                            url_prefix='/v1/networks')
