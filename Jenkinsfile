@@ -7,8 +7,17 @@ pipeline {
 
   stages {
     stage('test') {
-      steps {
-        sh 'tox -e pep8,py27'
+      parallel {
+        stage('pep8') {
+          steps {
+            sh 'source scl_source enable rh-python35 && tox -e pep8'
+          }
+        }
+        stage('py27') {
+          steps {
+            sh 'tox -e py27'
+          }
+        }
       }
     }
 
