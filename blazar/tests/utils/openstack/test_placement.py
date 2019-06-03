@@ -574,6 +574,25 @@ class TestPlacementClient(tests.TestCase):
                                           json=expected_data)
         self.assertEqual(mock_put_json, result)
 
+        kss_req.reset_mock()
+
+        # Test retrying on 409 conflict
+        mock_json_data = {
+            "errors": [
+                {"status": 409,
+                 "code": "placement.concurrent_update",
+                 "title": "Conflict"}
+            ]
+        }
+
+        kss_req.return_value = fake_requests.FakeResponse(
+            409, content=jsonutils.dump_as_bytes(mock_json_data))
+        self.assertRaises(
+            exceptions.InventoryConflict,
+            self.client.update_reservation_inventory, host_name, 'add', 3)
+        self.assertEqual(5, kss_req.call_count)
+        kss_req.reset_mock()
+
     @mock.patch('blazar.utils.openstack.placement.'
                 'BlazarPlacementClient.get_resource_provider')
     @mock.patch('keystoneauth1.session.Session.request')
