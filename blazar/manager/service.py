@@ -610,7 +610,15 @@ class ManagerService(service_utils.RPCServer):
                                 {'status': status.event.IN_PROGRESS})
 
         with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
-            for reservation in lease['reservations']:
+            network_reservations = [
+                x for x in lease['reservations']
+                if x['resource_type'] == 'network']
+
+            reservations = [
+                x for x in lease['reservations']
+                if x not in network_reservations]
+
+            for reservation in reservations + network_reservations:
                 if reservation['status'] != status.reservation.DELETED:
                     plugin = self.plugins[reservation['resource_type']]
                     try:
