@@ -603,9 +603,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                           interval_end):
         """Heal reservations which suffer from resource failures.
 
-        :param: failed_resources: failed resources
-        :param: interval_begin: start date of the period to heal.
-        :param: interval_end: end date of the period to heal.
+        :param failed_resources: failed resources
+        :param interval_begin: start date of the period to heal.
+        :param interval_end: end date of the period to heal.
         :return: a dictionary of {reservation id: flags to update}
                  e.g. {'de27786d-bd96-46bb-8363-19c13b2c6657':
                        {'missing_resources': True}}
