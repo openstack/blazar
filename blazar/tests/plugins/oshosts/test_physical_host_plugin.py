@@ -461,6 +461,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             ('reservation-3', 'lease-2', 'host-1'),
         ]
 
+        self.db_host_list.return_value = [
+            {'id': 'host-1'}, {'id': 'host-2'}, {'id': 'host-3'}]
+
         expected = [
             {
                 'resource_id': 'host-1',
@@ -504,6 +507,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             ('reservation-2', 'lease-1', 'host-3'),
         ]
 
+        self.db_host_list.return_value = [
+            {'id': 'host-1'}, {'id': 'host-2'}, {'id': 'host-3'}]
+
         expected = [
             {
                 'resource_id': 'host-1',
@@ -544,6 +550,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             ('reservation-1', 'lease-1', 'host-2'),
         ]
 
+        self.db_host_list.return_value = [
+            {'id': 'host-1'}, {'id': 'host-2'}]
+
         expected = [
             {
                 'resource_id': 'host-1',
@@ -580,6 +589,9 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             ('reservation-2', 'lease-1', 'host-3'),
             ('reservation-3', 'lease-2', 'host-1'),
         ]
+
+        self.db_host_list.return_value = [
+            {'id': 'host-1'}, {'id': 'host-2'}, {'id': 'host-3'}]
 
         expected = {
             'resource_id': 'host-1',
