@@ -39,8 +39,9 @@ class TestPlacementClient(tests.TestCase):
         self.client = placement.BlazarPlacementClient()
 
     def test_client_auth_url(self):
+        client = self.client._create_client()
         self.assertEqual("http://foofoo:8080/identity/v3",
-                         self.client._client.session.auth.auth_url)
+                         client.session.auth.auth_url)
 
     def _add_default_kwargs(self, kwargs):
         kwargs['endpoint_filter'] = {'service_type': 'placement',

@@ -31,17 +31,6 @@ PLACEMENT_MICROVERSION = 1.29
 class BlazarPlacementClient(object):
     """Client class for updating placement."""
 
-    def __init__(self, **kwargs):
-        """Initialize the report client.
-
-        If a prepared keystoneauth1 adapter for API communication is
-        specified, it is used.
-
-        Otherwise creates it via _create_client() function.
-        """
-        adapter = kwargs.pop('adapter', None)
-        self._client = adapter or self._create_client(**kwargs)
-
     def _create_client(self, **kwargs):
         """Create the HTTP session accessing the placement service."""
         username = kwargs.pop('username',
@@ -83,20 +72,24 @@ class BlazarPlacementClient(object):
         return client
 
     def get(self, url, microversion=PLACEMENT_MICROVERSION):
-        return self._client.get(url, raise_exc=False,
-                                microversion=microversion)
+        client = self._create_client()
+        return client.get(url, raise_exc=False,
+                          microversion=microversion)
 
     def post(self, url, data, microversion=PLACEMENT_MICROVERSION):
-        return self._client.post(url, json=data, raise_exc=False,
-                                 microversion=microversion)
+        client = self._create_client()
+        return client.post(url, json=data, raise_exc=False,
+                           microversion=microversion)
 
     def put(self, url, data, microversion=PLACEMENT_MICROVERSION):
-        return self._client.put(url, json=data, raise_exc=False,
-                                microversion=microversion)
+        client = self._create_client()
+        return client.put(url, json=data, raise_exc=False,
+                          microversion=microversion)
 
     def delete(self, url, microversion=PLACEMENT_MICROVERSION):
-        return self._client.delete(url, raise_exc=False,
-                                   microversion=microversion)
+        client = self._create_client()
+        return client.delete(url, raise_exc=False,
+                             microversion=microversion)
 
     def get_resource_provider(self, rp_name):
         """Calls the placement API for a resource provider record.
