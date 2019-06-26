@@ -917,7 +917,6 @@ class NetworkPluginTestCase(tests.TestCase):
         matching_networks.assert_called_with(
             '["=", "$network_type", "vlan"]',
             '',
-            '1-1',
             datetime.datetime(2017, 7, 12, 20, 00),
             datetime.datetime(2017, 7, 12, 21, 00)
         )

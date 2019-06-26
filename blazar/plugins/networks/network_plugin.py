@@ -717,10 +717,8 @@ class NetworkPlugin(base.BasePlugin):
         if kept_networks < 1:
             min_networks = 1 - kept_networks \
                 if (1 - kept_networks) > 0 else 0
-            max_networks = 1 - kept_networks
             network_ids_to_add = self._matching_networks(
                 network_properties, resource_properties,
-                str(min_networks) + '-' + str(max_networks),
                 dates_after['start_date'], dates_after['end_date'])
 
             if len(network_ids_to_add) < min_networks:
