@@ -55,7 +55,8 @@ def create_ctx_from_trust(trust_id):
     ctx = context.BlazarContext(
         user_name=CONF.os_admin_username,
         project_name=CONF.os_admin_project_name,
-        request_id=ctx.request_id
+        request_id=ctx.request_id,
+        global_request_id=ctx.global_request_id
     )
     auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
                                   CONF.os_auth_host,
@@ -75,7 +76,8 @@ def create_ctx_from_trust(trust_id):
         auth_token=client.auth_token,
         service_catalog=client.service_catalog.catalog['catalog'],
         project_id=client.tenant_id,
-        request_id=ctx.request_id
+        request_id=ctx.request_id,
+        global_request_id=ctx.global_request_id
     )
 
 

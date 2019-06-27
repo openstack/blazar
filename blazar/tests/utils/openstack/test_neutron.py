@@ -19,6 +19,7 @@ from neutronclient.common import exceptions as neutron_exceptions
 from oslo_config import cfg
 from oslo_config import fixture
 
+from blazar import context
 from blazar import tests
 from blazar.utils.openstack import exceptions
 from blazar.utils.openstack import neutron
@@ -30,16 +31,21 @@ class TestBlazarNeutronClient(tests.TestCase):
     def setUp(self):
         super(TestBlazarNeutronClient, self).setUp()
         self.cfg = self.useFixture(fixture.Config(CONF))
+        self.context = context
+        self.ctx = self.patch(self.context, 'current')
 
     def test_client_from_kwargs(self):
         kwargs = {
             'auth_url': 'http://foo:8080/identity/v3',
-            'region_name': 'RegionTwo'
+            'region_name': 'RegionTwo',
+            'global_request_id': 'req-e19f8f4f-40e7-441e-b776-7b43ed15c7dd'
         }
         client = neutron.BlazarNeutronClient(**kwargs)
         self.assertEqual("http://foo:8080/identity/v3",
                          client.neutron.httpclient.session.auth.auth_url)
         self.assertEqual("RegionTwo", client.neutron.httpclient.region_name)
+        self.assertEqual("req-e19f8f4f-40e7-441e-b776-7b43ed15c7dd",
+                         client.neutron.httpclient.global_request_id)
 
 
 class TestFloatingIPPool(tests.TestCase):

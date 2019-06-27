@@ -58,7 +58,8 @@ class ContextTestCaseV1(ContextTestCase):
     def test_ctx_from_headers(self):
         self.fake_headers[u'X-Service-Catalog'] = self.catalog
         environ_base = {
-            'openstack.request_id': 'req-' + uuidsentinel.reqid}
+            'openstack.request_id': 'req-' + uuidsentinel.reqid,
+            'openstack.global_request_id': 'req-' + uuidsentinel.globalreqid}
         req = wrappers.Request.from_values(
             '/v1/leases',
             headers=self.fake_headers,
@@ -74,7 +75,8 @@ class ContextTestCaseV1(ContextTestCase):
             service_catalog={u'nova': u'catalog'},
             project_id=uuidsentinel.project_id,
             user_name=u'user_name',
-            request_id='req-' + uuidsentinel.reqid)
+            request_id='req-' + uuidsentinel.reqid,
+            global_request_id='req-' + uuidsentinel.globalreqid)
 
 
 class ContextTestCaseV2(ContextTestCase):

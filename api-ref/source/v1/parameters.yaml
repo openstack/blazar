@@ -1,4 +1,17 @@
 # variables in headers
+x-openstack-request-id_req:
+  description: |
+    The global request ID, which is a unique common ID
+    for tracking each request in OpenStack services.
+    The format of the global request ID must be ``req-`` + UUID (UUID4).
+    If not in accordance with the format, it is ignored.
+    It is associated with the request and appears in the log lines
+    for that request.
+    The global request ID appears in the Blazar logs and all cross
+    services it interacts with.
+  in: header
+  required: false
+  type: string
 x-openstack-request-id_resp:
   description: |
     The local request ID, which is a unique ID generated automatically

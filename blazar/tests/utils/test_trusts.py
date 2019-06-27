@@ -62,6 +62,7 @@ class TestTrusts(tests.TestCase):
         fake_ctx_dict = {
             'auth_token': self.client().auth_token,
             'domain': None,
+            'global_request_id': self.context.current().global_request_id,
             'is_admin': False,
             'is_admin_project': True,
             'project': self.client().tenant_id,

@@ -74,7 +74,10 @@ class TestCKClient(tests.TestCase):
                                             endpoint='http://fake.com/',
                                             username=self.username,
                                             password=self.password,
-                                            auth_url=self.auth_url)
+                                            auth_url=self.auth_url,
+                                            global_request_id=self.
+                                            context.current().
+                                            global_request_id)
 
     def test_client_from_ctx(self):
 
@@ -86,7 +89,8 @@ class TestCKClient(tests.TestCase):
             token=self.ctx().auth_token,
             tenant_name=self.ctx().project_name,
             auth_url='http://fake.com/',
-            endpoint='http://fake.com/')
+            endpoint='http://fake.com/',
+            global_request_id=self.context.current().global_request_id)
 
     def test_complement_auth_url_supported_api_version(self):
         bkc = self.keystone.BlazarKeystoneClient()

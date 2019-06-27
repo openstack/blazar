@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Adds support for `global_request_id`_ to the ``RequestId`` middleware. An
+    inbound header of ``X-OpenStack-Request-ID`` is accepted as long as it is
+    of the format ``req-$uuid``, and made available to oslo.context. This
+    allows for cross-project request ID tracking. By default, global request
+    IDs will not appear in the Blazar service logs. Operators need to add
+    global_request_id in the `logging_context_format_string`_ configuration
+    option.
+
+    .. _`global_request_id`:  https://developer.openstack.org/api-ref/reservation/v1/index.html#global-request-id
+    .. _`logging_context_format_string`: https://docs.openstack.org/oslo.log/latest/configuration/index.html#DEFAULT.logging_context_format_string

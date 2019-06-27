@@ -127,6 +127,7 @@ class BlazarNovaClient(object):
                              os_region_name=CONF.os_region_name)
             auth_url = base.url_for(ctx.service_catalog, CONF.identity_service,
                                     os_region_name=CONF.os_region_name)
+            kwargs.setdefault('global_request_id', ctx.global_request_id)
 
         if auth_url is None:
             auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,

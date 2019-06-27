@@ -40,4 +40,6 @@ def ctx_from_headers(headers):
     # For v1 only, request_id and global_request_id will be available.
     if headers.environ['PATH_INFO'].startswith('/v1'):
         kwargs['request_id'] = headers.environ['openstack.request_id']
+        kwargs['global_request_id'] = headers.environ.get(
+            'openstack.global_request_id')
     return context.BlazarContext(**kwargs)

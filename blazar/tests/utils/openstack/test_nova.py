@@ -94,7 +94,8 @@ class TestCNClient(tests.TestCase):
         self.session.assert_called_once_with(auth=self.auth.return_value)
         self.client.assert_called_once_with(version=self.version,
                                             endpoint_override=self.url,
-                                            session=self.session.return_value)
+                                            session=self.session.return_value,
+                                            global_request_id=mock.ANY)
 
     def test_getattr(self):
         # TODO(n.s.): Will be done as soon as pypi package will be updated

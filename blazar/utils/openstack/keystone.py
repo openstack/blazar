@@ -102,6 +102,7 @@ class BlazarKeystoneClient(object):
         if ctx is not None:
             kwargs.setdefault('username', ctx.user_name)
             kwargs.setdefault('tenant_name', ctx.project_name)
+            kwargs.setdefault('global_request_id', ctx.global_request_id)
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
                     ctx.service_catalog, CONF.identity_service,

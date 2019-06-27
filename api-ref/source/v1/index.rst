@@ -11,3 +11,4 @@ Blazar project.
 .. include:: hosts.inc
 .. include:: floatingips.inc
 .. include:: request-ids.inc
+.. include:: global-request-id.inc

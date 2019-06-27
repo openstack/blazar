@@ -22,6 +22,7 @@ from neutronclient.v2_0 import client as neutron_client
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from blazar import context
 from blazar.utils.openstack import exceptions
 
 CONF = cfg.CONF
@@ -32,6 +33,7 @@ class BlazarNeutronClient(object):
     """Client class for Neutron service."""
 
     def __init__(self, **kwargs):
+        ctx = kwargs.pop('ctx', None)
         username = kwargs.pop('username',
                               CONF.os_admin_username)
         password = kwargs.pop('password',
@@ -44,6 +46,13 @@ class BlazarNeutronClient(object):
                                          CONF.os_admin_project_domain_name)
         auth_url = kwargs.pop('auth_url', None)
         region_name = kwargs.pop('region_name', CONF.os_region_name)
+        if ctx is None:
+            try:
+                ctx = context.current()
+            except RuntimeError:
+                pass
+        if ctx is not None:
+            kwargs.setdefault('global_request_id', ctx.global_request_id)
 
         if auth_url is None:
             auth_url = "%s://%s:%s/%s/%s" % (CONF.os_auth_protocol,
@@ -59,8 +68,9 @@ class BlazarNeutronClient(object):
                            user_domain_name=user_domain_name,
                            project_domain_name=project_domain_name)
         sess = session.Session(auth=auth)
-        self.neutron = neutron_client.Client(
-            session=sess, region_name=region_name)
+        kwargs.setdefault('session', sess)
+        kwargs.setdefault('region_name', region_name)
+        self.neutron = neutron_client.Client(**kwargs)
 
 
 class FloatingIPPool(BlazarNeutronClient):
