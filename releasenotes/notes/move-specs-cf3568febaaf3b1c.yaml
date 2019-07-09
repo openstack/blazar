@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    The specifications for Blazar have been moved from openstack/blazar to
+    their own repository, openstack/blazar-specs. Specs are now available at
+    https://specs.openstack.org/openstack/blazar-specs/.
