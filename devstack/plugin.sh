@@ -72,6 +72,8 @@ function configure_blazar {
     iniset_rpc_backend blazar $BLAZAR_CONF_FILE DEFAULT
     iniupdate_rpc_backend $BLAZAR_CONF_FILE DEFAULT
 
+    setup_logging $BLAZAR_CONF_FILE
+
     ACTUAL_FILTERS=$(iniget $NOVA_CONF filter_scheduler enabled_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
         iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, AggregateInstanceExtraSpecsFilter, AggregateMultiTenancyIsolation, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, BlazarFilter"
