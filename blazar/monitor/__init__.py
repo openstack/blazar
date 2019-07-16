@@ -18,7 +18,7 @@ from blazar.monitor import polling_monitor
 def load_monitors(plugins):
     """Load resource monitors.
 
-    :param: plugins: resource plugins.
+    :param plugins: resource plugins.
     :return: a list of monitors.
     """
     monitors = []
