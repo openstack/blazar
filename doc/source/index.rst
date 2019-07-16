@@ -65,9 +65,8 @@ Specs
 -----
 
 .. toctree::
-   :maxdepth: 2
 
-   specs/index
+   Blazar Specifications <https://specs.openstack.org/openstack/blazar-specs/index.html>
 
 Indices and tables
 ------------------
