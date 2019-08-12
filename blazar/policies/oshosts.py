@@ -79,7 +79,18 @@ oshosts_policies = [
                 'method': 'GET'
             }
         ]
-    )
+    ),
+    policy.DocumentedRuleDefault(
+        name=POLICY_ROOT % 'reallocate',
+        check_str=base.RULE_ADMIN,
+        description='Policy rule for Reallocate Host API.',
+        operations=[
+            {
+                'path': '/{api_version}/os-hosts/{host_id}/allocation',
+                'method': 'PUT'
+            }
+        ]
+    ),
 ]
 
 

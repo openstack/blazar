@@ -64,3 +64,8 @@ class ManagerRPCAPI(service.RPCClient):
         """List all allocations on a specified computehost."""
         return self.call('physical:host:get_allocations',
                          host_id=host_id, query=query)
+
+    def reallocate(self, host_id, data):
+        """Exchange host from current allocations."""
+        return self.call('physical:host:reallocate_computehost',
+                         host_id=host_id, data=data)

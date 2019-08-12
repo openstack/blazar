@@ -86,3 +86,8 @@ class API(object):
         :type query: dict
         """
         return self.manager_rpcapi.get_allocations(host_id, query)
+
+    @policy.authorize('oshosts', 'reallocate')
+    def reallocate(self, host_id, data):
+        """Exchange host from allocations."""
+        return self.manager_rpcapi.reallocate(host_id, data)
