@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import collections
 import datetime
 
 from novaclient import exceptions as nova_exceptions
@@ -541,21 +542,12 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         # To reduce overhead, this method only executes one query
         # to get the allocation information
-        allocs = db_utils.get_reservation_allocations_by_host_ids(
+        rsv_lease_host = db_utils.get_reservation_allocations_by_host_ids(
             hosts, start, end, lease_id, reservation_id)
 
-        hosts_allocs = {}
-        for reservation, alloc in allocs:
-            if alloc['compute_host_id'] in hosts_allocs:
-                hosts_allocs[alloc['compute_host_id']].append({
-                    'lease_id': reservation['lease_id'],
-                    'id': reservation['id']
-                })
-            else:
-                hosts_allocs[alloc['compute_host_id']] = [{
-                    'lease_id': reservation['lease_id'],
-                    'id': reservation['id']
-                }]
+        hosts_allocs = collections.defaultdict(list)
+        for rsv, lease, host in rsv_lease_host:
+            hosts_allocs[host].append({'lease_id': lease, 'id': rsv})
         return hosts_allocs
 
     def _matching_hosts(self, hypervisor_properties, resource_properties,
