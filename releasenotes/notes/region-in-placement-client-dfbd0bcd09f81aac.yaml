@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Fixes placement operations in multi-region deployments.
