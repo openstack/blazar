@@ -6,3 +6,4 @@ Command-Line Interface Reference
 
    host-reservation
    instance-reservation
+   floatingip-reservation
