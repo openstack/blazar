@@ -35,6 +35,7 @@ class TestPlacementClient(tests.TestCase):
         self.cfg.config(os_auth_port='8080')
         self.cfg.config(os_auth_prefix='identity')
         self.cfg.config(os_auth_version='v3')
+        self.cfg.config(os_region_name='region_foo')
         self.client = placement.BlazarPlacementClient()
 
     def test_client_auth_url(self):
@@ -43,7 +44,8 @@ class TestPlacementClient(tests.TestCase):
 
     def _add_default_kwargs(self, kwargs):
         kwargs['endpoint_filter'] = {'service_type': 'placement',
-                                     'interface': 'public'}
+                                     'interface': 'public',
+                                     'region_name': 'region_foo'}
         kwargs['headers'] = {'accept': 'application/json'}
         kwargs['microversion'] = PLACEMENT_MICROVERSION
         kwargs['raise_exc'] = False
