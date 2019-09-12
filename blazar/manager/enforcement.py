@@ -76,6 +76,17 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
     # math.isclose in Python 3.5+
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
+def handle_redis_errors(fn):
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except (redis.exceptions.ConnectionError,
+                redis.exceptions.TimeoutError):
+            LOG.exception('Cannot connect to Redis host %s',
+                          CONF.enforcement.usage_db_host)
+            raise exceptions.RedisConnectionError(
+                host=CONF.enforcement.usage_db_host)
+    return wrapper
 
 class UsageEnforcer(object):
     def __init__(self):
@@ -85,8 +96,10 @@ class UsageEnforcer(object):
             if not CONF.enforcement.usage_db_host:
                 raise common_ex.ConfigurationError(
                     'usage_db_host must be set when using usage_enforcement')
+
         self.redis = redis.StrictRedis(host=CONF.enforcement.usage_db_host,
-                                       port=6379, db=0)
+                                       port=6379, db=0,
+                                       socket_connect_timeout=5.0)
 
     def _project_max_lease_durations(self):
         """Parses per-project maximum lease duration
@@ -105,50 +118,38 @@ class UsageEnforcer(object):
                 raise exceptions.ConfigurationError(error=msg)
         return max_durations
 
+    @handle_redis_errors
     def initialize_project_allocation(self, project_name):
-        try:
-            allocated = self.redis.hget('allocated', project_name)
-            if allocated is None:
-                LOG.info('Setting project %s allocated to %f',
-                         CONF.enforcement.usage_default_allocated)
-                self.redis.hset('allocated', project_name,
-                                CONF.enforcement.usage_default_allocated)
-            balance = self.redis.hget('balance', project_name)
-            if balance is None:
-                LOG.info('Setting project %s balance to %f', project_name,
-                         CONF.enforcement.usage_default_allocated)
-                self.redis.hset('balance', project_name,
-                                CONF.enforcement.usage_default_allocated)
-            used = self.redis.hget('used', project_name)
-            if used is None:
-                self.redis.hset('used', project_name, 0.0)
-            encumbered = self.redis.hget('encumbered', project_name)
-            if encumbered is None:
-                self.redis.hset('encumbered', project_name, 0.0)
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        allocated = self.redis.hget('allocated', project_name)
+        if allocated is None:
+            LOG.info('Setting project %s allocated to %f',
+                     CONF.enforcement.usage_default_allocated)
+            self.redis.hset('allocated', project_name,
+                            CONF.enforcement.usage_default_allocated)
+        balance = self.redis.hget('balance', project_name)
+        if balance is None:
+            LOG.info('Setting project %s balance to %f', project_name,
+                     CONF.enforcement.usage_default_allocated)
+            self.redis.hset('balance', project_name,
+                            CONF.enforcement.usage_default_allocated)
+        used = self.redis.hget('used', project_name)
+        if used is None:
+            self.redis.hset('used', project_name, 0.0)
+        encumbered = self.redis.hget('encumbered', project_name)
+        if encumbered is None:
+            self.redis.hset('encumbered', project_name, 0.0)
 
+    @handle_redis_errors
     def get_lease_exception(self, user_name):
-        try:
-            lease_exception = self.redis.hget('user_exceptions', user_name)
-            return lease_exception
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
+        if not CONF.enforcement.usage_enforcement:
             return None
 
+        return self.redis.hget('user_exceptions', user_name)
+
+    @handle_redis_errors
     def remove_lease_exception(self, user_name):
         LOG.info('Removing lease exception for user {}'.format(user_name))
-        try:
-            self.redis.hdel('user_exceptions', user_name)
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        self.redis.hdel('user_exceptions', user_name)
 
     def setup_usage_enforcement(self, project_name):
         self.initialize_project_allocation(project_name)
@@ -263,34 +264,20 @@ class UsageEnforcer(object):
                       project.name, project.id)
             raise
 
+    @handle_redis_errors
     def get_balance(self, project_enforcement_id):
-        try:
-            return float(self.redis.hget('balance', project_enforcement_id))
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        return float(self.redis.hget('balance', project_enforcement_id))
 
+    @handle_redis_errors
     def get_encumbered(self, project_enforcement_id):
-        try:
-            return float(self.redis.hget('encumbered', project_enforcement_id))
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        return float(self.redis.hget('encumbered', project_enforcement_id))
 
+    @handle_redis_errors
     def increase_encumbered(self, project_enforcement_id, amount):
-        try:
-            self.redis.hincrbyfloat(
-                'encumbered', project_enforcement_id, str(amount))
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        self.redis.hincrbyfloat(
+            'encumbered', project_enforcement_id, str(amount))
 
+    @handle_redis_errors
     def check_usage_against_allocation(self, lease_values,
                                        allocated_host_ids=None,
                                        allocated_network_ids=None,
@@ -303,7 +290,7 @@ class UsageEnforcer(object):
         Redis.
         """
         if not CONF.enforcement.usage_enforcement:
-            pass
+            return
 
         user_name = self._get_user_name(lease_values['user_id'])
 
@@ -326,40 +313,36 @@ class UsageEnforcer(object):
                 for floatingip_id in allocated_floatingip_ids)
         else:
             total_su_factor = lease_values['max']
-        try:
-            balance = self.get_balance(project_enforcement_id)
-            encumbered = self.get_encumbered(project_enforcement_id)
-            duration = lease_values['end_date'] - lease_values['start_date']
-            requested = dt_hours(duration) * total_su_factor
-            left = balance - encumbered
-            if left - requested < 0:
-                raise BillingError(
-                    'Reservation for project {} would spend {:.2f} SUs, '
-                    'only {:.2f} left'.format(
-                        project_enforcement_id, requested, left))
-            if (allocated_host_ids or allocated_network_ids or
-                    allocated_floatingip_ids):
-                LOG.info('Increasing encumbered for project {} by {:.2f} '
-                         '({:.2f} hours @ {:.2f} SU/hr)'.format(
-                             project_enforcement_id, requested,
-                             dt_hours(duration), total_su_factor))
-                self.increase_encumbered(project_enforcement_id, requested)
-                LOG.info('Encumbered usage for project {} now {:.2f}'
-                         .format(project_enforcement_id,
-                                 self.get_encumbered(project_enforcement_id)))
-                if self.get_lease_exception(user_name):
-                    self.remove_lease_exception(user_name)
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
 
+        balance = self.get_balance(project_enforcement_id)
+        encumbered = self.get_encumbered(project_enforcement_id)
+        duration = lease_values['end_date'] - lease_values['start_date']
+        requested = dt_hours(duration) * total_su_factor
+        left = balance - encumbered
+        if left - requested < 0:
+            raise BillingError(
+                'Reservation for project {} would spend {:.2f} SUs, '
+                'only {:.2f} left'.format(
+                    project_enforcement_id, requested, left))
+        if (allocated_host_ids or allocated_network_ids or
+                allocated_floatingip_ids):
+            LOG.info('Increasing encumbered for project {} by {:.2f} '
+                     '({:.2f} hours @ {:.2f} SU/hr)'.format(
+                         project_enforcement_id, requested,
+                         dt_hours(duration), total_su_factor))
+            self.increase_encumbered(project_enforcement_id, requested)
+            LOG.info('Encumbered usage for project {} now {:.2f}'
+                     .format(project_enforcement_id,
+                             self.get_encumbered(project_enforcement_id)))
+            if self.get_lease_exception(user_name):
+                self.remove_lease_exception(user_name)
+
+    @handle_redis_errors
     def check_usage_against_allocation_pre_update(self, reservation_values,
                                                   lease, allocations):
         """Check if we have enough available SUs for update"""
         if not CONF.enforcement.usage_enforcement:
-            pass
+            return
 
         project_enforcement_id = self._get_project_enforcement_id(
             lease['project_id'])
@@ -367,31 +350,26 @@ class UsageEnforcer(object):
         self.setup_usage_enforcement(project_enforcement_id)
 
         old_su_factor = self._total_billrate(allocations)
-        try:
-            balance = self.get_balance(project_enforcement_id)
-            encumbered = self.get_encumbered(project_enforcement_id)
-            old_duration = lease['end_date'] - lease['start_date']
-            new_duration = (reservation_values['end_date'] -
-                            reservation_values['start_date'])
-            change = new_duration - old_duration
-            estimated_requested = dt_hours(change) * old_su_factor
-            left = balance - encumbered
-            if left - estimated_requested < 0:
-                raise BillingError(
-                    'Reservation update would spend {:.2f} more SUs, only '
-                    '{:.2f} left'.format(estimated_requested, left))
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        balance = self.get_balance(project_enforcement_id)
+        encumbered = self.get_encumbered(project_enforcement_id)
+        old_duration = lease['end_date'] - lease['start_date']
+        new_duration = (reservation_values['end_date'] -
+                        reservation_values['start_date'])
+        change = new_duration - old_duration
+        estimated_requested = dt_hours(change) * old_su_factor
+        left = balance - encumbered
+        if left - estimated_requested < 0:
+            raise BillingError(
+                'Reservation update would spend {:.2f} more SUs, only '
+                '{:.2f} left'.format(estimated_requested, left))
 
+    @handle_redis_errors
     def check_usage_against_allocation_post_update(self, reservation_values,
                                                    lease, old_allocations,
                                                    new_allocations):
         """Check if we have enough available SUs for update"""
         if not CONF.enforcement.usage_enforcement:
-            pass
+            return
 
         user_name = self._get_user_name(lease['user_id'])
 
@@ -422,16 +400,11 @@ class UsageEnforcer(object):
                      project_enforcement_id, change_encumbered, change_hours,
                      new_su_factor))
 
-        try:
-            self.redis.hincrbyfloat(
-                'encumbered', project_enforcement_id, str(change_encumbered))
-            if self.get_lease_exception(user_name):
-                self.remove_lease_exception(user_name)
-        except redis.exceptions.ConnectionError:
-            LOG.exception('Cannot connect to Redis host %s',
-                          CONF.enforcement.usage_db_host)
-            raise exceptions.RedisConnectionError(
-                host=CONF.enforcement.usage_db_host)
+        self.redis.hincrbyfloat(
+            'encumbered', project_enforcement_id, str(change_encumbered))
+        if self.get_lease_exception(user_name):
+            self.remove_lease_exception(user_name)
+
         LOG.info('Encumbered usage for project {} now {:.2f}'
                  .format(project_enforcement_id,
                          self.get_encumbered(project_enforcement_id)))
@@ -456,7 +429,7 @@ class UsageEnforcer(object):
 
     def release_encumbered(self, lease, reservation, allocations):
         if not CONF.enforcement.usage_enforcement:
-            pass
+            return
 
         project_enforcement_id = self._get_project_enforcement_id(
             lease['project_id'])
