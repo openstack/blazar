@@ -76,6 +76,7 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
     # math.isclose in Python 3.5+
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
+
 def handle_redis_errors(fn):
     def wrapper(*args, **kwargs):
         try:
@@ -87,6 +88,7 @@ def handle_redis_errors(fn):
             raise exceptions.RedisConnectionError(
                 host=CONF.enforcement.usage_db_host)
     return wrapper
+
 
 class UsageEnforcer(object):
     def __init__(self):
