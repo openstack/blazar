@@ -100,8 +100,14 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
     session = get_session()
     border0 = start_date <= models.Lease.end_date
     border1 = models.Lease.start_date <= end_date
-    query = (session.query(models.Reservation, models.ComputeHostAllocation)
-             .join(models.Lease).join(models.ComputeHostAllocation)
+    query = (session.query(models.Reservation.id,
+                           models.Reservation.lease_id,
+                           models.ComputeHostAllocation.compute_host_id)
+             .join(models.Lease,
+                   models.Lease.id == models.Reservation.lease_id)
+             .join(models.ComputeHostAllocation,
+                   models.ComputeHostAllocation.reservation_id ==
+                   models.Reservation.id)
              .filter(models.ComputeHostAllocation.compute_host_id
                      .in_(host_ids))
              .filter(sa.and_(border0, border1)))
