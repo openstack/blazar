@@ -466,6 +466,11 @@ def required_fip_destroy(required_fip_id):
     return IMPL.required_fip_destroy(required_fip_id)
 
 
+def required_fip_destroy_by_fip_reservation_id(fip_reservation_id):
+    """Delete all required FIPs for a floating IP reservation."""
+    return IMPL.required_fip_destroy_by_fip_reservation_id(fip_reservation_id)
+
+
 # FloatingIP Allocation
 
 def fip_allocation_create(allocation_values):

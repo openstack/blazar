@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Adds support for updating floating IP reservations, with some limitations.
+    The ``amount`` of reserved floating IPs can be updated; however, updating
+    ``network_id`` is denied and ``required_floatingips`` can only be changed
+    to an empty list.

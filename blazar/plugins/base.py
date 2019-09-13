@@ -19,8 +19,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
-from blazar.db import api as db_api
-
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
@@ -66,12 +64,10 @@ class BasePlugin(object):
         """Reserve resource."""
         pass
 
+    @abc.abstractmethod
     def update_reservation(self, reservation_id, values):
         """Update reservation."""
-        reservation_values = {
-            'resource_id': values['resource_id']
-        }
-        db_api.reservation_update(reservation_id, reservation_values)
+        pass
 
     @abc.abstractmethod
     def on_end(self, resource_id):

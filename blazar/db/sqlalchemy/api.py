@@ -934,6 +934,16 @@ def required_fip_destroy(required_fip_id):
         session.delete(required_fip)
 
 
+def required_fip_destroy_by_fip_reservation_id(fip_reservation_id):
+    session = get_session()
+    with session.begin():
+        required_fips = model_query(
+            models.RequiredFloatingIP, session).filter_by(
+            floatingip_reservation_id=fip_reservation_id)
+        for required_fip in required_fips:
+            required_fip_destroy(required_fip['id'])
+
+
 # FloatingIP Allocation
 
 def _fip_allocation_get(session, fip_allocation_id):
