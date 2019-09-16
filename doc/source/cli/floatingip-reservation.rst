@@ -60,11 +60,16 @@ Result:
 
 1. Create a lease (floating IP reservation) using the lease-create command.
    Note that ``python-blazarclient`` version 2.2.0 or greater is required to
-   use this feature.
+   use this feature. When you use ``resource_type=virtual:floatingip``, the
+   following parameters are supported:
+
+   * ``network_id``: UUID of the external network to reserve from (required)
+   * ``amount``: number of floating IPs to reserve (optional, defaults to 1)
+   * ``required_floatingips``: list of specific floating IPs to allocate (optional, must be formatted as a JSON array)
 
 .. sourcecode:: console
 
- blazar lease-create --reservation resource_type=virtual:floatingip,network_id=81fabec7-00ae-497a-b485-72f4bf187d3e,amount=1 fip-lease
+ blazar lease-create --reservation 'resource_type=virtual:floatingip,network_id=81fabec7-00ae-497a-b485-72f4bf187d3e,amount=2,required_floatingips=["172.24.4.2","172.24.4.3"]' fip-lease
 
 ..
 
@@ -116,9 +121,12 @@ Result:
  |              |     "network_id": "81fabec7-00ae-497a-b485-72f4bf187d3e",   |
  |              |     "created_at": "2019-08-27 10:49:22",                    |
  |              |     "updated_at": "2019-08-27 10:49:22",                    |
- |              |     "required_floatingips": [],                             |
+ |              |     "required_floatingips": [                               |
+ |              |         "172.24.4.3",                                       |
+ |              |         "172.24.4.2"                                        |
+ |              |     ],                                                      |
  |              |     "missing_resources": false,                             |
- |              |     "amount": 1,                                            |
+ |              |     "amount": 2,                                            |
  |              |     "id": "2fef4ef9-fc29-40f8-bfc4-5c9952b83743",           |
  |              |     "resource_type": "virtual:floatingip",                  |
  |              |     "resources_changed": false                              |
