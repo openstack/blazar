@@ -32,27 +32,27 @@ _api = utils.LazyProxy(service.API)
 # Floatingips operations
 
 @rest.get('')
-def floatingips_list():
+def floatingips_list(req):
     """List all existing floatingips."""
     return api_utils.render(floatingips=_api.get_floatingips())
 
 
 @rest.post('')
-def floatingips_create(data):
+def floatingips_create(req, data):
     """Create new floatingip."""
     return api_utils.render(floatingip=_api.create_floatingip(data))
 
 
 @rest.get('/<floatingip_id>')
 @validation.check_exists(_api.get_floatingip, floatingip_id='floatingip_id')
-def floatingips_get(floatingip_id):
+def floatingips_get(req, floatingip_id):
     """Get floatingip by its ID."""
     return api_utils.render(floatingip=_api.get_floatingip(floatingip_id))
 
 
 @rest.delete('/<floatingip_id>')
 @validation.check_exists(_api.get_floatingip, floatingip_id='floatingip_id')
-def floatingips_delete(floatingip_id):
+def floatingips_delete(req, floatingip_id):
     """Delete specified floatingip."""
     _api.delete_floatingip(floatingip_id)
     return api_utils.render()
