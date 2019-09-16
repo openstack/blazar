@@ -402,16 +402,16 @@ reservation:
   type: object
 reservation_affinity:
   description: |
-    The affinity of instances to reserve.
+    The affinity of instances to reserve. The value should be ``True``, ``False`` or ``None``.
   in: body
   required: true
-  type: boolean
+  type: trilean
 reservation_affinity_optional:
   description: |
-    The affinity of instances to reserve.
+    The affinity of instances to reserve. The value should be ``True``, ``False`` or ``None``.
   in: body
   required: false
-  type: boolean
+  type: trilean
 reservation_aggregate_id:
   description: |
     The aggregate ID of the reservation.
