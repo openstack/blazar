@@ -15,6 +15,7 @@
 
 import datetime
 
+import ddt
 import mock
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
@@ -101,6 +102,7 @@ class PhysicalHostPluginSetupOnlyTestCase(tests.TestCase):
         self.assertEqual({}, res)
 
 
+@ddt.ddt
 class PhysicalHostPluginTestCase(tests.TestCase):
 
     def setUp(self):
@@ -643,8 +645,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         now = datetime.datetime.utcnow()
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'1',
-            'max': u'1',
+            'min': 1,
+            'max': 1,
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
             'start_date': now,
@@ -665,8 +667,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_create_reservation_hosts_available(self):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'1',
-            'max': u'1',
+            'min': 1,
+            'max': 1,
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
             'start_date': datetime.datetime(2013, 12, 19, 20, 00),
@@ -706,102 +708,115 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         ]
         host_allocation_create.assert_has_calls(calls)
 
-    def test_create_reservation_with_missing_param_min(self):
+    @ddt.data("min", "max", "hypervisor_properties", "resource_properties")
+    def test_create_reservation_with_missing_param(self, missing_param):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'max': u'2',
+            'min': 1,
+            'max': 2,
+            'before_end': 'default',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
             'start_date': datetime.datetime(2017, 3, 1, 20, 00),
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
-            'resource_type': plugin.RESOURCE_TYPE,
-        }
+            'resource_type': plugin.RESOURCE_TYPE}
+        del values[missing_param]
         self.assertRaises(
             manager_exceptions.MissingParameter,
             self.fake_phys_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
-    def test_create_reservation_with_missing_param_max(self):
+    @ddt.data({"params": {'max': 0}},
+              {"params": {'max': -1}},
+              {"params": {'max': 'one'}},
+              {"params": {'min': 0}},
+              {"params": {'min': -1}},
+              {"params": {'min': 'one'}},
+              {"params": {'before_end': 'invalid'}})
+    @ddt.unpack
+    def test_create_reservation_with_invalid_param(self, params):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'2',
+            'min': 1,
+            'max': 2,
+            'before_end': 'default',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
             'start_date': datetime.datetime(2017, 3, 1, 20, 00),
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
-            'resource_type': plugin.RESOURCE_TYPE,
-        }
-        self.assertRaises(
-            manager_exceptions.MissingParameter,
-            self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            values)
-
-    def test_create_reservation_with_missing_param_properties(self):
-        values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'1',
-            'max': u'2',
-            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
-            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
-            'resource_type': plugin.RESOURCE_TYPE,
-        }
-        self.assertRaises(
-            manager_exceptions.MissingParameter,
-            self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            values)
-
-    def test_create_reservation_with_invalid_param_max(self):
-        values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'2',
-            'max': u'three',
-            'hypervisor_properties': '["=", "$memory_mb", "256"]',
-            'resource_properties': '',
-            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
-            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
-            'resource_type': plugin.RESOURCE_TYPE,
-        }
+            'resource_type': plugin.RESOURCE_TYPE}
+        for key, value in params.items():
+            values[key] = value
         self.assertRaises(
             manager_exceptions.MalformedParameter,
             self.fake_phys_plugin.reserve_resource,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
-    def test_create_reservation_with_invalid_param_before_end(self):
+    @ddt.data({"params": {'max': 0}},
+              {"params": {'max': -1}},
+              {"params": {'max': 'one'}},
+              {"params": {'min': 0}},
+              {"params": {'min': -1}},
+              {"params": {'min': 'one'}})
+    @ddt.unpack
+    def test_update_reservation_with_invalid_param(self, params):
         values = {
             'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'1',
-            'max': u'2',
+            'min': 1,
+            'max': 2,
+            'before_end': 'default',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
             'resource_properties': '',
-            'before_end': 'invalid',
+            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
+            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
+            'resource_type': plugin.RESOURCE_TYPE}
+        self.patch(self.db_api, 'reservation_get')
+        self.patch(self.db_api, 'lease_get')
+        host_reservation_get = self.patch(self.db_api,
+                                          'host_reservation_get')
+        host_reservation_get.return_value = {
+            'count_range': '1-1',
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': ''
+        }
+        for key, value in params.items():
+            values[key] = value
+        self.assertRaises(
+            manager_exceptions.MalformedParameter,
+            self.fake_phys_plugin.update_reservation,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
+
+    def test_create_update_reservation_with_invalid_range(self):
+        values = {
+            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'min': 2,
+            'max': 1,
+            'hypervisor_properties': '["=", "$memory_mb", "256"]',
+            'resource_properties': '',
             'start_date': datetime.datetime(2017, 3, 1, 20, 00),
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
             'resource_type': plugin.RESOURCE_TYPE,
         }
-        self.assertRaises(
-            manager_exceptions.MalformedParameter,
-            self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            values)
-
-    def test_create_reservation_with_invalid_range(self):
-        values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'min': u'2',
-            'max': u'1',
+        self.patch(self.db_api, 'reservation_get')
+        self.patch(self.db_api, 'lease_get')
+        host_reservation_get = self.patch(self.db_api,
+                                          'host_reservation_get')
+        host_reservation_get.return_value = {
+            'count_range': '1-1',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
-            'resource_properties': '',
-            'start_date': datetime.datetime(2017, 3, 1, 20, 00),
-            'end_date': datetime.datetime(2017, 3, 2, 20, 00),
-            'resource_type': plugin.RESOURCE_TYPE,
+            'resource_properties': ''
         }
         self.assertRaises(
             manager_exceptions.InvalidRange,
             self.fake_phys_plugin.reserve_resource,
+            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            values)
+        self.assertRaises(
+            manager_exceptions.InvalidRange,
+            self.fake_phys_plugin.update_reservation,
             u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 

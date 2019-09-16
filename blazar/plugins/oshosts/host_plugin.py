@@ -605,13 +605,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         return param
 
     def _check_params(self, values):
-        min_hosts = self._convert_int_param(values.get('min'), 'min')
-        max_hosts = self._convert_int_param(values.get('max'), 'max')
-
-        if 0 <= min_hosts and min_hosts <= max_hosts:
-            values['count_range'] = str(min_hosts) + '-' + str(max_hosts)
-        else:
-            raise manager_ex.InvalidRange()
+        self._validate_min_max_range(values, values.get('min'),
+                                     values.get('max'))
 
         if 'hypervisor_properties' not in values:
             raise manager_ex.MissingParameter(param='hypervisor_properties')
@@ -623,14 +618,23 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         if values['before_end'] not in before_end_options:
             raise manager_ex.MalformedParameter(param='before_end')
 
+    def _validate_min_max_range(self, values, min_hosts, max_hosts):
+        self._convert_int_param(min_hosts, 'min')
+        self._convert_int_param(max_hosts, 'max')
+        if min_hosts <= 0 or max_hosts <= 0:
+            raise manager_ex.MalformedParameter(
+                param='min and max (must be greater than or equal to 1)')
+        if max_hosts < min_hosts:
+            raise manager_ex.InvalidRange()
+        values['count_range'] = str(min_hosts) + '-' + str(max_hosts)
+
     def _update_allocations(self, dates_before, dates_after, reservation_id,
                             reservation_status, host_reservation, values):
-        min_hosts = self._convert_int_param(values.get(
-            'min', host_reservation['count_range'].split('-')[0]), 'min')
-        max_hosts = self._convert_int_param(values.get(
-            'max', host_reservation['count_range'].split('-')[1]), 'max')
-        if min_hosts < 0 or max_hosts < min_hosts:
-            raise manager_ex.InvalidRange()
+        min_hosts = values.get('min', int(
+            host_reservation['count_range'].split('-')[0]))
+        max_hosts = values.get(
+            'max', int(host_reservation['count_range'].split('-')[1]))
+        self._validate_min_max_range(values, min_hosts, max_hosts)
         hypervisor_properties = values.get(
             'hypervisor_properties',
             host_reservation['hypervisor_properties'])

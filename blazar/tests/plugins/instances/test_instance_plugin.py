@@ -16,6 +16,7 @@
 import datetime
 import uuid
 
+import ddt
 import mock
 from novaclient import exceptions as nova_exceptions
 import six
@@ -35,6 +36,7 @@ from oslo_config import fixture as conf_fixture
 CONF = cfg.CONF
 
 
+@ddt.ddt
 class TestVirtualInstancePlugin(tests.TestCase):
 
     def setUp(self):
@@ -139,6 +141,28 @@ class TestVirtualInstancePlugin(tests.TestCase):
                                                  {'flavor_id': 1,
                                                   'server_group_id': 2,
                                                   'aggregate_id': 3})
+
+    @ddt.data(-1, 0, '0', 'one')
+    def test_error_with_amount(self, value):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        inputs = self.get_input_values(2, 4018, 10, value, False,
+                                       '2030-01-01 08:00', '2030-01-01 08:00',
+                                       'lease-1', '')
+        self.assertRaises(mgr_exceptions.MalformedParameter,
+                          plugin.reserve_resource, 'reservation_id', inputs)
+        self.assertRaises(mgr_exceptions.MalformedParameter,
+                          plugin.update_reservation, 'reservation_id', inputs)
+
+    @ddt.data('vcpus', 'memory_mb', 'disk_gb', 'amount', 'affinity',
+              'resource_properties')
+    def test_create_reservation_with_missing_param(self, missing_param):
+        plugin = instance_plugin.VirtualInstancePlugin()
+        inputs = self.get_input_values(2, 4018, 10, 1, False,
+                                       '2030-01-01 08:00', '2030-01-01 08:00',
+                                       'lease-1', '')
+        del inputs[missing_param]
+        self.assertRaises(mgr_exceptions.MissingParameter,
+                          plugin.reserve_resource, 'reservation_id', inputs)
 
     def test_filter_hosts_by_reservation_with_exclude(self):
         def fake_get_reservation_by_host(host_id, start, end):
