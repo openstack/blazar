@@ -18,6 +18,7 @@ import functools
 from oslo_config import cfg
 
 from blazar import context
+from blazar.utils.openstack import base
 from blazar.utils.openstack import keystone
 
 CONF = cfg.CONF
@@ -59,7 +60,7 @@ def create_ctx_from_trust(trust_id):
         global_request_id=ctx.global_request_id
     )
     auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
-                                  CONF.os_auth_host,
+                                  base.get_os_auth_host(CONF),
                                   CONF.os_auth_port,
                                   CONF.os_auth_prefix)
     client = keystone.BlazarKeystoneClient(

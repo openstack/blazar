@@ -131,7 +131,7 @@ class BlazarNovaClient(object):
 
         if auth_url is None:
             auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
-                                          CONF.os_auth_host,
+                                          base.get_os_auth_host(CONF),
                                           CONF.os_auth_port,
                                           CONF.os_auth_prefix)
 

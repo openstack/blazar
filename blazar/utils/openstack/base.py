@@ -13,7 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import netaddr
+
 from blazar.manager import exceptions
+
+
+def get_os_auth_host(conf):
+    """Description
+
+    Returns os_auth_host from conf, surrounded by brackets if IPv6.
+    """
+    os_auth_host = conf.os_auth_host
+    if netaddr.valid_ipv6(os_auth_host, netaddr.core.INET_PTON):
+        os_auth_host = "[%s]" % os_auth_host
+    return os_auth_host
 
 
 def url_for(service_catalog, service_type, admin=False,

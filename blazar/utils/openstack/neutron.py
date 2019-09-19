@@ -23,6 +23,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from blazar import context
+from blazar.utils.openstack import base
 from blazar.utils.openstack import exceptions
 
 CONF = cfg.CONF
@@ -56,7 +57,7 @@ class BlazarNeutronClient(object):
 
         if auth_url is None:
             auth_url = "%s://%s:%s/%s/%s" % (CONF.os_auth_protocol,
-                                             CONF.os_auth_host,
+                                             base.get_os_auth_host(CONF),
                                              CONF.os_auth_port,
                                              CONF.os_auth_prefix,
                                              CONF.os_auth_version)
