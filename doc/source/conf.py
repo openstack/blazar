@@ -188,9 +188,12 @@ htmlhelp_basename = 'BlazarDoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'blazardoc.tex', u'Blazar',
+    ('index', 'doc-blazar.tex', u'Blazar Documentation',
      u'OpenStack Foundation', 'manual'),
 ]
+
+# Disable usage of xindy https://bugzilla.redhat.com/show_bug.cgi?id=1643664
+latex_use_xindy = False
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
