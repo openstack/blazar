@@ -222,3 +222,7 @@ class CantUpdateFloatingIPReservation(exceptions.BlazarException):
     code = 400
     msg_fmt = _("Floating IP reservation cannot be updated with requested "
                 "parameters. %(msg)s")
+
+
+class NeutronClientError(exceptions.BlazarException):
+    msg_fmt = _("Failed to create Neutron resources for the reservation")
