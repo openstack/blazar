@@ -90,6 +90,27 @@ class FloatingIpPlugin(base.BasePlugin):
             if len(fip_ids_to_add) < needed_fips:
                 raise manager_ex.NotEnoughFloatingIPAvailable()
 
+        # Create new floating IPs if reservation is active
+        created_fips = []
+        if reservation_status == status.reservation.ACTIVE:
+            ctx = context.current()
+            fip_pool = neutron.FloatingIPPool(fip_reservation['network_id'])
+            for fip_id in fip_ids_to_add:
+                try:
+                    fip = db_api.floatingip_get(fip_id)
+                    LOG.debug(
+                        'Creating floating IP {} for reservation {}'.format(
+                            fip['floating_ip_address'], reservation_id))
+                    fip_pool.create_reserved_floatingip(
+                        fip['subnet_id'], fip['floating_ip_address'],
+                        ctx.project_id, reservation_id)
+                    created_fips.append(fip['floating_ip_address'])
+                except Exception as e:
+                    for fip_address in created_fips:
+                        fip_pool.delete_reserved_floatingip(fip_address)
+                    err_msg = 'Failed to create floating IP: {}'.format(str(e))
+                    raise manager_ex.NeutronClientError(err_msg)
+
         for fip_id in fip_ids_to_add:
             LOG.debug('Adding floating IP {} to reservation {}'.format(
                 fip_id, reservation_id))
