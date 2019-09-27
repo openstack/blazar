@@ -39,3 +39,6 @@ ChangeLog
 
 # generated policy file
 etc/blazar/policy.yaml.sample
+
+# generated doc file
+doc/source/_static/*
