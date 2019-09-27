@@ -42,6 +42,13 @@
       - openstack/python-blazarclient
       - openstack/blazar-tempest-plugin
 
+- job:
+    name: blazar-devstack-dsvm-ipv6-only
+    parent: blazar-devstack-dsvm-py35
+    run: playbooks/legacy/blazar-devstack-dsvm-py35/run-ipv6.yaml
+    required-projects:
+      - openstack/tempest
+
 - project:
     templates:
       - check-requirements
@@ -54,6 +61,7 @@
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
+        - blazar-devstack-dsvm-ipv6-only
         - openstack-tox-pylint:
             voting: false
     gate:
@@ -61,3 +69,4 @@
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
+        - blazar-devstack-dsvm-ipv6-only

@@ -44,7 +44,7 @@ function configure_blazar {
     touch $BLAZAR_CONF_FILE
 
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_version v3
-    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_host $KEYSTONE_AUTH_HOST
+    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_host $(ipv6_unquote $KEYSTONE_AUTH_HOST)
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_port 80
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_prefix identity
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
@@ -58,7 +58,7 @@ function configure_blazar {
 
     iniset $BLAZAR_CONF_FILE nova aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
 
-    iniset $BLAZAR_CONF_FILE DEFAULT host $HOST_IP
+    iniset $BLAZAR_CONF_FILE DEFAULT host $(ipv6_unquote $SERVICE_HOST)
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
 
     iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin,virtual.instance.plugin,virtual.floatingip.plugin
