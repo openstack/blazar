@@ -632,7 +632,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         return self.get_allocations(host_id, data)
 
     def query_host_allocations(self, hosts, lease_id=None,
-                               reservation_id=None):
+                               reservation_id=None, detail=False):
         """Return dict of host and its allocations.
 
         The list element forms
@@ -756,7 +756,8 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         values['count_range'] = str(min_hosts) + '-' + str(max_hosts)
 
     def _update_allocations(self, dates_before, dates_after, reservation_id,
-                            reservation_status, host_reservation, values):
+                            reservation_status, host_reservation, values,
+                            lease):
         min_hosts = values.get('min', int(
             host_reservation['count_range'].split('-')[0]))
         max_hosts = values.get(
