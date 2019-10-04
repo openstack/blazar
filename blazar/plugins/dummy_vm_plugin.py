@@ -25,6 +25,9 @@ class DummyVMPlugin(base.BasePlugin):
     def reserve_resource(self, reservation_id, values):
         return None
 
+    def update_reservation(self, reservation_id, values):
+        return None
+
     def on_start(self, resource_id):
         """Dummy VM plugin does nothing."""
         return 'VM %s should be waked up this moment.' % resource_id
