@@ -1,4 +1,4 @@
-# Install and start **blazar** reservations service
+# Install and start **blazar** reservation service
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -19,19 +19,6 @@ enable_python3_package blazar blazar-nova python-blazarclient
 function is_blazar_enabled {
     [[ ,${ENABLED_SERVICES} =~ ,"blazar-" ]] && return 0
     return 1
-}
-
-# Oslo.Messaging RPC iniupdate configuration
-function iniupdate_rpc_backend {
-    local file=$1
-    local section=$2
-    if is_service_enabled zeromq; then
-        iniset $file $section rpc_backend zmq
-    elif is_service_enabled qpid || [ -n "$QPID_HOST" ]; then
-        iniset $file $section rpc_backend qpid
-    elif is_service_enabled rabbit || { [ -n "$RABBIT_HOST" ] && [ -n "$RABBIT_PASSWORD" ]; }; then
-        iniset $file $section rpc_backend rabbit
-    fi
 }
 
 # configure_blazar() - Set config files, create data dirs, etc
@@ -70,7 +57,6 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT use_syslog $SYSLOG
 
     iniset_rpc_backend blazar $BLAZAR_CONF_FILE DEFAULT
-    iniupdate_rpc_backend $BLAZAR_CONF_FILE DEFAULT
 
     setup_logging $BLAZAR_CONF_FILE
 
@@ -114,23 +100,8 @@ function configure_blazar {
 function _blazar_setup_keystone {
     local conf_file=$1
     local section=$2
-    local use_auth_url=$3
 
-    if [[ -z $skip_auth_cache ]]; then
-        iniset $conf_file $section signing_dir $BLAZAR_AUTH_CACHE_DIR
-        # Create cache dir
-        create_blazar_cache_dir
-    fi
-
-    configure_auth_token_middleware $conf_file $BLAZAR_USER_NAME $BLAZAR_AUTH_CACHE_DIR $section
-}
-
-# create_blazar_cache_dir() - Part of the _blazar_setup_keystone process
-function create_blazar_cache_dir {
-    # Create cache dir
-    sudo mkdir -m 700 -p $BLAZAR_AUTH_CACHE_DIR
-    sudo chown $STACK_USER $BLAZAR_AUTH_CACHE_DIR
-    rm -f $BLAZAR_AUTH_CACHE_DIR/*
+    configure_keystone_authtoken_middleware $conf_file $BLAZAR_USER_NAME $section
 }
 
 # create_blazar_aggregate_freepool() - Create a Nova aggregate to use as freepool (for host reservation)
@@ -236,10 +207,7 @@ function clean_blazar_configuration {
 
 
 if is_service_enabled blazar blazar-m blazar-a; then
-    if [[ "$1" == "stack" && "$2" == "pre-config" ]]; then
-        echo "Pre installation steps for Blazar"
-        iniupdate_rpc_backend
-    elif [[ "$1" == "stack" && "$2" == "install" ]]; then
+    if [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing Blazar"
         # Use stack_install_service here to account for virtualenv
         stack_install_service blazar
