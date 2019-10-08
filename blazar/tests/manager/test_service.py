@@ -72,6 +72,12 @@ class FakePluginRaisesException(base.BasePlugin):
     def __init__(self):
         raise Exception
 
+    def reserve_resource(self, reservation_id, values):
+        return None
+
+    def update_reservation(self, reservation_id, values):
+        return None
+
     def on_start(self, resource_id):
         return 'Resource %s should be started this moment.' % resource_id
 
