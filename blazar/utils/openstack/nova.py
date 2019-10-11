@@ -386,7 +386,7 @@ class ReservationPool(NovaClientWrapper):
             if removed_hosts:
                 LOG.warn('Adding hosts back to freepool: %s', removed_hosts)
                 for host in removed_hosts:
-                    self.nova.aggregates.add_host(freepool_agg.name, host)
+                    self.nova.aggregates.add_host(freepool_agg.id, host)
             raise e
 
         return self.get_aggregate_from_name_or_id(pool)

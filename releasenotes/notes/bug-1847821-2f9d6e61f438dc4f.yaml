@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Updates the on_start failure handlers to look up the freepool aggregate by
+    ID, not by name, when moving hosts back to the freepool. Fixes issue where
+    hosts wind up without any aggregate during lease start failure.  For more
+    details, see `bug 1847821
+    <https://bugs.launchpad.net/blazar/+bug/1847821>`_.

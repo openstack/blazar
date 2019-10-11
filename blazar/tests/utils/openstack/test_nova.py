@@ -346,8 +346,8 @@ class ReservationPoolTestCase(tests.TestCase):
         check0 = self.nova.aggregates.add_host
         check0.assert_has_calls([mock.call(self.fake_aggregate.id, 'host1'),
                                  mock.call(self.fake_aggregate.id, 'host2'),
-                                 mock.call('freepool', 'host1'),
-                                 mock.call('freepool', 'host2')])
+                                 mock.call(self.fake_freepool.id, 'host1'),
+                                 mock.call(self.fake_freepool.id, 'host2')])
         check1 = self.nova.aggregates.remove_host
         check1.assert_has_calls([mock.call(self.fake_freepool.id, 'host1'),
                                  mock.call(self.fake_freepool.id, 'host2'),
