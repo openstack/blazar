@@ -1,5 +1,5 @@
 - hosts: all
-  name: Autoconverted job legacy-blazar-devstack-dsvm from old job gate-blazar-devstack-dsvm
+  name: legacy-blazar-devstack-dsvm-py35
   tasks:
 
     - name: Ensure legacy workspace directory
@@ -30,6 +30,13 @@
           cat << 'EOF' >>"/tmp/dg-local.conf"
           [[local|localrc]]
           enable_plugin blazar https://opendev.org/openstack/blazar
+          # Swift is not ready for python3 yet
+          disable_service s-account
+          disable_service s-container
+          disable_service s-object
+          disable_service s-proxy
+          # Without Swift, c-bak cannot run (in the Gate at least)
+          disable_service c-bak
           # Enable Tempest plugin
           TEMPEST_PLUGINS='/opt/stack/new/blazar-tempest-plugin'
           EOF
@@ -41,6 +48,7 @@
         cmd: |
           set -e
           set -x
+          export DEVSTACK_GATE_USE_PYTHON3=True
           export PYTHONUNBUFFERED=true
           export DEVSTACK_GATE_TEMPEST=1
           export ENABLED_SERVICES=blazar,blazar-a,blazar-m,tempest
