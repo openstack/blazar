@@ -767,6 +767,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'end_date': datetime.datetime(2017, 3, 2, 20, 00),
             'resource_type': plugin.RESOURCE_TYPE}
         del values[missing_param]
+        self.patch(db_api, 'host_allocation_get_all_by_values')
         self.assertRaises(
             manager_exceptions.MissingParameter,
             self.fake_phys_plugin.reserve_resource,
@@ -794,6 +795,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'resource_type': plugin.RESOURCE_TYPE}
         for key, value in params.items():
             values[key] = value
+        self.patch(db_api, 'host_allocation_get_all_by_values')
         self.assertRaises(
             manager_exceptions.MalformedParameter,
             self.fake_phys_plugin.reserve_resource,
@@ -829,6 +831,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         for key, value in params.items():
             values[key] = value
+        self.patch(db_api, 'host_allocation_get_all_by_values')
         self.assertRaises(
             manager_exceptions.MalformedParameter,
             self.fake_phys_plugin.update_reservation,
@@ -848,6 +851,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         self.patch(self.db_api, 'reservation_get')
         self.patch(self.db_api, 'lease_get')
+        self.patch(db_api, 'host_allocation_get_all_by_values')
         host_reservation_get = self.patch(self.db_api,
                                           'host_reservation_get')
         host_reservation_get.return_value = {
