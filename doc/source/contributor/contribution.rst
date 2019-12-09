@@ -7,16 +7,16 @@ Getting started
 
 * Read the `OpenStack Developer's Guide
   <https://docs.openstack.org/infra/manual/developers.html#developer-s-guide>`_
-* Login to `OpenStack Gerrit <https://review.openstack.org/>`_ using your
+* Login to `OpenStack Gerrit <https://review.opendev.org/>`_ using your
   Launchpad ID
 
   * Sign the `OpenStack Individual Contributor License Agreement
-    <https://review.openstack.org/#/settings/agreements>`_
+    <https://review.opendev.org/#/settings/agreements>`_
   * Check that your email is listed in `Gerrit identities
-    <https://review.openstack.org/#/settings/web-identities>`_
+    <https://review.opendev.org/#/settings/web-identities>`_
 
 * Subscribe to Blazar-related projects on
-  `OpenStack Gerrit <https://review.openstack.org/>`_. Go to your
+  `OpenStack Gerrit <https://review.opendev.org/>`_. Go to your
   settings and in the watched projects add *openstack/blazar*,
   *openstack/blazar-nova*, *openstack/python-blazarclient* and
   *openstack/blazar-dashboard*.
