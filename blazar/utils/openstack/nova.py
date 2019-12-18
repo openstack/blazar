@@ -162,19 +162,7 @@ class BlazarNovaClient(object):
         return getattr(self.nova, name)
 
 
-# TODO(dbelova): remove these lines after novaclient 2.16.0 will be released
-class BlazarServer(servers.Server):
-    def unshelve(self):
-        """Unshelve -- Unshelve the server."""
-        self.manager.unshelve(self)
-
-
 class ServerManager(servers.ServerManager):
-    resource_class = BlazarServer
-
-    def unshelve(self, server):
-        """Unshelve the server."""
-        self._action('unshelve', server, None)
 
     def create_image(self, server, image_name=None, metadata=None):
         """Snapshot a server."""
