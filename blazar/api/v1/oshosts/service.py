@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from blazar import context
 from blazar.manager.oshosts import rpcapi as manager_rpcapi
 from blazar import policy
 from blazar.utils import trusts
@@ -74,7 +75,13 @@ class API(object):
         :param query: parameters to query allocations
         :type query: dict
         """
-        return self.manager_rpcapi.list_allocations(query)
+        ctx = context.current()
+        detail = False
+
+        if policy.enforce(ctx, 'admin', {}, do_raise=False):
+            detail = True
+
+        return self.manager_rpcapi.list_allocations(query, detail=detail)
 
     @policy.authorize('oshosts', 'get_allocations')
     def get_allocations(self, host_id, query):
