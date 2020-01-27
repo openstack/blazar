@@ -39,12 +39,12 @@ via the commands:
 
 .. sourcecode:: console
 
-   tox -e py27
-   tox -e py35
+   tox -e py36
+   tox -e py37
 
 ..
 
-for Python 2.7 and Python 3.5 accordingly.
+for Python 3.6 and Python 3.7 accordingly.
 
 Note that the Blazar code base is not yet compatible with Python 3, so tests
 will be failing.
