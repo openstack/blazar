@@ -248,10 +248,10 @@ def render(result=None, response_type=None, status=None, **kwargs):
         return
 
     body = serializer.dump_as_bytes(result)
-
     response_type = str(response_type)
+    headers = {'Content-Length': 0} if status_code == 204 else None
 
-    return flask.Response(response=body, status=status_code,
+    return flask.Response(response=body, headers=headers, status=status_code,
                           mimetype=response_type)
 
 
