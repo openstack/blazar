@@ -48,4 +48,5 @@ def datetime_to_str(dct, attr_name):
     if dct.get(attr_name) is not None:
         dct[attr_name] = dct[attr_name].isoformat(' ')
 
+
 BlazarBase = declarative.declarative_base(cls=_BlazarBase)

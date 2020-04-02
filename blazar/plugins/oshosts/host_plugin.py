@@ -195,7 +195,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                     host_reservation['aggregate_id']):
                 for server in client.servers.list(
                         search_opts={"host": host, "all_tenants": 1}):
-                        client.servers.create_image(server=server)
+                    client.servers.create_image(server=server)
 
     def on_end(self, resource_id):
         """Remove the hosts from the pool."""

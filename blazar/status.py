@@ -194,18 +194,18 @@ class LeaseStatus(BaseStatus):
             def wrapper(*args, **kwargs):
                 # Update a lease status
                 lease_id = kwargs['lease_id']
-                l = db_api.lease_get(lease_id)
-                if cls.is_valid_transition(l['status'],
+                lease = db_api.lease_get(lease_id)
+                if cls.is_valid_transition(lease['status'],
                                            transition,
                                            lease_id=lease_id):
                     db_api.lease_update(lease_id,
                                         {'status': transition})
                     LOG.debug('Status of lease %s changed from %s to %s.',
-                              lease_id, l['status'], transition)
+                              lease_id, lease['status'], transition)
                 else:
                     LOG.warn('Aborting %s. '
                              'Invalid lease status transition from %s to %s.',
-                             func.__name__, l['status'],
+                             func.__name__, lease['status'],
                              transition)
                     raise exceptions.InvalidStatus
 

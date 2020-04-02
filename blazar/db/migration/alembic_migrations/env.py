@@ -78,6 +78,7 @@ def run_migrations_online(config):
     finally:
         connection.close()
 
+
 if context.is_offline_mode():
     run_migrations_offline(config.blazar_config)
 else:
