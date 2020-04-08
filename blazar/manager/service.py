@@ -74,7 +74,11 @@ class ManagerService(service_utils.RPCServer):
 
     def start(self):
         super(ManagerService, self).start()
-        self.tg.add_timer(EVENT_INTERVAL, self._event)
+        # NOTE(jakecoll): stop_on_exception=False was added because database
+        # exceptions would prevent threads from being scheduled again.
+        # TODO(jakecoll): Find a way to test this.
+        self.tg.add_timer_args(EVENT_INTERVAL, self._event,
+                               stop_on_exception=False)
         for m in self.monitors:
             m.start_monitoring()
 
