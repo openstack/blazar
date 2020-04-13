@@ -12,3 +12,10 @@ Internals
 The following is a dive into some of the internals in blazar.
 
 * :doc:`/reference/api-microversion-history`: How blazar uses API microversion.
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   api-microversion-history
