@@ -130,10 +130,11 @@ class BlazarNovaClient(object):
             kwargs.setdefault('global_request_id', ctx.global_request_id)
 
         if auth_url is None:
-            auth_url = "%s://%s:%s/%s" % (CONF.os_auth_protocol,
-                                          base.get_os_auth_host(CONF),
-                                          CONF.os_auth_port,
-                                          CONF.os_auth_prefix)
+            auth_url = "%s://%s:%s" % (CONF.os_auth_protocol,
+                                       base.get_os_auth_host(CONF),
+                                       CONF.os_auth_port)
+            if CONF.os_auth_prefix:
+                auth_url += "/%s" % CONF.os_auth_prefix
 
         if username:
             kwargs.setdefault('username', username)
