@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
+
 import neutronclient
 from neutronclient.common import exceptions as neutron_exceptions
 from oslo_config import cfg

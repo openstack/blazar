@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import datetime
+from unittest import mock
 
 import ddt
 import eventlet
-import mock
 from oslo_config import cfg
 import oslo_messaging as messaging
 from six.moves import reload_module

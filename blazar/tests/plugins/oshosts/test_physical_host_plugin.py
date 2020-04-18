@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import datetime
+from unittest import mock
 
 import ddt
-import mock
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg

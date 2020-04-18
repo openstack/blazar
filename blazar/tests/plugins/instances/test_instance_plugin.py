@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import datetime
+from unittest import mock
 import uuid
 
 import ddt
-import mock
 from novaclient import exceptions as nova_exceptions
 import six
 

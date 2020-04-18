@@ -12,11 +12,11 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
 import uuid as uuidgen
 
 from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
-import mock
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from novaclient.v2 import availability_zones
