@@ -38,9 +38,9 @@ html_theme_options = {
 }
 
 # openstackdocstheme options
-repository_name = 'openstack/blazar'
-bug_project = 'blazar'
-bug_tag = 'api-ref'
+openstackdocs_repo_name = 'openstack/blazar'
+openstackdocs_bug_project = 'blazar'
+openstackdocs_bug_tag = 'api-ref'
 
 # -- General configuration ------------------------------------------------
 
@@ -73,7 +73,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False

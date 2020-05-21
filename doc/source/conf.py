@@ -43,9 +43,10 @@ extensions = ['sphinx.ext.autodoc',
               ]
 
 # openstackdocstheme options
-repository_name = 'openstack/blazar'
-bug_project = 'blazar'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/blazar'
+openstackdocs_pdf_link = True
+openstackdocs_bug_project = 'blazar'
+openstackdocs_bug_tag = ''
 
 wsme_protocols = ['restjson', 'restxml']
 
@@ -101,7 +102,7 @@ exclude_patterns = [
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
