@@ -490,9 +490,9 @@ class NovaInventory(NovaClientWrapper):
 
         az_name = ''
         if CONF.nova.az_aware:
-            host_name = hypervisor.hypervisor_hostname
+            host_name = hypervisor.service['host']
             for zone in self.nova.availability_zones.list(detailed=True):
-                if (host_name in zone.hosts
+                if (zone.hosts and host_name in zone.hosts
                    and 'nova-compute' in zone.hosts[host_name]):
                     az_name = zone.zoneName
 

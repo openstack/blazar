@@ -448,7 +448,7 @@ class FakeNovaHypervisors(object):
     class FakeHost(object):
         id = 1
         availability_zone = 'fake_az1'
-        hypervisor_hostname = 'fake_name'
+        hypervisor_hostname = 'fake_name.openstack.org'
         vcpus = 1
         cpu_info = 'fake_cpu'
         hypervisor_type = 'fake_type'

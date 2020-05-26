@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes host creation in the presence of availability zones with no hosts.
+    For more details, see `bug 1880646
+    <https://bugs.launchpad.net/blazar/+bug/1880646>`_.
