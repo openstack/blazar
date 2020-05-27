@@ -15,31 +15,29 @@
 
 import threading
 
+from oslo_config import cfg
 from oslo_context import context
+
+CONF = cfg.CONF
 
 
 class BlazarContext(context.RequestContext):
 
+    # service_catalog is not by default read from a dict
+    # when deserializing a context.
+    FROM_DICT_EXTRA_KEYS = ['service_catalog']
+
     _context_stack = threading.local()
 
-    def __init__(self, user_id=None, project_id=None, project_name=None,
-                 service_catalog=None, user_name=None, **kwargs):
+    def __init__(self, service_catalog=None, **kwargs):
         # NOTE(neha-alhat): During serializing/deserializing context object
         # over the RPC layer, below extra parameters which are passed by
         # `oslo.messaging` are popped as these parameters are not required.
         kwargs.pop('client_timeout', None)
         kwargs.pop('user_identity', None)
-        kwargs.pop('project', None)
-
-        if user_id:
-            kwargs['user_id'] = user_id
-        if project_id:
-            kwargs['project_id'] = project_id
 
         super(BlazarContext, self).__init__(**kwargs)
 
-        self.project_name = project_name
-        self.user_name = user_name
         self.service_catalog = service_catalog or []
 
         if self.is_admin and 'admin' not in self.roles:
@@ -65,28 +63,35 @@ class BlazarContext(context.RequestContext):
         except (AttributeError, IndexError):
             raise RuntimeError("Context isn't available here")
 
-    # NOTE(yorik-sar): as long as oslo.rpc requires this
     def to_dict(self):
         result = super(BlazarContext, self).to_dict()
-        result['user_id'] = self.user_id
-        result['user_name'] = self.user_name
-        result['project_id'] = self.project_id
-        result['project_name'] = self.project_name
         result['service_catalog'] = self.service_catalog
         return result
 
     @classmethod
-    def elevated(cls):
+    def admin(cls):
         try:
-            ctx = cls.current()
+            cur = cls.current()
+            request_id = cur.request_id
+            global_request_id = cur.global_request_id
+            service_catalog = cur.service_catalog
         except RuntimeError:
-            ctx = None
-        return cls(ctx, is_admin=True)
+            request_id = global_request_id = service_catalog = None
+        return cls(
+            user_name=CONF.os_admin_username,
+            user_domain_name=CONF.os_admin_user_domain_name,
+            project_name=CONF.os_admin_project_name,
+            project_domain_name=CONF.os_admin_project_domain_name,
+            is_admin=True,
+            service_catalog=service_catalog,
+            request_id=request_id,
+            global_request_id=global_request_id
+        )
 
 
 def current():
     return BlazarContext.current()
 
 
-def elevated():
-    return BlazarContext.elevated()
+def admin():
+    return BlazarContext.admin()

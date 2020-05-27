@@ -27,18 +27,5 @@ def ctx_from_headers(headers):
     except TypeError:
         raise exceptions.WrongFormat()
 
-    kwargs = {"user_id": headers['X-User-Id'],
-              "project_id": headers['X-Project-Id'],
-              "auth_token": headers['X-Auth-Token'],
-              "service_catalog": service_catalog,
-              "user_name": headers['X-User-Name'],
-              "project_name": headers['X-Project-Name'],
-              "roles": list(
-                  map(str.strip, headers['X-Roles'].split(',')))}
-
-    # For v1 only, request_id and global_request_id will be available.
-    if headers.environ['PATH_INFO'].startswith('/v1'):
-        kwargs['request_id'] = headers.environ['openstack.request_id']
-        kwargs['global_request_id'] = headers.environ.get(
-            'openstack.global_request_id')
-    return context.BlazarContext(**kwargs)
+    return context.BlazarContext.from_environ(headers.environ,
+                                              service_catalog=service_catalog)

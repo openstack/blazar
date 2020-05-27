@@ -27,6 +27,9 @@ from blazar import tests
 
 PATH_PREFIX = '/v2'
 
+FAKE_PROJECT = '981b767265174c108bc5a61185b748ac'
+FAKE_USER = 'b4fdb2fff13545ceb751295096cc18ee'
+
 
 class APITest(tests.TestCase):
     """Used for unittests tests of Pecan controllers."""
@@ -40,11 +43,12 @@ class APITest(tests.TestCase):
         def fake_ctx_from_headers(headers):
             if not headers:
                 return context.BlazarContext(
-                    user_id='fake', project_id='fake', roles=['member'])
+                    user_id=FAKE_USER, project_id=FAKE_PROJECT,
+                    roles=['member'])
             roles = headers.get('X-Roles', str('member')).split(',')
             return context.BlazarContext(
-                user_id=headers.get('X-User-Id', 'fake'),
-                project_id=headers.get('X-Project-Id', 'fake'),
+                user_id=headers.get('X-User-Id', FAKE_USER),
+                project_id=headers.get('X-Project-Id', FAKE_PROJECT),
                 auth_token=headers.get('X-Auth-Token', None),
                 service_catalog=None,
                 user_name=headers.get('X-User-Name', 'fake'),
