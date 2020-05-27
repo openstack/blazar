@@ -52,15 +52,6 @@ class BlazarPolicyTestCase(tests.TestCase):
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
-    def test_elevatedpolicy(self):
-        target = {'user_id': self.context.user_id,
-                  'project_id': self.context.project_id}
-        action = "blazar:oshosts:get"
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, action, target)
-        elevated_context = self.context.elevated()
-        self.assertTrue(policy.enforce(elevated_context, action, target))
-
     def test_authorize(self):
 
         @policy.authorize('leases', 'get', ctx=self.context)

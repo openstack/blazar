@@ -91,7 +91,7 @@ def enforce(context, action, target, do_raise=True):
 
     init()
 
-    credentials = context.to_dict()
+    credentials = context.to_policy_values()
 
     # Add the exceptions arguments if asked to do a raise
     extra = {}

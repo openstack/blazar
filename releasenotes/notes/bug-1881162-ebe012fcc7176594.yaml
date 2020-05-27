@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Allows users of multiple Keystone domains to create leases; previously only users
+    and projects in the default domain could use Blazar.

@@ -101,7 +101,9 @@ class BlazarKeystoneClient(object):
         kwargs.setdefault('version', cfg.CONF.keystone_client_version)
         if ctx is not None:
             kwargs.setdefault('username', ctx.user_name)
-            kwargs.setdefault('tenant_name', ctx.project_name)
+            kwargs.setdefault('user_domain_name', ctx.user_domain_name)
+            kwargs.setdefault('project_name', ctx.project_name)
+            kwargs.setdefault('project_domain_name', ctx.project_domain_name)
             kwargs.setdefault('global_request_id', ctx.global_request_id)
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
@@ -121,8 +123,8 @@ class BlazarKeystoneClient(object):
         # NOTE(dbelova): we need this checking to support current
         # keystoneclient: token can only be scoped now to either
         # a trust or project, not both.
-        if kwargs.get('trust_id') and kwargs.get('tenant_name'):
-            kwargs.pop('tenant_name')
+        if kwargs.get('trust_id') and kwargs.get('project_name'):
+            kwargs.pop('project_name')
 
         try:
             # NOTE(n.s.): we shall remove this try: except: clause when
