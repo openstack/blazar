@@ -1,32 +1,3 @@
-- job:
-    name: blazar-devstack-dsvm
-    parent: legacy-dsvm-base
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^blazar/tests/.*$
-      - ^doc/.*$
-      - ^releasenotes/.*$
-      - ^test-requirements.txt$
-      - ^tools/.*$
-      - ^tox.ini$
-    run: playbooks/legacy/blazar-devstack-dsvm/run.yaml
-    post-run: playbooks/legacy/blazar-devstack-dsvm/post.yaml
-    timeout: 4200
-    required-projects:
-      - openstack/devstack
-      - openstack/devstack-gate
-      - openstack/blazar
-      - openstack/blazar-nova
-      - openstack/python-blazarclient
-      - openstack/blazar-tempest-plugin
-
-- job:
-    name: blazar-devstack-dsvm-ipv6-only
-    parent: blazar-devstack-dsvm
-    run: playbooks/legacy/blazar-devstack-dsvm/run-ipv6.yaml
-    required-projects:
-      - openstack/tempest
-
 - project:
     templates:
       - check-requirements
@@ -37,12 +8,12 @@
       - release-notes-jobs-python3
     check:
       jobs:
-        - blazar-devstack-dsvm
-        - blazar-devstack-dsvm-ipv6-only
+        - blazar-tempest-plugin-base
+        - blazar-tempest-plugin-ipv6-only
         - openstack-tox-pylint:
             voting: false
     gate:
       queue: blazar
       jobs:
-        - blazar-devstack-dsvm
-        - blazar-devstack-dsvm-ipv6-only
+        - blazar-tempest-plugin-base
+        - blazar-tempest-plugin-ipv6-only
