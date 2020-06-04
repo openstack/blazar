@@ -38,9 +38,9 @@ html_theme_options = {
 }
 
 # openstackdocstheme options
-repository_name = 'openstack/blazar'
-bug_project = 'blazar'
-bug_tag = 'api-ref'
+openstackdocs_repo_name = 'openstack/blazar'
+openstackdocs_bug_project = 'blazar'
+openstackdocs_bug_tag = 'api-ref'
 
 # -- General configuration ------------------------------------------------
 

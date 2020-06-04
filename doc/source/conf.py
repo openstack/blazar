@@ -43,9 +43,10 @@ extensions = ['sphinx.ext.autodoc',
               ]
 
 # openstackdocstheme options
-repository_name = 'openstack/blazar'
-bug_project = 'blazar'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/blazar'
+openstackdocs_pdf_link = True
+openstackdocs_bug_project = 'blazar'
+openstackdocs_bug_tag = ''
 
 wsme_protocols = ['restjson', 'restxml']
 
