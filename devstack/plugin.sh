@@ -182,7 +182,7 @@ function blazar_setup_horizon {
 # start_blazar() - Start running processes, including screen
 function start_blazar {
     if [ "$BLAZAR_USE_MOD_WSGI" == "True" ]; then
-        run_process 'blazar-a' "$BLAZAR_BIN_DIR/uwsgi --ini $BLAZAR_UWSGI_CONF"
+        run_process 'blazar-a' "$(which uwsgi) --ini $BLAZAR_UWSGI_CONF"
     else
         run_process blazar-a "$BLAZAR_BIN_DIR/blazar-api --debug --config-file $BLAZAR_CONF_FILE"
     fi

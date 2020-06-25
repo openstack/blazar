@@ -36,7 +36,13 @@
       - publish-openstack-docs-pti
       - release-notes-jobs-python3
     check:
-      jobs: []
+      jobs:
+        - blazar-devstack-dsvm
+        - blazar-devstack-dsvm-ipv6-only
+        - openstack-tox-pylint:
+            voting: false
     gate:
       queue: blazar
-      jobs: []
+      jobs:
+        - blazar-devstack-dsvm
+        - blazar-devstack-dsvm-ipv6-only
