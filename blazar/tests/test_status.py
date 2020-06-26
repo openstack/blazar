@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mock import call
+from unittest.mock import call
 
 from blazar.db import api as db_api
 from blazar import exceptions
