@@ -13,13 +13,18 @@ Reference
    blazar-conf.rst
    nova-conf.rst
 
+.. # NOTE(priteau): Keep sample files for HTML only.
+   # Sample files are too large and cause TeX memory issues.
+   # See bug https://bugs.launchpad.net/blazar/+bug/1885250
 
-Sample Files
-^^^^^^^^^^^^
+.. only:: html
 
-.. toctree::
+   Sample Files
+   ^^^^^^^^^^^^
 
-   samples/blazar-conf.rst
+   .. toctree::
+
+      samples/blazar-conf.rst
 
 Policy
 ------
@@ -31,9 +36,15 @@ Reference
 
    blazar-policy.rst
 
-Sample Files
-^^^^^^^^^^^^
+.. # NOTE(priteau): Keep sample files for HTML only.
+   # Sample files are too large and cause TeX memory issues.
+   # See bug https://bugs.launchpad.net/blazar/+bug/1885250
 
-.. toctree::
+.. only:: html
 
-   samples/blazar-policy.rst
+   Sample Files
+   ^^^^^^^^^^^^
+
+   .. toctree::
+
+      samples/blazar-policy.rst
