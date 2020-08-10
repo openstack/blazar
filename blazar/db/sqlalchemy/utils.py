@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from collections import defaultdict
 import sys
 
 import sqlalchemy as sa
@@ -93,28 +94,87 @@ def get_reservations_by_host_ids(host_ids, start_date, end_date):
     return query.all()
 
 
+def get_reservations_for_allocations(session, start_date, end_date,
+                                     lease_id=None, reservation_id=None):
+    fields = ['id', 'status', 'lease_id', 'start_date',
+              'end_date', 'lease_name', 'project_id']
+
+    reservations_query = (session.query(
+        models.Reservation.id,
+        models.Reservation.status,
+        models.Reservation.lease_id,
+        models.Lease.start_date,
+        models.Lease.end_date,
+        models.Lease.name,
+        models.Lease.project_id)
+        .join(models.Lease))
+
+    if lease_id:
+        reservations_query = reservations_query.filter(
+            models.Reservation.lease_id == lease_id)
+    if reservation_id:
+        reservations_query = reservations_query.filter(
+            models.Reservation.id == reservation_id)
+
+    # Only enforce time restrictions if we're not targeting a specific
+    # lease or reservation.
+    if not (lease_id or reservation_id):
+        border0 = models.Lease.end_date >= start_date
+        border1 = models.Lease.start_date <= end_date
+        reservations_query = reservations_query.filter(
+            sa.and_(border0, border1))
+
+    return [dict(zip(fields, r)) for r in reservations_query.all()]
+
+
 def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
                                             lease_id=None,
                                             reservation_id=None):
     session = get_session()
-    border0 = start_date <= models.Lease.end_date
-    border1 = models.Lease.start_date <= end_date
-    query = (session.query(models.Reservation.id,
-                           models.Reservation.lease_id,
-                           models.ComputeHostAllocation.compute_host_id)
-             .join(models.Lease,
-                   models.Lease.id == models.Reservation.lease_id)
-             .join(models.ComputeHostAllocation,
-                   models.ComputeHostAllocation.reservation_id ==
-                   models.Reservation.id)
-             .filter(models.ComputeHostAllocation.compute_host_id
-                     .in_(host_ids))
-             .filter(sa.and_(border0, border1)))
-    if lease_id:
-        query = query.filter(models.Reservation.lease_id == lease_id)
-    if reservation_id:
-        query = query.filter(models.Reservation.id == reservation_id)
-    return query.all()
+    reservations = get_reservations_for_allocations(
+        session, start_date, end_date, lease_id, reservation_id)
+
+    allocations_query = (session.query(
+        models.ComputeHostAllocation.reservation_id,
+        models.ComputeHostAllocation.compute_host_id)
+        .filter(models.ComputeHostAllocation.compute_host_id.in_(host_ids))
+        .filter(models.ComputeHostAllocation.reservation_id.in_(
+            list(set([x['id'] for x in reservations])))))
+
+    allocations = defaultdict(list)
+
+    for row in allocations_query.all():
+        allocations[row[0]].append(row[1])
+
+    allocs = []
+    for r in reservations:
+        allocs.append((r['id'], r['lease_id'], allocations[r['id']][0]))
+
+    return allocs
+
+
+def get_reservation_allocations_by_fip_ids(fip_ids, start_date, end_date,
+                                           lease_id=None, reservation_id=None):
+    session = get_session()
+    reservations = get_reservations_for_allocations(
+        session, start_date, end_date, lease_id, reservation_id)
+
+    allocations_query = (session.query(
+        models.FloatingIPAllocation.reservation_id,
+        models.FloatingIPAllocation.floatingip_id)
+        .filter(models.FloatingIPAllocation.floatingip_id.in_(fip_ids))
+        .filter(models.FloatingIPAllocation.reservation_id.in_(
+            list(set([x['id'] for x in reservations])))))
+
+    allocations = defaultdict(list)
+
+    for row in allocations_query.all():
+        allocations[row[0]].append(row[1])
+
+    for r in reservations:
+        r['floatingip_ids'] = allocations[r['id']]
+
+    return reservations
 
 
 def get_plugin_reservation(resource_type, resource_id):

@@ -35,6 +35,8 @@ from blazar.utils import plugins as plugins_utils
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+QUERY_TYPE_ALLOCATION = 'allocation'
+
 
 class FloatingIpPlugin(base.BasePlugin):
     """Plugin for floating IP resource."""
@@ -42,6 +44,9 @@ class FloatingIpPlugin(base.BasePlugin):
     resource_type = plugin.RESOURCE_TYPE
     title = 'Floating IP Plugin'
     description = 'This plugin creates and assigns floating IPs.'
+    query_options = {
+        QUERY_TYPE_ALLOCATION: ['lease_id', 'reservation_id']
+    }
 
     def check_params(self, values):
         if 'network_id' not in values:
@@ -262,6 +267,19 @@ class FloatingIpPlugin(base.BasePlugin):
             fip = db_api.floatingip_get(alloc['floatingip_id'])
             fip_pool.delete_reserved_floatingip(fip['floating_ip_address'])
 
+    def allocation_candidates(self, values):
+        self.check_params(values)
+
+        required_fips = values.get('required_floatingips', [])
+        amount = int(values['amount'])
+
+        if len(required_fips) > amount:
+            raise manager_ex.TooLongFloatingIPs()
+
+        return self._matching_fips(values['network_id'], required_fips,
+                                   amount, values['start_date'],
+                                   values['end_date'])
+
     def _matching_fips(self, network_id, fip_addresses, amount,
                        start_date, end_date):
         filter_array = []
@@ -344,6 +362,9 @@ class FloatingIpPlugin(base.BasePlugin):
 
         return floatingip
 
+    def get(self, fip_id):
+        return self.get_floatingip(fip_id)
+
     def get_floatingip(self, fip_id):
         fip = db_api.floatingip_get(fip_id)
         if fip is None:
@@ -370,3 +391,53 @@ class FloatingIpPlugin(base.BasePlugin):
         except db_ex.BlazarDBException as e:
             raise manager_ex.CantDeleteFloatingIP(floatingip=fip_id,
                                                   msg=str(e))
+
+    def list_allocations(self, query, detail=False):
+        fip_id_list = [f['id'] for f in db_api.floatingip_list()]
+        options = self.get_query_options(query, QUERY_TYPE_ALLOCATION)
+        options['detail'] = detail
+        fip_allocations = self.query_allocations(fip_id_list, **options)
+
+        return [{"resource_id": fip, "reservations": allocs}
+                for fip, allocs in fip_allocations.items()]
+
+    def query_allocations(self, resource_id_list, detail=None, lease_id=None,
+                          reservation_id=None):
+        return self.query_fip_allocations(resource_id_list, detail=detail,
+                                          lease_id=lease_id,
+                                          reservation_id=reservation_id)
+
+    def query_fip_allocations(self, fips, detail=None, lease_id=None,
+                              reservation_id=None):
+        """Return dict of host and its allocations.
+
+        The list element forms
+        {
+          '-id': [
+                       {
+                         'lease_id': lease_id,
+                         'id': reservation_id
+                       },
+                     ]
+        }.
+        """
+        start = datetime.datetime.utcnow()
+        end = datetime.date.max
+
+        reservations = db_utils.get_reservation_allocations_by_fip_ids(
+            fips, start, end, lease_id, reservation_id)
+        fip_allocations = {fip: [] for fip in fips}
+
+        for reservation in reservations:
+            if not detail:
+                del reservation['project_id']
+                del reservation['lease_name']
+                del reservation['status']
+
+            for fip_id in reservation['floatingip_ids']:
+                if fip_id in fip_allocations.keys():
+                    fip_allocations[fip_id].append({
+                        k: v for k, v in reservation.items()
+                        if k != 'floatingip_ids'})
+
+        return fip_allocations

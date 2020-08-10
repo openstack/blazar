@@ -10,3 +10,4 @@ Administrator Guide
     ../cli/index
     ../restapi/index
     blazar-status
+    usage-enforcement

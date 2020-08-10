@@ -27,6 +27,8 @@ import testtools
 from blazar import context
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
+from blazar import enforcement
+from blazar.enforcement import exceptions as enforcement_ex
 from blazar import exceptions
 from blazar.manager import exceptions as manager_ex
 from blazar.manager import service
@@ -51,7 +53,20 @@ class FakePlugin(base.BasePlugin):
     title = 'Fake Plugin'
     description = 'This plugin is fake.'
 
+    def get(self, resource_id):
+        return None
+
     def reserve_resource(self, reservation_id, values):
+        return None
+
+    def query_allocations(self, resource_id_list, lease_id=None,
+                          reservation_id=None):
+        return None
+
+    def allocation_candidates(self, lease_values):
+        return None
+
+    def list_allocations(self, query, defail=False):
         return None
 
     def update_reservation(self, reservation_id, values):
@@ -127,12 +142,16 @@ class ServiceTestCase(tests.TestCase):
                                         'send_lease_notification')
 
         cfg.CONF.set_override('plugins', ['dummy.vm.plugin'], group='manager')
+        cfg.CONF.set_override(
+            'enabled_filters', ['MaxLeaseDurationFilter'],
+            group='enforcement')
 
         with mock.patch('blazar.status.lease.lease_status',
                         FakeLeaseStatus.lease_status):
             importlib.reload(service)
         self.service = service
         self.manager = self.service.ManagerService()
+        self.enforcement = self.patch(self.manager, 'enforcement')
 
         self.lease_id = '11-22-33'
         self.user_id = '123'
@@ -159,12 +178,27 @@ class ServiceTestCase(tests.TestCase):
                       'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                       'end_date': datetime.datetime(2013, 12, 20, 15, 00),
                       'trust_id': 'exxee111qwwwwe'}
+        self.lease_values = {
+            'id': self.lease_id,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'name': 'lease-name',
+            'reservations': [{'id': '111',
+                              'resource_id': '111',
+                              'resource_type': 'virtual:instance',
+                              'status': 'FAKE PROGRESS'}],
+            'start_date': '2026-11-13 13:13',
+            'end_date': '2026-12-13 13:13',
+            'trust_id': 'exxee111qwwwwe'}
+
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
                                                     '%Y-%m-%d %H:%M')
 
         self.ctx = self.patch(self.context, 'BlazarContext')
+        self.ctx_current = self.patch(context, 'current')
         self.trust_ctx = self.patch(self.trusts, 'create_ctx_from_trust')
         self.trust_create = self.patch(self.trusts, 'create_trust')
+        self.patch(enforcement.UsageEnforcement, 'format_context')
         self.lease_get = self.patch(self.db_api, 'lease_get')
         self.lease_get.return_value = self.lease
         self.lease_list = self.patch(self.db_api, 'lease_list')
@@ -387,61 +421,33 @@ class ServiceTestCase(tests.TestCase):
         self.lease_list.assert_called_once_with()
 
     def test_create_lease_now(self):
-        trust_id = 'exxee111qwwwwe'
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': 'now',
-            'end_date': '2026-12-13 13:13',
-            'trust_id': trust_id}
-
+        lease_values = self.lease_values
         lease = self.manager.create_lease(lease_values)
 
-        self.trust_ctx.assert_called_once_with(trust_id)
+        self.enforcement.check_create.assert_called_once()
+
+        self.trust_ctx.assert_called_once_with(lease_values['trust_id'])
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)
         expected_context = self.trust_ctx.return_value
+
         self.fake_notifier.assert_called_once_with(
             expected_context.__enter__.return_value,
             notifier_api.format_lease_payload(lease),
             'lease.create')
 
     def test_create_lease_some_time(self):
-        trust_id = 'exxee111qwwwwe'
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
-            'trust_id': trust_id}
-
+        lease_values = self.lease_values.copy()
         self.lease['start_date'] = '2026-11-13 13:13'
 
         lease = self.manager.create_lease(lease_values)
 
-        self.trust_ctx.assert_called_once_with(trust_id)
+        self.trust_ctx.assert_called_once_with(lease_values['trust_id'])
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)
 
     def test_create_lease_validate_created_events(self):
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-12-13 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
@@ -476,16 +482,7 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual('UNDONE', event['status'])
 
     def test_create_lease_before_end_event_is_before_lease_start(self):
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-13 14:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-12-13 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
@@ -520,15 +517,8 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual('UNDONE', event['status'])
 
     def test_create_lease_before_end_event_before_start_without_lease_id(self):
-        lease_values = {
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-13 14:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.cfg.CONF.set_override('minutes_before_end_lease', 120,
@@ -541,53 +531,27 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual(3, len(lease['events']))
 
     def test_create_lease_before_end_param_is_before_lease_start(self):
-        before_end_date = '2026-11-11 13:13'
-        start_date = '2026-11-13 13:13'
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': start_date,
-            'end_date': '2026-11-14 13:13',
-            'trust_id': 'exxee111qwwwwe',
-            'before_end_date': before_end_date}
+        lease_values = self.lease_values.copy()
+        lease_values['before_end_date'] = '2026-11-11 13:13'
+        lease_values['start_date'] = '2026-11-13 13:13'
+
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_create_lease_before_end_param_is_past_lease_ending(self):
-        before_end_date = '2026-11-15 13:13'
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
-            'trust_id': 'exxee111qwwwwe',
-            'before_end_date': before_end_date}
+        lease_values = self.lease_values.copy()
+        lease_values['start_date'] = '2026-11-13 13:13'
+        lease_values['end_date'] = '2026-11-14 13:13'
+        lease_values['before_end_date'] = '2026-11-15 13:13'
         self.lease['start_date'] = '2026-11-13 13:13'
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_create_lease_no_before_end_event(self):
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-11-14 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
@@ -616,18 +580,9 @@ class ServiceTestCase(tests.TestCase):
         self.assertEqual('UNDONE', event['status'])
 
     def test_create_lease_with_before_end_date_param(self):
-        before_end_date = '2026-11-14 10:13'
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'virtual:instance',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
-            'trust_id': 'exxee111qwwwwe',
-            'before_end_date': before_end_date}
+        lease_values = self.lease_values.copy()
+        lease_values['before_end_date'] = '2026-11-14 10:13'
+
         self.lease['start_date'] = '2026-11-13 13:13:00'
         self.lease['end_date'] = '2026-11-14 13:13:00'
         self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
@@ -656,75 +611,55 @@ class ServiceTestCase(tests.TestCase):
         event = lease['events'][2]
         self.assertEqual('before_end_lease', event['event_type'])
         expected_before_end_time = datetime.datetime.strptime(
-            before_end_date, service.LEASE_DATE_FORMAT)
+            lease_values['before_end_date'], service.LEASE_DATE_FORMAT)
         self.assertEqual(str(expected_before_end_time), event['time'])
         self.assertEqual('UNDONE', event['status'])
 
     def test_create_lease_wrong_date(self):
-        lease_values = {'name': 'lease-name',
-                        'start_date': '2025-13-35 13:13',
-                        'end_date': '2025-12-31 13:13',
-                        'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['start_date'] = '2025-13-35 13:13'
+        lease_values['end_date'] = '2025-12-31 13:13'
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
 
     def test_create_lease_wrong_format_before_end_date(self):
-        before_end_date = '2026-14 10:13'
-        lease_values = {
-            'name': 'lease-name',
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-14 13:13',
-            'before_end_date': before_end_date,
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['before_end_date'] = '2026-14 10:13'
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
 
     def test_create_lease_start_date_in_past(self):
-        lease_values = {
-            'name': 'lease-name',
-            'start_date':
-            datetime.datetime.strftime(
-                datetime.datetime.utcnow() - datetime.timedelta(days=1),
-                service.LEASE_DATE_FORMAT),
-            'end_date': '2025-12-31 13:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['start_date'] = datetime.datetime.strftime(
+            datetime.datetime.utcnow() - datetime.timedelta(days=1),
+            service.LEASE_DATE_FORMAT)
 
         self.assertRaises(
             exceptions.InvalidInput, self.manager.create_lease, lease_values)
 
     def test_create_lease_end_before_start(self):
-        lease_values = {
-            'name': 'lease-name',
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-11-13 12:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['start_date'] = '2026-11-13 13:13'
+        lease_values['end_date'] = '2026-11-13 12:13'
 
         self.assertRaises(
             exceptions.InvalidInput, self.manager.create_lease, lease_values)
 
     def test_create_lease_unsupported_resource_type(self):
-        lease_values = {
-            'id': self.lease_id,
-            'name': 'lease-name',
-            'reservations': [{'id': '111',
-                              'resource_id': '111',
-                              'resource_type': 'unsupported:type',
-                              'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['reservations'] = [{'id': '111',
+                                         'resource_id': '111',
+                                         'resource_type': 'unsupported:type',
+                                         'status': 'FAKE PROGRESS'}]
 
         self.assertRaises(manager_ex.UnsupportedResourceType,
                           self.manager.create_lease, lease_values)
 
     def test_create_lease_duplicated_name(self):
-        lease_values = {
-            'name': 'duplicated_name',
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
-            'trust_id': 'exxee111qwwwwe'}
+        lease_values = self.lease_values.copy()
+        lease_values['name'] = 'duplicated_name'
 
         self.patch(self.db_api,
                    'lease_create').side_effect = db_ex.BlazarDBDuplicateEntry
@@ -732,10 +667,8 @@ class ServiceTestCase(tests.TestCase):
                           self.manager.create_lease, lease_values)
 
     def test_create_lease_without_trust_id(self):
-        lease_values = {
-            'name': 'name',
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13'}
+        lease_values = self.lease_values.copy()
+        del lease_values['trust_id']
 
         self.assertRaises(manager_ex.MissingTrustId,
                           self.manager.create_lease, lease_values)
@@ -765,6 +698,18 @@ class ServiceTestCase(tests.TestCase):
                       end_missing_values, resource_type_missing_value]:
             self.assertRaises(manager_ex.MissingParameter,
                               self.manager.create_lease, value)
+
+    def test_create_lease_with_filter_exception(self):
+        lease_values = self.lease_values.copy()
+
+        self.enforcement.check_create.side_effect = (
+            enforcement_ex.MaxLeaseDurationException(lease_duration=200,
+                                                     max_duration=100))
+
+        self.assertRaises(exceptions.NotAuthorized,
+                          self.manager.create_lease,
+                          lease_values=lease_values)
+        self.lease_create.assert_not_called()
 
     def test_update_lease_completed_lease_rename(self):
         lease_values = {'name': 'renamed'}
@@ -846,7 +791,8 @@ class ServiceTestCase(tests.TestCase):
                 {
                     'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                     'min': 3,
-                    'max': 3
+                    'max': 3,
+                    'resource_type': 'virtual:instance'
                 }
             ]
         }
@@ -874,7 +820,8 @@ class ServiceTestCase(tests.TestCase):
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00),
                 'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'min': 3,
-                'max': 3
+                'max': 3,
+                'resource_type': 'virtual:instance'
             }
         )
         calls = [mock.call('2eeb784a-2d84-4a89-a201-9d42d61eecb1',
@@ -1374,32 +1321,93 @@ class ServiceTestCase(tests.TestCase):
             '2eeb784a-2d84-4a89-a201-9d42d61eecb1',
             {'time': datetime.datetime(2013, 12, 20, 13, 0)})
 
-    def test_delete_lease_before_starting_date(self):
-        fake_get_lease = self.patch(self.manager, 'get_lease')
-        fake_get_lease.return_value = self.lease
+    def test_update_lease_with_filter_exception(self):
+        self.enforcement.check_update.side_effect = (
+            enforcement_ex.MaxLeaseDurationException(lease_duration=200,
+                                                     max_duration=100))
 
-        target = datetime.datetime(2013, 12, 20, 12, 00)
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+            elif filters['event_type'] == 'before_end_lease':
+                delta = datetime.timedelta(hours=1)
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
+                        'time': self.lease['end_date'] - delta,
+                        'status': 'UNDONE'}
+
+        lease_values = {
+            'reservations': [
+                {
+                    'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
+                    'min': 3,
+                    'max': 3,
+                    'resource_type': 'virtual:instance'
+                }
+            ]
+        }
+        reservation_get_all = (
+            self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
+        reservation_get_all.return_value = [
+            {
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'resource_type': 'virtual:instance',
+            }
+        ]
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
+        target = datetime.datetime(2013, 12, 15)
         with mock.patch.object(datetime,
                                'datetime',
                                mock.Mock(wraps=datetime.datetime)) as patched:
             patched.utcnow.return_value = target
-            self.manager.delete_lease(self.lease_id)
+
+            self.assertRaises(exceptions.NotAuthorized,
+                              self.manager.update_lease,
+                              lease_id=self.lease_id, values=lease_values)
+
+        self.lease_update.assert_not_called()
+
+    def test_delete_lease_before_start(self):
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': 'fake', 'status': 'UNDONE'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': 'fake', 'status': 'UNDONE'}
+            else:
+                return None
+
+        fake_get_lease = self.patch(self.manager, 'get_lease')
+        fake_get_lease.return_value = self.lease
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
+
+        self.manager.delete_lease(self.lease_id)
 
         self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         self.lease_destroy.assert_called_once_with(self.lease_id)
         self.fake_plugin.on_end.assert_called_with('111')
+        enforcement_on_end.assert_called_once()
 
-    def test_delete_lease_after_ending_date(self):
+    def test_delete_lease_after_ending(self):
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': 'fake', 'status': 'DONE'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': 'fake', 'status': 'DONE'}
+            else:
+                return None
+
         self.lease['reservations'][0]['status'] = 'deleted'
         fake_get_lease = self.patch(self.manager, 'get_lease')
         fake_get_lease.return_value = self.lease
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
 
-        target = datetime.datetime(2013, 12, 20, 16, 00)
-        with mock.patch.object(datetime,
-                               'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = target
-            self.manager.delete_lease(self.lease_id)
+        self.manager.delete_lease(self.lease_id)
 
         expected_context = self.trust_ctx.return_value
         self.lease_destroy.assert_called_once_with(self.lease_id)
@@ -1408,8 +1416,9 @@ class ServiceTestCase(tests.TestCase):
             self.notifier_api.format_lease_payload(self.lease),
             'lease.delete')
         self.fake_plugin.on_end.assert_not_called()
+        enforcement_on_end.assert_not_called()
 
-    def test_delete_lease_after_starting_date(self):
+    def test_delete_lease_after_start(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
                 return {'id': 'fake', 'status': 'DONE'}
@@ -1417,23 +1426,22 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': 'fake', 'status': 'UNDONE'}
             else:
                 return None
+
         event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
         event_get.side_effect = fake_event_get
         fake_get_lease = self.patch(self.manager, 'get_lease')
         fake_get_lease.return_value = self.lease
-        target = datetime.datetime(2013, 12, 20, 13, 30)
-        with mock.patch.object(datetime,
-                               'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = target
-            self.manager.delete_lease(self.lease_id)
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
+
+        self.manager.delete_lease(self.lease_id)
 
         self.event_update.assert_called_once_with('fake',
                                                   {'status': 'IN_PROGRESS'})
         self.fake_plugin.on_end.assert_called_with('111')
         self.lease_destroy.assert_called_once_with(self.lease_id)
+        enforcement_on_end.assert_called_once()
 
-    def test_delete_lease_after_starting_date_with_error_status(self):
+    def test_delete_lease_after_start_with_error_status(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
                 return {'id': 'fake', 'status': 'ERROR'}
@@ -1441,21 +1449,47 @@ class ServiceTestCase(tests.TestCase):
                 return {'id': 'fake', 'status': 'UNDONE'}
             else:
                 return None
+
         event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
         event_get.side_effect = fake_event_get
         fake_get_lease = self.patch(self.manager, 'get_lease')
         fake_get_lease.return_value = self.lease
-        target = datetime.datetime(2013, 12, 20, 13, 30)
-        with mock.patch.object(datetime,
-                               'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = target
-            self.manager.delete_lease(self.lease_id)
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
+
+        self.manager.delete_lease(self.lease_id)
+
+        self.event_update.assert_called_once_with('fake',
+                                                  {'status': 'IN_PROGRESS'})
+
+        self.fake_plugin.on_end.assert_called_with('111')
+        self.lease_destroy.assert_called_once_with(self.lease_id)
+        enforcement_on_end.assert_called_once()
+
+    def test_delete_lease_with_filter_exception(self):
+        self.enforcement.on_end.side_effect = (
+            exceptions.BlazarException)
+
+        def fake_event_get(sort_key, sort_dir, filters):
+            if filters['event_type'] == 'start_lease':
+                return {'id': 'fake', 'status': 'DONE'}
+            elif filters['event_type'] == 'end_lease':
+                return {'id': 'fake', 'status': 'UNDONE'}
+            else:
+                return None
+
+        event_get = self.patch(db_api, 'event_get_first_sorted_by_filters')
+        event_get.side_effect = fake_event_get
+        fake_get_lease = self.patch(self.manager, 'get_lease')
+        fake_get_lease.return_value = self.lease
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
+
+        self.manager.delete_lease(self.lease_id)
 
         self.event_update.assert_called_once_with('fake',
                                                   {'status': 'IN_PROGRESS'})
         self.fake_plugin.on_end.assert_called_with('111')
         self.lease_destroy.assert_called_once_with(self.lease_id)
+        enforcement_on_end.assert_called_once()
 
     def test_start_lease(self):
         basic_action = self.patch(self.manager, '_basic_action')
@@ -1468,12 +1502,14 @@ class ServiceTestCase(tests.TestCase):
 
     def test_end_lease(self):
         basic_action = self.patch(self.manager, '_basic_action')
+        enforcement_on_end = self.patch(self.enforcement, 'on_end')
 
         self.manager.end_lease(self.lease_id, '1')
 
         self.trust_ctx.assert_called_once_with(self.lease['trust_id'])
         basic_action.assert_called_once_with(self.lease_id, '1', 'on_end',
                                              'deleted')
+        enforcement_on_end.assert_called_once()
 
     def test_before_end_lease(self):
         basic_action = self.patch(self.manager, '_basic_action')

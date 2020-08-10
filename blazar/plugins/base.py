@@ -58,8 +58,29 @@ class BasePlugin(object, metaclass=abc.ABCMeta):
         }
 
     @abc.abstractmethod
+    def get(self, resource_id):
+        """Get resource by id"""
+        pass
+
+    @abc.abstractmethod
     def reserve_resource(self, reservation_id, values):
         """Reserve resource."""
+        pass
+
+    @abc.abstractmethod
+    def list_allocations(self, query, detail=False):
+        """List resource allocations."""
+        pass
+
+    @abc.abstractmethod
+    def query_allocations(self, resource_id_list, lease_id=None,
+                          reservation_id=None):
+        """List resource allocations."""
+        pass
+
+    @abc.abstractmethod
+    def allocation_candidates(self, lease_values):
+        """Get candidates for reservation allocation."""
         pass
 
     @abc.abstractmethod

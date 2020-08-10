@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    A filter-based usage enforcement framework is introduced in this release.
+    Enforcement filters allow operators to define lease constraints. The first
+    filter introduced in this release restricts maximum lease duration.

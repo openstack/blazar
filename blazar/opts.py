@@ -44,6 +44,9 @@ def list_opts():
         ('api', blazar.api.v2.controllers.api_opts),
         ('manager', itertools.chain(blazar.manager.opts,
                                     blazar.manager.service.manager_opts)),
+        ('enforcement', itertools.chain(
+            blazar.enforcement.filters.max_lease_duration_filter.MaxLeaseDurationFilter.enforcement_opts, # noqa
+            blazar.enforcement.enforcement.enforcement_opts)),
         ('notifications', blazar.notification.notifier.notification_opts),
         ('nova', blazar.utils.openstack.nova.nova_opts),
         (blazar.plugins.oshosts.RESOURCE_TYPE,

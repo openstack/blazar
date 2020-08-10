@@ -25,6 +25,7 @@ from werkzeug import datastructures
 from blazar.api import context
 from blazar.api.v1 import api_version_request as api_version
 from blazar.db import exceptions as db_exceptions
+from blazar.enforcement import exceptions as enforcement_exceptions
 from blazar import exceptions as ex
 from blazar.i18n import _
 from blazar.manager import exceptions as manager_exceptions
@@ -91,9 +92,12 @@ class Rest(flask.Blueprint):
                     except ex.BlazarException as e:
                         return bad_request(e)
                     except messaging.RemoteError as e:
-                        # Get the exception from manager and common exceptions
-                        cls = getattr(manager_exceptions, e.exc_type,
+                        # Get the exception from enforcement, manager and
+                        # common exceptions
+                        cls = getattr(enforcement_exceptions, e.exc_type,
                                       getattr(ex, e.exc_type, None))
+                        cls = cls or getattr(manager_exceptions, e.exc_type,
+                                             getattr(ex, e.exc_type, None))
                         cls = cls or getattr(opst_exceptions, e.exc_type,
                                              getattr(ex, e.exc_type, None))
                         if cls is not None:

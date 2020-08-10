@@ -100,17 +100,11 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def reserve_resource(self, reservation_id, values):
         """Create reservation."""
-        self._check_params(values)
+        host_ids = self.allocation_candidates(values)
 
-        host_ids = self._matching_hosts(
-            values['hypervisor_properties'],
-            values['resource_properties'],
-            values['count_range'],
-            values['start_date'],
-            values['end_date'],
-        )
         if not host_ids:
             raise manager_ex.NotEnoughHostsAvailable()
+
         pool = nova.ReservationPool()
         pool_name = reservation_id
         az_name = "%s%s" % (CONF[self.resource_type].blazar_az_prefix,
@@ -314,6 +308,9 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
             extra_capabilities[key] = capability['capability_value']
         return extra_capabilities
 
+    def get(self, host_id):
+        return self.get_computehost(host_id)
+
     def get_computehost(self, host_id):
         host = db_api.host_get(host_id)
         extra_capabilities = self._get_extra_capabilities(host_id)
@@ -510,21 +507,19 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         hosts_id_list = [h['id'] for h in db_api.host_list()]
         options = self.get_query_options(query, QUERY_TYPE_ALLOCATION)
 
-        hosts_allocations = self.query_host_allocations(hosts_id_list,
-                                                        **options)
+        hosts_allocations = self.query_allocations(hosts_id_list, **options)
         return [{"resource_id": host, "reservations": allocs}
                 for host, allocs in hosts_allocations.items()]
 
     def get_allocations(self, host_id, query):
         options = self.get_query_options(query, QUERY_TYPE_ALLOCATION)
-        host_allocations = self.query_host_allocations([host_id], **options)
+        host_allocations = self.query_allocations([host_id], **options)
         if host_id not in host_allocations:
             host_allocations = {host_id: []}
         allocs = host_allocations[host_id]
         return {"resource_id": host_id, "reservations": allocs}
 
-    def query_host_allocations(self, hosts, lease_id=None,
-                               reservation_id=None):
+    def query_allocations(self, hosts, lease_id=None, reservation_id=None):
         """Return dict of host and its allocations.
 
         The list element forms
@@ -549,6 +544,16 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         for rsv, lease, host in rsv_lease_host:
             hosts_allocs[host].append({'lease_id': lease, 'id': rsv})
         return hosts_allocs
+
+    def allocation_candidates(self, values):
+        self._check_params(values)
+
+        return self._matching_hosts(
+            values['hypervisor_properties'],
+            values['resource_properties'],
+            values['count_range'],
+            values['start_date'],
+            values['end_date'])
 
     def _matching_hosts(self, hypervisor_properties, resource_properties,
                         count_range, start_date, end_date):

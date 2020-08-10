@@ -22,7 +22,21 @@ class DummyVMPlugin(base.BasePlugin):
     title = 'Dummy VM Plugin'
     description = 'This plugin does nothing.'
 
+    def get(self, resource_id):
+        return None
+
     def reserve_resource(self, reservation_id, values):
+        return None
+
+    def list_allocations(self, query, detail=False):
+        """List resource allocations."""
+        pass
+
+    def query_allocations(self, resource_id_list, lease_id=None,
+                          reservation_id=None):
+        return None
+
+    def allocation_candidates(self, lease_values):
         return None
 
     def update_reservation(self, reservation_id, values):
