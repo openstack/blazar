@@ -15,6 +15,7 @@
 
 import flask
 
+from blazar.api.v1 import app as v1_app
 from blazar.api.v1 import utils
 from blazar import tests
 
@@ -28,15 +29,18 @@ class Error(Exception):
 class UtilsTestCase(tests.TestCase):
     def setUp(self):
         super(UtilsTestCase, self).setUp()
-        self.utils = utils
-        self.flask = flask
+        app = v1_app.make_app()
 
-        self.rest = self.patch(self.utils, "Rest")
-        self.response = self.patch(self.flask, "Response")
-        self.abort = self.patch(self.flask, "abort")
-        self.request = self.patch(self.flask, "request")
+        with app.test_request_context():
+            self.utils = utils
+            self.flask = flask
 
-        self.error = Error("message", "code")
+            self.rest = self.patch(self.utils, "Rest")
+            self.response = self.patch(self.flask, "Response")
+            self.abort = self.patch(self.flask, "abort")
+            self.request = self.patch(self.flask, "request")
+
+            self.error = Error("message", "code")
 
     def test_get(self):
         self.rest.get('rule', status_code=200)
