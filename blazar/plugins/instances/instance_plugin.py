@@ -15,7 +15,6 @@
 import collections
 import datetime
 import retrying
-import six
 
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -399,7 +398,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                 values['amount'] = strutils.validate_integer(
                     values['amount'], "amount", 1, db_api.DB_MAX_INT)
             except ValueError as e:
-                raise mgr_exceptions.MalformedParameter(six.text_type(e))
+                raise mgr_exceptions.MalformedParameter(str(e))
 
         if 'affinity' in values:
             if (values['affinity'] not in NONE_VALUES and

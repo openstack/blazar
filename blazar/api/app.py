@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from oslo_serialization import jsonutils
-import six
 
 from blazar.api.v1 import app as v1_app
 from blazar.api.v2 import app as v2_app
@@ -36,7 +35,7 @@ class VersionSelectorApplication(object):
             # whereas in case of v2, it returns list.
             # So convert it to iterator to get the versions.
             app_iter = iter(tmp_versions)
-            tmp_versions = jsonutils.loads(six.next(app_iter))
+            tmp_versions = jsonutils.loads(next(app_iter))
             versions['versions'].extend(tmp_versions['versions'])
         return tmp_versions
 

@@ -17,14 +17,12 @@ import abc
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BasePlugin(object):
+class BasePlugin(object, metaclass=abc.ABCMeta):
 
     resource_type = 'none'
     title = None
@@ -106,8 +104,7 @@ class BasePlugin(object):
         return options
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseMonitorPlugin():
+class BaseMonitorPlugin(metaclass=abc.ABCMeta):
     """Base class of monitor plugin."""
     @abc.abstractmethod
     def is_notification_enabled(self):

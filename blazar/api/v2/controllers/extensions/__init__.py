@@ -18,15 +18,12 @@ import abc
 from oslo_config import cfg
 from oslo_log import log as logging
 from pecan import rest
-import six
-
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseController(rest.RestController):
+class BaseController(rest.RestController, metaclass=abc.ABCMeta):
 
     """Mandatory API method name."""
     name = None

@@ -15,8 +15,6 @@
 Tests for API /os-hosts/ methods
 """
 from oslo_utils import uuidutils
-import six
-
 
 from blazar.tests import api
 from blazar.utils import trusts
@@ -121,8 +119,8 @@ class TestListHosts(api.APITest):
         self.assertEqual([fake_computehost(id=1)], response)
 
     def test_multiple(self):
-        id1 = six.text_type('1')
-        id2 = six.text_type('2')
+        id1 = str('1')
+        id2 = str('2')
         self.patch(
             self.hosts_rpcapi, 'list_computehosts').return_value = [
                 fake_computehost_from_rpc(id=id1),
@@ -155,7 +153,7 @@ class TestShowHost(api.APITest):
     def setUp(self):
         super(TestShowHost, self).setUp()
 
-        self.id1 = six.text_type('1')
+        self.id1 = str('1')
         self.path = '/os-hosts/{0}'.format(self.id1)
         self.patch(
             self.hosts_rpcapi, 'get_computehost'
@@ -204,7 +202,7 @@ class TestCreateHost(api.APITest):
     def setUp(self):
         super(TestCreateHost, self).setUp()
 
-        self.id1 = six.text_type(uuidutils.generate_uuid())
+        self.id1 = str(uuidutils.generate_uuid())
         self.fake_computehost = fake_computehost(id=self.id1)
         self.fake_computehost_body = fake_computehost_request_body(id=self.id1)
         self.path = '/os-hosts'
@@ -290,7 +288,7 @@ class TestUpdateHost(api.APITest):
     def setUp(self):
         super(TestUpdateHost, self).setUp()
 
-        self.id1 = six.text_type('1')
+        self.id1 = str('1')
         self.fake_computehost = fake_computehost(id=self.id1, name='updated')
         self.fake_computehost_body = fake_computehost_request_body(
             exclude=['reservations', 'events'],
@@ -362,7 +360,7 @@ class TestDeleteHost(api.APITest):
     def setUp(self):
         super(TestDeleteHost, self).setUp()
 
-        self.id1 = six.text_type('1')
+        self.id1 = str('1')
         self.path = '/os-hosts/{0}'.format(self.id1)
         self.patch(self.hosts_rpcapi, 'delete_computehost')
         self.headers = {'X-Roles': 'admin'}

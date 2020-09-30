@@ -18,9 +18,9 @@ from unittest import mock
 
 import ddt
 import eventlet
+import importlib
 from oslo_config import cfg
 import oslo_messaging as messaging
-from six.moves import reload_module
 from stevedore import enabled
 import testtools
 
@@ -130,7 +130,7 @@ class ServiceTestCase(tests.TestCase):
 
         with mock.patch('blazar.status.lease.lease_status',
                         FakeLeaseStatus.lease_status):
-            reload_module(service)
+            importlib.reload(service)
         self.service = service
         self.manager = self.service.ManagerService()
 

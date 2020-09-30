@@ -22,11 +22,11 @@
 # There is an ongoing work to extact similar code to oslo incubator. Once it is
 # extracted we'll be able to remove this file and use oslo.
 
+import configparser
 import io
 import os
-from six.moves import configparser
-from six.moves.urllib import parse as urlparse
 import subprocess
+from urllib import parse as urlparse
 
 from alembic import command
 from alembic import config as alembic_config

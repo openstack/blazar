@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from oslo_serialization import jsonutils
-import six
 
 from blazar import context
 from blazar import exceptions
@@ -35,7 +34,7 @@ def ctx_from_headers(headers):
               "user_name": headers['X-User-Name'],
               "project_name": headers['X-Project-Name'],
               "roles": list(
-                  map(six.text_type.strip, headers['X-Roles'].split(',')))}
+                  map(str.strip, headers['X-Roles'].split(',')))}
 
     # For v1 only, request_id and global_request_id will be available.
     if headers.environ['PATH_INFO'].startswith('/v1'):

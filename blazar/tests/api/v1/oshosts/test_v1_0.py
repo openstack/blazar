@@ -16,7 +16,6 @@
 import ddt
 import flask
 from oslo_utils import uuidutils
-import six
 from testtools import matchers
 
 from oslo_middleware import request_id as id
@@ -85,7 +84,7 @@ class OsHostAPITestCase(tests.TestCase):
         self.app = make_app()
         self.headers = {'Accept': 'application/json',
                         'OpenStack-API-Version': 'reservation 1.0'}
-        self.host_id = six.text_type('1')
+        self.host_id = str('1')
         self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
         self.mock_ctx.return_value = context.BlazarContext(
             user_id='fake', project_id='fake', roles=['member'])
@@ -223,16 +222,16 @@ class OsHostAPITestCase(tests.TestCase):
                         headers=self.headers)
             self._assert_response(res, 200, {}, key='allocation')
 
-    @ddt.data({'lease_id': six.text_type(uuidutils.generate_uuid()),
-               'reservation_id': six.text_type(uuidutils.generate_uuid())})
+    @ddt.data({'lease_id': str(uuidutils.generate_uuid()),
+               'reservation_id': str(uuidutils.generate_uuid())})
     def test_allocation_list_with_query_params(self, query_params):
         with self.app.test_client() as c:
             res = c.get('/v1/allocations?{0}'.format(query_params),
                         headers=self.headers)
             self._assert_response(res, 200, {}, key='allocations')
 
-    @ddt.data({'lease_id': six.text_type(uuidutils.generate_uuid()),
-               'reservation_id': six.text_type(uuidutils.generate_uuid())})
+    @ddt.data({'lease_id': str(uuidutils.generate_uuid()),
+               'reservation_id': str(uuidutils.generate_uuid())})
     def test_allocation_get_with_query_params(self, query_params):
         with self.app.test_client() as c:
             res = c.get('/v1/{0}/allocation?{1}'.format(

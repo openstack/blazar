@@ -15,7 +15,6 @@
 
 import copy
 from oslo_serialization import jsonutils
-import six
 
 from blazar.manager import exceptions as manager_ex
 
@@ -28,7 +27,7 @@ def convert_requirements(requirements):
     """
     # TODO(frossigneux) Support the "or" operator
     # Convert text to json
-    if isinstance(requirements, six.string_types):
+    if isinstance(requirements, str):
         # Treat empty string as an empty JSON array, to avoid raising a
         # ValueError exception while loading JSON
         #
@@ -64,9 +63,9 @@ def _requirements_with_three_elements(requirements):
     """Return true if requirement list looks like ['<', '$ram', '1024']."""
     return (isinstance(requirements, list) and
             len(requirements) == 3 and
-            isinstance(requirements[0], six.string_types) and
-            isinstance(requirements[1], six.string_types) and
-            isinstance(requirements[2], six.string_types) and
+            isinstance(requirements[0], str) and
+            isinstance(requirements[1], str) and
+            isinstance(requirements[2], str) and
             requirements[0] in ['==', '=', '!=', '>=', '<=', '>', '<'] and
             len(requirements[1]) > 1 and requirements[1][0] == '$' and
             len(requirements[2]) > 0)
@@ -74,7 +73,7 @@ def _requirements_with_three_elements(requirements):
 
 def _requirements_with_and_keyword(requirements):
     return (len(requirements) > 1 and
-            isinstance(requirements[0], six.string_types) and
+            isinstance(requirements[0], str) and
             requirements[0] == 'and' and
             all(convert_requirements(x) for x in requirements[1:]))
 

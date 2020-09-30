@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import six
-
 from blazar import exceptions
 from blazar import tests
 
@@ -25,18 +23,17 @@ class BlazarExceptionTestCase(tests.TestCase):
             msg_fmt = "default message"
 
         exc = FakeBlazarException()
-        self.assertEqual('default message', six.text_type(exc))
+        self.assertEqual('default message', str(exc))
 
     def test_error_msg(self):
         self.assertEqual('test',
-                         six.text_type(exceptions.BlazarException('test')))
+                         str(exceptions.BlazarException('test')))
 
     def test_default_error_msg_with_kwargs(self):
         class FakeBlazarException(exceptions.BlazarException):
             msg_fmt = "default message: %(code)s"
 
         exc = FakeBlazarException(code=500)
-        self.assertEqual('default message: 500', six.text_type(exc))
         self.assertEqual('default message: 500', str(exc))
 
     def test_error_msg_exception_with_kwargs(self):
@@ -44,7 +41,6 @@ class BlazarExceptionTestCase(tests.TestCase):
             msg_fmt = "default message: %(mispelled_code)s"
 
         exc = FakeBlazarException(code=500, mispelled_code='blah')
-        self.assertEqual('default message: blah', six.text_type(exc))
         self.assertEqual('default message: blah', str(exc))
 
     def test_default_error_code(self):
@@ -64,5 +60,5 @@ class BlazarExceptionTestCase(tests.TestCase):
     def test_policynotauthorized_exception(self):
         exc = exceptions.PolicyNotAuthorized(action='foo')
         self.assertEqual("Policy doesn't allow foo to be performed",
-                         six.text_type(exc))
+                         str(exc))
         self.assertEqual(403, exc.kwargs['code'])

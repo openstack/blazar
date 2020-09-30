@@ -18,7 +18,6 @@ from keystonemiddleware import fixture
 from oslo_utils import uuidutils
 import pecan
 import pecan.testing
-import six
 
 from blazar.api import context as api_context
 from blazar import context
@@ -42,7 +41,7 @@ class APITest(tests.TestCase):
             if not headers:
                 return context.BlazarContext(
                     user_id='fake', project_id='fake', roles=['member'])
-            roles = headers.get('X-Roles', six.text_type('member')).split(',')
+            roles = headers.get('X-Roles', str('member')).split(',')
             return context.BlazarContext(
                 user_id=headers.get('X-User-Id', 'fake'),
                 project_id=headers.get('X-Project-Id', 'fake'),

@@ -15,7 +15,6 @@
 
 import flask
 from oslo_utils import uuidutils
-import six
 from testtools import matchers
 
 from oslo_middleware import request_id as id
@@ -82,7 +81,7 @@ class LeaseAPITestCase(tests.TestCase):
         self.app = make_app()
         self.headers = {'Accept': 'application/json',
                         'OpenStack-API-Version': 'reservation 1.0'}
-        self.lease_uuid = six.text_type(uuidutils.generate_uuid())
+        self.lease_uuid = str(uuidutils.generate_uuid())
         self.mock_ctx = self.patch(api_context, 'ctx_from_headers')
         self.mock_ctx.return_value = context.BlazarContext(
             user_id='fake', project_id='fake', roles=['member'])

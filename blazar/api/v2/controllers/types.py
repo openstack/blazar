@@ -17,7 +17,6 @@ import datetime
 import uuid
 
 from oslo_serialization import jsonutils
-import six
 from wsme import types as wtypes
 from wsme import utils as wutils
 
@@ -40,7 +39,7 @@ class UuidType(wtypes.UserType):
 
     def validate(self, value):
         try:
-            valid_uuid = six.text_type(uuid.UUID(value))
+            valid_uuid = str(uuid.UUID(value))
             if self.without_dashes:
                 valid_uuid = valid_uuid.replace('-', '')
             return valid_uuid
@@ -98,8 +97,7 @@ class TextOrInteger(wtypes.UserType):
     @staticmethod
     def validate(value):
         # NOTE(sbauza): We need to accept non-unicoded Python2 strings
-        if (isinstance(value, six.text_type) or isinstance(value, str)
-                or isinstance(value, int)):
+        if (isinstance(value, str) or isinstance(value, int)):
             return value
         else:
             raise exceptions.InvalidInput(cls=TextOrInteger.name, value=value)

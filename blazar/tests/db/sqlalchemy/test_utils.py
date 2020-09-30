@@ -18,7 +18,6 @@ import datetime
 
 from oslo_context import context
 from oslo_utils import uuidutils
-import six
 
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import utils as db_utils
@@ -27,7 +26,7 @@ from blazar import tests
 
 
 def _get_fake_random_uuid():
-    return six.text_type(uuidutils.generate_uuid())
+    return str(uuidutils.generate_uuid())
 
 
 def _get_fake_lease_uuid():
