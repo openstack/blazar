@@ -37,7 +37,6 @@ logilab-common==1.4.1
 logutils==0.3.5
 Mako==1.0.7
 MarkupSafe==1.0
-mccabe==0.2.1
 microversion-parse===0.2.1
 monotonic==1.4
 mox3==0.25.0
