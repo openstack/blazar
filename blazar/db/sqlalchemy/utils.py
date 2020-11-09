@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import datetime
 import sys
 
 import sqlalchemy as sa
@@ -250,64 +249,3 @@ def get_reserved_periods(resource_id, start_date, end_date, duration,
     events = _get_events(resource_id, start_date, end_date, resource_type)
     reserved_periods = _find_reserved_periods(events, quantity, capacity)
     return _merge_periods(reserved_periods, start_date, end_date, duration)
-
-
-def reservation_ratio(host_id, start_date, end_date):
-    res_time = reservation_time(host_id, start_date, end_date).seconds
-    return float(res_time) / (end_date - start_date).seconds
-
-
-def availability_time(host_id, start_date, end_date):
-    res_time = reservation_time(host_id, start_date, end_date)
-    return end_date - start_date - res_time
-
-
-def reservation_time(host_id, start_date, end_date):
-    res_time = datetime.timedelta(0)
-    for lease in _get_leases_from_host_id(host_id, start_date, end_date):
-        res_time += lease.end_date - lease.start_date
-        if lease.start_date < start_date:
-            res_time -= start_date - lease.start_date
-        if lease.end_date > end_date:
-            res_time -= lease.end_date - end_date
-    return res_time
-
-
-def number_of_reservations(host_id, start_date, end_date):
-    return sum(1 for x in
-               _get_leases_from_host_id(host_id, start_date, end_date))
-
-
-def longest_lease(host_id, start_date, end_date):
-    max_duration = datetime.timedelta(0)
-    longest_lease = None
-    session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
-             .join(models.ComputeHostAllocation)
-             .filter(models.ComputeHostAllocation.compute_host_id == host_id)
-             .filter(models.Lease.start_date >= start_date)
-             .filter(models.Lease.end_date <= end_date))
-    for lease in query:
-        duration = lease.end_date - lease.start_date
-        if max_duration < duration:
-            max_duration = duration
-            longest_lease = lease.id
-    return longest_lease
-
-
-def shortest_lease(host_id, start_date, end_date):
-    # TODO(frossigneux) Fix max timedelta
-    min_duration = datetime.timedelta(365 * 1000)
-    longest_lease = None
-    session = get_session()
-    query = (session.query(models.Lease).join(models.Reservation)
-             .join(models.ComputeHostAllocation)
-             .filter(models.ComputeHostAllocation.compute_host_id == host_id)
-             .filter(models.Lease.start_date >= start_date)
-             .filter(models.Lease.end_date <= end_date))
-    for lease in query:
-        duration = lease.end_date - lease.start_date
-        if min_duration > duration:
-            min_duration = duration
-            longest_lease = lease.id
-    return longest_lease

@@ -136,27 +136,3 @@ def get_reserved_periods(resource_id, start_date, end_date, duration,
     """Returns a list of reserved periods."""
     return IMPL.get_reserved_periods(resource_id, start_date, end_date,
                                      duration, resource_type=resource_type)
-
-
-def reservation_ratio(resource_id, start_date, end_date):
-    return IMPL.reservation_ratio(resource_id, start_date, end_date)
-
-
-def availability_time(resource_id, start_date, end_date):
-    return IMPL.availability_time(resource_id, start_date, end_date)
-
-
-def reservation_time(resource_id, start_date, end_date):
-    return IMPL.reservation_time(resource_id, start_date, end_date)
-
-
-def number_of_reservations(resource_id, start_date, end_date):
-    return IMPL.number_of_reservations(resource_id, start_date, end_date)
-
-
-def longest_lease(resource_id, start_date, end_date):
-    return IMPL.longest_lease(resource_id, start_date, end_date)
-
-
-def shortest_lease(resource_id, start_date, end_date):
-    return IMPL.shortest_lease(resource_id, start_date, end_date)
