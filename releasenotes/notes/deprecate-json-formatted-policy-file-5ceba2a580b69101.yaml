@@ -1,0 +1,19 @@
+---
+upgrade:
+  - |
+    The default value of the ``[oslo_policy]/policy_file`` configuration option
+    has been changed from ``policy.json`` to ``policy.yaml``.  Operators using
+    customized or previously generated static policy JSON files (which are not
+    needed by default) should generate new policy files or convert them to YAML
+    format. Use the `oslopolicy-convert-json-to-yaml
+    <https://docs.openstack.org/oslo.policy/latest/cli/oslopolicy-convert-json-to-yaml.html>`_
+    tool to convert a policy file from JSON to YAML in a backward-compatible
+    way.
+deprecations:
+  - |
+    Use of JSON-formatted policy files was deprecated by the ``oslo.policy``
+    library during the Victoria development cycle. As a result, this
+    deprecation is being noted in the Wallaby cycle with an anticipated future
+    removal of support by ``oslo.policy``. As such operators will need to
+    convert to YAML-formatted policy files. Please see the upgrade notes for
+    details on migration of any custom policy files.
