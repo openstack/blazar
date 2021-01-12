@@ -46,7 +46,7 @@ class TestBlazarContext(tests.TestCase):
             'user': 111,
             'user_domain': None,
             'user_id': 111,
-            'user_identity': u'111 222 - - -',
+            'user_identity': '111 222 - - -',
             'user_name': None}
         self.assertEqual(expected, ctx.to_dict())
 

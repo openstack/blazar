@@ -192,8 +192,8 @@ class FloatingIpPluginTest(tests.TestCase):
     def test_create_reservation_fips_available(self):
         fip_plugin = floatingip_plugin.FloatingIpPlugin()
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'network_id': 'f548089e-fb3e-4013-a043-c5ed809c7a67',
             'start_date': datetime.datetime(2013, 12, 19, 20, 0),
             'end_date': datetime.datetime(2013, 12, 19, 21, 0),
             'resource_type': plugin.RESOURCE_TYPE,
@@ -206,22 +206,22 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_allocation_create = self.patch(
             self.db_api, 'fip_allocation_create')
         fip_plugin.reserve_resource(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_values = {
-            'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
+            'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            'network_id': 'f548089e-fb3e-4013-a043-c5ed809c7a67',
             'amount': 2
         }
         fip_reservation_create.assert_called_once_with(fip_values)
         calls = [
             mock.call(
                 {'floatingip_id': 'fip1',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
             mock.call(
                 {'floatingip_id': 'fip2',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
         ]
         fip_allocation_create.assert_has_calls(calls)
@@ -229,8 +229,8 @@ class FloatingIpPluginTest(tests.TestCase):
     def test_create_reservation_fips_with_required(self):
         fip_plugin = floatingip_plugin.FloatingIpPlugin()
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'network_id': 'f548089e-fb3e-4013-a043-c5ed809c7a67',
             'start_date': datetime.datetime(2013, 12, 19, 20, 0),
             'end_date': datetime.datetime(2013, 12, 19, 21, 0),
             'resource_type': plugin.RESOURCE_TYPE,
@@ -246,11 +246,11 @@ class FloatingIpPluginTest(tests.TestCase):
             self.db_api, 'fip_allocation_create')
         required_addr_create = self.patch(self.db_api, 'required_fip_create')
         fip_plugin.reserve_resource(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_values = {
-            'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
-            'network_id': u'f548089e-fb3e-4013-a043-c5ed809c7a67',
+            'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            'network_id': 'f548089e-fb3e-4013-a043-c5ed809c7a67',
             'amount': 2
         }
         fip_reservation_create.assert_called_once_with(fip_values)
@@ -262,18 +262,18 @@ class FloatingIpPluginTest(tests.TestCase):
         calls = [
             mock.call(
                 {'floatingip_id': 'fip1',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
             mock.call(
                 {'floatingip_id': 'fip2',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
         ]
         fip_allocation_create.assert_has_calls(calls)
 
     def test_create_reservation_with_missing_param_network(self):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'amount': 2,
             'start_date': datetime.datetime(2017, 3, 1, 20, 0),
             'end_date': datetime.datetime(2017, 3, 2, 20, 0),
@@ -283,13 +283,13 @@ class FloatingIpPluginTest(tests.TestCase):
         self.assertRaises(
             mgr_exceptions.MissingParameter,
             fip_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_create_reservation_with_invalid_fip(self):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'network_id': u'a37a14f3-e3eb-4fe2-9e36-082b67f12ea0',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'network_id': 'a37a14f3-e3eb-4fe2-9e36-082b67f12ea0',
             'amount': 2,
             'required_floatingips': ['aaa.aaa.aaa.aaa'],
             'start_date': datetime.datetime(2017, 3, 1, 20, 0),
@@ -300,13 +300,13 @@ class FloatingIpPluginTest(tests.TestCase):
         self.assertRaises(
             mgr_exceptions.InvalidIPFormat,
             fip_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_create_reservation_required_bigger_than_amount(self):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
-            'network_id': u'a37a14f3-e3eb-4fe2-9e36-082b67f12ea0',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
+            'network_id': 'a37a14f3-e3eb-4fe2-9e36-082b67f12ea0',
             'amount': 1,
             'required_floatingips': ['172.24.4.100', '172.24.4.101'],
             'start_date': datetime.datetime(2017, 3, 1, 20, 0),
@@ -317,7 +317,7 @@ class FloatingIpPluginTest(tests.TestCase):
         self.assertRaises(
             mgr_exceptions.TooLongFloatingIPs,
             fip_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_update_pending_reservation_increase_amount_fips_available(self):
@@ -363,14 +363,14 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_allocation_create = self.patch(
             self.db_api, 'fip_allocation_create')
         fip_plugin.update_reservation(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_reservation_update.assert_called_once_with(
             'fip_resv_id1', {'amount': 2})
         calls = [
             mock.call(
                 {'floatingip_id': 'fip2',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  })
         ]
         fip_allocation_create.assert_has_calls(calls)
@@ -429,7 +429,7 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_allocation_destroy = self.patch(
             self.db_api, 'fip_allocation_destroy')
         fip_plugin.update_reservation(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_reservation_update.assert_called_once_with(
             'fip_resv_id1', {'amount': 2})
@@ -443,7 +443,7 @@ class FloatingIpPluginTest(tests.TestCase):
         calls = [
             mock.call(
                 {'floatingip_id': 'fip2',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  })
         ]
         fip_allocation_create.assert_has_calls(calls)
@@ -611,7 +611,7 @@ class FloatingIpPluginTest(tests.TestCase):
         fip_reservation_update = self.patch(self.db_api,
                                             'fip_reservation_update')
         fip_plugin.update_reservation(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         fip_reservation_update.assert_called_once_with(
             'fip_resv_id1', {'amount': 1})
@@ -659,7 +659,7 @@ class FloatingIpPluginTest(tests.TestCase):
         required_fip_destroy_by_fip_reservation_id = self.patch(
             self.db_api, 'required_fip_destroy_by_fip_reservation_id')
         fip_plugin.update_reservation(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         calls = [mock.call('fip_resv_id1')]
         required_fip_destroy_by_fip_reservation_id.assert_has_calls(calls)

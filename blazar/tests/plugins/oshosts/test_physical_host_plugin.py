@@ -392,7 +392,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'host_allocation_get_all_by_values')
         host_allocation_get_all.return_value = [
             {
-                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
                 'compute_host_id': self.fake_host_id
             }
         ]
@@ -644,7 +644,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_create_reservation_no_hosts_available(self):
         now = datetime.datetime.utcnow()
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
             'max': 1,
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
@@ -659,14 +659,14 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         matching_hosts.return_value = []
         self.assertRaises(manager_exceptions.NotEnoughHostsAvailable,
                           self.fake_phys_plugin.reserve_resource,
-                          u'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
+                          'f9894fcf-e2ed-41e9-8a4c-92fac332608e',
                           values)
         self.rp_create.assert_not_called()
         host_reservation_create.assert_not_called()
 
     def test_create_reservation_hosts_available(self):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
             'max': 1,
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
@@ -684,10 +684,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_allocation_create')
         self.fake_phys_plugin.reserve_resource(
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         host_values = {
-            'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             'aggregate_id': 1,
             'resource_properties': '',
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
@@ -699,11 +699,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         calls = [
             mock.call(
                 {'compute_host_id': 'host1',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
             mock.call(
                 {'compute_host_id': 'host2',
-                 'reservation_id': u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+                 'reservation_id': '441c1476-9f8f-4700-9f30-cd9b6fef3509',
                  }),
         ]
         host_allocation_create.assert_has_calls(calls)
@@ -711,7 +711,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     @ddt.data("min", "max", "hypervisor_properties", "resource_properties")
     def test_create_reservation_with_missing_param(self, missing_param):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
             'max': 2,
             'before_end': 'default',
@@ -724,7 +724,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(
             manager_exceptions.MissingParameter,
             self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     @ddt.data({"params": {'max': 0}},
@@ -737,7 +737,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     @ddt.unpack
     def test_create_reservation_with_invalid_param(self, params):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
             'max': 2,
             'before_end': 'default',
@@ -751,7 +751,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(
             manager_exceptions.MalformedParameter,
             self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     @ddt.data({"params": {'max': 0}},
@@ -763,7 +763,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     @ddt.unpack
     def test_update_reservation_with_invalid_param(self, params):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 1,
             'max': 2,
             'before_end': 'default',
@@ -786,12 +786,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(
             manager_exceptions.MalformedParameter,
             self.fake_phys_plugin.update_reservation,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_create_update_reservation_with_invalid_range(self):
         values = {
-            'lease_id': u'018c1b43-e69e-4aef-a543-09681539cf4c',
+            'lease_id': '018c1b43-e69e-4aef-a543-09681539cf4c',
             'min': 2,
             'max': 1,
             'hypervisor_properties': '["=", "$memory_mb", "256"]',
@@ -812,12 +812,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.assertRaises(
             manager_exceptions.InvalidRange,
             self.fake_phys_plugin.reserve_resource,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
         self.assertRaises(
             manager_exceptions.InvalidRange,
             self.fake_phys_plugin.update_reservation,
-            u'441c1476-9f8f-4700-9f30-cd9b6fef3509',
+            '441c1476-9f8f-4700-9f30-cd9b6fef3509',
             values)
 
     def test_update_reservation_shorten(self):
@@ -827,7 +827,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
-            'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
         }
         lease_get = self.patch(self.db_api, 'lease_get')
         lease_get.return_value = {
@@ -848,8 +848,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
-            'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
             'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
@@ -868,7 +868,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'host_allocation_get_all_by_values')
         host_allocation_get_all.return_value = [
             {
-                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
                 'compute_host_id': 'host1'
             }
         ]
@@ -901,8 +901,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
-            'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
             'status': 'active'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
@@ -923,7 +923,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'host_allocation_get_all_by_values')
         host_allocation_get_all.return_value = [
             {
-                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
                 'compute_host_id': 'host1'
             }
         ]
@@ -955,8 +955,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
-            'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
             'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
@@ -977,7 +977,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'host_allocation_get_all_by_values')
         host_allocation_get_all.return_value = [
             {
-                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
                 'compute_host_id': 'host1'
             }
         ]
@@ -1010,8 +1010,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         reservation_get = self.patch(self.db_api, 'reservation_get')
         reservation_get.return_value = {
-            'lease_id': u'10870923-6d56-45c9-b592-f788053f5baa',
-            'resource_id': u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
+            'lease_id': '10870923-6d56-45c9-b592-f788053f5baa',
+            'resource_id': '91253650-cc34-4c4f-bbe8-c943aa7d0c9b',
             'status': 'pending'
         }
         lease_get = self.patch(self.db_api, 'lease_get')
@@ -1033,7 +1033,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'host_allocation_get_all_by_values')
         host_allocation_get_all.return_value = [
             {
-                'id': u'dd305477-4df8-4547-87f6-69069ee546a6',
+                'id': 'dd305477-4df8-4547-87f6-69069ee546a6',
                 'compute_host_id': 'host1'
             }
         ]
@@ -1059,7 +1059,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             '706eb3bc-07ed-4383-be93-b32845ece672',
             values)
         host_reservation_get.assert_called_with(
-            u'91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
+            '91253650-cc34-4c4f-bbe8-c943aa7d0c9b')
         host_allocation_destroy.assert_called_with(
             'dd305477-4df8-4547-87f6-69069ee546a6')
         host_allocation_create.assert_called_with(
@@ -1363,7 +1363,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             'count_range': '1-2',
             'hypervisor_properties': '["=", "$memory_mb", "16384"]',
             'resource_properties': '',
-            'reservation_id': u'706eb3bc-07ed-4383-be93-b32845ece672',
+            'reservation_id': '706eb3bc-07ed-4383-be93-b32845ece672',
             'aggregate_id': 1,
         }
         host_allocation_get_all = self.patch(
@@ -1663,7 +1663,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_on_start(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_reservation_get.return_value = {
-            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'reservation_id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
             'aggregate_id': 1,
         }
         host_allocation_get_all_by_values = self.patch(
@@ -1676,7 +1676,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         add_computehost = self.patch(
             self.nova.ReservationPool, 'add_computehost')
 
-        self.fake_phys_plugin.on_start(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        self.fake_phys_plugin.on_start('04de74e8-193a-49d2-9ab8-cba7b49e45e8')
 
         add_computehost.assert_called_with(1, ['host1_hostname'])
 
@@ -1685,7 +1685,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_reservation_get.return_value = {'before_end': ''}
         reservationpool = self.patch(self.nova, 'ReservationPool')
         self.fake_phys_plugin.before_end(
-            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+            '04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         reservationpool.assert_not_called()
 
     def test_before_end_with_snapshot(self):
@@ -1701,15 +1701,15 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         list_servers.return_value = ['server1', 'server2']
         create_image = self.patch(self.ServerManager, 'create_image')
         self.fake_phys_plugin.before_end(
-            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+            '04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         create_image.assert_any_call(server='server1')
         create_image.assert_any_call(server='server2')
 
     def test_on_end_with_instances(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_reservation_get.return_value = {
-            'id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
-            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'id': '04de74e8-193a-49d2-9ab8-cba7b49e45e8',
+            'reservation_id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
             'aggregate_id': 1
         }
         host_reservation_update = self.patch(
@@ -1719,8 +1719,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_allocation_get_all_by_values')
         host_allocation_get_all_by_values.return_value = [
-            {'id': u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f',
-             'compute_host_id': u'cdae2a65-236f-475a-977d-f6ad82f828b7',
+            {'id': 'bfa9aa0b-8042-43eb-a4e6-4555838bf64f',
+             'compute_host_id': 'cdae2a65-236f-475a-977d-f6ad82f828b7',
              },
         ]
         host_allocation_destroy = self.patch(
@@ -1738,11 +1738,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             side_effect=[nova_exceptions.NotFound(
                 404, 'Instance server1 could not be found.'), None])
         delete_pool = self.patch(self.nova.ReservationPool, 'delete')
-        self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        self.fake_phys_plugin.on_end('04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         host_reservation_update.assert_called_with(
-            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
+            '04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
-            u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
+            'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
         list_servers.assert_called_with(search_opts={'host': 'host',
                                                      'all_tenants': 1})
         delete_server.assert_any_call(server='server1')
@@ -1752,8 +1752,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
     def test_on_end_without_instances(self):
         host_reservation_get = self.patch(self.db_api, 'host_reservation_get')
         host_reservation_get.return_value = {
-            'id': u'04de74e8-193a-49d2-9ab8-cba7b49e45e8',
-            'reservation_id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+            'id': '04de74e8-193a-49d2-9ab8-cba7b49e45e8',
+            'reservation_id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
             'aggregate_id': 1
         }
         host_reservation_update = self.patch(
@@ -1763,8 +1763,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_api,
             'host_allocation_get_all_by_values')
         host_allocation_get_all_by_values.return_value = [
-            {'id': u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f',
-             'compute_host_id': u'cdae2a65-236f-475a-977d-f6ad82f828b7',
+            {'id': 'bfa9aa0b-8042-43eb-a4e6-4555838bf64f',
+             'compute_host_id': 'cdae2a65-236f-475a-977d-f6ad82f828b7',
              },
         ]
         host_allocation_destroy = self.patch(
@@ -1777,11 +1777,11 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         list_servers.return_value = []
         delete_server = self.patch(self.ServerManager, 'delete')
         delete_pool = self.patch(self.nova.ReservationPool, 'delete')
-        self.fake_phys_plugin.on_end(u'04de74e8-193a-49d2-9ab8-cba7b49e45e8')
+        self.fake_phys_plugin.on_end('04de74e8-193a-49d2-9ab8-cba7b49e45e8')
         host_reservation_update.assert_called_with(
-            u'04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
+            '04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
-            u'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
+            'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
         delete_server.assert_not_called()
         delete_pool.assert_called_with(1)
 

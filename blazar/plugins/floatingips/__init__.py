@@ -12,4 +12,4 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-RESOURCE_TYPE = u'virtual:floatingip'
+RESOURCE_TYPE = 'virtual:floatingip'

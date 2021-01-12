@@ -42,7 +42,7 @@ def upgrade():
                     sa.Column('floating_ip_address', sa.String(length=255),
                               nullable=False),
                     sa.Column('reservable', sa.Boolean(),
-                              server_default=sa.text(u'true'), nullable=False),
+                              server_default=sa.text('true'), nullable=False),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('subnet_id', 'floating_ip_address'))
     # ### end Alembic commands ###

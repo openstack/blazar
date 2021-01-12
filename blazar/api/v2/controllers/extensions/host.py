@@ -85,9 +85,9 @@ class Host(base._Base):
 
     @classmethod
     def sample(cls):
-        return cls(id=u'1',
-                   hypervisor_hostname=u'host01',
-                   hypervisor_type=u'QEMU',
+        return cls(id='1',
+                   hypervisor_hostname='host01',
+                   hypervisor_type='QEMU',
                    vcpus=1,
                    hypervisor_version=1000000,
                    memory_mb=8192,
@@ -95,7 +95,7 @@ class Host(base._Base):
                    cpu_info="{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
                             "\"arch\": \"x86_64\", \"features\": [],"
                             " \"topology\": {\"cores\": 1}}",
-                   extra_capas={u'vgpus': 2, u'fruits': u'bananas'},
+                   extra_capas={'vgpus': 2, 'fruits': 'bananas'},
                    )
 
 

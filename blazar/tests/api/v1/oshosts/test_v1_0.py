@@ -46,22 +46,22 @@ def make_app():
 
 def fake_computehost(**kw):
     return {
-        u'id': kw.get('id', u'1'),
-        u'hypervisor_hostname': kw.get('hypervisor_hostname', u'host01'),
-        u'hypervisor_type': kw.get('hypervisor_type', u'QEMU'),
-        u'vcpus': kw.get('vcpus', 1),
-        u'hypervisor_version': kw.get('hypervisor_version', 1000000),
-        u'trust_id': kw.get('trust_id',
-                            u'35b17138-b364-4e6a-a131-8f3099c5be68'),
-        u'memory_mb': kw.get('memory_mb', 8192),
-        u'local_gb': kw.get('local_gb', 50),
-        u'cpu_info': kw.get('cpu_info',
-                            u"{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
-                            "\"arch\": \"x86_64\", \"features\": [],"
-                            " \"topology\": {\"cores\": 1}}",
-                            ),
-        u'extra_capas': kw.get('extra_capas',
-                               {u'vgpus': 2, u'fruits': u'bananas'})
+        'id': kw.get('id', '1'),
+        'hypervisor_hostname': kw.get('hypervisor_hostname', 'host01'),
+        'hypervisor_type': kw.get('hypervisor_type', 'QEMU'),
+        'vcpus': kw.get('vcpus', 1),
+        'hypervisor_version': kw.get('hypervisor_version', 1000000),
+        'trust_id': kw.get('trust_id',
+                           '35b17138-b364-4e6a-a131-8f3099c5be68'),
+        'memory_mb': kw.get('memory_mb', 8192),
+        'local_gb': kw.get('local_gb', 50),
+        'cpu_info': kw.get('cpu_info',
+                           "{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                           "\"arch\": \"x86_64\", \"features\": [],"
+                           " \"topology\": {\"cores\": 1}}",
+                           ),
+        'extra_capas': kw.get('extra_capas',
+                              {'vgpus': 2, 'fruits': 'bananas'})
     }
 
 

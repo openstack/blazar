@@ -64,18 +64,18 @@ class Lease(base._Base):
 
     @classmethod
     def sample(cls):
-        return cls(id=u'2bb8720a-0873-4d97-babf-0d906851a1eb',
-                   name=u'lease_test',
-                   start_date=u'2014-01-01 01:23',
-                   end_date=u'2014-02-01 13:37',
-                   user_id=u'efd8780712d24b389c705f5c2ac427ff',
-                   project_id=u'bd9431c18d694ad3803a8d4a6b89fd36',
-                   trust_id=u'35b17138b3644e6aa1318f3099c5be68',
-                   reservations=[{u'resource_id': u'1234',
-                                  u'resource_type': u'physical:host'}],
+        return cls(id='2bb8720a-0873-4d97-babf-0d906851a1eb',
+                   name='lease_test',
+                   start_date='2014-01-01 01:23',
+                   end_date='2014-02-01 13:37',
+                   user_id='efd8780712d24b389c705f5c2ac427ff',
+                   project_id='bd9431c18d694ad3803a8d4a6b89fd36',
+                   trust_id='35b17138b3644e6aa1318f3099c5be68',
+                   reservations=[{'resource_id': '1234',
+                                  'resource_type': 'physical:host'}],
                    events=[],
-                   before_end_date=u'2014-02-01 10:37',
-                   status=u'ACTIVE',
+                   before_end_date='2014-02-01 10:37',
+                   status='ACTIVE',
                    )
 
 

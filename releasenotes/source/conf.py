@@ -58,7 +58,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-copyright = u'2017, Blazar developers'
+copyright = '2017, Blazar developers'
 
 # Release notes are version independent.
 # The short X.Y version.
@@ -193,8 +193,8 @@ htmlhelp_basename = 'BlazarReleaseNotesdoc'
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('index', 'BlazarReleaseNotes.tex',
-     u'Blazar Release Notes Documentation',
-     u'Blazar developers', 'manual'),
+     'Blazar Release Notes Documentation',
+     'Blazar developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -223,8 +223,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'blazarreleasenotes', u'Blazar Release Notes Documentation',
-     [u'Blazar developers'], 1)
+    ('index', 'blazarreleasenotes', 'Blazar Release Notes Documentation',
+     ['Blazar developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -237,8 +237,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'BlazarReleaseNotes', u'Blazar Release Notes Documentation',
-     u'Blazar developers', 'BlazarReleaseNotes',
+    ('index', 'BlazarReleaseNotes', 'Blazar Release Notes Documentation',
+     'Blazar developers', 'BlazarReleaseNotes',
      'One line description of project.', 'Miscellaneous'),
 ]
 

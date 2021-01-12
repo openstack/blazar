@@ -29,12 +29,12 @@ class ContextTestCase(tests.TestCase):
     def setUp(self):
         super(ContextTestCase, self).setUp()
 
-        self.fake_headers = {u'X-User-Id': uuidsentinel.user_id,
-                             u'X-Project-Id': uuidsentinel.project_id,
-                             u'X-Auth-Token': u'111-111-111',
-                             u'X-User-Name': u'user_name',
-                             u'X-Project-Name': u'project_name',
-                             u'X-Roles': u'user_name0, user_name1'}
+        self.fake_headers = {'X-User-Id': uuidsentinel.user_id,
+                             'X-Project-Id': uuidsentinel.project_id,
+                             'X-Auth-Token': '111-111-111',
+                             'X-User-Name': 'user_name',
+                             'X-Project-Name': 'project_name',
+                             'X-Roles': 'user_name0, user_name1'}
         self.context = self.patch(context, 'BlazarContext')
         self.catalog = jsonutils.dump_as_bytes({'nova': 'catalog'})
 
@@ -46,7 +46,7 @@ class ContextTestCase(tests.TestCase):
 
     def test_ctx_from_headers_wrong_format(self):
         catalog = ['etc']
-        self.fake_headers[u'X-Service-Catalog'] = catalog
+        self.fake_headers['X-Service-Catalog'] = catalog
         self.assertRaises(
             exceptions.WrongFormat,
             api_context.ctx_from_headers,
@@ -56,7 +56,7 @@ class ContextTestCase(tests.TestCase):
 class ContextTestCaseV1(ContextTestCase):
 
     def test_ctx_from_headers(self):
-        self.fake_headers[u'X-Service-Catalog'] = self.catalog
+        self.fake_headers['X-Service-Catalog'] = self.catalog
         environ_base = {
             'openstack.request_id': 'req-' + uuidsentinel.reqid,
             'openstack.global_request_id': 'req-' + uuidsentinel.globalreqid}
@@ -68,13 +68,13 @@ class ContextTestCaseV1(ContextTestCase):
 
         self.context.assert_called_once_with(
             user_id=uuidsentinel.user_id,
-            roles=[u'user_name0',
-                   u'user_name1'],
-            project_name=u'project_name',
-            auth_token=u'111-111-111',
-            service_catalog={u'nova': u'catalog'},
+            roles=['user_name0',
+                   'user_name1'],
+            project_name='project_name',
+            auth_token='111-111-111',
+            service_catalog={'nova': 'catalog'},
             project_id=uuidsentinel.project_id,
-            user_name=u'user_name',
+            user_name='user_name',
             request_id='req-' + uuidsentinel.reqid,
             global_request_id='req-' + uuidsentinel.globalreqid)
 
@@ -82,17 +82,17 @@ class ContextTestCaseV1(ContextTestCase):
 class ContextTestCaseV2(ContextTestCase):
 
     def test_ctx_from_headers(self):
-        self.fake_headers[u'X-Service-Catalog'] = self.catalog
+        self.fake_headers['X-Service-Catalog'] = self.catalog
         req = webob.Request.blank('/v2/leases')
         req.headers = self.fake_headers
         api_context.ctx_from_headers(req.headers)
 
         self.context.assert_called_once_with(
             user_id=uuidsentinel.user_id,
-            roles=[u'user_name0',
-                   u'user_name1'],
-            project_name=u'project_name',
-            auth_token=u'111-111-111',
-            service_catalog={u'nova': u'catalog'},
+            roles=['user_name0',
+                   'user_name1'],
+            project_name='project_name',
+            auth_token='111-111-111',
+            service_catalog={'nova': 'catalog'},
             project_id=uuidsentinel.project_id,
-            user_name=u'user_name')
+            user_name='user_name')
