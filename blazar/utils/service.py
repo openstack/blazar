@@ -19,10 +19,10 @@ import functools
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging as messaging
 from oslo_service import service
 
 from blazar import context
+from blazar import rpc
 
 LOG = logging.getLogger(__name__)
 
@@ -30,10 +30,8 @@ LOG = logging.getLogger(__name__)
 class RPCClient(object):
     def __init__(self, target):
         super(RPCClient, self).__init__()
-        self._client = messaging.RPCClient(
-            target=target,
-            transport=messaging.get_rpc_transport(cfg.CONF),
-        )
+        rpc.init()
+        self._client = rpc.get_client(target)
 
     def cast(self, name, **kwargs):
         ctx = context.current()
@@ -47,11 +45,10 @@ class RPCClient(object):
 class RPCServer(service.Service):
     def __init__(self, target):
         super(RPCServer, self).__init__()
-        self._server = messaging.get_rpc_server(
-            target=target,
-            transport=messaging.get_rpc_transport(cfg.CONF),
-            endpoints=[ContextEndpointHandler(self, target)],
-            executor='eventlet',
+        rpc.init()
+        self._server = rpc.get_server(
+            target,
+            endpoints=[ContextEndpointHandler(self, target)]
         )
 
     def start(self):
