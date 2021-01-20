@@ -40,7 +40,7 @@ def upgrade():
         op.execute('ALTER TABLE tmp_leases RENAME TO leases')
         return
 
-    op.alter_column('leases', 'tenant_id', name='project_id',
+    op.alter_column('leases', 'tenant_id', new_column_name='project_id',
                     existing_type=sa.String(length=255))
 
 
@@ -55,5 +55,5 @@ def downgrade():
         op.execute('ALTER TABLE tmp_leases RENAME TO leases')
         return
 
-    op.alter_column('leases', 'project_id', name='tenant_id',
+    op.alter_column('leases', 'project_id', new_column_name='tenant_id',
                     existing_type=sa.String(length=255))

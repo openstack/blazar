@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fixes database migrations with Alembic 1.5.0 or greater. For more details,
+    see `bug 1912502 <https://bugs.launchpad.net/blazar/+bug/1912502>`_.
