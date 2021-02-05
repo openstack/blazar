@@ -39,7 +39,7 @@ class ValidationTestCase(tests.TestCase):
 
         @self.v_api.check_exists(fake_get, self.fake_id)
         def trap(fake_id):
-            return self.u_api.render(lease_id=self.fake_id)
+            self.u_api.render(lease_id=self.fake_id)
             fake_get.assert_called_once_with()
 
     def test_check_false(self):
