@@ -45,23 +45,23 @@ def make_app():
 
 def fake_lease(**kw):
     return {
-        u'id': kw.get('id', u'2bb8720a-0873-4d97-babf-0d906851a1eb'),
-        u'name': kw.get('name', u'lease_test'),
-        u'start_date': kw.get('start_date', u'2014-01-01 01:23'),
-        u'end_date': kw.get('end_date', u'2014-02-01 13:37'),
-        u'trust_id': kw.get('trust_id',
-                            u'35b17138b3644e6aa1318f3099c5be68'),
-        u'user_id': kw.get('user_id', u'efd8780712d24b389c705f5c2ac427ff'),
-        u'project_id': kw.get('project_id',
-                              u'bd9431c18d694ad3803a8d4a6b89fd36'),
-        u'reservations': kw.get('reservations', [
+        'id': kw.get('id', '2bb8720a-0873-4d97-babf-0d906851a1eb'),
+        'name': kw.get('name', 'lease_test'),
+        'start_date': kw.get('start_date', '2014-01-01 01:23'),
+        'end_date': kw.get('end_date', '2014-02-01 13:37'),
+        'trust_id': kw.get('trust_id',
+                           '35b17138b3644e6aa1318f3099c5be68'),
+        'user_id': kw.get('user_id', 'efd8780712d24b389c705f5c2ac427ff'),
+        'project_id': kw.get('project_id',
+                             'bd9431c18d694ad3803a8d4a6b89fd36'),
+        'reservations': kw.get('reservations', [
             {
-                u'resource_id': u'1234',
-                u'resource_type': u'virtual:instance'
+                'resource_id': '1234',
+                'resource_type': 'virtual:instance'
             }
         ]),
-        u'events': kw.get('events', []),
-        u'status': kw.get('status', 'ACTIVE'),
+        'events': kw.get('events', []),
+        'status': kw.get('status', 'ACTIVE'),
     }
 
 

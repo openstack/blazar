@@ -781,12 +781,12 @@ class ServiceTestCase(tests.TestCase):
     def test_update_lease_not_started_modify_dates(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 delta = datetime.timedelta(hours=1)
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': self.lease['end_date'] - delta,
                         'status': 'UNDONE'}
 
@@ -799,7 +799,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
             }
         ]
@@ -832,19 +832,19 @@ class ServiceTestCase(tests.TestCase):
     def test_update_modify_reservations(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 delta = datetime.timedelta(hours=1)
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': self.lease['end_date'] - delta,
                         'status': 'UNDONE'}
 
         lease_values = {
             'reservations': [
                 {
-                    'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                    'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                     'min': 3,
                     'max': 3
                 }
@@ -854,7 +854,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
             }
         ]
@@ -872,7 +872,7 @@ class ServiceTestCase(tests.TestCase):
             {
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00),
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'min': 3,
                 'max': 3
             }
@@ -891,7 +891,7 @@ class ServiceTestCase(tests.TestCase):
         lease_values = {
             'reservations': [
                 {
-                    'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                    'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                     'resource_type': 'invalid',
                     'min': 3,
                     'max': 3
@@ -902,7 +902,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
             }
         ]
@@ -927,7 +927,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
             }
         ]
@@ -955,11 +955,11 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
             },
             {
-                'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1',
+                'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1',
                 'resource_type': 'virtual:instance',
             }
         ]
@@ -975,9 +975,9 @@ class ServiceTestCase(tests.TestCase):
     def test_update_lease_started_modify_end_date_without_before_end(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             else:
                 return None
 
@@ -989,7 +989,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1022,12 +1022,12 @@ class ServiceTestCase(tests.TestCase):
     def test_update_lease_started_modify_end_date_and_before_end(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
                 delta = datetime.timedelta(hours=1)
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': self.lease['end_date'] - delta,
                         'status': 'DONE'}
 
@@ -1039,7 +1039,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1087,11 +1087,11 @@ class ServiceTestCase(tests.TestCase):
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': before_end_date,
                         'status': 'DONE'}
 
@@ -1104,7 +1104,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1157,11 +1157,11 @@ class ServiceTestCase(tests.TestCase):
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': before_end_date,
                         'status': 'DONE'}
 
@@ -1174,7 +1174,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': expected_start_date,
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1197,11 +1197,11 @@ class ServiceTestCase(tests.TestCase):
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': before_end_date,
                         'status': 'DONE'}
 
@@ -1214,7 +1214,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1236,11 +1236,11 @@ class ServiceTestCase(tests.TestCase):
 
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             elif filters['event_type'] == 'end_lease':
-                return {'id': u'7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
+                return {'id': '7085381b-45e0-4e5d-b24a-f965f5e6e5d7'}
             elif filters['event_type'] == 'before_end_lease':
-                return {'id': u'452bf850-e223-4035-9d13-eb0b0197228f',
+                return {'id': '452bf850-e223-4035-9d13-eb0b0197228f',
                         'time': wrong_before_end_date,
                         'status': 'DONE'}
 
@@ -1253,7 +1253,7 @@ class ServiceTestCase(tests.TestCase):
             self.patch(self.db_api, 'reservation_get_all_by_lease_id'))
         reservation_get_all.return_value = [
             {
-                'id': u'593e7028-c0d1-4d76-8642-2ffd890b324c',
+                'id': '593e7028-c0d1-4d76-8642-2ffd890b324c',
                 'resource_type': 'virtual:instance',
                 'start_date': datetime.datetime(2013, 12, 20, 13, 00),
                 'end_date': datetime.datetime(2013, 12, 20, 15, 00)
@@ -1347,7 +1347,7 @@ class ServiceTestCase(tests.TestCase):
     def test_update_lease_end_date_event_not_found(self):
         def fake_event_get(sort_key, sort_dir, filters):
             if filters['event_type'] == 'start_lease':
-                return {'id': u'2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
+                return {'id': '2eeb784a-2d84-4a89-a201-9d42d61eecb1'}
             else:
                 return None
 

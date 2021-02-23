@@ -22,22 +22,22 @@ from blazar.utils import trusts
 
 def fake_computehost(**kw):
     return {
-        u'id': kw.get('id', u'1'),
-        u'hypervisor_hostname': kw.get('hypervisor_hostname', u'host01'),
-        u'hypervisor_type': kw.get('hypervisor_type', u'QEMU'),
-        u'vcpus': kw.get('vcpus', 1),
-        u'hypervisor_version': kw.get('hypervisor_version', 1000000),
-        u'trust_id': kw.get('trust_id',
-                            u'35b17138-b364-4e6a-a131-8f3099c5be68'),
-        u'memory_mb': kw.get('memory_mb', 8192),
-        u'local_gb': kw.get('local_gb', 50),
-        u'cpu_info': kw.get('cpu_info',
-                            u"{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
-                            "\"arch\": \"x86_64\", \"features\": [],"
-                            " \"topology\": {\"cores\": 1}}",
-                            ),
-        u'extra_capas': kw.get('extra_capas',
-                               {u'vgpus': 2, u'fruits': u'bananas'}),
+        'id': kw.get('id', '1'),
+        'hypervisor_hostname': kw.get('hypervisor_hostname', 'host01'),
+        'hypervisor_type': kw.get('hypervisor_type', 'QEMU'),
+        'vcpus': kw.get('vcpus', 1),
+        'hypervisor_version': kw.get('hypervisor_version', 1000000),
+        'trust_id': kw.get('trust_id',
+                           '35b17138-b364-4e6a-a131-8f3099c5be68'),
+        'memory_mb': kw.get('memory_mb', 8192),
+        'local_gb': kw.get('local_gb', 50),
+        'cpu_info': kw.get('cpu_info',
+                           "{\"vendor\": \"Intel\", \"model\": \"qemu32\", "
+                           "\"arch\": \"x86_64\", \"features\": [],"
+                           " \"topology\": {\"cores\": 1}}",
+                           ),
+        'extra_capas': kw.get('extra_capas',
+                              {'vgpus': 2, 'fruits': 'bananas'})
     }
 
 
@@ -82,9 +82,9 @@ class TestIncorrectHostFromRPC(api.APITest):
 
     def test_bad_list(self):
         expected = {
-            u'error_code': 400,
-            u'error_message': u"Invalid input",
-            u'error_name': 400
+            'error_code': 400,
+            'error_message': "Invalid input",
+            'error_name': 400
         }
         response = self.get_json(self.path, expect_errors=True,
                                  headers=self.headers)
@@ -134,9 +134,9 @@ class TestListHosts(api.APITest):
         def fake_list_computehosts(*args, **kwargs):
             raise Exception("Nah...")
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Nah...",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': "Nah...",
+            'error_name': 500
         }
         self.patch(
             self.hosts_rpcapi, 'list_computehosts'
@@ -167,10 +167,10 @@ class TestShowHost(api.APITest):
 
     def test_empty(self):
         expected = {
-            u'error_code': 404,
-            u'error_message': u"Object with {{'host_id': "
-                              u"{0}}} not found".format(self.id1),
-            u'error_name': 404
+            'error_code': 404,
+            'error_message': "Object with {{'host_id': "
+                             "{0}}} not found".format(self.id1),
+            'error_name': 404
         }
         self.patch(self.hosts_rpcapi, 'get_computehost').return_value = None
         response = self.get_json(self.path, expect_errors=True,
@@ -183,9 +183,9 @@ class TestShowHost(api.APITest):
         def fake_get_computehost(*args, **kwargs):
             raise Exception("Nah...")
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Nah...",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': "Nah...",
+            'error_name': 500
         }
         self.patch(
             self.hosts_rpcapi, 'get_computehost'
@@ -254,9 +254,9 @@ class TestCreateHost(api.APITest):
 
     def test_empty_response(self):
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Host can't be created",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': "Host can't be created",
+            'error_name': 500
         }
         self.patch(self.hosts_rpcapi, 'create_computehost').return_value = None
         response = self.post_json(self.path, self.fake_computehost_body,
@@ -269,9 +269,9 @@ class TestCreateHost(api.APITest):
         def fake_create_computehost(*args, **kwargs):
             raise Exception("Nah...")
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Nah...",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': u"Nah...",
+            'error_name': 500
         }
         self.patch(
             self.hosts_rpcapi, 'create_computehost'
@@ -325,10 +325,10 @@ class TestUpdateHost(api.APITest):
 
     def test_empty_response(self):
         expected = {
-            u'error_code': 404,
-            u'error_message': u"Object with {{'host_id': "
-                              u"{0}}} not found".format(self.id1),
-            u'error_name': 404
+            'error_code': 404,
+            'error_message': "Object with {{'host_id': "
+                             "{0}}} not found".format(self.id1),
+            'error_name': 404
         }
         self.patch(self.hosts_rpcapi, 'update_computehost').return_value = None
         response = self.put_json(self.path, self.fake_computehost_body,
@@ -341,9 +341,9 @@ class TestUpdateHost(api.APITest):
         def fake_update_computehost(*args, **kwargs):
             raise Exception("Nah...")
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Nah...",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': u"Nah...",
+            'error_name': 500
         }
         self.patch(
             self.hosts_rpcapi, 'update_computehost'
@@ -375,9 +375,9 @@ class TestDeleteHost(api.APITest):
         def fake_delete_computehost(*args, **kwargs):
             raise TypeError("Nah...")
         expected = {
-            u'error_code': 404,
-            u'error_message': u"not found",
-            u'error_name': 404
+            'error_code': 404,
+            'error_message': "not found",
+            'error_name': 404
         }
         self.patch(
             self.hosts_rpcapi, 'delete_computehost'
@@ -395,9 +395,9 @@ class TestDeleteHost(api.APITest):
         def fake_delete_computehost(*args, **kwargs):
             raise Exception("Nah...")
         expected = {
-            u'error_code': 500,
-            u'error_message': u"Nah...",
-            u'error_name': 500
+            'error_code': 500,
+            'error_message': u"Nah...",
+            'error_name': 500
         }
         self.patch(
             self.hosts_rpcapi, 'delete_computehost'
