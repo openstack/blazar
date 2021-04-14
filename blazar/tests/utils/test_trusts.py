@@ -60,12 +60,12 @@ class TestTrusts(tests.TestCase):
         self.cfg.config(os_admin_username='admin')
         ctx = self.trusts.create_ctx_from_trust('1')
         fake_ctx_dict = {
-            'auth_token': self.client().auth_token,
+            'auth_token': self.client().session.get_token(),
             'domain': None,
             'global_request_id': self.context.current().global_request_id,
             'is_admin': False,
             'is_admin_project': True,
-            'project': self.client().project_id,
+            'project': self.client().session.get_project_id(),
             'project_domain': None,
             'read_only': False,
             'request_id': ctx.request_id,

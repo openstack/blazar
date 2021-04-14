@@ -81,7 +81,7 @@ class MaxLeaseDurationTestCase(tests.TestCase):
 
         self.enforcement.load_filters()
         cfg.CONF.set_override('max_lease_duration', 3600, group='enforcement')
-        self.fake_service_catalog = [
+        self.fake_service_catalog = tests.FakeServiceCatalog([
             dict(
                 type='identity', endpoints=[
                     dict(
@@ -89,7 +89,7 @@ class MaxLeaseDurationTestCase(tests.TestCase):
                         url='https://fakeauth.com')
                 ]
             )
-        ]
+        ])
 
         self.ctx = context.BlazarContext(
             user_id='111', project_id='222',

@@ -112,7 +112,7 @@ class EnforcementTestCase(tests.TestCase):
         cfg.CONF.set_override('os_region_name', self.region)
 
         self.enforcement.load_filters()
-        self.fake_service_catalog = [
+        self.fake_service_catalog = tests.FakeServiceCatalog([
             dict(
                 type='identity', endpoints=[
                     dict(
@@ -120,7 +120,7 @@ class EnforcementTestCase(tests.TestCase):
                         url='https://fakeauth.com')
                 ]
             )
-        ]
+        ])
 
         self.ctx = context.BlazarContext(
             user_id='111', project_id='222',
