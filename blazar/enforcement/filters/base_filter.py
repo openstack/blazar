@@ -14,11 +14,9 @@
 # limitations under the License.
 
 import abc
-import six
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseFilter:
+class BaseFilter(metaclass=abc.ABCMeta):
 
     enforcement_opts = []
 
