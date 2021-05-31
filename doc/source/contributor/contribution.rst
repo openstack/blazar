@@ -35,7 +35,7 @@ How to keep in touch with community
   please do. Blazar-related emails must be send with **[blazar]** in the
   subject.
 * All questions may be asked on our IRC channel #openstack-blazar on
-  `freenode <http://freenode.net>`_.
+  `OFTC <http://oftc.net>`_.
 * We also have weekly meetings on #openstack-meeting-alt. Please check
   `meeting details <https://wiki.openstack.org/wiki/Meetings/Blazar>`_.
 
