@@ -19,7 +19,11 @@ The following packages should be installed:
 
 .. sourcecode:: console
 
-    blazar host-create compute-1
+ # Using the blazar CLI
+ blazar host-create compute-1
+
+ # Using the openstack CLI
+ openstack reservation host create compute-1
 
 ..
 
@@ -27,7 +31,11 @@ The following packages should be installed:
 
 .. sourcecode:: console
 
-    blazar host-list
+ # Using the blazar CLI
+ blazar host-list
+
+ # Using the openstack CLI
+ openstack reservation host list
 
 ..
 
@@ -50,9 +58,18 @@ Result:
 
 .. sourcecode:: console
 
-    blazar lease-create --physical-reservation min=1,max=1,hypervisor_properties='[">=", "$vcpus", "2"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
+ # Using the blazar CLI
+ blazar lease-create --physical-reservation min=1,max=1,hypervisor_properties='[">=", "$vcpus", "2"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
+
+ # Using the openstack CLI
+ openstack reservation lease create --reservation resource_type=physical:host,min=1,max=1,hypervisor_properties='[">=", "$vcpus", "2"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
 
 ..
+
+.. note::
+   The :code:`--physical-reservation` flag is not available in the openstack
+   client, instead use :code:`--reservation resource_type=physical:host` as
+   shown above.
 
 Result:
 
@@ -90,7 +107,11 @@ Result:
 
 .. sourcecode:: console
 
-    blazar lease-list
+ # Using the blazar CLI
+ blazar lease-list
+
+ # Using the openstack CLI
+ openstack reservation lease list
 
 ..
 

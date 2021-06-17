@@ -22,7 +22,11 @@ The following four scheduler filters should be configured in nova.conf:
 
 .. sourcecode:: console
 
-    blazar host-create compute-1
+ # Using the blazar CLI
+ blazar host-create compute-1
+
+ # Using the openstack CLI
+ openstack reservation host create compute-1
 
 ..
 
@@ -30,7 +34,11 @@ The following four scheduler filters should be configured in nova.conf:
 
 .. sourcecode:: console
 
-    blazar host-list
+ # Using the blazar CLI
+ blazar host-list
+
+ # Using the openstack CLI
+ openstack reservation host list
 
 ..
 
@@ -53,7 +61,11 @@ Result:
 
 .. sourcecode:: console
 
-    blazar lease-create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1 --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
+ # Using the blazar CLI
+ blazar lease-create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1 --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
+
+ # Using the openstack CLI
+ openstack reservation lease create --reservation resource_type=virtual:instance,vcpus=1,memory_mb=1024,disk_gb=20,amount=1 --start-date "2020-07-24 20:00" --end-date "2020-08-09 21:00" lease-1
 
 ..
 
@@ -98,7 +110,11 @@ Result:
 
 .. sourcecode:: console
 
-    blazar lease-list
+ # Using the blazar CLI
+ blazar lease-list
+
+ # Using the openstack CLI
+ openstack reservation lease list
 
 ..
 

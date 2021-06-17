@@ -31,7 +31,11 @@ The floating IP plugin should be enabled in ``blazar.conf``:
 
 .. sourcecode:: console
 
+ # Using the blazar CLI
  blazar floatingip-create 81fabec7-00ae-497a-b485-72f4bf187d3e 172.24.4.2
+
+ # Using the openstack CLI
+ openstack reservation floatingip create 81fabec7-00ae-497a-b485-72f4bf187d3e 172.24.4.2
 
 ..
 
@@ -39,7 +43,11 @@ The floating IP plugin should be enabled in ``blazar.conf``:
 
 .. sourcecode:: console
 
+ # Using the blazar CLI
  blazar floatingip-list
+
+ # Using the openstack CLI
+ openstack reservation floatingip list
 
 ..
 
@@ -69,7 +77,11 @@ Result:
 
 .. sourcecode:: console
 
+ # Using the blazar CLI
  blazar lease-create --reservation 'resource_type=virtual:floatingip,network_id=81fabec7-00ae-497a-b485-72f4bf187d3e,amount=2,required_floatingips=["172.24.4.2","172.24.4.3"]' fip-lease
+
+ # Using the openstack CLI
+ openstack reservation lease create --reservation 'resource_type=virtual:floatingip,network_id=81fabec7-00ae-497a-b485-72f4bf187d3e,amount=2,required_floatingips=["172.24.4.2","172.24.4.3"]' fip-lease
 
 ..
 
@@ -144,8 +156,11 @@ Result:
 
 .. sourcecode:: console
 
+ # Using the blazar CLI
  blazar lease-list
 
+ # Using the openstack CLI
+ openstack reservation lease list
 ..
 
 Result:
@@ -174,7 +189,11 @@ Result:
 
 .. sourcecode:: console
 
+ # Using the blazar CLI
  blazar lease-update --reservation 'id=e80033e6-5279-461d-9573-dec137233434,amount=3,required_floatingips=[]' fip-lease
+
+ # Using the openstack CLI
+ openstack reservation lease update --reservation 'id=e80033e6-5279-461d-9573-dec137233434,amount=3,required_floatingips=[]' fip-lease
 
 ..
 
@@ -190,7 +209,11 @@ Result:
 
 .. sourcecode:: console
 
+ # Using the openstack CLI
  blazar lease-show fip-lease
+
+ # Using the openstack CLI
+ openstack reservation lease show fip-lease
 
 ..
 
