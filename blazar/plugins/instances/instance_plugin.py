@@ -161,6 +161,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                        {
                          'lease_id': lease_id,
                          'id': reservation_id
+                         'start_date': lease_start_date,
+                         'end_date': lease_end_date,
                        },
                      ]
         }.
@@ -170,13 +172,17 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         # To reduce overhead, this method only executes one query
         # to get the allocation information
-        rsv_lease_host = db_utils.get_reservation_allocations_by_host_ids(
+        reservations = db_utils.get_reservation_allocations_by_host_ids(
             hosts, start, end, lease_id, reservation_id)
-
-        hosts_allocs = collections.defaultdict(list)
-        for rsv, lease, host in rsv_lease_host:
-            hosts_allocs[host].append({'lease_id': lease, 'id': rsv})
-        return hosts_allocs
+        host_allocs = {h: [] for h in hosts}
+        attributes_to_copy = ["id", "lease_id", "start_date", "end_date"]
+        for reservation in reservations:
+            for host_id in reservation['host_ids']:
+                if host_id in host_allocs.keys():
+                    host_allocs[host_id].append({
+                        k: v for k, v in reservation.items()
+                        if k in attributes_to_copy})
+        return host_allocs
 
     def query_available_hosts(self, cpus=None, memory=None, disk=None,
                               resource_properties=None,

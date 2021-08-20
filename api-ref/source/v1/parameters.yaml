@@ -67,6 +67,18 @@ allocation:
   in: body
   required: true
   type: array
+allocation_end_date:
+  description: |
+    The end date of the lease.
+  in: body
+  required: true
+  type: string
+allocation_start_date:
+  description: |
+    The start date of the lease.
+  in: body
+  required: true
+  type: string
 allocations:
   description: |
     A list of ``allocation`` objects.
