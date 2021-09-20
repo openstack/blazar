@@ -179,7 +179,7 @@ class LeaseStatus(BaseStatus):
         return (lease['status'] in cls.STABLE)
 
     @classmethod
-    def lease_status(cls, transition, result_in):
+    def lease_status(cls, transition, result_in, non_fatal_exceptions=[]):
         """Decorator for managing a lease status.
 
         This checks and updates a lease status before and after executing a
@@ -189,24 +189,28 @@ class LeaseStatus(BaseStatus):
                            decorated function.
         :param result_in: A tuple of statuses to which a lease transits after
                           executing the decorated function.
+        :param non_fatal_exceptions: A list of exceptions that are non fatal.
+                          If one is raised during execution, the lease status
+                          will be restored.
         """
         def decorator(func):
             def wrapper(*args, **kwargs):
                 # Update a lease status
                 lease_id = kwargs['lease_id']
                 lease = db_api.lease_get(lease_id)
-                if cls.is_valid_transition(lease['status'],
+                original_status = lease['status']
+                if cls.is_valid_transition(original_status,
                                            transition,
                                            lease_id=lease_id):
                     db_api.lease_update(lease_id,
                                         {'status': transition})
                     LOG.debug('Status of lease %s changed from %s to %s.',
-                              lease_id, lease['status'], transition)
+                              lease_id, original_status, transition)
                 else:
                     LOG.warning('Aborting %s. '
                                 'Invalid lease status transition '
                                 'from %s to %s.',
-                                func.__name__, lease['status'],
+                                func.__name__, original_status,
                                 transition)
                     raise exceptions.InvalidStatus
 
@@ -214,10 +218,16 @@ class LeaseStatus(BaseStatus):
                 try:
                     result = func(*args, **kwargs)
                 except Exception as e:
-                    LOG.exception('Lease %s went into ERROR status. %s',
-                                  lease_id, str(e))
-                    db_api.lease_update(lease_id,
-                                        {'status': cls.ERROR})
+                    if type(e) in non_fatal_exceptions:
+                        LOG.exception('Non-fatal exception during transition '
+                                      'of lease %s', lease_id)
+                        db_api.lease_update(lease_id,
+                                            {'status': original_status})
+                    else:
+                        LOG.exception('Lease %s went into ERROR status. %s',
+                                      lease_id, str(e))
+                        db_api.lease_update(lease_id,
+                                            {'status': cls.ERROR})
                     raise e
 
                 # Update a lease status if it exists

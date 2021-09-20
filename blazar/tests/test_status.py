@@ -242,6 +242,40 @@ class LeaseStatusTestCase(tests.TestCase):
             [call(self.lease_id, {'status': status.LeaseStatus.STARTING}),
              call(self.lease_id, {'status': status.LeaseStatus.ERROR})])
 
+    def test_lease_status_func_allow_non_fatal_exception(self):
+        """Test when non-fatal exception is raised during lease transition.
+
+        When this happens, the exception should still get raised, but the
+        lease should be transitioned to its original status (not ERROR).
+        """
+        lease = {
+            'status': status.LeaseStatus.PENDING
+        }
+        lease_get = self.patch(self.db_api, 'lease_get')
+        lease_get.return_value = lease
+        lease_update = self.patch(self.db_api, 'lease_update')
+        self.patch(self.status.LeaseStatus, 'is_valid_transition'
+                   ).return_value = True
+
+        class NonFatalException(Exception):
+            pass
+
+        @self.status.LeaseStatus.lease_status(
+            transition=status.LeaseStatus.STARTING,
+            result_in=(status.LeaseStatus.ACTIVE,),
+            non_fatal_exceptions=[NonFatalException])
+        def dummy_start_lease(*args, **kwargs):
+            raise NonFatalException
+
+        self.assertRaises(NonFatalException,
+                          dummy_start_lease,
+                          lease_id=self.lease_id)
+
+        lease_get.assert_called_once_with(self.lease_id)
+        lease_update.assert_has_calls(
+            [call(self.lease_id, {'status': status.LeaseStatus.STARTING}),
+             call(self.lease_id, {'status': status.LeaseStatus.PENDING})])
+
     def test_lease_status_mismatch_result_in(self):
         lease = {
             'status': status.LeaseStatus.PENDING

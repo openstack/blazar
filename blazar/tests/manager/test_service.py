@@ -102,7 +102,7 @@ class FakePluginRaisesException(base.BasePlugin):
 
 class FakeLeaseStatus(object):
     @classmethod
-    def lease_status(cls, transition, result_in):
+    def lease_status(cls, transition, result_in, non_fatal_exceptions=[]):
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)

@@ -397,7 +397,20 @@ class ManagerService(service_utils.RPCServer):
                     return lease
 
     @status.lease.lease_status(
-        transition=status.lease.UPDATING, result_in=status.lease.STABLE)
+        transition=status.lease.UPDATING,
+        result_in=status.lease.STABLE,
+        non_fatal_exceptions=[
+            common_ex.InvalidInput,
+            exceptions.InvalidRange,
+            exceptions.MissingParameter,
+            exceptions.MalformedRequirements,
+            exceptions.MalformedParameter,
+            exceptions.NotEnoughHostsAvailable,
+            exceptions.InvalidDate,
+            exceptions.CantUpdateParameter,
+            exceptions.InvalidPeriod,
+        ]
+    )
     def update_lease(self, lease_id, values):
         if not values:
             return db_api.lease_get(lease_id)
