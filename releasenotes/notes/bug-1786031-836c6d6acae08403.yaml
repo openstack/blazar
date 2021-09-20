@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Updating a lease with invalid parameters (for example, specifying an
+    invalid date range) now has no effect on the lease, where previously this
+    would cause the lease to be set to ERROR status. For more details, see `bug
+    1786031 <https://bugs.launchpad.net/blazar/+bug/1786031>`_.
