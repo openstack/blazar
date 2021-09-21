@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import datetime
 from unittest import mock
 
@@ -81,18 +82,13 @@ class PhysicalHostPluginSetupOnlyTestCase(tests.TestCase):
                          self.fake_phys_plugin.project_domain_name)
 
     def test__get_extra_capabilities_with_values(self):
+        ComputeHostExtraCapability = collections.namedtuple(
+            'ComputeHostExtraCapability',
+            ['id', 'property_id', 'capability_value', 'computehost_id'])
         self.db_host_extra_capability_get_all_per_host.return_value = [
-            {'id': 1,
-             'capability_name': 'foo',
-             'capability_value': 'bar',
-             'other': 'value',
-             'computehost_id': 1
-             },
-            {'id': 2,
-             'capability_name': 'buzz',
-             'capability_value': 'word',
-             'computehost_id': 1
-             }]
+            (ComputeHostExtraCapability(1, 'foo', 'bar', 1), 'foo'),
+            (ComputeHostExtraCapability(2, 'buzz', 'word', 1), 'buzz')]
+
         res = self.fake_phys_plugin._get_extra_capabilities(1)
         self.assertEqual({'foo': 'bar', 'buzz': 'word'}, res)
 
@@ -229,7 +225,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         # NOTE(sbauza): 'id' will be pop'd, we need to keep track of it
         fake_request = fake_host.copy()
         fake_capa = {'computehost_id': '1',
-                     'capability_name': 'foo',
+                     'property_name': 'foo',
                      'capability_value': 'bar',
                      }
         self.get_extra_capabilities.return_value = {'foo': 'bar'}
@@ -296,11 +292,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_values = {'foo': 'baz'}
 
         self.db_host_extra_capability_get_all_per_name.return_value = [
-            {'id': 'extra_id1',
-             'computehost_id': self.fake_host_id,
-             'capability_name': 'foo',
-             'capability_value': 'bar'
-             },
+            ({'id': 'extra_id1',
+              'computehost_id': self.fake_host_id,
+              'capability_value': 'bar'},
+             'foo'),
         ]
 
         self.get_reservations_by_host = self.patch(
@@ -310,7 +305,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.fake_phys_plugin.update_computehost(self.fake_host_id,
                                                  host_values)
         self.db_host_extra_capability_update.assert_called_once_with(
-            'extra_id1', {'capability_name': 'foo', 'capability_value': 'baz'})
+            'extra_id1', {'capability_value': 'baz'})
 
     def test_update_host_having_issue_when_storing_extra_capability(self):
         def fake_db_host_extra_capability_update(*args, **kwargs):
@@ -320,11 +315,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             self.db_utils, 'get_reservations_by_host_id')
         self.get_reservations_by_host.return_value = []
         self.db_host_extra_capability_get_all_per_name.return_value = [
-            {'id': 'extra_id1',
-             'computehost_id': self.fake_host_id,
-             'capability_name': 'foo',
-             'capability_value': 'bar'
-             },
+            ({'id': 'extra_id1',
+              'computehost_id': self.fake_host_id,
+              'capability_value': 'bar'},
+             'foo'),
         ]
         fake = self.db_host_extra_capability_update
         fake.side_effect = fake_db_host_extra_capability_update
@@ -340,7 +334,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                                                  host_values)
         self.db_host_extra_capability_create.assert_called_once_with({
             'computehost_id': '1',
-            'capability_name': 'qux',
+            'property_name': 'qux',
             'capability_value': 'word'
         })
 
@@ -348,11 +342,10 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         host_values = {'foo': 'buzz'}
 
         self.db_host_extra_capability_get_all_per_name.return_value = [
-            {'id': 'extra_id1',
-             'computehost_id': self.fake_host_id,
-             'capability_name': 'foo',
-             'capability_value': 'bar'
-             },
+            ({'id': 'extra_id1',
+              'computehost_id': self.fake_host_id,
+              'capability_value': 'bar'},
+             'foo'),
         ]
         fake_phys_reservation = {
             'resource_type': plugin.RESOURCE_TYPE,
@@ -2387,6 +2380,74 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         }
         self.fake_phys_plugin._check_params(values)
         self.assertEqual(values['before_end'], 'default')
+
+    def test_list_resource_properties(self):
+        self.db_list_resource_properties = self.patch(
+            self.db_api, 'resource_properties_list')
+
+        # Expecting a list of (Reservation, Allocation)
+        self.db_list_resource_properties.return_value = [
+            ('prop1', False, 'aaa'),
+            ('prop1', False, 'bbb'),
+            ('prop2', False, 'aaa'),
+            ('prop2', False, 'aaa'),
+            ('prop3', True, 'aaa')
+        ]
+
+        expected = [
+            {'property': 'prop1'},
+            {'property': 'prop2'}
+        ]
+
+        ret = self.fake_phys_plugin.list_resource_properties(
+            query={'detail': False})
+
+        # Sort returned value to use assertListEqual
+        ret.sort(key=lambda x: x['property'])
+
+        self.assertListEqual(expected, ret)
+        self.db_list_resource_properties.assert_called_once_with(
+            'physical:host')
+
+    def test_list_resource_properties_with_detail(self):
+        self.db_list_resource_properties = self.patch(
+            self.db_api, 'resource_properties_list')
+
+        # Expecting a list of (Reservation, Allocation)
+        self.db_list_resource_properties.return_value = [
+            ('prop1', False, 'aaa'),
+            ('prop1', False, 'bbb'),
+            ('prop2', False, 'ccc'),
+            ('prop3', True, 'aaa')
+        ]
+
+        expected = [
+            {'property': 'prop1', 'private': False, 'values': ['aaa', 'bbb']},
+            {'property': 'prop2', 'private': False, 'values': ['ccc']}
+        ]
+
+        ret = self.fake_phys_plugin.list_resource_properties(
+            query={'detail': True})
+
+        # Sort returned value to use assertListEqual
+        ret.sort(key=lambda x: x['property'])
+
+        self.assertListEqual(expected, ret)
+        self.db_list_resource_properties.assert_called_once_with(
+            'physical:host')
+
+    def test_update_resource_property(self):
+        resource_property_values = {
+            'resource_type': 'physical:host',
+            'private': False}
+
+        db_resource_property_update = self.patch(
+            self.db_api, 'resource_property_update')
+
+        self.fake_phys_plugin.update_resource_property(
+            'foo', resource_property_values)
+        db_resource_property_update.assert_called_once_with(
+            'physical:host', 'foo', resource_property_values)
 
 
 class PhysicalHostMonitorPluginTestCase(tests.TestCase):

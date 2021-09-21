@@ -1,0 +1,12 @@
+{
+    "resource_properties": [
+        {
+            "property": "gpu",
+            "private": false,
+            "values": [
+                "True",
+                "False"
+            ]
+        }
+    ]
+}

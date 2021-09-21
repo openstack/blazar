@@ -53,6 +53,9 @@ class Rest(flask.Blueprint):
     def put(self, rule, status_code=200):
         return self._mroute('PUT', rule, status_code)
 
+    def patch(self, rule, status_code=200):
+        return self._mroute('PATCH', rule, status_code)
+
     def delete(self, rule, status_code=204):
         return self._mroute('DELETE', rule, status_code)
 
@@ -79,7 +82,7 @@ class Rest(flask.Blueprint):
                 if status:
                     flask.request.status_code = status
 
-                if flask.request.method in ['POST', 'PUT']:
+                if flask.request.method in ['POST', 'PUT', 'PATCH']:
                     kwargs['data'] = request_data()
 
                 if flask.request.endpoint in self.routes_with_query_support:

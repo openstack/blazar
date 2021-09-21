@@ -42,6 +42,12 @@ lease_id_path:
   in: path
   required: true
   type: string
+property_name:
+  description: |
+    The name of the property.
+  in: path
+  required: true
+  type: string
 
 
 # variables in query
@@ -54,6 +60,19 @@ allocation_lease_id_query:
 allocation_reservation_id_query:
   description: |
     Filter allocations results by reservation id
+  in: query
+  required: false
+  type: string
+resource_property_all:
+  description: |
+    Whether to include all resource properties, public and private.
+  in: query
+  required: false
+  type: string
+resource_property_detail:
+  description: |
+    Whether to include values along for each property and if the property
+    is private.
   in: query
   required: false
   type: string
@@ -406,6 +425,13 @@ leases:
   in: body
   required: true
   type: array
+property_private:
+  description: |
+    Whether the property is private.
+
+  in: body
+  required: true
+  type: boolean
 reservation:
   description: |
     A ``reservation`` object.
@@ -627,6 +653,69 @@ reservations_optional:
   in: body
   required: false
   type: array
+resource_properties:
+  description: |
+    A list of ``resource_property`` objects.
+
+  in: body
+  required: true
+  type: array
+resource_properties_private:
+  description: |
+    Whether the property is private.
+
+  in: body
+  required: false
+  type: boolean
+resource_properties_property:
+  description: |
+    The name of the property.
+
+  in: body
+  required: true
+  type: any
+resource_properties_values:
+  description: |
+    A list of values for the property.
+
+  in: body
+  required: false
+  type: array
+resource_property:
+  description: |
+    The updated ``resource_property`` object.
+
+  in: body
+  required: true
+  type: any
+resource_property_id:
+  description: |
+    The updated ``resource_property`` UUID.
+
+  in: body
+  required: true
+  type: string
+resource_property_private:
+  description: |
+    Whether the updated ``resource_property`` is private.
+
+  in: body
+  required: true
+  type: boolean
+resource_property_property_name:
+  description: |
+    The updated ``resource_property`` property_name.
+
+  in: body
+  required: true
+  type: string
+resource_property_resource_type:
+  description: |
+    The updated ``resource_property`` resource type.
+
+  in: body
+  required: true
+  type: string
 updated_at:
   description: |
     The date and time when the object was updated.

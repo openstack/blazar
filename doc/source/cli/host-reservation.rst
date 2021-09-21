@@ -51,6 +51,49 @@ Result:
 
 ..
 
+3. (Optional) Add extra capabilities to host to add other properties. These can
+   be used to filter hosts when creating a reservation.
+
+.. sourcecode:: console
+
+ # Using the blazar CLI
+ blazar host-update --extra gpu=True compute-1
+
+ # Using the openstack CLI
+ openstack reservation host set --extra gpu=True compute-1
+
+..
+
+Result:
+
+.. sourcecode:: console
+
+  Updated host: compute-1
+
+..
+
+Multiple ``--extra`` parameters can be included. They can also be specified in
+``host-create``. Properties can be made private or public. By default, they
+are public.
+
+.. sourcecode:: console
+
+ # Using the blazar CLI
+ blazar host-capability-update gpu --private
+
+ # Using the openstack CLI
+ openstack reservation host capability update gpu --private
+
+..
+
+Result:
+
+.. sourcecode:: console
+
+  Updated host extra capability: gpu
+
+..
+
 2. Create a lease
 -----------------
 
@@ -127,6 +170,103 @@ Result:
     +--------------------------------------+---------+----------------------------+----------------------------+
 
 ..
+
+3. Alternatively, create leases with resource properties.
+   First list properties.
+
+.. sourcecode:: console
+
+ # Using the blazar CLI
+ blazar host-capability-list
+
+ # Using the openstack CLI
+ openstack reservation host capability list
+
+..
+
+Result:
+
+.. sourcecode:: console
+
+    +----------+
+    | property |
+    +----------+
+    | gpu      |
+    +----------+
+
+..
+
+List possible values for a property
+
+.. sourcecode:: console
+
+ # Using the blazar CLI
+ blazar host-capability-show gpu
+
+ # Using the openstack CLI
+ openstack reservation host capability show gpu
+
+..
+
+Result:
+
+.. sourcecode:: console
+
+    +-------------------+-------+
+    | Field             | Value |
+    +-------------------+-------+
+    | capability_values | True  |
+    |                   | False |
+    | private           | False |
+    | property          | gpu   |
+    +-------------------+-------+
+
+..
+
+Create a lease.
+
+.. sourcecode:: console
+
+ # Using the blazar CLI
+ blazar lease-create --physical-reservation min=1,max=1,resource_properties='["=", "$gpu", "True"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
+
+ # Using the openstack CLI
+ openstack reservation lease create --reservation resource_type=physical:host,min=1,max=1,resource_properties='[">=", "$vcpus", "2"]' --start-date "2020-06-08 12:00" --end-date "2020-06-09 12:00" lease-1
+
+..
+
+Result:
+
+.. sourcecode:: console
+
+    +---------------+---------------------------------------------------------------------------------------------------------------------------------------------+
+    | Field         | Value                                                                                                                                       |
+    +---------------+---------------------------------------------------------------------------------------------------------------------------------------------+
+    | action        |                                                                                                                                             |
+    | created_at    | 2020-06-08 02:43:40                                                                                                                         |
+    | end_date      | 2020-06-09T12:00:00.000000                                                                                                                  |
+    | events        | {"status": "UNDONE", "lease_id": "6638c31e-f6c8-4982-9b98-d2ca0a8cb646", "event_type": "before_end_lease", "created_at": "2020-06-08        |
+    |               | 02:43:40", "updated_at": null, "time": "2020-06-08T12:00:00.000000", "id": "420caf25-dba5-4ac3-b377-50503ea5c886"}                          |
+    |               | {"status": "UNDONE", "lease_id": "6638c31e-f6c8-4982-9b98-d2ca0a8cb646", "event_type": "start_lease", "created_at": "2020-06-08 02:43:40",  |
+    |               | "updated_at": null, "time": "2020-06-08T12:00:00.000000", "id": "b9696139-55a1-472d-baff-5fade2c15243"}                                     |
+    |               | {"status": "UNDONE", "lease_id": "6638c31e-f6c8-4982-9b98-d2ca0a8cb646", "event_type": "end_lease", "created_at": "2020-06-08 02:43:40",    |
+    |               | "updated_at": null, "time": "2020-06-09T12:00:00.000000", "id": "ff9e6f52-db50-475a-81f1-e6897fdc769d"}                                     |
+    | id            | 6638c31e-f6c8-4982-9b98-d2ca0a8cb646                                                                                                        |
+    | name          | lease-1                                                                                                                                     |
+    | project_id    | 4527fa2138564bd4933887526d01bc95                                                                                                            |
+    | reservations  | {"status": "pending", "lease_id": "6638c31e-f6c8-4982-9b98-d2ca0a8cb646", "resource_id": "8", "max": 1, "created_at": "2020-06-08           |
+    |               | 02:43:40", "min": 1, "updated_at": null, "hypervisor_properties": "", "resource_properties": "[\"=\", \"$gpu\", \"True\"]", "id":           |
+    |               | "4d3dd68f-0e3f-4f6b-bef7-617525c74ccb", "resource_type": "physical:host"}                                                                   |
+    | start_date    | 2020-06-08T12:00:00.000000                                                                                                                  |
+    | status        |                                                                                                                                             |
+    | status_reason |                                                                                                                                             |
+    | trust_id      | ba4c321878d84d839488216de0a9e945                                                                                                            |
+    | updated_at    |                                                                                                                                             |
+    | user_id       |                                                                                                                                             |
+    +---------------+---------------------------------------------------------------------------------------------------------------------------------------------+
+
+..
+
 
 3. Use the leased resources
 ---------------------------

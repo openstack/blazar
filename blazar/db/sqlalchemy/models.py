@@ -155,6 +155,23 @@ class Event(mb.BlazarBase):
         return super(Event, self).to_dict()
 
 
+class ResourceProperty(mb.BlazarBase):
+    """Defines an resource property by resource type."""
+
+    __tablename__ = 'resource_properties'
+
+    id = _id_column()
+    resource_type = sa.Column(sa.String(255), nullable=False)
+    property_name = sa.Column(sa.String(255), nullable=False)
+    private = sa.Column(sa.Boolean, nullable=False,
+                        server_default=sa.false())
+
+    __table_args__ = (sa.UniqueConstraint('resource_type', 'property_name'),)
+
+    def to_dict(self):
+        return super(ResourceProperty, self).to_dict()
+
+
 class ComputeHostReservation(mb.BlazarBase):
     """Description
 
@@ -252,7 +269,9 @@ class ComputeHostExtraCapability(mb.BlazarBase):
 
     id = _id_column()
     computehost_id = sa.Column(sa.String(36), sa.ForeignKey('computehosts.id'))
-    capability_name = sa.Column(sa.String(64), nullable=False)
+    property_id = sa.Column(sa.String(36),
+                            sa.ForeignKey('resource_properties.id'),
+                            nullable=False)
     capability_value = sa.Column(MediumText(), nullable=False)
 
     def to_dict(self):

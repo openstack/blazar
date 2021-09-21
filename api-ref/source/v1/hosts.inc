@@ -128,6 +128,7 @@ Request
 .. rest_parameters:: parameters.yaml
 
   - host_id: host_id_path
+  - private: property_private
 
 Response
 --------
@@ -328,3 +329,90 @@ Response
 
 .. literalinclude:: ../../../doc/api_samples/hosts/allocation-get-resp.json
    :language: javascript
+
+List Resource Properties
+========================
+
+.. rest_method:: GET v1/os-hosts/properties
+
+Get all resource properties from host
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - detail: resource_property_detail
+  - all: resource_property_all
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - resource_properties: resource_properties
+  - property: resource_properties_property
+  - private: resource_properties_private
+  - values: resource_properties_values
+
+**Example of List Resource Properties Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-property-list.json
+   :language: javascript
+
+**Example of List Resource Properties With Detail Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-property-list-detail.json
+   :language: javascript
+
+Update Resource Properties
+==========================
+
+.. rest_method:: PATCH v1/os-hosts/properties/{property_name}
+
+Update a host resource properties
+
+**Response codes**
+
+Normal response code: 200
+
+Error response codes: Bad Request(400), Unauthorized(401), Forbidden(403),
+Internal Server Error(500)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - property_name: property_name
+  - private: property_private
+
+**Example of Update Resource Properties**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-property-update.json
+  :language: javascript
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - created_at: created_at
+  - updated_at: updated_at
+  - id: resource_property_id
+  - resource_type: resource_property_resource_type
+  - property_name: resource_properties_property
+  - private: resource_property_private
+
+**Example of List Resource Properties Response**
+
+.. literalinclude:: ../../../doc/api_samples/hosts/host-property-update-res.json
+   :language: javascript
+
