@@ -4,4 +4,5 @@ Xena Series Release Notes
 
 .. release-notes::
    :branch: stable/xena
-   :earliest-version: 8.0.0.0rc1
+   :ignore-notes:
+     usage-enforcement-f997ce618f542104.yaml
