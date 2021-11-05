@@ -31,7 +31,7 @@ function configure_blazar {
     touch $BLAZAR_CONF_FILE
 
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_version v3
-    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_host $(ipv6_unquote $KEYSTONE_AUTH_HOST)
+    iniset $BLAZAR_CONF_FILE DEFAULT os_auth_host $(ipv6_unquote $KEYSTONE_SERVICE_HOST)
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_port 80
     iniset $BLAZAR_CONF_FILE DEFAULT os_auth_prefix identity
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_password $SERVICE_PASSWORD
@@ -135,13 +135,16 @@ function create_blazar_accounts {
         "$REGION_NAME" \
         "$blazar_api_url/v1"
 
-    KEYSTONEV3_SERVICE=$(get_or_create_service "keystonev3" \
-        "identityv3" "Keystone Identity Service V3")
-    get_or_create_endpoint $KEYSTONEV3_SERVICE \
+    # Create admin and internal endpoints for keystone. Blazar currently uses
+    # the admin endpoint to interact with keystone, but devstack stopped
+    # creating one in https://review.opendev.org/c/openstack/devstack/+/777345
+    KEYSTONE_SERVICE=$(get_or_create_service "keystone" \
+        "identity" "Keystone Identity Service")
+    get_or_create_endpoint $KEYSTONE_SERVICE \
         "$REGION_NAME" \
-        "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3" \
-        "$KEYSTONE_AUTH_PROTOCOL://$KEYSTONE_AUTH_HOST:$KEYSTONE_AUTH_PORT/v3" \
-        "$KEYSTONE_SERVICE_PROTOCOL://$KEYSTONE_SERVICE_HOST:$KEYSTONE_SERVICE_PORT/v3"
+        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity" \
+        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity" \
+        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity"
 }
 
 
