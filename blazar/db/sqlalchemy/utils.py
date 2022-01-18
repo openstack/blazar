@@ -148,7 +148,8 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
 
     allocs = []
     for r in reservations:
-        allocs.append((r['id'], r['lease_id'], allocations[r['id']][0]))
+        for host in allocations[r['id']]:
+            allocs.append((r['id'], r['lease_id'], host))
 
     return allocs
 
