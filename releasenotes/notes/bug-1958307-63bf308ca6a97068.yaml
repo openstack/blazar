@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes result of the List Allocations API for reservations with multiple
+    physical hosts. For more details, see `bug 1958307
+    <https://bugs.launchpad.net/blazar/+bug/1958307>`_.
