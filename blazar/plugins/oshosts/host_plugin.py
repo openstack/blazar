@@ -282,15 +282,15 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
         )
         if not new_hostids:
             db_api.host_allocation_destroy(allocation['id'])
-            LOG.warn('Could not find alternative host for reservation %s '
-                     '(lease: %s).', reservation['id'], lease['name'])
+            LOG.warning('Could not find alternative host for reservation %s '
+                        '(lease: %s).', reservation['id'], lease['name'])
             return False
         else:
             new_hostid = new_hostids.pop()
             db_api.host_allocation_update(allocation['id'],
                                           {'compute_host_id': new_hostid})
-            LOG.warn('Resource changed for reservation %s (lease: %s).',
-                     reservation['id'], lease['name'])
+            LOG.warning('Resource changed for reservation %s (lease: %s).',
+                        reservation['id'], lease['name'])
             if reservation['status'] == status.reservation.ACTIVE:
                 # Add the alternative host into the aggregate.
                 new_host = db_api.host_get(new_hostid)
@@ -802,8 +802,8 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
                 failed_hosts = db_api.reservable_host_get_all_by_queries(
                     ['hypervisor_hostname == ' + data['host']])
                 if failed_hosts:
-                    LOG.warn('%s failed.',
-                             failed_hosts[0]['hypervisor_hostname'])
+                    LOG.warning('%s failed.',
+                                failed_hosts[0]['hypervisor_hostname'])
                     reservation_flags = self._handle_failures(failed_hosts)
             else:
                 recovered_hosts = db_api.host_get_all_by_queries(
@@ -812,8 +812,8 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
                 if recovered_hosts:
                     db_api.host_update(recovered_hosts[0]['id'],
                                        {'reservable': True})
-                    LOG.warn('%s recovered.',
-                             recovered_hosts[0]['hypervisor_hostname'])
+                    LOG.warning('%s recovered.',
+                                recovered_hosts[0]['hypervisor_hostname'])
 
         return reservation_flags
 
@@ -838,12 +838,12 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
         failed_hosts, recovered_hosts = self._poll_resource_failures()
         if failed_hosts:
             for host in failed_hosts:
-                LOG.warn('%s failed.', host['hypervisor_hostname'])
+                LOG.warning('%s failed.', host['hypervisor_hostname'])
             reservation_flags = self._handle_failures(failed_hosts)
         if recovered_hosts:
             for host in recovered_hosts:
                 db_api.host_update(host['id'], {'reservable': True})
-                LOG.warn('%s recovered.', host['hypervisor_hostname'])
+                LOG.warning('%s recovered.', host['hypervisor_hostname'])
 
         return reservation_flags
 

@@ -8,5 +8,6 @@ Blazar Style Commandments
 Blazar Specific Commandments
 ----------------------------
 
-- [C312] Validate that logs are not translated.
+- [Bl301] Validate that logs are not translated.
+- [Bl302] Use LOG.warning() rather than LOG.warn().
 - [H904] Delay string interpolations at logging calls.

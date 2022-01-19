@@ -714,9 +714,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             if new_host_id is None:
                 for allocation in allocations:
                     db_api.host_allocation_destroy(allocation['id'])
-                LOG.warn('Could not find alternative host for '
-                         'reservation %s (lease: %s).',
-                         reservation['id'], lease['name'])
+                LOG.warning('Could not find alternative host for '
+                            'reservation %s (lease: %s).',
+                            reservation['id'], lease['name'])
                 ret = False
             else:
                 for allocation in allocations:
@@ -735,9 +735,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
                 if new_host_id is None:
                     db_api.host_allocation_destroy(allocation['id'])
-                    LOG.warn('Could not find alternative host for '
-                             'reservation %s (lease: %s).',
-                             reservation['id'], lease['name'])
+                    LOG.warning('Could not find alternative host for '
+                                'reservation %s (lease: %s).',
+                                reservation['id'], lease['name'])
                     ret = False
                     continue
 
@@ -796,8 +796,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             self.placement_client.update_reservation_inventory(
                 new_host['hypervisor_hostname'], reservation['id'], num,
                 additional=True)
-        LOG.warn('Resource changed for reservation %s (lease: %s).',
-                 reservation['id'], lease['name'])
+        LOG.warning('Resource changed for reservation %s (lease: %s).',
+                    reservation['id'], lease['name'])
 
     def _get_extra_capabilities(self, host_id):
         extra_capabilities = {}
