@@ -31,7 +31,7 @@ _log_translation_hint = re.compile(
 
 @core.flake8ext
 def no_translate_logs(logical_line):
-    """C312 - Don't translate logs.
+    """Bl301 - Don't translate logs.
 
     Check for 'LOG.*(_('
 
@@ -46,4 +46,14 @@ def no_translate_logs(logical_line):
     message describe the check validation failure.
     """
     if _log_translation_hint.match(logical_line):
-        yield (0, "C312: Log messages should not be translated!")
+        yield (0, "Bl301: Log messages should not be translated!")
+
+
+@core.flake8ext
+def no_log_warn(logical_line):
+    """Bl302 - Use LOG.warning() rather than LOG.warn()
+
+    https://bugs.launchpad.net/tempest/+bug/1508442
+    """
+    if logical_line.startswith('LOG.warn('):
+        yield(0, 'Bl302 Use LOG.warning() rather than LOG.warn()')

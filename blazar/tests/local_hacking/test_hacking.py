@@ -25,3 +25,10 @@ class HackingTestCase(tests.TestCase):
                 # Catch abuses when used with a variable and not a literal
                 bad = 'LOG.%s(%s(msg))' % (log, hint)
                 self.assertEqual(1, len(list(checks.no_translate_logs(bad))))
+
+    def test_no_log_warn(self):
+        bad = 'LOG.warn("LOG.warn is deprecated")'
+        self.assertEqual(1, len(list(checks.no_log_warn(bad))))
+
+        good = 'LOG.warning("LOG.warn is deprecated")'
+        self.assertEqual(0, len(list(checks.no_log_warn(good))))

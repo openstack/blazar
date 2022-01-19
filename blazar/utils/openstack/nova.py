@@ -281,7 +281,7 @@ class ReservationPool(NovaClientWrapper):
         try:
             agg = self.get_aggregate_from_name_or_id(pool)
         except manager_exceptions.AggregateNotFound:
-            LOG.warn("Aggregate '%s' not found, skipping deletion", pool)
+            LOG.warning("Aggregate '%s' not found, skipping deletion", pool)
             return
 
         hosts = agg.hosts
@@ -373,12 +373,12 @@ class ReservationPool(NovaClientWrapper):
                         pool=pool, host=host, nova_exception=str(e))
         except Exception as e:
             if added_hosts:
-                LOG.warn('Removing hosts added to aggregate %s: %s',
-                         agg.id, added_hosts)
+                LOG.warning('Removing hosts added to aggregate %s: %s',
+                            agg.id, added_hosts)
                 for host in added_hosts:
                     self.nova.aggregates.remove_host(agg.id, host)
             if removed_hosts:
-                LOG.warn('Adding hosts back to freepool: %s', removed_hosts)
+                LOG.warning('Adding hosts back to freepool: %s', removed_hosts)
                 for host in removed_hosts:
                     self.nova.aggregates.add_host(freepool_agg.id, host)
             raise e

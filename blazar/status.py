@@ -38,8 +38,8 @@ class BaseStatus(object):
         """
 
         if next_status not in cls.NEXT_STATUSES[current_status]:
-            LOG.warn('Invalid transition from %s to %s.',
-                     current_status, next_status)
+            LOG.warning('Invalid transition from %s to %s.',
+                        current_status, next_status)
             return False
 
         return True
@@ -135,7 +135,7 @@ class LeaseStatus(BaseStatus):
             if cls.is_valid_combination(kwargs['lease_id'], next):
                 return True
             else:
-                LOG.warn('Invalid combination of statuses.')
+                LOG.warning('Invalid combination of statuses.')
 
         return False
 
@@ -203,10 +203,11 @@ class LeaseStatus(BaseStatus):
                     LOG.debug('Status of lease %s changed from %s to %s.',
                               lease_id, lease['status'], transition)
                 else:
-                    LOG.warn('Aborting %s. '
-                             'Invalid lease status transition from %s to %s.',
-                             func.__name__, lease['status'],
-                             transition)
+                    LOG.warning('Aborting %s. '
+                                'Invalid lease status transition '
+                                'from %s to %s.',
+                                func.__name__, lease['status'],
+                                transition)
                     raise exceptions.InvalidStatus
 
                 # Executing the wrapped function
