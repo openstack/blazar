@@ -131,9 +131,11 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
                                             lease_id=None,
                                             reservation_id=None):
     session = get_session()
+    # Get all reservations applicable
     reservations = get_reservations_for_allocations(
         session, start_date, end_date, lease_id, reservation_id)
 
+    # Select (reservation_id, host_id) for all reservations
     allocations_query = (session.query(
         models.ComputeHostAllocation.reservation_id,
         models.ComputeHostAllocation.compute_host_id)
@@ -141,17 +143,15 @@ def get_reservation_allocations_by_host_ids(host_ids, start_date, end_date,
         .filter(models.ComputeHostAllocation.reservation_id.in_(
             list(set([x['id'] for x in reservations])))))
 
+    # Create a mapping of reservation_id to list of host_ids
     allocations = defaultdict(list)
-
     for row in allocations_query.all():
         allocations[row[0]].append(row[1])
 
-    allocs = []
+    # Copy the host id lists to the corresponding reservation
     for r in reservations:
-        for host in allocations[r['id']]:
-            allocs.append((r['id'], r['lease_id'], host))
-
-    return allocs
+        r['host_ids'] = allocations[r['id']]
+    return reservations
 
 
 def get_reservation_allocations_by_fip_ids(fip_ids, start_date, end_date,

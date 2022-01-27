@@ -435,34 +435,94 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_get_reserv_allocs = self.patch(
             self.db_utils, 'get_reservation_allocations_by_host_ids')
 
+        self.db_host_list.return_value = [
+            {'id': '3001'},
+            {'id': '3002'},
+            {'id': '3003'},
+            {'id': '3004'},
+        ]
+
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
-            ('reservation-1', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-3'),
-            ('reservation-3', 'lease-2', 'host-1'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
+            {
+                'id': '1002',
+                'lease_id': '2002',
+                'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                'end_date': datetime.datetime(2021, 8, 21, 16, 34),
+                'host_ids': ['3003', '3004']
+            },
+            {
+                'id': '1003',
+                'lease_id': '2003',
+                'start_date': datetime.datetime(2021, 8, 19, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 27, 20, 18),
+                'host_ids': ['3001']
+            },
+            {
+                'id': '1004',
+                'lease_id': '2004',
+                'start_date': datetime.datetime(2021, 8, 25, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3003']
+            }
         ]
 
         expected = [
             {
-                'resource_id': 'host-1',
+                'resource_id': '3001',
                 'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
-                    {'id': 'reservation-3', 'lease_id': 'lease-2'},
+                    {
+                        'id': '1003',
+                        'lease_id': '2003',
+                        'start_date': datetime.datetime(2021, 8, 19, 20, 18),
+                        'end_date': datetime.datetime(2021, 8, 27, 20, 18)
+                    }
                 ]
             },
             {
-                'resource_id': 'host-2',
+                'resource_id': '3002',
                 'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
-                    {'id': 'reservation-2', 'lease_id': 'lease-1'},
+                    {
+                        'id': '1001',
+                        'lease_id': '2001',
+                        'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                        'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                    },
                 ]
             },
             {
-                'resource_id': 'host-3',
+                'resource_id': '3003',
                 'reservations': [
-                    {'id': 'reservation-2', 'lease_id': 'lease-1'},
+                    {
+                        'id': '1002',
+                        'lease_id': '2002',
+                        'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                        'end_date': datetime.datetime(2021, 8, 21, 16, 34)
+                    },
+                    {
+                        'id': '1004',
+                        'lease_id': '2004',
+                        'start_date': datetime.datetime(2021, 8, 25, 20, 18),
+                        'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                    }
+                ]
+            },
+            {
+                'resource_id': '3004',
+                'reservations': [
+                    {
+                        'id': '1002',
+                        'lease_id': '2002',
+                        'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                        'end_date': datetime.datetime(2021, 8, 21, 16, 34)
+                    }
                 ]
             }
         ]
@@ -479,37 +539,49 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_get_reserv_allocs = self.patch(
             self.db_utils, 'get_reservation_allocations_by_host_ids')
 
+        self.db_host_list.return_value = [
+            {'id': '3001'},
+            {'id': '3002'},
+            {'id': '3003'},
+            {'id': '3004'},
+        ]
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
-            ('reservation-1', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-3'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
         ]
 
         expected = [
             {
-                'resource_id': 'host-1',
+                'resource_id': '3001',
+                'reservations': []
+            },
+            {
+                'resource_id': '3002',
                 'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
+                    {
+                        'id': '1001',
+                        'lease_id': '2001',
+                        'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                        'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                    }
                 ]
             },
             {
-                'resource_id': 'host-2',
-                'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
-                    {'id': 'reservation-2', 'lease_id': 'lease-1'},
-                ]
+                'resource_id': '3003',
+                'reservations': []
             },
             {
-                'resource_id': 'host-3',
-                'reservations': [
-                    {'id': 'reservation-2', 'lease_id': 'lease-1'},
-                ]
-            }
+                'resource_id': '3004',
+                'reservations': []
+            },
         ]
-        ret = self.fake_phys_plugin.list_allocations({'lease_id': 'lease-1'})
-
+        ret = self.fake_phys_plugin.list_allocations({'lease_id': '2001'})
         # Sort returned value to use assertListEqual
         for r in ret:
             r['reservations'].sort(key=lambda x: x['id'])
@@ -521,28 +593,58 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.db_get_reserv_allocs = self.patch(
             self.db_utils, 'get_reservation_allocations_by_host_ids')
 
+        self.db_host_list.return_value = [
+            {'id': "3001"},
+            {'id': "3002"},
+            {'id': "3003"},
+            {'id': "3004"},
+        ]
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
-            ('reservation-1', 'lease-1', 'host-2'),
+            {
+                'id': '1002',
+                'lease_id': '2002',
+                'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                'end_date': datetime.datetime(2021, 8, 21, 16, 34),
+                'host_ids': ['3003', '3004']
+            },
         ]
 
         expected = [
             {
-                'resource_id': 'host-1',
+                'resource_id': '3001',
+                'reservations': []
+            },
+            {
+                'resource_id': '3002',
+                'reservations': []
+            },
+            {
+                'resource_id': '3003',
                 'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
+                    {
+                        'id': '1002',
+                        'lease_id': '2002',
+                        'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                        'end_date': datetime.datetime(2021, 8, 21, 16, 34)
+                    },
                 ]
             },
             {
-                'resource_id': 'host-2',
+                'resource_id': '3004',
                 'reservations': [
-                    {'id': 'reservation-1', 'lease_id': 'lease-1'},
+                    {
+                        'id': '1002',
+                        'lease_id': '2002',
+                        'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                        'end_date': datetime.datetime(2021, 8, 21, 16, 34)
+                    }
                 ]
             },
         ]
+
         ret = self.fake_phys_plugin.list_allocations(
-            {'reservation_id': 'reservation-1'})
+            {'reservation_id': '1002'})
 
         # Sort returned value to use assertListEqual
         for r in ret:
@@ -557,21 +659,54 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
-            ('reservation-1', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-3'),
-            ('reservation-3', 'lease-2', 'host-1'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
+            {
+                'id': '1002',
+                'lease_id': '2002',
+                'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                'end_date': datetime.datetime(2021, 8, 21, 16, 34),
+                'host_ids': ['3003', '3004']
+            },
+            {
+                'id': '1003',
+                'lease_id': '2003',
+                'start_date': datetime.datetime(2021, 8, 19, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 27, 20, 18),
+                'host_ids': ['3001']
+            },
+            {
+                'id': '1004',
+                'lease_id': '2004',
+                'start_date': datetime.datetime(2021, 8, 25, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3003']
+            }
         ]
 
         expected = {
-            'resource_id': 'host-1',
+            'resource_id': '3003',
             'reservations': [
-                {'id': 'reservation-1', 'lease_id': 'lease-1'},
-                {'id': 'reservation-3', 'lease_id': 'lease-2'},
+                {
+                    'id': '1002',
+                    'lease_id': '2002',
+                    'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                    'end_date': datetime.datetime(2021, 8, 21, 16, 34)
+                },
+                {
+                    'id': '1004',
+                    'lease_id': '2004',
+                    'start_date': datetime.datetime(2021, 8, 25, 20, 18),
+                    'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                }
             ]
         }
-        ret = self.fake_phys_plugin.get_allocations('host-1', {})
+        ret = self.fake_phys_plugin.get_allocations('3003', {})
 
         # sort returned value to use assertListEqual
         ret['reservations'].sort(key=lambda x: x['id'])
@@ -584,17 +719,29 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
         ]
 
         expected = {
-            'resource_id': 'host-1',
+            'resource_id': '3002',
             'reservations': [
-                {'id': 'reservation-1', 'lease_id': 'lease-1'},
+                {
+                    'id': '1001',
+                    'lease_id': '2001',
+                    'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                    'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                }
             ]
         }
-        ret = self.fake_phys_plugin.get_allocations('host-1',
-                                                    {'lease_id': 'lease-1'})
+
+        ret = self.fake_phys_plugin.get_allocations('3002',
+                                                    {'lease_id': '2001'})
 
         # sort returned value to use assertListEqual
         ret['reservations'].sort(key=lambda x: x['id'])
@@ -607,17 +754,28 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
         ]
 
         expected = {
-            'resource_id': 'host-1',
+            'resource_id': '3002',
             'reservations': [
-                {'id': 'reservation-1', 'lease_id': 'lease-1'},
+                {
+                    'id': '1001',
+                    'lease_id': '2001',
+                    'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                    'end_date': datetime.datetime(2021, 8, 30, 20, 0)
+                }
             ]
         }
         ret = self.fake_phys_plugin.get_allocations(
-            'host-1', {'reservation_id': 'reservation-1'})
+            '3002', {'reservation_id': '1001'})
 
         # sort returned value to use assertListEqual
         ret['reservations'].sort(key=lambda x: x['id'])
@@ -630,11 +788,34 @@ class PhysicalHostPluginTestCase(tests.TestCase):
 
         # Expecting a list of (Reservation, Allocation)
         self.db_get_reserv_allocs.return_value = [
-            ('reservation-1', 'lease-1', 'host-1'),
-            ('reservation-1', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-2'),
-            ('reservation-2', 'lease-1', 'host-3'),
-            ('reservation-3', 'lease-2', 'host-1'),
+            {
+                'id': '1001',
+                'lease_id': '2001',
+                'start_date': datetime.datetime(2021, 8, 20, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3002']
+            },
+            {
+                'id': '1002',
+                'lease_id': '2002',
+                'start_date': datetime.datetime(2021, 8, 20, 16, 34),
+                'end_date': datetime.datetime(2021, 8, 21, 16, 34),
+                'host_ids': ['3003', '3004']
+            },
+            {
+                'id': '1003',
+                'lease_id': '2003',
+                'start_date': datetime.datetime(2021, 8, 19, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 27, 20, 18),
+                'host_ids': ['3001']
+            },
+            {
+                'id': '1004',
+                'lease_id': '2004',
+                'start_date': datetime.datetime(2021, 8, 25, 20, 18),
+                'end_date': datetime.datetime(2021, 8, 30, 20, 0),
+                'host_ids': ['3003']
+            }
         ]
         expected = {'resource_id': 'no-reserved-host', 'reservations': []}
         ret = self.fake_phys_plugin.get_allocations('no-reserved-host', {})

@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    The List Allocation and Get Allocation API have been extended to include
+    lease start date and end date along with the reservation.
