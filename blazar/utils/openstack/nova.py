@@ -361,6 +361,15 @@ class ReservationPool(NovaClientWrapper):
                     except nova_exception.NotFound:
                         raise manager_exceptions.HostNotFound(host=host)
 
+                    # When moving a host out of the freepool, we need to
+                    # terminate preemptible instances before adding hosts to
+                    # the reservation aggregate, which makes them available for
+                    # scheduling.
+                    #
+                    # NOTE(priteau): Preemptibles should not be used with
+                    # instance reservation yet.
+                    self.terminate_preemptibles(host)
+
                 LOG.info("adding host '%(host)s' to aggregate %(id)s",
                          {'host': host, 'id': agg.id})
                 try:
@@ -450,6 +459,20 @@ class ReservationPool(NovaClientWrapper):
 
         metadata = {project_id: None}
         return self.nova.aggregates.set_metadata(agg.id, metadata)
+
+    def terminate_preemptibles(self, host):
+        """Terminate preemptible instances running on host"""
+        for server in self.nova.servers.list(
+                search_opts={"host": host, "all_tenants": 1}):
+            try:
+                LOG.info('Terminating preemptible instance %s (%s)',
+                         server.name, server.id)
+                self.nova.servers.delete(server=server)
+            except nova_exception.NotFound:
+                LOG.info('Could not find server %s, may have been deleted '
+                         'concurrently.', server)
+            except Exception as e:
+                LOG.exception('Failed to delete %s: %s.', server, str(e))
 
 
 class NovaInventory(NovaClientWrapper):

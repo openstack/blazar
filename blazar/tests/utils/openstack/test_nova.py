@@ -284,12 +284,15 @@ class ReservationPoolTestCase(tests.TestCase):
 
     def test_add_computehost(self):
         self._patch_get_aggregate_from_name_or_id()
+        terminate_preemptibles = self.patch(
+            self.pool, 'terminate_preemptibles')
         self.pool.add_computehost('pool', 'host3')
 
         check0 = self.nova.aggregates.add_host
         check0.assert_any_call(self.fake_aggregate.id, 'host3')
         check1 = self.nova.aggregates.remove_host
         check1.assert_any_call(self.fake_freepool.id, 'host3')
+        terminate_preemptibles.assert_called_with('host3')
 
     def test_add_computehost_with_host_id(self):
         # NOTE(sbauza): Freepool.hosts only contains names of hosts, not UUIDs
@@ -341,6 +344,8 @@ class ReservationPoolTestCase(tests.TestCase):
     def test_add_computehost_revert(self):
         self._patch_get_aggregate_from_name_or_id()
         self.fake_freepool.hosts = ['host1', 'host2']
+        terminate_preemptibles = self.patch(
+            self.pool, 'terminate_preemptibles')
         self.assertRaises(manager_exceptions.HostNotInFreePool,
                           self.pool.add_computehost,
                           'pool', ['host1', 'host2', 'host3'])
@@ -355,6 +360,8 @@ class ReservationPoolTestCase(tests.TestCase):
                                  mock.call(self.fake_freepool.id, 'host2'),
                                  mock.call(self.fake_aggregate.id, 'host1'),
                                  mock.call(self.fake_aggregate.id, 'host2')])
+        terminate_preemptibles.assert_has_calls([mock.call('host1'),
+                                                 mock.call('host2')])
 
     def test_remove_computehost_from_freepool(self):
         self._patch_get_aggregate_from_name_or_id()
