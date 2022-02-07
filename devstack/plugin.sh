@@ -62,21 +62,12 @@ function configure_blazar {
 
     ACTUAL_FILTERS=$(iniget $NOVA_CONF filter_scheduler enabled_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
-        iniadd $NOVA_CONF filter_scheduler enabled_filters "RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, AggregateInstanceExtraSpecsFilter, AggregateMultiTenancyIsolation, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, BlazarFilter"
+        iniadd $NOVA_CONF filter_scheduler enabled_filters "AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter,BlazarFilter"
     else
-        if [[ $ACTUAL_FILTERS != *AggregateInstanceExtraSpecsFilter* ]];  then
-	    ACTUAL_FILTERS="$ACTUAL_FILTERS,AggregateInstanceExtraSpecsFilter"
-        fi
-        if [[ $ACTUAL_FILTERS != *AggregateMultiTenancyIsolation* ]];  then
-	    ACTUAL_FILTERS="$ACTUAL_FILTERS,AggregateMultiTenancyIsolation"
-        fi
-        if [[ $ACTUAL_FILTERS != *ServerGroupAntiAffinityFilter* ]];  then
-	    ACTUAL_FILTERS="$ACTUAL_FILTERS,ServerGroupAntiAffinityFilter"
-        fi
         if [[ $ACTUAL_FILTERS != *BlazarFilter* ]];  then
-	    ACTUAL_FILTERS="$ACTUAL_FILTERS,BlazarFilter"
+            ACTUAL_FILTERS="$ACTUAL_FILTERS,BlazarFilter"
         fi
-	iniset $NOVA_CONF filter_scheduler enabled_filters $ACTUAL_FILTERS
+        iniset $NOVA_CONF filter_scheduler enabled_filters $ACTUAL_FILTERS
     fi
 
     ACTUAL_AVAILABLE_FILTERS=$(iniget $NOVA_CONF filter_scheduler available_filters)
