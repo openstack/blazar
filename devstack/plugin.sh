@@ -43,7 +43,12 @@ function configure_blazar {
     # Keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
 
+    iniset $BLAZAR_CONF_FILE neutron endpoint_type public
+
     iniset $BLAZAR_CONF_FILE nova aggregate_freepool_name $BLAZAR_FREEPOOL_NAME
+    iniset $BLAZAR_CONF_FILE nova endpoint_type public
+
+    iniset $BLAZAR_CONF_FILE placement endpoint_type public
 
     iniset $BLAZAR_CONF_FILE DEFAULT host $(ipv6_unquote $SERVICE_HOST)
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG

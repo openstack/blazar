@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    Requests to other OpenStack services are now made using the internal
+    interface instead of the public interface. This fixes issues when public
+    endpoints are not reachable by Blazar. For more details, see `bug 1960335
+    <https://bugs.launchpad.net/blazar/+bug/1960335>`_.
+
+    This can be configured with the following options:
+
+    * ``[DEFAULT]/endpoint_type`` to configure the Keystone endpoint type
+    * ``[neutron]/endpoint_type`` to configure the Neutron endpoint type
+    * ``[nova]/endpoint_type`` to configure the Nova endpoint type
+    * ``[placement]/endpoint_type`` to configure the Placement endpoint type

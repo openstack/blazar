@@ -51,6 +51,7 @@ class TestCNClient(tests.TestCase):
         self.patch(self.base, 'url_for').return_value = self.url
 
         self.version = '2'
+        self.endpoint_type = 'internalURL'
 
     def test_client_from_kwargs(self):
         self.ctx.side_effect = RuntimeError
@@ -83,7 +84,8 @@ class TestCNClient(tests.TestCase):
                                             project_name=project_name,
                                             project_domain_name=project_domain,
                                             auth_url=auth_url,
-                                            endpoint_override=endpoint)
+                                            endpoint_override=endpoint,
+                                            endpoint_type=self.endpoint_type)
 
     def test_client_from_ctx(self):
         kwargs = {'version': self.version}
@@ -95,6 +97,7 @@ class TestCNClient(tests.TestCase):
         self.session.assert_called_once_with(auth=self.auth.return_value)
         self.client.assert_called_once_with(version=self.version,
                                             endpoint_override=self.url,
+                                            endpoint_type=self.endpoint_type,
                                             session=self.session.return_value,
                                             global_request_id=mock.ANY)
 

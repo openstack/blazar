@@ -26,7 +26,18 @@ from blazar import context
 from blazar.utils.openstack import base
 from blazar.utils.openstack import exceptions
 
+
+neutron_opts = [
+    cfg.StrOpt('endpoint_type',
+               default='internal',
+               choices=['public', 'admin', 'internal'],
+               help='Type of the neutron endpoint to use. This endpoint will '
+                    'be looked up in the keystone catalog and should be one '
+                    'of public, internal or admin.'),
+]
+
 CONF = cfg.CONF
+CONF.register_opts(neutron_opts, group='neutron')
 LOG = logging.getLogger(__name__)
 
 
@@ -73,6 +84,7 @@ class BlazarNeutronClient(object):
         sess = session.Session(auth=auth)
         kwargs.setdefault('session', sess)
         kwargs.setdefault('region_name', region_name)
+        kwargs.setdefault('endpoint_type', CONF.neutron.endpoint_type + 'URL')
         self.neutron = neutron_client.Client(**kwargs)
 
 
