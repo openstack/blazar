@@ -24,7 +24,17 @@ from blazar import context
 from blazar.utils.openstack import base
 from blazar.utils.openstack import exceptions
 
+placement_opts = [
+    cfg.StrOpt('endpoint_type',
+               default='internal',
+               choices=['public', 'admin', 'internal'],
+               help='Type of the placement endpoint to use. This endpoint '
+                    'will be looked up in the keystone catalog and should be '
+                    'one of public, internal or admin.'),
+]
+
 CONF = cfg.CONF
+CONF.register_opts(placement_opts, group='placement')
 LOG = logging.getLogger(__name__)
 
 PLACEMENT_MICROVERSION = 1.29
@@ -78,7 +88,7 @@ class BlazarPlacementClient(object):
         # service of our response body media type preferences.
         headers = {'accept': 'application/json'}
         kwargs.setdefault('service_type', 'placement')
-        kwargs.setdefault('interface', 'public')
+        kwargs.setdefault('interface', CONF.placement.endpoint_type)
         kwargs.setdefault('additional_headers', headers)
         kwargs.setdefault('region_name', region_name)
         client = adapter.Adapter(sess, **kwargs)

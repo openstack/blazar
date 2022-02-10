@@ -45,7 +45,7 @@ class TestPlacementClient(tests.TestCase):
 
     def _add_default_kwargs(self, kwargs):
         kwargs['endpoint_filter'] = {'service_type': 'placement',
-                                     'interface': 'public',
+                                     'interface': 'internal',
                                      'region_name': 'region_foo'}
         kwargs['headers'] = {'accept': 'application/json'}
         kwargs['microversion'] = PLACEMENT_MICROVERSION

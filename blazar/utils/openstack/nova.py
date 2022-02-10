@@ -29,6 +29,12 @@ from blazar.utils.openstack import base
 
 
 nova_opts = [
+    cfg.StrOpt('endpoint_type',
+               default='internal',
+               choices=['public', 'admin', 'internal'],
+               help='Type of the nova endpoint to use. This endpoint will be '
+                    'looked up in the keystone catalog and should be one of '
+                    'public, internal or admin.'),
     cfg.StrOpt('nova_client_version',
                default='2',
                deprecated_group='DEFAULT',
@@ -124,8 +130,10 @@ class BlazarNovaClient(object):
             endpoint_override = endpoint_override or \
                 base.url_for(ctx.service_catalog,
                              CONF.nova.compute_service,
+                             endpoint_interface=CONF.nova.endpoint_type,
                              os_region_name=CONF.os_region_name)
             auth_url = base.url_for(ctx.service_catalog, CONF.identity_service,
+                                    CONF.endpoint_type,
                                     os_region_name=CONF.os_region_name)
             kwargs.setdefault('global_request_id', ctx.global_request_id)
 
@@ -151,6 +159,7 @@ class BlazarNovaClient(object):
             sess = session.Session(auth=auth)
             kwargs.setdefault('session', sess)
 
+        kwargs.setdefault('endpoint_type', CONF.nova.endpoint_type + 'URL')
         kwargs.setdefault('endpoint_override', endpoint_override)
         kwargs.setdefault('version', version)
         self.nova = nova_client.Client(**kwargs)
