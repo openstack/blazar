@@ -39,6 +39,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT os_admin_project_name $SERVICE_TENANT_NAME
     iniset $BLAZAR_CONF_FILE DEFAULT identity_service $BLAZAR_IDENTITY_SERVICE_NAME
     iniset $BLAZAR_CONF_FILE DEFAULT os_region_name $REGION_NAME
+    iniset $BLAZAR_CONF_FILE DEFAULT endpoint_type public
 
     # Keystone authtoken
     _blazar_setup_keystone $BLAZAR_CONF_FILE keystone_authtoken
@@ -130,17 +131,6 @@ function create_blazar_accounts {
     get_or_create_endpoint $BLAZAR_SERVICE \
         "$REGION_NAME" \
         "$blazar_api_url/v1"
-
-    # Create admin and internal endpoints for keystone. Blazar currently uses
-    # the admin endpoint to interact with keystone, but devstack stopped
-    # creating one in https://review.opendev.org/c/openstack/devstack/+/777345
-    KEYSTONE_SERVICE=$(get_or_create_service "keystone" \
-        "identity" "Keystone Identity Service")
-    get_or_create_endpoint $KEYSTONE_SERVICE \
-        "$REGION_NAME" \
-        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity" \
-        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity" \
-        "${KEYSTONE_SERVICE_PROTOCOL}://${KEYSTONE_SERVICE_HOST}/identity"
 }
 
 

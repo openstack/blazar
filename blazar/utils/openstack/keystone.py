@@ -43,7 +43,7 @@ Possible values:
 
 keystone_opts = [
     cfg.StrOpt('endpoint_type',
-               default='admin',
+               default='internal',
                choices=['public', 'admin', 'internal'],
                help='Type of the keystone endpoint to use. This endpoint will '
                     'be looked up in the keystone catalog and should be one '
@@ -112,7 +112,7 @@ class BlazarKeystoneClient(object):
             if not kwargs.get('auth_url'):
                 kwargs['auth_url'] = base.url_for(
                     ctx.service_catalog, CONF.identity_service,
-                    endpoint_interface='internal',
+                    endpoint_interface=CONF.endpoint_type,
                     os_region_name=CONF.os_region_name)
             if not kwargs.get('trust_id'):
                 try:
