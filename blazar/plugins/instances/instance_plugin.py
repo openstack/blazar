@@ -809,9 +809,9 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         extra_capabilities = {}
         raw_extra_capabilities = (
             db_api.host_extra_capability_get_all_per_host(host_id))
-        for capability in raw_extra_capabilities:
-            key = capability['capability_name']
-            extra_capabilities[key] = capability['capability_value']
+        for capability, capability_name in raw_extra_capabilities:
+            key = capability_name
+            extra_capabilities[key] = capability.capability_value
         return extra_capabilities
 
     def get(self, host_id):

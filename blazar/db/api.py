@@ -385,13 +385,11 @@ def host_extra_capability_create(values):
     return IMPL.host_extra_capability_create(values)
 
 
-@to_dict
 def host_extra_capability_get(host_extra_capability_id):
     """Return a specific Host Extracapability."""
     return IMPL.host_extra_capability_get(host_extra_capability_id)
 
 
-@to_dict
 def host_extra_capability_get_all_per_host(host_id):
     """Return all extra_capabilities belonging to a specific Compute host."""
     return IMPL.host_extra_capability_get_all_per_host(host_id)
@@ -410,7 +408,6 @@ def host_extra_capability_update(host_extra_capability_id, values):
 def host_extra_capability_get_all_per_name(host_id,
                                            extra_capability_name):
     return IMPL.host_extra_capability_get_all_per_name(host_id,
-
                                                        extra_capability_name)
 
 
@@ -525,3 +522,17 @@ def reservable_fip_get_all_by_queries(queries):
 def floatingip_destroy(floatingip_id):
     """Delete specific floating ip."""
     IMPL.floatingip_destroy(floatingip_id)
+
+
+# Resource Properties
+
+def resource_properties_list(resource_type):
+    return IMPL.resource_properties_list(resource_type)
+
+
+def resource_property_update(resource_type, property_name, values):
+    return IMPL.resource_property_update(resource_type, property_name, values)
+
+
+def resource_property_create(values):
+    return IMPL.resource_property_create(values)

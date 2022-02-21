@@ -193,7 +193,7 @@ def _get_fake_host_extra_capabilities(id=None,
         computehost_id = _get_fake_random_uuid()
     return {'id': id,
             'computehost_id': computehost_id,
-            'capability_name': name,
+            'property_name': name,
             'capability_value': value}
 
 
@@ -507,6 +507,12 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         """Create one host and test extra capability queries."""
         # We create a first host, with extra capabilities
         db_api.host_create(_get_fake_host_values(id=1))
+        db_api.resource_property_create(dict(
+            id='a', resource_type='physical:host', private=False,
+            property_name='vgpu'))
+        db_api.resource_property_create(dict(
+            id='b', resource_type='physical:host', private=False,
+            property_name='nic_model'))
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(computehost_id=1))
         db_api.host_extra_capability_create(_get_fake_host_extra_capabilities(
@@ -532,6 +538,20 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(1, len(
             db_api.host_get_all_by_queries(['nic_model == ACME Model A'])
         ))
+
+    def test_resource_properties_list(self):
+        """Create one host and test extra capability queries."""
+        # We create a first host, with extra capabilities
+        db_api.host_create(_get_fake_host_values(id=1))
+        db_api.resource_property_create(dict(
+            id='a', resource_type='physical:host', private=False,
+            property_name='vgpu'))
+        db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(computehost_id=1))
+
+        result = db_api.resource_properties_list('physical:host')
+
+        self.assertListEqual(result, [('vgpu', False, '2')])
 
     def test_search_for_hosts_by_composed_queries(self):
         """Create one host and test composed queries."""
@@ -580,9 +600,13 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
                           db_api.host_destroy, 2)
 
     def test_create_host_extra_capability(self):
-        result = db_api.host_extra_capability_create(
-            _get_fake_host_extra_capabilities(id=1))
-        self.assertEqual(result['id'], _get_fake_host_values(id='1')['id'])
+        db_api.resource_property_create(dict(
+            id='id', resource_type='physical:host', private=False,
+            property_name='vgpu'))
+        result, _ = db_api.host_extra_capability_create(
+            _get_fake_host_extra_capabilities(id=1, name='vgpu'))
+
+        self.assertEqual(result.id, _get_fake_host_values(id='1')['id'])
 
     def test_create_duplicated_host_extra_capability(self):
         db_api.host_extra_capability_create(
@@ -594,8 +618,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
     def test_get_host_extra_capability_per_id(self):
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(id='1'))
-        result = db_api.host_extra_capability_get('1')
-        self.assertEqual('1', result['id'])
+        result, _ = db_api.host_extra_capability_get('1')
+        self.assertEqual('1', result.id)
 
     def test_host_extra_capability_get_all_per_host(self):
         db_api.host_extra_capability_create(
@@ -609,8 +633,8 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.host_extra_capability_create(
             _get_fake_host_extra_capabilities(id='1'))
         db_api.host_extra_capability_update('1', {'capability_value': '2'})
-        res = db_api.host_extra_capability_get('1')
-        self.assertEqual('2', res['capability_value'])
+        res, _ = db_api.host_extra_capability_get('1')
+        self.assertEqual('2', res.capability_value)
 
     def test_delete_host_extra_capability(self):
         db_api.host_extra_capability_create(

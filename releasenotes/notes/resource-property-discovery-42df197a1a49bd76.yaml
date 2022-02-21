@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Adds a host resource property discovery API, which allows users to
+    enumerate what properties are available, and current property values.
+    Properties can be made private by operators, which filters them from the
+    public list.

@@ -100,6 +100,10 @@ class OsHostAPITestCase(tests.TestCase):
         self.list_allocations = self.patch(service_api.API,
                                            'list_allocations')
         self.get_allocations = self.patch(service_api.API, 'get_allocations')
+        self.list_resource_properties = self.patch(service_api.API,
+                                                   'list_resource_properties')
+        self.update_resource_property = self.patch(service_api.API,
+                                                   'update_resource_property')
 
     def _assert_response(self, actual_resp, expected_status_code,
                          expected_resp_body, key='host',
@@ -237,3 +241,20 @@ class OsHostAPITestCase(tests.TestCase):
             res = c.get('/v1/{0}/allocation?{1}'.format(
                 self.host_id, query_params), headers=self.headers)
             self._assert_response(res, 200, {}, key='allocation')
+
+    def test_resource_properties_list(self):
+        with self.app.test_client() as c:
+            self.list_resource_properties.return_value = []
+            res = c.get('/v1/properties', headers=self.headers)
+            self._assert_response(res, 200, [], key='resource_properties')
+
+    def test_resource_property_update(self):
+        resource_property = 'fake_property'
+        resource_property_body = {'private': True}
+
+        with self.app.test_client() as c:
+
+            res = c.patch('/v1/properties/{0}'.format(resource_property),
+                          json=resource_property_body,
+                          headers=self.headers)
+            self._assert_response(res, 200, {}, 'resource_property')

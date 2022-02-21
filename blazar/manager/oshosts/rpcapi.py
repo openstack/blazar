@@ -64,3 +64,12 @@ class ManagerRPCAPI(service.RPCClient):
         """List all allocations on a specified computehost."""
         return self.call('physical:host:get_allocations',
                          host_id=host_id, query=query)
+
+    def list_resource_properties(self, query):
+        """List resource properties and possible values for computehosts."""
+        return self.call('physical:host:list_resource_properties', query=query)
+
+    def update_resource_property(self, property_name, values):
+        """Update resource property for computehost."""
+        return self.call('physical:host:update_resource_property',
+                         property_name=property_name, values=values)

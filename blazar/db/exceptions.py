@@ -40,3 +40,12 @@ class BlazarDBInvalidFilter(BlazarDBException):
 
 class BlazarDBInvalidFilterOperator(BlazarDBException):
     msg_fmt = _('%(filter_operator)s is invalid')
+
+
+class BlazarDBResourcePropertiesNotEnabled(BlazarDBException):
+    msq_fmt = _('%(resource_type)s does not have resource properties enabled.')
+
+
+class BlazarDBInvalidResourceProperty(BlazarDBException):
+    msg_fmt = _('%(property_name)s does not exist for resource type '
+                '%(resource_type)s.')

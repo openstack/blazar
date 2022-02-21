@@ -79,3 +79,17 @@ def allocations_list(req, query):
 def allocations_get(req, host_id, query):
     """List all allocations on a specific host."""
     return api_utils.render(allocation=_api.get_allocations(host_id, query))
+
+
+@rest.get('/properties', query=True)
+def resource_properties_list(req, query=None):
+    """List computehost resource properties."""
+    return api_utils.render(
+        resource_properties=_api.list_resource_properties(query))
+
+
+@rest.patch('/properties/<property_name>')
+def resource_property_update(req, property_name, data):
+    """Update a computehost resource property."""
+    return api_utils.render(
+        resource_property=_api.update_resource_property(property_name, data))
