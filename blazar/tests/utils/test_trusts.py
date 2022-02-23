@@ -65,10 +65,8 @@ class TestTrusts(tests.TestCase):
             'global_request_id': self.context.current().global_request_id,
             'is_admin': False,
             'is_admin_project': True,
-            'project': self.client().tenant_id,
+            'project': self.client().project_id,
             'project_domain': None,
-            'project_id': self.client().tenant_id,
-            'project_name': 'admin',
             'read_only': False,
             'request_id': ctx.request_id,
             'resource_uuid': None,
@@ -76,10 +74,8 @@ class TestTrusts(tests.TestCase):
             'service_catalog': ctx.service_catalog,
             'show_deleted': False,
             'system_scope': None,
-            'tenant': self.client().tenant_id,
             'user': None,
-            'user_domain': None,
-            'user_id': None}
+            'user_domain': None}
         self.assertDictContainsSubset(fake_ctx_dict, ctx.to_dict())
 
     def test_use_trust_auth_dict(self):
