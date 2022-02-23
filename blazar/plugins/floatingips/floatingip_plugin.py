@@ -16,6 +16,7 @@ import datetime
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils.excutils import save_and_reraise_exception
 from oslo_utils import netutils
 from oslo_utils import strutils
 
@@ -348,9 +349,10 @@ class FloatingIpPlugin(base.BasePlugin):
         try:
             subnet = pool.fetch_subnet(floatingip_address)
         except exceptions.BlazarException:
-            LOG.info("Floating IP %s in network %s can't be used "
-                     "for Blazar's resource.", floatingip_address, network_id)
-            raise
+            with save_and_reraise_exception():
+                LOG.info("Floating IP %s in network %s can't be used "
+                         "for Blazar's resource.", floatingip_address,
+                         network_id)
 
         floatingip_values = {
             'floating_network_id': network_id,

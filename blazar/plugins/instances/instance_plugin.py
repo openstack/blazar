@@ -568,11 +568,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         self.update_host_allocations(changed_hosts['added'],
                                      changed_hosts['removed'],
                                      reservation_id)
-
-        try:
-            self.update_resources(reservation_id)
-        except mgr_exceptions.NovaClientError:
-            raise
+        self.update_resources(reservation_id)
 
     def on_start(self, resource_id):
         ctx = context.current()

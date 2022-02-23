@@ -18,6 +18,7 @@ import datetime
 import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils.excutils import save_and_reraise_exception
 from stevedore import enabled
 
 from blazar import context
@@ -360,8 +361,8 @@ class ManagerService(service_utils.RPCServer):
                 raise exceptions.LeaseNameAlreadyExists(
                     name=lease_values['name'])
             except db_ex.BlazarDBException:
-                LOG.exception('Cannot create a lease')
-                raise
+                with save_and_reraise_exception():
+                    LOG.exception('Cannot create a lease')
             else:
                 try:
                     for reservation in reservations:
@@ -370,11 +371,11 @@ class ManagerService(service_utils.RPCServer):
                         reservation['end_date'] = lease['end_date']
                         self._create_reservation(reservation)
                 except Exception:
-                    LOG.exception("Failed to create reservation for a lease. "
-                                  "Rollback the lease and associated "
-                                  "reservations")
-                    db_api.lease_destroy(lease_id)
-                    raise
+                    with save_and_reraise_exception():
+                        LOG.exception("Failed to create reservation for a "
+                                      "lease. Rollback the lease and "
+                                      "associated reservations")
+                        db_api.lease_destroy(lease_id)
 
                 try:
                     for event in events:
@@ -382,11 +383,11 @@ class ManagerService(service_utils.RPCServer):
                         db_api.event_create(event)
                 except (exceptions.UnsupportedResourceType,
                         common_ex.BlazarException):
-                    LOG.exception("Failed to create event for a lease. "
-                                  "Rollback the lease and associated "
-                                  "reservations")
-                    db_api.lease_destroy(lease_id)
-                    raise
+                    with save_and_reraise_exception():
+                        LOG.exception("Failed to create event for a lease. "
+                                      "Rollback the lease and associated "
+                                      "reservations")
+                        db_api.lease_destroy(lease_id)
 
                 else:
                     db_api.lease_update(
@@ -626,9 +627,9 @@ class ManagerService(service_utils.RPCServer):
                     try:
                         plugin.on_end(reservation['resource_id'])
                     except (db_ex.BlazarDBException, RuntimeError):
-                        LOG.exception("Failed to delete a reservation "
-                                      "for a lease.")
-                        raise
+                        with save_and_reraise_exception():
+                            LOG.exception("Failed to delete a reservation "
+                                          "for a lease.")
             db_api.lease_destroy(lease_id)
             self._send_notification(lease, ctx, events=['delete'])
 
