@@ -11,10 +11,6 @@ The following packages should be installed:
 * blazar-nova
 * python-blazarclient
 
-The following four scheduler filters should be configured in nova.conf:
-
-* BlazarFilter
-
 1. Add hosts into the freepool
 ------------------------------
 
