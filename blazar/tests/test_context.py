@@ -38,6 +38,14 @@ class TestBlazarContext(tests.TestCase):
         ctx = context.BlazarContext(
             user_id=111, project_id=222,
             request_id='req-679033b7-1755-4929-bf85-eb3bfaef7e0b')
+
+        # NOTE(priteau): for compatibility with oslo.context<4.0.0 which
+        # returns a tenant key instead of project_id
+        ctx_dict = ctx.to_dict()
+        if 'tenant' in ctx_dict:
+            ctx_dict['project_id'] = ctx_dict['tenant']
+            del ctx_dict['tenant']
+
         expected = {
             'auth_token': None,
             'domain': None,
@@ -46,6 +54,7 @@ class TestBlazarContext(tests.TestCase):
             'is_admin_project': True,
             'project': 222,
             'project_domain': None,
+            'project_id': 222,
             'read_only': False,
             'request_id': 'req-679033b7-1755-4929-bf85-eb3bfaef7e0b',
             'resource_uuid': None,
@@ -53,11 +62,10 @@ class TestBlazarContext(tests.TestCase):
             'service_catalog': [],
             'show_deleted': False,
             'system_scope': None,
-            'tenant': 222,
             'user': 111,
             'user_domain': None,
             'user_identity': '111 222 - - -'}
-        self.assertEqual(expected, ctx.to_dict())
+        self.assertEqual(expected, ctx_dict)
 
     def test_service_catalog_default(self):
         ctxt = context.BlazarContext(user_id=uuidsentinel.user_id,
