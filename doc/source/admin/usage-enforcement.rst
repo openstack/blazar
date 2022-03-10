@@ -39,7 +39,7 @@ as follows:
 MaxLeaseDurationFilter
 ----------------------
 
-This filter simply examines the lease ``start_time`` and ``end_time``
+This filter simply examines the lease ``start_date`` and ``end_date``
 attributes and rejects the lease if its duration exceeds a threshold. It
 supports two configuration options:
 
