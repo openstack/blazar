@@ -17,10 +17,10 @@ import fixtures
 import tempfile
 import testscenarios
 
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base
 
+from blazar import config as cfg
 from blazar import context
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db.sqlalchemy import facade_wrapper
