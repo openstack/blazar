@@ -19,7 +19,6 @@ import webob
 from werkzeug import wrappers
 
 from blazar.api import context as api_context
-from blazar import context
 from blazar import exceptions
 from blazar import tests
 
@@ -33,9 +32,10 @@ class ContextTestCase(tests.TestCase):
                              'X-Project-Id': uuidsentinel.project_id,
                              'X-Auth-Token': '111-111-111',
                              'X-User-Name': 'user_name',
+                             'X-User-Domain-Name': 'user_domain_name',
                              'X-Project-Name': 'project_name',
+                             'X-Project-Domain-Name': 'project_domain_name',
                              'X-Roles': 'user_name0, user_name1'}
-        self.context = self.patch(context, 'BlazarContext')
         self.catalog = jsonutils.dump_as_bytes({'nova': 'catalog'})
 
     def test_ctx_from_headers_no_catalog(self):
@@ -64,19 +64,24 @@ class ContextTestCaseV1(ContextTestCase):
             '/v1/leases',
             headers=self.fake_headers,
             environ_base=environ_base)
-        api_context.ctx_from_headers(req.headers)
-
-        self.context.assert_called_once_with(
+        context = api_context.ctx_from_headers(req.headers)
+        expected = dict(
             user_id=uuidsentinel.user_id,
             roles=['user_name0',
                    'user_name1'],
             project_name='project_name',
+            project_domain_name='project_domain_name',
             auth_token='111-111-111',
             service_catalog={'nova': 'catalog'},
             project_id=uuidsentinel.project_id,
             user_name='user_name',
+            user_domain_name='user_domain_name',
             request_id='req-' + uuidsentinel.reqid,
-            global_request_id='req-' + uuidsentinel.globalreqid)
+            global_request_id='req-' + uuidsentinel.globalreqid
+        )
+
+        for k, v in expected.items():
+            self.assertEqual(getattr(context, k, None), v)
 
 
 class ContextTestCaseV2(ContextTestCase):
@@ -85,14 +90,19 @@ class ContextTestCaseV2(ContextTestCase):
         self.fake_headers['X-Service-Catalog'] = self.catalog
         req = webob.Request.blank('/v2/leases')
         req.headers = self.fake_headers
-        api_context.ctx_from_headers(req.headers)
-
-        self.context.assert_called_once_with(
+        context = api_context.ctx_from_headers(req.headers)
+        expected = dict(
             user_id=uuidsentinel.user_id,
             roles=['user_name0',
                    'user_name1'],
             project_name='project_name',
+            project_domain_name='project_domain_name',
             auth_token='111-111-111',
             service_catalog={'nova': 'catalog'},
             project_id=uuidsentinel.project_id,
-            user_name='user_name')
+            user_name='user_name',
+            user_domain_name='user_domain_name'
+        )
+
+        for k, v in expected.items():
+            self.assertEqual(getattr(context, k, None), v)

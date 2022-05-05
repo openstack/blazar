@@ -29,9 +29,8 @@ def create_trust():
     client = keystone.BlazarKeystoneClient()
 
     trustee_id = keystone.BlazarKeystoneClient(
-        username=CONF.os_admin_username,
         password=CONF.os_admin_password,
-        tenant_name=CONF.os_admin_project_name).user_id
+        ctx=context.admin()).user_id
 
     ctx = context.current()
     trust = client.trusts.create(trustor_user=ctx.user_id,
@@ -53,31 +52,26 @@ def create_ctx_from_trust(trust_id):
     """Return context built from given trust."""
     ctx = context.current()
 
-    ctx = context.BlazarContext(
-        user_name=CONF.os_admin_username,
-        project_name=CONF.os_admin_project_name,
-        request_id=ctx.request_id,
-        global_request_id=ctx.global_request_id
-    )
     auth_url = "%s://%s:%s" % (CONF.os_auth_protocol,
                                base.get_os_auth_host(CONF),
                                CONF.os_auth_port)
     if CONF.os_auth_prefix:
         auth_url += "/%s" % CONF.os_auth_prefix
+
     client = keystone.BlazarKeystoneClient(
         password=CONF.os_admin_password,
         trust_id=trust_id,
         auth_url=auth_url,
-        ctx=ctx,
+        ctx=context.admin(),
     )
 
     # use 'with ctx' statement in the place you need context from trust
     return context.BlazarContext(
         user_name=ctx.user_name,
-        project_name=ctx.project_name,
+        user_domain_name=ctx.user_domain_name,
         auth_token=client.auth_token,
         service_catalog=client.service_catalog.catalog['catalog'],
-        project_id=client.tenant_id,
+        project_id=client.project_id,
         request_id=ctx.request_id,
         global_request_id=ctx.global_request_id
     )

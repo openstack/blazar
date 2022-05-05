@@ -28,9 +28,8 @@ def fake_lease(**kw):
         'end_date': kw.get('end_date', '2014-02-01 13:37'),
         'trust_id': kw.get('trust_id',
                            '35b17138b3644e6aa1318f3099c5be68'),
-        'user_id': kw.get('user_id', 'efd8780712d24b389c705f5c2ac427ff'),
-        'project_id': kw.get('project_id',
-                             'bd9431c18d694ad3803a8d4a6b89fd36'),
+        'user_id': kw.get('user_id', api.FAKE_USER),
+        'project_id': kw.get('project_id', api.FAKE_PROJECT),
         'reservations': kw.get('reservations', [
             {
                 'resource_id': '1234',
