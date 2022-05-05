@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes failure to update reservations when the ``resource_type`` parameter
+    is not provided in the API request. For more details, see `bug 1957761
+    <https://bugs.launchpad.net/blazar/+bug/1957761>`_.
