@@ -74,7 +74,7 @@ class ContextEndpointHandler(object):
             method = getattr(self.__endpoint, name)
 
             def run_method(__ctx, **kwargs):
-                with context.BlazarContext(**__ctx):
+                with context.BlazarContext.from_dict(__ctx):
                     return method(**kwargs)
 
             return run_method
