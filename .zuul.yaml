@@ -9,8 +9,6 @@
       jobs:
         - blazar-tempest-plugin-base
         - blazar-tempest-plugin-ipv6-only
-        - openstack-tox-lower-constraints:
-            voting: false
         - openstack-tox-pylint:
             voting: false
     gate:
