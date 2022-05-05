@@ -278,7 +278,11 @@ class ReservationPool(NovaClientWrapper):
 
         """
 
-        agg = self.get_aggregate_from_name_or_id(pool)
+        try:
+            agg = self.get_aggregate_from_name_or_id(pool)
+        except manager_exceptions.AggregateNotFound:
+            LOG.warn("Aggregate '%s' not found, skipping deletion", pool)
+            return
 
         hosts = agg.hosts
         if len(hosts) > 0 and not force:
