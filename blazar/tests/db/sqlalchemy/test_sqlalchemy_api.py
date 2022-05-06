@@ -332,7 +332,7 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         self.assertEqual(['1', '2'], db_api.lease_list())
 
     def test_lease_update(self):
-        """Update both start_time and name and check lease has been updated."""
+        """Update both start_date and name and check lease has been updated."""
         result = _create_physical_lease()
         result = db_api.lease_update(result['id'],
                                      values={'name': 'lease_renamed'})
