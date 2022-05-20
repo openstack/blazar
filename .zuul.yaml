@@ -21,6 +21,7 @@
       - openstack/blazar-tempest-plugin
 
 - project:
+    queue: blazar
     templates:
       - openstack-python-jobs
       - check-requirements
@@ -35,7 +36,6 @@
         - openstack-tox-py35:
             voting: false
     gate:
-      queue: blazar
       jobs:
         - openstack-tox-py35:
             voting: false
