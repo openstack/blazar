@@ -43,6 +43,7 @@
       - openstack/blazar-tempest-plugin
 
 - project:
+    queue: blazar
     templates:
       - check-requirements
       - openstack-python-jobs
@@ -58,7 +59,6 @@
         - openstack-tox-pylint:
             voting: false
     gate:
-      queue: blazar
       jobs:
         - blazar-devstack-dsvm
         - blazar-devstack-dsvm-py35
