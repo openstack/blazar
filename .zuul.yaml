@@ -19,6 +19,7 @@
         USE_PYTHON3: True
 
 - project:
+    queue: blazar
     templates:
       - check-requirements
       - openstack-python-jobs
@@ -33,7 +34,6 @@
         - openstack-tox-pylint:
             voting: false
     gate:
-      queue: blazar
       jobs:
         - blazar-tempest-plugin-base
         - blazar-tempest-py3
