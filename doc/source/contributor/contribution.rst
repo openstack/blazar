@@ -36,8 +36,8 @@ How to keep in touch with community
   subject.
 * All questions may be asked on our IRC channel #openstack-blazar on
   `OFTC <http://oftc.net>`_.
-* We also have weekly meetings on #openstack-meeting-alt. Please check
-  `meeting details <https://wiki.openstack.org/wiki/Meetings/Blazar>`_.
+* We also have bi-weekly meetings on #openstack-blazar. Please check `meeting
+  details <https://wiki.openstack.org/wiki/Meetings/Blazar>`_.
 
 Your first commit to Blazar
 ----------------------------
