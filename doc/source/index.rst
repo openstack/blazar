@@ -1,9 +1,9 @@
 Blazar, the OpenStack Reservation Service
 =========================================
 
-Blazar is an OpenStack service to provide resource reservations in the
-OpenStack cloud for different resource types - both virtual (instances,
-volumes, stacks) and physical (hosts).
+Blazar is the *Resource Reservation Service* for OpenStack.
+
+If you are new to Blazar, please start with the :ref:`Introduction`.
 
 Installation Guide
 ------------------
