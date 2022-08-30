@@ -45,6 +45,8 @@ def list_opts():
         ('manager', itertools.chain(blazar.manager.opts,
                                     blazar.manager.service.manager_opts)),
         ('enforcement', itertools.chain(
+            blazar.enforcement.filters.external_service_filter
+                    .ExternalServiceFilter.enforcement_opts,
             blazar.enforcement.filters.max_lease_duration_filter.MaxLeaseDurationFilter.enforcement_opts, # noqa
             blazar.enforcement.enforcement.enforcement_opts)),
         ('notifications', blazar.notification.notifier.notification_opts),

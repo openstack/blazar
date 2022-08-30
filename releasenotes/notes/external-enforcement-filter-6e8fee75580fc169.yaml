@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add a usage enforcement filter delegating decisions to an external HTTP
+    service. This new filter is called ``ExternalServiceFilter``.
