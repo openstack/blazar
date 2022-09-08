@@ -21,3 +21,8 @@ class MaxLeaseDurationException(exceptions.NotAuthorized):
     msg_fmt = _('Lease duration of %(lease_duration)s seconds must be less '
                 'than or equal to the maximum lease duration of '
                 '%(max_duration)s seconds.')
+
+
+class ExternalServiceFilterException(exceptions.BlazarException):
+    code = 400
+    msg_fmt = _('%(message)s')

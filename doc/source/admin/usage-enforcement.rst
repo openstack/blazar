@@ -37,6 +37,11 @@ as follows:
 
 ..
 
+Do note that filter config options follow filter names - the prefix is always
+the snake case of the filter name (``MaxLeaseDurationFilter`` becomes
+``max_lease_duration``; in this case it is special that there is nothing
+beyond the prefix but there is also ``max_lease_duration_exempt_project_ids``).
+
 MaxLeaseDurationFilter
 ----------------------
 
@@ -55,17 +60,32 @@ ExternalServiceFilter
 ---------------------
 
 This filter delegates the decision for each API to an external HTTP service.
-The service must use token-based authentication and implement the following
-endpoints for POST method:
+The service must use token-based authentication, accepting (or ignoring)
+the static token sent by Blazar in the ``X-Auth-Token`` header.
+The following endpoints should be implemented:
 
-* ``POST /v1/check-create``
-* ``POST /v1/check-update``
-* ``POST /v1/on-end``
+* ``POST /check-create``
+* ``POST /check-update``
+* ``POST /on-end``
+
+The exact URLs can be overridden and not all have to be used (although
+we imagine a proper implementation requires at least both checks unless
+lease updates are disabled in the first place).
 
 The external service should return ``204 No Content`` if the parameters meet
-defined criteria and ``403 Forbidden`` if not.
+defined criteria and ``403 Forbidden`` if not. The service may send a JSON
+body response with the ``403 Forbidden`` reply, including the rejection
+reasoning in the field named ``message`` as in:
 
-Example format of data the external service will receive in a request body:
+.. sourcecode:: json
+
+   {
+     "message": "You shall not pass!"
+   }
+
+An example of data the external service will receive in a request body (do note
+all dates and times are encoded as strings following the ISO8601 standard that
+is expected in JSON to represent dates and times):
 
 * Request example:
 
@@ -79,8 +99,8 @@ Example format of data the external service will receive in a request body:
        "region_name": "RegionOne"
      },
      "current_lease": {
-       "start_date": "2020-05-13 00:00",
-       "end_time": "2020-05-14 23:59",
+       "start_date": "2020-05-13T00:00:00.012345+02:00",
+       "end_time": "2020-05-14T23:59:00.012345+02:00",
        "reservations": [
          {
            "resource_type": "physical:host",
@@ -101,8 +121,8 @@ Example format of data the external service will receive in a request body:
        ]
      },
      "lease": {
-       "start_date": "2020-05-13 00:00",
-       "end_time": "2020-05-14 23:59",
+       "start_date": "2020-05-13T00:00:00.012345+02:00",
+       "end_time": "2020-05-14T23:59:00.012345+02:00",
        "reservations": [
          {
            "resource_type": "physical:host",
@@ -130,3 +150,11 @@ Example format of data the external service will receive in a request body:
        ]
      }
    }
+
+The ``current_lease`` field is present only in ``check-update`` requests and
+describes the existing lease. In both checks the ``lease`` field describes
+the new lease. In ``on-end``, the ``lease`` field describes the lease that
+has just ended.
+
+There is no guarantee on the delivery of the ``on-end`` event and it should be
+considered an optimisation rather than a reliable mechanism.
