@@ -38,6 +38,10 @@ def _clear_engine():
 def _get_facade():
     global _engine_facade
     if not _engine_facade:
-        _engine_facade = db_session.EngineFacade.from_config(CONF)
+        # FIXME(priteau): Remove autocommit=True (and ideally use of
+        # LegacyEngineFacade) asap since it's not compatible with SQLAlchemy
+        # 2.0.
+        _engine_facade = db_session.EngineFacade.from_config(CONF,
+                                                             autocommit=True)
 
     return _engine_facade
