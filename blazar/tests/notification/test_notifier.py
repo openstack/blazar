@@ -39,7 +39,7 @@ class NotifierTestCase(tests.TestCase):
         self.fake_notifier.return_value = FakeNotifier()
         self.fake_transport = self.patch(
             messaging,
-            'get_notification_transport').return_value
+            'get_notification_transport')
 
         self.info_method = self.patch(FakeNotifier, 'info')
 
@@ -64,14 +64,14 @@ class NotifierTestCase(tests.TestCase):
     def test_cleanup(self):
         notification.cleanup()
 
-        self.fake_transport.cleanup.assert_called_once_with()
+        self.fake_transport.return_value.cleanup.assert_called_once_with()
         self.assertIsNone(notification.NOTIFIER)
         self.assertIsNone(notification.TRANSPORT)
 
     def test_init(self):
-        self.fake_transport.called_once
-        self.fake_notifier.called_once_with(self.fake_transport,
-                                            publisher_id='lease-service')
+        self.fake_transport.assert_called_once_with(notification.CONF)
+        self.fake_notifier.assert_called_once_with(
+            self.fake_transport.return_value, publisher_id='lease-service')
 
     def test_init_called_twice_returns_same_instance(self):
         prev_notifier = notification.NOTIFIER

@@ -35,7 +35,8 @@ class UtilsTestCase(tests.TestCase):
             self.utils = utils
             self.flask = flask
 
-            self.rest = self.patch(self.utils, "Rest")
+            self.rest = utils.Rest('v1_0', __name__)
+            self.patch(self.rest, "_mroute")
             self.response = self.patch(self.flask, "Response")
             self.abort = self.patch(self.flask, "abort")
             self.request = self.patch(self.flask, "request")
@@ -44,19 +45,20 @@ class UtilsTestCase(tests.TestCase):
 
     def test_get(self):
         self.rest.get('rule', status_code=200)
-        self.rest._mroute.called_once_with('GET', 'rule', 200)
+        self.rest._mroute.assert_called_once_with('GET', 'rule', 200,
+                                                  query=False)
 
     def test_post(self):
         self.rest.post('rule', status_code=201)
-        self.rest._mroute.called_once_with('POST', 'rule', 201)
+        self.rest._mroute.assert_called_once_with('POST', 'rule', 201)
 
     def test_put(self):
         self.rest.put('rule', status_code=200)
-        self.rest._mroute.called_once_with('PUT', 'rule', 200)
+        self.rest._mroute.assert_called_once_with('PUT', 'rule', 200)
 
     def test_delete(self):
         self.rest.delete('rule', status_code=204)
-        self.rest._mroute.called_once_with('DELETE', 'rule', 204)
+        self.rest._mroute.assert_called_once_with('DELETE', 'rule', 204)
 
     def test_route_ok(self):
         pass
@@ -104,7 +106,7 @@ class UtilsTestCase(tests.TestCase):
 
     def test_abort_and_log(self):
         self.utils.abort_and_log(400, "Funny error")
-        self.abort.called_once_with(400, description="Funny error")
+        self.abort.assert_called_once_with(400, description="Funny error")
 
     def test_render_error_message(self):
         render = self.patch(self.utils, 'render')
