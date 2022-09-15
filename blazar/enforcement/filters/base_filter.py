@@ -22,9 +22,12 @@ class BaseFilter(metaclass=abc.ABCMeta):
 
     def __init__(self, conf=None):
         self.conf = conf
+        self.register_opts(conf)
 
-        for opt in self.enforcement_opts:
-            self.conf.register_opt(opt, 'enforcement')
+    @classmethod
+    def register_opts(cls, conf):
+        for opt in cls.enforcement_opts:
+            conf.register_opt(opt, 'enforcement')
 
     def __getattr__(self, name):
         func = getattr(self.conf.enforcement, name)

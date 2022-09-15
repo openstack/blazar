@@ -13,14 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+from datetime import datetime
 import json
 import requests
+from urllib.parse import urljoin
+from urllib.parse import urlparse
 
+from blazar.enforcement.exceptions import ExternalServiceFilterException
 from blazar.enforcement.filters import base_filter
-from blazar import exceptions
+from blazar.exceptions import BlazarException
 from blazar.i18n import _
-from blazar.utils.openstack.keystone import BlazarKeystoneClient
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -28,29 +30,18 @@ from oslo_log import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class DateTimeEncoder(json.JSONEncoder):
+class ISODateTimeEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return str(o)
+        if isinstance(o, datetime):
+            return o.isoformat()
 
         return json.JSONEncoder.default(self, o)
 
 
-class ExternalServiceUnsupportedHTTPResponse(exceptions.BlazarException):
-    code = 400
-    msg_fmt = _('External service enforcement filter returned a %(status)s '
-                'HTTP response. Only 204 and 403 responses are supported.')
+GENERIC_DENY_MSG = 'External service enforcement filter denied the request.'
 
 
-class ExternalServiceUnsupportedDeniedResponse(exceptions.BlazarException):
-    code = 400
-    msg_fmt = _('External service enforcement filter returned a 403 HTTP '
-                'response %(response)s without a valid JSON dictionary '
-                'containing a "message" key.')
-
-
-class ExternalServiceFilterException(exceptions.NotAuthorized):
-    code = 400
+class ExternalServiceMisconfigured(BlazarException):
     msg_fmt = _('%(message)s')
 
 
@@ -58,21 +49,21 @@ class ExternalServiceFilter(base_filter.BaseFilter):
 
     enforcement_opts = [
         cfg.StrOpt(
-            'external_service_endpoint',
+            'external_service_base_endpoint',
             default=None,
             help='The URL of the external service API.'),
         cfg.StrOpt(
-            'external_service_check_create',
+            'external_service_check_create_endpoint',
             default=None,
-            help='Overwrite check-create endpoint with absolute URL.'),
+            help='Overrides check-create endpoint with another URL.'),
         cfg.StrOpt(
-            'external_service_check_update',
+            'external_service_check_update_endpoint',
             default=None,
-            help='Overwrite check-update endpoint with absolute URL.'),
+            help='Overrides check-update endpoint with another URL.'),
         cfg.StrOpt(
-            'external_service_on_end',
+            'external_service_on_end_endpoint',
             default=None,
-            help='Overwrite on-end endpoint with absolute URL.'),
+            help='Overrides on-end endpoint with another URL.'),
         cfg.StrOpt(
             'external_service_token',
             default="",
@@ -82,75 +73,99 @@ class ExternalServiceFilter(base_filter.BaseFilter):
     def __init__(self, conf=None):
         super(ExternalServiceFilter, self).__init__(conf=conf)
 
-    def get_headers(self):
+        self._validate_url(conf.enforcement.external_service_base_endpoint)
+        self.base_endpoint = conf.enforcement.external_service_base_endpoint
+
+        self.check_create_endpoint = self._construct_url(
+            "check-create",
+            conf.enforcement.external_service_check_create_endpoint)
+        self.check_update_endpoint = self._construct_url(
+            "check-update",
+            conf.enforcement.external_service_check_update_endpoint)
+        self.on_end_endpoint = self._construct_url(
+            "on-end",
+            conf.enforcement.external_service_on_end_endpoint)
+
+        endpoints = (
+            self.check_create_endpoint,
+            self.check_update_endpoint,
+            self.on_end_endpoint,
+        )
+
+        if all(x is None for x in endpoints):
+            raise ExternalServiceMisconfigured(
+                message=_("ExternalService has no endpoints set."))
+
+        self.token = conf.enforcement.external_service_token
+
+    @staticmethod
+    def _validate_url(url):
+        if url is None:
+            return
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https"):
+            raise ExternalServiceMisconfigured(
+                message=_("ExternalService URL scheme must be http(s): "
+                          "%s") % url)
+        if parsed_url.netloc == '':
+            raise ExternalServiceMisconfigured(
+                message=_("ExternalService URL must have netloc: "
+                          "%s") % url)
+
+    def _construct_url(self, method, replacement_url):
+        if replacement_url is None:
+            if self.base_endpoint is None:
+                return None
+            return urljoin(self.base_endpoint, method)
+
+        self._validate_url(replacement_url)
+        return replacement_url
+
+    def _get_headers(self):
         headers = {'Content-Type': 'application/json'}
 
-        if self.external_service_token:
-            headers['X-Auth-Token'] = (self.external_service_token)
-        else:
-            client = BlazarKeystoneClient()
-            headers['X-Auth-Token'] = client.session.get_token()
+        if self.token:
+            headers['X-Auth-Token'] = self.token
 
         return headers
 
-    def _get_absolute_url(self, path):
-        url = self.external_service_endpoint
+    def _post(self, url, body):
+        body = json.dumps(body, cls=ISODateTimeEncoder)
+        res = requests.post(url, headers=self._get_headers(), data=body)
 
-        if url[-1] == '/':
-            url += path[1:]
-        else:
-            url += path
-
-        return url
-
-    def post(self, url, body):
-        body = json.dumps(body, cls=DateTimeEncoder)
-        req = requests.post(url, headers=self.get_headers(), data=body)
-
-        if req.status_code == 204:
+        if res.status_code == 204:
             return True
-        elif req.status_code == 403:
+        elif res.status_code == 403:
             try:
-                message = req.json()['message']
+                message = res.json()['message']
             except (requests.JSONDecodeError, KeyError):
-                raise ExternalServiceUnsupportedDeniedResponse(
-                    response=req.content)
-
-            raise ExternalServiceFilterException(message=message)
+                # NOTE(yoctozepto): It is more secure not to send the actual
+                # response to the end user as it may leak something.
+                # Instead, we log it for debugging.
+                LOG.debug("The External Service API returned a malformed "
+                          "response (403): %s", res.content)
+                message = GENERIC_DENY_MSG
         else:
-            raise ExternalServiceUnsupportedHTTPResponse(
-                status=req.status_code)
+            # NOTE(yoctozepto): It is more secure not to send the actual
+            # response to the end user as it may leak something.
+            # Instead, we log it for debugging.
+            LOG.debug("The External Service API returned a malformed "
+                      "response (%d): %s", res.status_code, res.content)
+            message = GENERIC_DENY_MSG
+        raise ExternalServiceFilterException(message=message)
 
     def check_create(self, context, lease_values):
-        body = dict(context=context, lease=lease_values)
-        if self.external_service_check_create:
-            self.post(self.external_service_check_create, body)
-            return
-
-        if self.external_service_endpoint:
-            path = '/check-create'
-            self.post(self._get_absolute_url(path), body)
-            return
+        if self.check_create_endpoint:
+            self._post(self.check_create_endpoint, dict(
+                context=context, lease=lease_values))
 
     def check_update(self, context, current_lease_values, new_lease_values):
-        body = dict(context=context, current_lease=current_lease_values,
-                    lease=new_lease_values)
-        if self.external_service_check_update:
-            self.post(self.external_service_check_update, body)
-            return
-
-        if self.external_service_endpoint:
-            path = '/check-update'
-            self.post(self._get_absolute_url(path), body)
-            return
+        if self.check_update_endpoint:
+            self._post(self.check_update_endpoint, dict(
+                context=context, current_lease=current_lease_values,
+                lease=new_lease_values))
 
     def on_end(self, context, lease_values):
-        body = dict(context=context, lease=lease_values)
-        if self.external_service_on_end:
-            self.post(self.external_service_on_end, body)
-            return
-
-        if self.external_service_endpoint:
-            path = '/on-end'
-            self.post(self._get_absolute_url(path), body)
-            return
+        if self.on_end_endpoint:
+            self._post(self.on_end_endpoint, dict(
+                context=context, lease=lease_values))
