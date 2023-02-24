@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Adds optional randomness to physical host allocation. This is disabled by
+    default and can be enabled with the configuration option
+    ``[physical:host]/randomize_host_selection``.
