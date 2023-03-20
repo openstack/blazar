@@ -58,7 +58,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-copyright = '2013-2022, Blazar developers'
+copyright = '2013-2023, Blazar developers'
 
 # Release notes are version independent.
 # The short X.Y version.
