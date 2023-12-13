@@ -65,7 +65,9 @@ os_opts = [
                help='A domain name the os_admin_username belongs to.'),
     cfg.StrOpt('os_admin_project_domain_name',
                default='Default',
-               help='A domain name the os_admin_project_name belongs to')
+               help='A domain name the os_admin_project_name belongs to'),
+    cfg.StrOpt('cafile',
+               help='Path of the custom CA certificates bundle.'),
 ]
 
 api_opts = [

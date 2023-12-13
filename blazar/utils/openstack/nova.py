@@ -153,10 +153,18 @@ class BlazarNovaClient(object):
             if "v2.0" not in auth_url:
                 kwargs.setdefault('project_domain_name', project_domain_name)
                 kwargs.setdefault('user_domain_name', user_domain_name)
+
+            if CONF.cafile:
+                kwargs.setdefault('cacert', CONF.cafile)
         else:
             auth = token_endpoint.Token(endpoint_override,
                                         auth_token)
-            sess = session.Session(auth=auth)
+            sess_kwargs = dict(
+                auth=auth
+            )
+            if CONF.cafile:
+                sess_kwargs.update(verify=CONF.cafile)
+            sess = session.Session(**sess_kwargs)
             kwargs.setdefault('session', sess)
 
         kwargs.setdefault('endpoint_type', CONF.nova.endpoint_type + 'URL')
