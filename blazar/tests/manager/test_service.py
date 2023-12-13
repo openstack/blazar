@@ -112,7 +112,7 @@ class FakeLeaseStatus(object):
 
 
 @ddt.ddt
-class ServiceTestCase(tests.TestCase):
+class ServiceTestCase(tests.DBTestCase):
     def setUp(self):
         super(ServiceTestCase, self).setUp()
 
@@ -1687,3 +1687,106 @@ class ServiceTestCase(tests.TestCase):
         server.wait()
         server._server.wait.assert_called_once()
         self.assertEqual(1, mock_get_rpc_server.call_count)
+
+    def test_update_non_fatal_max_lease_duration_exception(self):
+        importlib.reload(service)
+        # import service again without mocking the lease_status
+        # decorator
+        manager = service.ManagerService()
+        enforcement_mngr = self.patch(manager, 'enforcement')
+        enforcement_mngr.check_update.side_effect = (
+            enforcement_ex.MaxLeaseDurationException(lease_duration=200,
+                                                     max_duration=100))
+        manager.plugins = {'virtual:instance': self.fake_plugin}
+        manager.resource_actions = (
+            {'virtual:instance':
+             {'on_start': self.fake_plugin.on_start,
+              'on_end': self.fake_plugin.on_end}})
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events.return_value = self.lease['events'][0]
+        lease_values = {
+            'name': 'renamed',
+            'prolong_for': '8d'
+        }
+        target = datetime.datetime(2013, 12, 14)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                enforcement_ex.MaxLeaseDurationException,
+                manager.update_lease,
+                lease_id=self.lease_id,
+                values=lease_values
+            )
+            self.lease_update.assert_called_with(
+                '11-22-33', {'status': 'PENDING'}
+            )
+
+    def test_update_non_fatal_external_service_filter_exception(self):
+        importlib.reload(service)
+        manager = service.ManagerService()
+        enforcement_mngr = self.patch(manager, 'enforcement')
+        enforcement_mngr.check_update.side_effect = (
+            enforcement.exceptions.ExternalServiceFilterException(
+                message="filter exception")
+            )
+        manager.plugins = {'virtual:instance': self.fake_plugin}
+        manager.resource_actions = (
+            {'virtual:instance':
+             {'on_start': self.fake_plugin.on_start,
+              'on_end': self.fake_plugin.on_end}})
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events.return_value = self.lease['events'][0]
+        lease_values = {
+            'name': 'renamed',
+            'prolong_for': '8d'
+        }
+        target = datetime.datetime(2013, 12, 14)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                enforcement.exceptions.ExternalServiceFilterException,
+                manager.update_lease,
+                lease_id=self.lease_id,
+                values=lease_values
+            )
+            self.lease_update.assert_called_with(
+                '11-22-33', {'status': 'PENDING'}
+            )
+
+    def test_update_fatal_extra_capability_too_long_exception(self):
+        # lease status ERROR when a fatal exception occurs
+        importlib.reload(service)
+        manager = service.ManagerService()
+        enforcement_mngr = self.patch(manager, 'enforcement')
+        enforcement_mngr.check_update.side_effect = (
+            manager_ex.ExtraCapabilityTooLong()
+        )
+        manager.plugins = {'virtual:instance': self.fake_plugin}
+        manager.resource_actions = (
+            {'virtual:instance':
+             {'on_start': self.fake_plugin.on_start,
+              'on_end': self.fake_plugin.on_end}})
+        events = self.patch(self.db_api, 'event_get_first_sorted_by_filters')
+        events.return_value = self.lease['events'][0]
+        lease_values = {
+            'name': 'renamed',
+            'prolong_for': '8d'
+        }
+        target = datetime.datetime(2013, 12, 14)
+        with mock.patch.object(datetime,
+                               'datetime',
+                               mock.Mock(wraps=datetime.datetime)) as patched:
+            patched.utcnow.return_value = target
+            self.assertRaises(
+                manager_ex.ExtraCapabilityTooLong,
+                manager.update_lease,
+                lease_id=self.lease_id,
+                values=lease_values
+            )
+            self.lease_update.assert_called_with(
+                '11-22-33', {'status': 'ERROR'}
+            )

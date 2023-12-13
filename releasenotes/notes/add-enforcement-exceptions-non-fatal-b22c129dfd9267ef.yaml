@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Improved handling of enforcement exceptions during lease creation and
+    updates.
+fixes:
+  - |
+    Resolved issues related to lease enforcement exceptions for smoother lease
+    operations.
