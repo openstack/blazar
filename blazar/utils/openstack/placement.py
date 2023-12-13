@@ -83,7 +83,12 @@ class BlazarPlacementClient(object):
                            project_name=project_name,
                            user_domain_name=user_domain_name,
                            project_domain_name=project_domain_name)
-        sess = session.Session(auth=auth)
+        sess_kwargs = dict(
+            auth=auth
+        )
+        if CONF.cafile:
+            sess_kwargs.update(verify=CONF.cafile)
+        sess = session.Session(**sess_kwargs)
         # Set accept header on every request to ensure we notify placement
         # service of our response body media type preferences.
         headers = {'accept': 'application/json'}
