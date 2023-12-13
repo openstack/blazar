@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The Blazar service now supports using a custom CA certificate bundle with
+    the ``[DEFAULT]/cafile`` option. This allows for deployment on OpenStack
+    clouds that are using HTTPS endpoints with certificates signed by a custom
+    CA. `LP#2045281 <https://launchpad.net/bugs/2045281>`__
