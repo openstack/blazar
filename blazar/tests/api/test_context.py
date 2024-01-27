@@ -36,7 +36,7 @@ class ContextTestCase(tests.TestCase):
                              'X-Project-Name': 'project_name',
                              'X-Project-Domain-Name': 'project_domain_name',
                              'X-Roles': 'user_name0, user_name1'}
-        self.catalog = jsonutils.dump_as_bytes({'nova': 'catalog'})
+        self.catalog = jsonutils.dumps({'nova': 'catalog'})
 
     def test_ctx_from_headers_no_catalog(self):
         self.assertRaises(
