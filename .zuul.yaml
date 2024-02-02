@@ -3,7 +3,6 @@
     templates:
       - check-requirements
       - openstack-cover-jobs
-      - openstack-lower-constraints-jobs
       - openstack-python3-yoga-jobs
       - publish-openstack-docs-pti
       - release-notes-jobs-python3
@@ -11,8 +10,6 @@
       jobs:
         - blazar-tempest-plugin-base
         - blazar-tempest-plugin-ipv6-only
-        - openstack-tox-lower-constraints:
-            voting: false
         - openstack-tox-pylint:
             voting: false
     gate:
