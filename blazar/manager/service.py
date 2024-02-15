@@ -484,6 +484,8 @@ class ManagerService(service_utils.RPCServer):
             exceptions.InvalidDate,
             exceptions.CantUpdateParameter,
             exceptions.InvalidPeriod,
+            enforcement.exceptions.MaxLeaseDurationException,
+            enforcement.exceptions.ExternalServiceFilterException,
         ]
     )
     def update_lease(self, lease_id, values):
@@ -566,7 +568,7 @@ class ManagerService(service_utils.RPCServer):
                                               new_reservations)
             except common_ex.NotAuthorized as e:
                 LOG.error("Enforcement checks failed. %s", str(e))
-                raise common_ex.NotAuthorized(e)
+                raise e
 
             # TODO(frossigneux) rollback if an exception is raised
             for reservation in existing_reservations:
