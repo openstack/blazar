@@ -204,7 +204,7 @@ class InstanceReservations(mb.BlazarBase):
     memory_mb = sa.Column(sa.Integer, nullable=False)
     disk_gb = sa.Column(sa.Integer, nullable=False)
     amount = sa.Column(sa.Integer, nullable=False)
-    affinity = sa.Column(sa.Boolean, nullable=False)
+    affinity = sa.Column(sa.Boolean, nullable=True)
     resource_properties = sa.Column(MediumText(), nullable=True)
     flavor_id = sa.Column(sa.String(36), nullable=True)
     aggregate_id = sa.Column(sa.Integer, nullable=True)
