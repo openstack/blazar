@@ -110,9 +110,9 @@ class ManagerService(service_utils.RPCServer):
             try:
                 plugin_obj = ext.plugin()
             except Exception as e:
-                LOG.warning("Could not load {0} plugin "
-                            "for resource type {1} '{2}'".format(
-                                ext.name, ext.plugin.resource_type, e))
+                LOG.warning("Could not load %s plugin "
+                            "for resource type %s '%s'",
+                            ext.name, ext.plugin.resource_type, e)
             else:
                 if plugin_obj.resource_type in plugins:
                     msg = ("You have provided several plugins for "
@@ -179,7 +179,7 @@ class ManagerService(service_utils.RPCServer):
                               event_id)
 
     def _select_for_execution(self, events):
-        """Orders the events such that they can be safely executed concurrently.
+        """Orders the events such that they can be safely executed concurrently
 
         Events are selected to be executed concurrently if they are of the same
         type, while keeping strict time ordering and the following priority of

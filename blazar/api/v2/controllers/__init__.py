@@ -68,7 +68,7 @@ class V2Controller(rest.RestController):
             self._routes.update(ext.obj.extra_routes)
             extensions.append(ext.obj.name)
 
-        LOG.debug("Loaded extensions: {0}".format(extensions))
+        LOG.debug("Loaded extensions: %s", extensions)
 
     @pecan.expose()
     def _route(self, args):

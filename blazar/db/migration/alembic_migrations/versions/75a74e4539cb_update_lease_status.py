@@ -68,38 +68,38 @@ def upgrade():
 
     # PENDING Lease
     pending_query = get_query('UNDONE', 'UNDONE')
-    for l in pending_query:
+    for leases in pending_query:
         op.execute(
             lease.update().values(status='PENDING').
-            where(lease.c.id == l[0]))
-        stable_lease_id.append(l[0])
+            where(lease.c.id == leases[0]))
+        stable_lease_id.append(leases[0])
 
     # ACTIVE Lease
     active_query = get_query('DONE', 'UNDONE')
 
-    for l in active_query:
+    for leases in active_query:
         op.execute(
             lease.update().values(status='ACTIVE').
-            where(lease.c.id == l[0]))
-        stable_lease_id.append(l[0])
+            where(lease.c.id == leases[0]))
+        stable_lease_id.append(leases[0])
 
     # TERMINATED Lease
     terminated_query = get_query('DONE', 'DONE')
 
-    for l in terminated_query:
+    for leases in terminated_query:
         op.execute(
             lease.update().values(status='TERMINATED').
-            where(lease.c.id == l[0]))
-        stable_lease_id.append(l[0])
+            where(lease.c.id == leases[0]))
+        stable_lease_id.append(leases[0])
 
     # ERROR Lease
     all_query = sess.query(lease.c.id)
 
-    for l in all_query:
-        if l[0] not in stable_lease_id:
+    for leases in all_query:
+        if leases[0] not in stable_lease_id:
             op.execute(
                 lease.update().values(status='ERROR').
-                where(lease.c.id == l[0]))
+                where(lease.c.id == leases[0]))
 
     sess.close()
 

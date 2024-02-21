@@ -104,9 +104,8 @@ class FloatingIpPlugin(base.BasePlugin):
             for fip_id in fip_ids_to_add:
                 try:
                     fip = db_api.floatingip_get(fip_id)
-                    LOG.debug(
-                        'Creating floating IP {} for reservation {}'.format(
-                            fip['floating_ip_address'], reservation_id))
+                    LOG.debug('Creating floating IP %s for reservation %s',
+                              fip['floating_ip_address'], reservation_id)
                     fip_pool.create_reserved_floatingip(
                         fip['subnet_id'], fip['floating_ip_address'],
                         ctx.project_id, reservation_id)
@@ -118,15 +117,15 @@ class FloatingIpPlugin(base.BasePlugin):
                     raise manager_ex.NeutronClientError(err_msg)
 
         for fip_id in fip_ids_to_add:
-            LOG.debug('Adding floating IP {} to reservation {}'.format(
-                fip_id, reservation_id))
+            LOG.debug('Adding floating IP %s to reservation %s',
+                      fip_id, reservation_id)
             db_api.fip_allocation_create({
                 'floatingip_id': fip_id,
                 'reservation_id': reservation_id})
 
         for allocation in allocs_to_remove:
-            LOG.debug('Removing floating IP {} from reservation {}'.format(
-                allocation['floatingip_id'], reservation_id))
+            LOG.debug('Removing floating IP %s from reservation %s',
+                      allocation['floatingip_id'], reservation_id)
             db_api.fip_allocation_destroy(allocation['id'])
 
     def _allocations_to_remove(self, dates_before, dates_after, allocs,

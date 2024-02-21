@@ -44,7 +44,7 @@ class UsageEnforcement:
             if filter_name in filters.all_filters:
                 self.enabled_filters.add(_filter(conf=CONF))
             else:
-                LOG.error("{} not in filters module.".format(filter_name))
+                LOG.error("%s not in filters module.", filter_name)
 
         self.enabled_filters = list(self.enabled_filters)
 

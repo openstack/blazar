@@ -150,8 +150,8 @@ class TestShowLease(api.APITest):
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(expected["error_name"], response.json["error_name"])
-        self.assertTrue(expected["error_message"]
-                        in response.json["error_message"])
+        self.assertIn(expected["error_message"],
+                      response.json["error_message"])
         self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_get(self):
@@ -202,8 +202,8 @@ class TestCreateLease(api.APITest):
         self.assertEqual(400, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(expected["error_name"], response.json["error_name"])
-        self.assertTrue(expected["error_message"]
-                        in response.json["error_message"])
+        self.assertIn(expected["error_message"],
+                      response.json["error_message"])
         self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_create_with_empty_body(self):
@@ -307,8 +307,8 @@ class TestUpdateLease(api.APITest):
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(expected["error_name"], response.json["error_name"])
-        self.assertTrue(expected["error_message"]
-                        in response.json["error_message"])
+        self.assertIn(expected["error_message"],
+                      response.json["error_message"])
         self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_update(self):
@@ -357,8 +357,8 @@ class TestDeleteLease(api.APITest):
         self.assertEqual(404, response.status_int)
         self.assertEqual('application/json', response.content_type)
         self.assertEqual(expected["error_name"], response.json["error_name"])
-        self.assertTrue(expected["error_message"]
-                        in response.json["error_message"])
+        self.assertIn(expected["error_message"],
+                      response.json["error_message"])
         self.assertEqual(expected["error_code"], response.json["error_code"])
 
     def test_rpc_exception_delete(self):

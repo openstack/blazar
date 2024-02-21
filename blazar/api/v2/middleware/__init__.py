@@ -109,7 +109,7 @@ class ParsableErrorMiddleware(object):
         try:
             (exc_name, exc_value) = faultstring.split(' ', 1)
         except (ValueError, AttributeError):
-            LOG.warning('Incorrect Remote error {0}'.format(faultstring))
+            LOG.warning('Incorrect Remote error %s', faultstring)
         else:
             cls = getattr(manager_exceptions, exc_name,
                           getattr(exceptions, exc_name, None))

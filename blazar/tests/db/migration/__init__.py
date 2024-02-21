@@ -436,8 +436,8 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
 
         connection.close()
 
-        del(self.engines[database])
-        del(self.test_databases[database])
+        del self.engines[database]
+        del self.test_databases[database]
 
     def _test_postgresql_opportunistically(self):
         # Test postgresql database migration walk
@@ -456,8 +456,8 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
         # build a fully populated postgresql database with all the tables
         self._reset_database(database)
         self._walk_versions(engine, self.snake_walk, self.downgrade)
-        del(self.engines[database])
-        del(self.test_databases[database])
+        del self.engines[database]
+        del self.test_databases[database]
 
     def _alembic_command(self, alembic_command, engine, *args, **kwargs):
         """Alembic command redefine reasons
