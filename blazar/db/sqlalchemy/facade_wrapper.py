@@ -12,22 +12,21 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import threading
 
-from oslo_config import cfg
-from oslo_db.sqlalchemy import session as db_session
+from oslo_db.sqlalchemy import enginefacade
 
-
-CONF = cfg.CONF
+_CONTEXT = threading.local()
 
 _engine_facade = None
 
 
-def get_session():
-    return _get_facade().get_session()
+def session_for_read():
+    return _get_facade().reader.using(_CONTEXT)
 
 
-def get_engine():
-    return _get_facade().get_engine()
+def session_for_write(sqlite_fk=False):
+    return _get_facade(sqlite_fk=sqlite_fk).writer.using(_CONTEXT)
 
 
 def _clear_engine():
@@ -35,13 +34,11 @@ def _clear_engine():
     _engine_facade = None
 
 
-def _get_facade():
+def _get_facade(sqlite_fk=False):
     global _engine_facade
     if not _engine_facade:
-        # FIXME(priteau): Remove autocommit=True (and ideally use of
-        # LegacyEngineFacade) asap since it's not compatible with SQLAlchemy
-        # 2.0.
-        _engine_facade = db_session.EngineFacade.from_config(CONF,
-                                                             autocommit=True)
+        ctx = enginefacade.transaction_context()
+        ctx.configure(sqlite_fk=sqlite_fk)
+        _engine_facade = ctx
 
     return _engine_facade

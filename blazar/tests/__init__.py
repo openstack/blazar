@@ -42,7 +42,6 @@ class Database(fixtures.Fixture):
         cfg.CONF.set_override('connection', str(database_connection),
                               group='database')
         facade_wrapper._clear_engine()
-        self.engine = facade_wrapper.get_engine()
 
         db_api.setup_db()
         self.addCleanup(db_api.drop_db)
