@@ -48,9 +48,9 @@ def upgrade():
     if op.get_bind().engine.name != 'sqlite':
         connection = op.get_bind()
 
-        host_query = connection.execute("""
+        host_query = connection.execute(sa.text("""
             SELECT DISTINCT "physical:host", capability_name
-            FROM computehost_extra_capabilities;""")
+            FROM computehost_extra_capabilities;"""))
 
         capability_values = [
             (str(uuid.uuid4()), resource_type, capability_name)
@@ -62,18 +62,18 @@ def upgrade():
                 INSERT INTO resource_properties
                 (id, resource_type, property_name)
                 VALUES {};"""
-            connection.execute(
-                insert.format(', '.join(map(str, capability_values))))
+            connection.execute(sa.text(
+                insert.format(', '.join(map(str, capability_values)))))
 
         op.add_column('computehost_extra_capabilities',
                       sa.Column('property_id', sa.String(length=255),
                                 nullable=False))
 
-        connection.execute("""
+        connection.execute(sa.text("""
             UPDATE computehost_extra_capabilities c
             LEFT JOIN resource_properties e
             ON e.property_name = c.capability_name
-            SET c.property_id = e.id;""")
+            SET c.property_id = e.id;"""))
 
         op.create_foreign_key('computehost_resource_property_id_fk',
                               'computehost_extra_capabilities',
@@ -89,11 +89,11 @@ def downgrade():
 
     if op.get_bind().engine.name != 'sqlite':
         connection = op.get_bind()
-        connection.execute("""
+        connection.execute(sa.text("""
             UPDATE computehost_extra_capabilities c
             LEFT JOIN resource_properties e
             ON e.id=c.property_id
-            SET c.capability_name = e.property_name;""")
+            SET c.capability_name = e.property_name;"""))
         op.drop_constraint('computehost_resource_property_id_fk',
                            'computehost_extra_capabilities',
                            type_='foreignkey')

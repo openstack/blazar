@@ -427,10 +427,11 @@ class BaseWalkMigrationTestCase(BaseMigrationTestCase):
 
         connection = engine.connect()
         # sanity check
-        total = connection.execute("SELECT count(*) "
+        total = connection.execute(sqlalchemy.text(
+                                   "SELECT count(*) "
                                    "from information_schema.TABLES "
                                    "where TABLE_SCHEMA='%(database)s'" %
-                                   {'database': database})
+                                   {'database': database}))
         self.assertTrue(total.scalar() > 0, "No tables found. Wrong schema?")
 
         connection.close()
