@@ -39,7 +39,7 @@ def upgrade():
         # I need to do it in this way because Postgress fails
         # if I use SQLAlchemy
         connection = op.get_bind()
-        connection.execute("UPDATE computehosts SET trust_id = ''")
+        connection.execute(sa.text("UPDATE computehosts SET trust_id = ''"))
 
         op.alter_column('computehosts', 'trust_id',
                         existing_type=sa.String(length=36), nullable=False)
