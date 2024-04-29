@@ -319,6 +319,17 @@ class BlazarPlacementClient(object):
             return resp.json()
         raise exceptions.ResourceProviderNotFound(resource_provider=rp_uuid)
 
+    def get_traits(self, rp_uuid):
+        """Calls the placement API to get resource trait information.
+
+        :param rp_uuid: UUID of the resource provider to get
+        """
+        url = '/resource_providers/%s/traits' % rp_uuid
+        resp = self.get(url)
+        if resp:
+            return resp.json().get("traits", [])
+        raise exceptions.ResourceProviderNotFound(resource_provider=rp_uuid)
+
     @retrying.retry(stop_max_attempt_number=5,
                     retry_on_exception=lambda e: isinstance(
                         e, exceptions.InventoryConflict))

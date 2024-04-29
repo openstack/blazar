@@ -425,6 +425,34 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                 raise manager_ex.CantAddExtraCapability(
                     keys=cantaddextracapability,
                     host=host['id'])
+
+            # Check for placement details
+            hostname = host_details['hypervisor_hostname']
+            rp = self.placement_client.get_resource_provider(hostname)
+            if rp is None:
+                raise manager_ex.ResourceProviderNotFound(host=hostname)
+
+            inventories = self.placement_client.get_inventory(rp['uuid'])
+            for rc, inventory in inventories['inventories'].items():
+                resource_inventory = {
+                    'computehost_id': host['id'],
+                    'resource_class': rc,
+                    'total': inventory['total'],
+                    'reserved': inventory['reserved'],
+                    'min_unit': inventory['min_unit'],
+                    'max_unit': inventory['max_unit'],
+                    'step_size': inventory['step_size'],
+                    'allocation_ratio': inventory['allocation_ratio'],
+                }
+                db_api.host_resource_inventory_create(resource_inventory)
+
+            traits = self.placement_client.get_traits(rp['uuid'])
+            for trait in traits:
+                db_api.host_trait_create({
+                    'computehost_id': host['id'],
+                    'trait': trait,
+                })
+
             return self.get_computehost(host['id'])
 
     def is_updatable_extra_capability(self, capability, property_name):

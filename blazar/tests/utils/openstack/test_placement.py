@@ -151,6 +151,31 @@ class TestPlacementClient(tests.TestCase):
             self.client.get_resource_provider, rp_name)
 
     @mock.patch('keystoneauth1.session.Session.request')
+    def test_get_traits(self, kss_req):
+        rp_uuid = uuidutils.generate_uuid()
+
+        mock_json_data = {
+            "resource_provider_generation": 1,
+            "traits": [
+                "CUSTOM_HW_FPGA_CLASS1",
+                "CUSTOM_HW_FPGA_CLASS3"
+            ]
+        }
+
+        kss_req.return_value = fake_requests.FakeResponse(
+            200, content=jsonutils.dump_as_bytes(mock_json_data))
+
+        result = self.client.get_traits(rp_uuid)
+
+        expected_url = '/resource_providers/%s/traits' % rp_uuid
+        self._assert_keystone_called_once(kss_req, expected_url, 'GET')
+        expected = [
+            "CUSTOM_HW_FPGA_CLASS1",
+            "CUSTOM_HW_FPGA_CLASS3"
+        ]
+        self.assertEqual(expected, result)
+
+    @mock.patch('keystoneauth1.session.Session.request')
     def test_create_resource_provider(self, kss_req):
         rp_name = 'Blazar'
         rp_uuid = uuidutils.generate_uuid()
