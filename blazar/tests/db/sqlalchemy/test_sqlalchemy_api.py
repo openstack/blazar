@@ -647,6 +647,52 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
                          db_api.host_extra_capability_get_all_per_name('1',
                                                                        'bad'))
 
+    # Resource Inventory
+
+    def test_host_resource_inventory_create(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        fake_inventory_values = {
+            'id': _get_fake_random_uuid(),
+            'computehost_id': '1',
+            'resource_class': 'VCPU',
+            'total': 10,
+            'reserved': 2,
+            'min_unit': 1,
+            'max_unit': 1,
+            'step_size': 1,
+            'allocation_ratio': 1.0
+        }
+
+        db_api.host_resource_inventory_create(fake_inventory_values)
+
+        host = db_api.host_get(1)
+        actual = host.computehost_resource_inventories[0].to_dict()
+        self.assertIsNotNone(actual["created_at"])
+        del actual["created_at"]
+        expected = fake_inventory_values.copy()
+        expected["updated_at"] = None
+        self.assertDictEqual(expected, actual)
+
+    # Trait
+
+    def test_host_traits_create(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        fake_trait_values = {
+            'id': _get_fake_random_uuid(),
+            'computehost_id': '1',
+            'trait': 'HW_CPU_X86_AVX'
+        }
+
+        db_api.host_trait_create(fake_trait_values)
+
+        host = db_api.host_get(1)
+        actual = host.computehost_traits[0].to_dict()
+        self.assertIsNotNone(actual["created_at"])
+        del actual["created_at"]
+        expected = fake_trait_values.copy()
+        expected["updated_at"] = None
+        self.assertDictEqual(expected, actual)
+
     # Instance reservation
 
     def check_instance_reservation_values(self, expected, reservation_id):

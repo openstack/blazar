@@ -253,6 +253,12 @@ class ComputeHost(mb.BlazarBase):
                                                   cascade="all,delete",
                                                   backref='computehost',
                                                   lazy='joined')
+    computehost_resource_inventories = relationship(
+        'ComputeHostResourceInventory', cascade="all,delete",
+        backref='computehost', lazy='joined')
+    computehost_traits = relationship(
+        'ComputeHostTrait', cascade="all,delete",
+        backref='computehost', lazy='joined')
 
     def to_dict(self):
         return super(ComputeHost, self).to_dict()
@@ -276,6 +282,34 @@ class ComputeHostExtraCapability(mb.BlazarBase):
 
     def to_dict(self):
         return super(ComputeHostExtraCapability, self).to_dict()
+
+
+class ComputeHostResourceInventory(mb.BlazarBase):
+    __tablename__ = 'computehost_resource_inventory'
+
+    id = _id_column()
+    computehost_id = sa.Column(sa.String(36), sa.ForeignKey('computehosts.id'))
+    resource_class = sa.Column(sa.String(255), nullable=False)
+    total = sa.Column(sa.Integer, nullable=False)
+    reserved = sa.Column(sa.Integer, nullable=False)
+    min_unit = sa.Column(sa.Integer, nullable=False)
+    max_unit = sa.Column(sa.Integer, nullable=False)
+    step_size = sa.Column(sa.Integer, nullable=False)
+    allocation_ratio = sa.Column(sa.Float, nullable=False)
+
+    def to_dict(self):
+        return super(ComputeHostResourceInventory, self).to_dict()
+
+
+class ComputeHostTrait(mb.BlazarBase):
+    __tablename__ = 'computehost_trait'
+
+    id = _id_column()
+    computehost_id = sa.Column(sa.String(36), sa.ForeignKey('computehosts.id'))
+    trait = sa.Column(sa.String(255), nullable=False)
+
+    def to_dict(self):
+        return super(ComputeHostTrait, self).to_dict()
 
 
 # Floating IP
