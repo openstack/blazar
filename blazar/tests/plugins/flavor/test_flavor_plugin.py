@@ -11,10 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
+import json
 from unittest import mock
 
 from novaclient.v2 import flavors
 
+from blazar import context
 from blazar.db.sqlalchemy import api as db_api
 from blazar.db import utils as db_utils
 from blazar.manager import exceptions as mgr_exceptions
@@ -22,6 +24,8 @@ from blazar.plugins.flavor import flavor_plugin
 from blazar.plugins.oshosts import host_plugin
 from blazar import tests
 from blazar.tests.db.sqlalchemy import test_sqlalchemy_api as fake
+from blazar.utils.openstack import nova
+from blazar.utils.openstack import placement
 
 
 class TestFlavorPlugin(tests.DBTestCase):
@@ -73,16 +77,16 @@ class TestFlavorPlugin(tests.DBTestCase):
         plugin = flavor_plugin.FlavorPlugin()
         reservation = {
             'flavor_id': "34eb7166-0e9b-432c-96fd-dff37f22e36e",
-            'amount': 1,
+            'amount': 4,
             'affinity': None,
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)
         }
-        mock_get_flavor.return_value = ({"PCPU": 2}, {})
+        mock_get_flavor.return_value = ({"PCPU": 2}, {},
+                                        {"flavor_id": "fake"})
 
         result = plugin.allocation_candidates(reservation)
 
-        # 4 because 2 requested x 4 + 2 reserved = 10 total
         self.assertEqual(4, len(result))
         mock_get_flavor.assert_called_once_with(
             "34eb7166-0e9b-432c-96fd-dff37f22e36e")
@@ -104,23 +108,100 @@ class TestFlavorPlugin(tests.DBTestCase):
         plugin = flavor_plugin.FlavorPlugin()
         reservation = {
             'flavor_id': "34eb7166-0e9b-432c-96fd-dff37f22e36e",
-            'amount': 1,
+            'amount': 5,
             'affinity': None,
             'start_date': datetime.datetime(2030, 1, 1, 8, 00),
             'end_date': datetime.datetime(2030, 1, 1, 12, 00)
         }
-        mock_get_flavor.return_value = ({"PCPU": 9}, {})
+        mock_get_flavor.return_value = ({"PCPU": 2}, {},
+                                        {"flavor_id": "fake"})
 
         self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
                           plugin.allocation_candidates,
                           reservation)
+
+    @mock.patch.object(flavor_plugin.FlavorPlugin, '_create_resources')
+    @mock.patch.object(flavor_plugin.FlavorPlugin, '_get_flavor_details')
+    def test_allocation_candidates_avoids_reservations(self, mock_get_flavor,
+                                                       mock_create):
+        self._create_fake_host()
+        fake_inventory_values = {
+            'computehost_id': 123,
+            'resource_class': 'PCPU',
+            'total': 10,
+            'reserved': 2,
+            'min_unit': 1,
+            'max_unit': 10,
+            'step_size': 1,
+            'allocation_ratio': 1.0
+        }
+        db_api.host_resource_inventory_create(fake_inventory_values)
+        plugin = flavor_plugin.FlavorPlugin()
+        new_reservation = {
+            'flavor_id': "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            'amount': 3,
+            'affinity': None,
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
+        }
+        fake_flavor = {
+            "disk": 0,  # GiB
+            "OS-FLV-EXT-DATA:ephemeral": 0,  # GiB
+            "id": "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            "name": "test1",
+            "ram": 0,  # MB
+            "swap": 0,
+            "vcpus": 2,
+            "extra_specs": {'hw:cpu_policy': 'dedicated'}
+        }
+        mock_get_flavor.return_value = ({"PCPU": 2}, {},
+                                        fake_flavor)
+        old_reservation = new_reservation.copy()
+        old_reservation['amount'] = 2
+        fake_phys_reservation = new_reservation.copy()
+        fake_phys_reservation['id'] = 345
+        fake_start_event = {
+            'id': 123,
+            'lease_id': 1234,
+            'event_type': "start_lease",
+            'time': datetime.datetime(2030, 1, 1, 8, 00),
+            'status': "fake",
+        }
+        fake_lease = {
+            'id': 1234,
+            'name': "fakelease",
+            'user_id': 'fake',
+            'project_id': 'fake',
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00),
+            'trust': 'trust',
+            'reservations': [fake_phys_reservation],
+            'events': [fake_start_event]
+        }
+        db_api.lease_create(fake_lease)
+        mock_create.return_value = ("flavor_id", "aggregate_id")
+        # create a reservation to avoid
+        plugin.reserve_resource("345", old_reservation)
+
+        # Host as 10 PCPUs, 2 are reserved, leaving 8 PCPUs available
+        # Old reservation is for 2 flavors needing 2 each, so 4 left
+        # So there should be space for 2 lots of 2 PCPUs
+        new_reservation['amount'] = 2
+        result = plugin.allocation_candidates(new_reservation)
+        self.assertEqual(2, len(result))
+
+        # there should not be space for 3 lots of 2 PCPUs
+        new_reservation['amount'] = 3
+        self.assertRaises(mgr_exceptions.NotEnoughHostsAvailable,
+                          plugin.allocation_candidates,
+                          new_reservation)
 
     @mock.patch.object(flavors.FlavorManager, 'get')
     def test__get_flavor_details(self, mock_get):
         plugin = flavor_plugin.FlavorPlugin()
         mock_flavor = mock.Mock()
         mock_get.return_value = mock_flavor
-        mock_flavor.to_dict.return_value = {
+        fake_flavor = {
             "disk": 10,  # GiB
             "OS-FLV-EXT-DATA:ephemeral": 0,  # GiB
             "id": "34eb7166-0e9b-432c-96fd-dff37f22e36e",
@@ -129,19 +210,144 @@ class TestFlavorPlugin(tests.DBTestCase):
             "swap": 0,
             "vcpus": 1,
         }
-        mock_flavor.get_keys.return_value = {
+        mock_flavor.to_dict.return_value = fake_flavor
+        fake_extra_specs = {
             'hw:cpu_policy': 'dedicated',
             'trait:HW_CPU_X86_AVX': 'required',
             'resources:VGPU': '1',
         }
+        mock_flavor.get_keys.return_value = fake_extra_specs
 
-        resource_request, resource_traits = plugin._get_flavor_details(
-            "34eb7166-0e9b-432c-96fd-dff37f22e36e")
+        resource_request, resource_traits, source_flavor = \
+            plugin._get_flavor_details("34eb7166-0e9b-432c-96fd-dff37f22e36e")
 
         self.assertDictEqual({
             'DISK_GB': 10, 'MEMORY_MB': 1024, 'PCPU': 1, 'VCPU': 0, 'VGPU': 1
         }, resource_request)
         self.assertDictEqual({'HW_CPU_X86_AVX': 'required'}, resource_traits)
+        expected = fake_flavor.copy()
+        expected["extra_specs"] = fake_extra_specs
+        self.assertDictEqual(expected, source_flavor)
+
+    @mock.patch.object(flavor_plugin.FlavorPlugin, '_create_resources')
+    @mock.patch.object(flavor_plugin.FlavorPlugin, '_pick_hosts')
+    def test_reserve_resource(self, mock_pick, mock_create):
+        plugin = flavor_plugin.FlavorPlugin()
+        reservation = {
+            'flavor_id': "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            'amount': 5,
+            'affinity': None,
+            'start_date': datetime.datetime(2030, 1, 1, 8, 00),
+            'end_date': datetime.datetime(2030, 1, 1, 12, 00)
+        }
+        fake_flavor = {
+            "disk": 10,  # GiB
+            "OS-FLV-EXT-DATA:ephemeral": 0,  # GiB
+            "id": "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            "name": "test1",
+            "ram": 1024,  # MB
+            "swap": 0,
+            "vcpus": 1,
+        }
+        mock_pick.return_value = (['123', '124'], fake_flavor)
+        mock_create.return_value = ("flavor_id", "aggregate_id")
+
+        id = plugin.reserve_resource("345", reservation)
+
+        allocations = db_api.host_allocation_get_all_by_values(
+            reservation_id="345")
+        self.assertEqual(2, len(allocations))
+        reservation = db_api.instance_reservation_get(id)
+        self.assertEqual("345", reservation["reservation_id"])
+        self.assertEqual("flavor_id", reservation["flavor_id"])
+        self.assertEqual("aggregate_id", reservation["aggregate_id"])
+
+    @mock.patch.object(nova.ReservationPool, 'create')
+    @mock.patch.object(context.BlazarContext, 'current')
+    @mock.patch.object(placement.BlazarPlacementClient,
+                       'create_reservation_class')
+    @mock.patch.object(flavor_plugin.FlavorPlugin, '_create_flavor')
+    def test_create_resources(self, mock_create_flavor,
+                              mock_reservation_create,
+                              mock_current, mock_pool_create):
+        plugin = flavor_plugin.FlavorPlugin()
+        fake_flavor = {
+            "disk": 10,  # GiB
+            "OS-FLV-EXT-DATA:ephemeral": 100,  # GiB
+            "id": "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            "name": "test1",
+            "ram": 1024,  # MB
+            "swap": 0,
+            "vcpus": 2,
+            "extra_specs": {'hw:cpu_policy': 'dedicated'}
+        }
+        fake_reservation = {
+            'reservation_id': "12345",
+            'vcpus': fake_flavor["vcpus"],
+            'memory_mb': fake_flavor["ram"],
+            'disk_gb': fake_flavor["disk"],
+            'amount': 2,
+            'affinity': None,
+            'resource_properties': json.dumps(fake_flavor)
+        }
+        mock_context = mock.Mock()
+        mock_context.project_id = "fake-project-id"
+        mock_current.return_value = mock_context
+        mock_aggregate = mock.Mock()
+        mock_aggregate.id = "aggregate_id"
+        mock_pool_create.return_value = mock_aggregate
+        mock_flavor = mock.Mock()
+        mock_flavor.id = "flavor_id"
+        mock_create_flavor.return_value = mock_flavor
+
+        fid, aid = plugin._create_resources(fake_reservation)
+
+        self.assertEqual(fid, "flavor_id")
+        self.assertEqual(aid, "aggregate_id")
+        mock_create_flavor.assert_called_once_with(fake_reservation)
+        mock_reservation_create.assert_called_once_with("12345")
+        mock_current.assert_called_once_with()
+        mock_pool_create.assert_called_once_with(
+            name="12345",
+            metadata={'reservation': '12345',
+                      'filter_tenant_id': 'fake-project-id'}
+        ),
+
+    @mock.patch.object(flavors.FlavorManager, 'create')
+    def test_create_flavor(self, mock_create):
+        plugin = flavor_plugin.FlavorPlugin()
+        fake_flavor = {
+            "disk": 10,  # GiB
+            "OS-FLV-EXT-DATA:ephemeral": 100,  # GiB
+            "id": "34eb7166-0e9b-432c-96fd-dff37f22e36e",
+            "name": "test1",
+            "ram": 1024,  # MB
+            "swap": 0,
+            "vcpus": 2,
+            "extra_specs": {'hw:cpu_policy': 'dedicated'}
+        }
+        fake_reservation = {
+            'reservation_id': "12345",
+            'vcpus': fake_flavor["vcpus"],
+            'memory_mb': fake_flavor["ram"],
+            'disk_gb': fake_flavor["disk"],
+            'amount': 2,
+            'affinity': None,
+            'resource_properties': json.dumps(fake_flavor)
+        }
+        mock_flavor = mock.Mock()
+        mock_create.return_value = mock_flavor
+
+        plugin._create_flavor(fake_reservation)
+
+        mock_flavor.set_keys.assert_called_once_with({
+            'hw:cpu_policy': 'dedicated',
+            'aggregate_instance_extra_specs:reservation': '12345',
+            'resources:CUSTOM_RESERVATION_12345': '1',
+        })
+        mock_create.assert_called_once_with(
+            flavorid='12345', name='reservation:12345', vcpus=2, ram=1024,
+            disk=10, is_public=False)
 
     def test__query_available_hosts(self):
         get_reservations = self.patch(db_utils,

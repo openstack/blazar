@@ -17,6 +17,16 @@ from blazar import exceptions
 from blazar.i18n import _
 
 
+class NotImplemented(exceptions.BlazarException):
+    code = 409
+    msg_fmt = '%(error)s'
+
+
+class ReservationTypeConflict(exceptions.NotFound):
+    code = 409
+    msg_fmt = _("Conflicting reservation types found")
+
+
 class NoFreePool(exceptions.NotFound):
     msg_fmt = _("No Freepool found")
 

@@ -588,6 +588,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
         instance_reservation = db_api.instance_reservation_get(resource_id)
         reservation_id = instance_reservation['reservation_id']
 
+        # TODO(johngarbutt): create flavor after updating placement?
+        # else we will race with automation looking for the flavor here
         try:
             self.nova.flavor_access.add_tenant_access(reservation_id,
                                                       ctx.project_id)
