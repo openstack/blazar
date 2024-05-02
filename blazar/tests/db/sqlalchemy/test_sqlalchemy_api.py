@@ -673,6 +673,31 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         expected["updated_at"] = None
         self.assertDictEqual(expected, actual)
 
+    def test_host_resource_inventory_get_all_per_host(self):
+        db_api.host_create(_get_fake_host_values(id=1))
+        fake_inventory_values = {
+            'id': _get_fake_random_uuid(),
+            'computehost_id': '1',
+            'resource_class': 'VCPU',
+            'total': 10,
+            'reserved': 2,
+            'min_unit': 1,
+            'max_unit': 1,
+            'step_size': 1,
+            'allocation_ratio': 1.0
+        }
+        db_api.host_resource_inventory_create(fake_inventory_values)
+
+        result = db_api.host_resource_inventory_get_all_per_host("1")
+
+        result = list(result)
+        self.assertEqual(1, len(result))
+        first_result = result[0].to_dict()
+        expected = fake_inventory_values.copy()
+        expected["updated_at"] = None
+        expected["created_at"] = first_result["created_at"]
+        self.assertDictEqual(expected, first_result)
+
     # Trait
 
     def test_host_traits_create(self):

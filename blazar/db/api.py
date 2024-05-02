@@ -425,6 +425,11 @@ def host_resource_inventory_create(values):
     return IMPL.host_resource_inventory_create(values)
 
 
+def host_resource_inventory_get_all_per_host(host_id):
+    """Return all resource inventories belonging to a specific Compute host."""
+    return IMPL.host_resource_inventory_get_all_per_host(host_id)
+
+
 # ComputeHostTrait
 
 def host_trait_create(values):
