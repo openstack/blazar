@@ -39,17 +39,6 @@ def get_backend():
     return sys.modules[__name__]
 
 
-def model_query(model, session=None):
-    """Query helper.
-
-    :param model: base model to query
-    """
-    if session is None:
-        with facade_wrapper.session_for_read() as session:
-            return session.query(model)
-    return session.query(model)
-
-
 def setup_db():
     try:
         with facade_wrapper.session_for_write(sqlite_fk=True) as session:
@@ -58,7 +47,7 @@ def setup_db():
         facade_wrapper._clear_engine()
     except sa.exc.OperationalError as e:
         LOG.error("Database registration exception: %s", e)
-        return False
+        raise
     return True
 
 
@@ -70,7 +59,7 @@ def drop_db():
         facade_wrapper._clear_engine()
     except Exception as e:
         LOG.error("Database shutdown exception: %s", e)
-        return False
+        raise
     return True
 
 
@@ -118,7 +107,7 @@ class InequalityCondition(object):
 
 # Reservation
 def _reservation_get(session, reservation_id):
-    query = model_query(models.Reservation, session)
+    query = session.query(models.Reservation)
     return query.filter_by(id=reservation_id).first()
 
 
@@ -129,21 +118,21 @@ def reservation_get(reservation_id):
 
 def reservation_get_all():
     with facade_wrapper.session_for_read() as session:
-        query = model_query(models.Reservation, session)
+        query = session.query(models.Reservation)
         return query.all()
 
 
 def reservation_get_all_by_lease_id(lease_id):
     with facade_wrapper.session_for_read() as session:
-        reservations = (model_query(models.Reservation,
-                        session).filter_by(lease_id=lease_id))
+        reservations = (session.query(models.Reservation
+                                      ).filter_by(lease_id=lease_id))
         return reservations.all()
 
 
 def reservation_get_all_by_values(**kwargs):
     """Returns all entries filtered by col=value."""
     with facade_wrapper.session_for_read() as session:
-        reservation_query = model_query(models.Reservation, session)
+        reservation_query = session.query(models.Reservation)
         for name, value in kwargs.items():
             column = getattr(models.Reservation, name, None)
             if column:
@@ -190,7 +179,7 @@ def reservation_destroy(reservation_id):
 
 # Lease
 def _lease_get(session, lease_id):
-    query = model_query(models.Lease, session)
+    query = session.query(models.Lease)
     return query.filter_by(id=lease_id).first()
 
 
@@ -201,7 +190,7 @@ def lease_get(lease_id):
 
 def lease_get_all():
     with facade_wrapper.session_for_read() as session:
-        query = model_query(models.Lease, session)
+        query = session.query(models.Lease)
         return query.all()
 
 
@@ -215,7 +204,7 @@ def lease_get_all_by_user(user_id):
 
 def lease_list(project_id=None):
     with facade_wrapper.session_for_read() as session:
-        query = model_query(models.Lease, session)
+        query = session.query(models.Lease)
         if project_id is not None:
             query = query.filter_by(project_id=project_id)
         return query.all()
@@ -283,12 +272,12 @@ def lease_destroy(lease_id):
 
 # Event
 def _event_get(session, event_id):
-    query = model_query(models.Event, session)
+    query = session.query(models.Event)
     return query.filter_by(id=event_id).first()
 
 
 def _event_get_all(session):
-    query = model_query(models.Event, session)
+    query = session.query(models.Event)
     return query
 
 
@@ -302,13 +291,12 @@ def event_get_all():
         return _event_get_all(session).all()
 
 
-def _event_get_sorted_by_filters(sort_key, sort_dir, filters):
+def _event_get_sorted_by_filters(session, sort_key, sort_dir, filters):
     """Return an event query filtered and sorted by name of the field."""
 
     sort_fn = {'desc': desc, 'asc': asc}
 
-    with facade_wrapper.session_for_read() as session:
-        events_query = _event_get_all(session)
+    events_query = _event_get_all(session)
 
     if 'status' in filters:
         events_query = (
@@ -345,14 +333,16 @@ def event_get_first_sorted_by_filters(sort_key, sort_dir, filters):
     Return the first result for all events matching the filters
     and sorted by name of the field.
     """
-
-    return _event_get_sorted_by_filters(sort_key, sort_dir, filters).first()
+    with facade_wrapper.session_for_read() as session:
+        return _event_get_sorted_by_filters(
+            session, sort_key, sort_dir, filters).first()
 
 
 def event_get_all_sorted_by_filters(sort_key, sort_dir, filters):
     """Return events filtered and sorted by name of the field."""
-
-    return _event_get_sorted_by_filters(sort_key, sort_dir, filters).all()
+    with facade_wrapper.session_for_read() as session:
+        return _event_get_sorted_by_filters(
+            session, sort_key, sort_dir, filters).all()
 
 
 def event_create(values):
@@ -393,7 +383,7 @@ def event_destroy(event_id):
 
 # ComputeHostReservation
 def _host_reservation_get(session, host_reservation_id):
-    query = model_query(models.ComputeHostReservation, session)
+    query = session.query(models.ComputeHostReservation)
     return query.filter_by(id=host_reservation_id).first()
 
 
@@ -404,12 +394,12 @@ def host_reservation_get(host_reservation_id):
 
 def host_reservation_get_all():
     with facade_wrapper.session_for_read() as session:
-        query = model_query(models.ComputeHostReservation, session)
+        query = session.query(models.ComputeHostReservation)
         return query.all()
 
 
 def _host_reservation_get_by_reservation_id(session, reservation_id):
-    query = model_query(models.ComputeHostReservation, session)
+    query = session.query(models.ComputeHostReservation)
     return query.filter_by(reservation_id=reservation_id).first()
 
 
@@ -475,10 +465,10 @@ def instance_reservation_create(values):
 
 def instance_reservation_get(instance_reservation_id, session=None):
     if not session:
-        with facade_wrapper.session_for_write() as session:
-            query = model_query(models.InstanceReservations, session)
+        with facade_wrapper.session_for_read() as session:
+            query = session.query(models.InstanceReservations)
             return query.filter_by(id=instance_reservation_id).first()
-    query = model_query(models.InstanceReservations, session)
+    query = session.query(models.InstanceReservations)
     return query.filter_by(id=instance_reservation_id).first()
 
 
@@ -509,7 +499,7 @@ def instance_reservation_destroy(instance_reservation_id):
 
 # ComputeHostAllocation
 def _host_allocation_get(session, host_allocation_id):
-    query = model_query(models.ComputeHostAllocation, session)
+    query = session.query(models.ComputeHostAllocation)
     return query.filter_by(id=host_allocation_id).first()
 
 
@@ -520,14 +510,14 @@ def host_allocation_get(host_allocation_id):
 
 def host_allocation_get_all():
     with facade_wrapper.session_for_read() as session:
-        query = model_query(models.ComputeHostAllocation, session)
+        query = session.query(models.ComputeHostAllocation)
         return query.all()
 
 
 def host_allocation_get_all_by_values(**kwargs):
     """Returns all entries filtered by col=value."""
     with facade_wrapper.session_for_read() as session:
-        allocation_query = model_query(models.ComputeHostAllocation, session)
+        allocation_query = session.query(models.ComputeHostAllocation)
         for name, value in kwargs.items():
             column = getattr(models.ComputeHostAllocation, name, None)
             if column:
@@ -576,12 +566,12 @@ def host_allocation_destroy(host_allocation_id):
 
 # ComputeHost
 def _host_get(session, host_id):
-    query = model_query(models.ComputeHost, session)
+    query = session.query(models.ComputeHost)
     return query.filter_by(id=host_id).first()
 
 
 def _host_get_all(session):
-    query = model_query(models.ComputeHost, session)
+    query = session.query(models.ComputeHost)
     return query
 
 
@@ -592,7 +582,7 @@ def host_get(host_id):
 
 def host_list():
     with facade_wrapper.session_for_read() as session:
-        return model_query(models.ComputeHost, session).all()
+        return session.query(models.ComputeHost).all()
 
 
 def host_get_all_by_filters(filters):
@@ -601,11 +591,11 @@ def host_get_all_by_filters(filters):
     with facade_wrapper.session_for_read() as session:
         hosts_query = _host_get_all(session)
 
-    if 'status' in filters:
-        hosts_query = hosts_query.filter(
-            models.ComputeHost.status == filters['status'])
+        if 'status' in filters:
+            hosts_query = hosts_query.filter(
+                models.ComputeHost.status == filters['status'])
 
-    return hosts_query.all()
+        return hosts_query.all()
 
 
 def host_get_all_by_queries(queries):
@@ -617,71 +607,73 @@ def host_get_all_by_queries(queries):
 
     """
     with facade_wrapper.session_for_read() as session:
-        hosts_query = model_query(models.ComputeHost, session)
+        hosts_query = session.query(models.ComputeHost)
 
-    oper = {
-        '<': ['lt', lambda a, b: a >= b],
-        '>': ['gt', lambda a, b: a <= b],
-        '<=': ['le', lambda a, b: a > b],
-        '>=': ['ge', lambda a, b: a < b],
-        '==': ['eq', lambda a, b: a != b],
-        '!=': ['ne', lambda a, b: a == b],
-    }
+        oper = {
+            '<': ['lt', lambda a, b: a >= b],
+            '>': ['gt', lambda a, b: a <= b],
+            '<=': ['le', lambda a, b: a > b],
+            '>=': ['ge', lambda a, b: a < b],
+            '==': ['eq', lambda a, b: a != b],
+            '!=': ['ne', lambda a, b: a == b],
+        }
 
-    hosts = []
-    for query in queries:
-        try:
-            key, op, value = query.split(' ', 2)
-        except ValueError:
-            raise db_exc.BlazarDBInvalidFilter(query_filter=query)
+        hosts = []
+        for query in queries:
+            try:
+                key, op, value = query.split(' ', 2)
+            except ValueError:
+                raise db_exc.BlazarDBInvalidFilter(query_filter=query)
 
-        column = getattr(models.ComputeHost, key, None)
-        if column is not None:
-            if op == 'in':
-                filt = column.in_(value.split(','))
+            column = getattr(models.ComputeHost, key, None)
+            if column is not None:
+                if op == 'in':
+                    filt = column.in_(value.split(','))
+                else:
+                    if op in oper:
+                        op = oper[op][0]
+                    try:
+                        attr = [e for e in ['%s', '%s_', '__%s__']
+                                if hasattr(column, e % op)][0] % op
+                    except IndexError:
+                        raise db_exc.BlazarDBInvalidFilterOperator(
+                            filter_operator=op)
+
+                    if value == 'null':
+                        value = None
+
+                    filt = getattr(column, attr)(value)
+
+                hosts_query = hosts_query.filter(filt)
             else:
-                if op in oper:
-                    op = oper[op][0]
-                try:
-                    attr = [e for e in ['%s', '%s_', '__%s__']
-                            if hasattr(column, e % op)][0] % op
-                except IndexError:
-                    raise db_exc.BlazarDBInvalidFilterOperator(
-                        filter_operator=op)
-
-                if value == 'null':
-                    value = None
-
-                filt = getattr(column, attr)(value)
-
-            hosts_query = hosts_query.filter(filt)
-        else:
-            with facade_wrapper.session_for_read() as session:
                 # looking for resource properties matches
                 extra_filter = (
                     _host_resource_property_query(session)
                     .filter(models.ResourceProperty.property_name == key)
                 ).all()
 
-            if not extra_filter:
-                raise db_exc.BlazarDBNotFound(
-                    id=key, model='ComputeHostExtraCapability')
+                if not extra_filter:
+                    raise db_exc.BlazarDBNotFound(
+                        id=key, model='ComputeHostExtraCapability')
 
-            for host, property_name in extra_filter:
-                print(dir(host))
-                if op in oper and oper[op][1](host.capability_value, value):
-                    hosts.append(host.computehost_id)
-                elif op not in oper:
-                    msg = 'Operator %s for resource properties not implemented'
-                    raise NotImplementedError(msg % op)
+                for host, property_name in extra_filter:
+                    print(dir(host))
+                    if op in oper and oper[op][1](host.capability_value,
+                                                  value):
+                        hosts.append(host.computehost_id)
+                    elif op not in oper:
+                        msg = ('Operator %s for resource properties '
+                               'not implemented')
+                        raise NotImplementedError(msg % op)
 
-            # We must also avoid selecting any host which doesn't have the
-            # extra capability present.
-            all_hosts = [h.id for h in hosts_query.all()]
-            extra_filter_hosts = [h.computehost_id for h, _ in extra_filter]
-            hosts += [h for h in all_hosts if h not in extra_filter_hosts]
+                # We must also avoid selecting any host which doesn't have the
+                # extra capability present.
+                all_hosts = [h.id for h in hosts_query.all()]
+                extra_filter_hosts = [h.computehost_id
+                                      for h, _ in extra_filter]
+                hosts += [h for h in all_hosts if h not in extra_filter_hosts]
 
-    return hosts_query.filter(~models.ComputeHost.id.in_(hosts)).all()
+        return hosts_query.filter(~models.ComputeHost.id.in_(hosts)).all()
 
 
 def reservable_host_get_all_by_queries(queries):
@@ -750,7 +742,7 @@ def host_destroy(host_id):
 
 def _host_resource_property_query(session):
     return (
-        model_query(models.ComputeHostExtraCapability, session)
+        session.query(models.ComputeHostExtraCapability)
         .join(models.ResourceProperty)
         .add_column(models.ResourceProperty.property_name))
 
@@ -854,7 +846,7 @@ def fip_reservation_create(fip_reservation_values):
 
 
 def _fip_reservation_get(session, fip_reservation_id):
-    query = model_query(models.FloatingIPReservation, session)
+    query = session.query(models.FloatingIPReservation)
     return query.filter_by(id=fip_reservation_id).first()
 
 
@@ -903,7 +895,7 @@ def required_fip_create(required_fip_values):
 
 
 def _required_fip_get(session, required_fip_id):
-    query = model_query(models.RequiredFloatingIP, session)
+    query = session.query(models.RequiredFloatingIP)
     return query.filter_by(id=required_fip_id).first()
 
 
@@ -935,8 +927,8 @@ def required_fip_destroy(required_fip_id):
 
 def required_fip_destroy_by_fip_reservation_id(fip_reservation_id):
     with facade_wrapper.session_for_write() as session:
-        required_fips = model_query(
-            models.RequiredFloatingIP, session).filter_by(
+        required_fips = session.query(
+            models.RequiredFloatingIP).filter_by(
             floatingip_reservation_id=fip_reservation_id)
         for required_fip in required_fips:
             required_fip_destroy(required_fip['id'])
@@ -945,7 +937,7 @@ def required_fip_destroy_by_fip_reservation_id(fip_reservation_id):
 # FloatingIP Allocation
 
 def _fip_allocation_get(session, fip_allocation_id):
-    query = model_query(models.FloatingIPAllocation, session)
+    query = session.query(models.FloatingIPAllocation)
     return query.filter_by(id=fip_allocation_id).first()
 
 
@@ -973,7 +965,7 @@ def fip_allocation_create(allocation_values):
 def fip_allocation_get_all_by_values(**kwargs):
     """Returns all entries filtered by col=value."""
     with facade_wrapper.session_for_read() as session:
-        allocation_query = model_query(models.FloatingIPAllocation, session)
+        allocation_query = session.query(models.FloatingIPAllocation)
         for name, value in kwargs.items():
             column = getattr(models.FloatingIPAllocation, name, None)
             if column:
@@ -1004,12 +996,12 @@ def fip_allocation_update(allocation_id, allocation_values):
 
 # Floating IP
 def _floatingip_get(session, floatingip_id):
-    query = model_query(models.FloatingIP, session)
+    query = session.query(models.FloatingIP)
     return query.filter_by(id=floatingip_id).first()
 
 
 def _floatingip_get_all(session):
-    query = model_query(models.FloatingIP, session)
+    query = session.query(models.FloatingIP)
     return query
 
 
@@ -1022,7 +1014,7 @@ def fip_get_all_by_queries(queries):
 
     """
     with facade_wrapper.session_for_read() as session:
-        fips_query = model_query(models.FloatingIP, session)
+        fips_query = session.query(models.FloatingIP)
 
     oper = {
         '<': ['lt', lambda a, b: a >= b],
@@ -1084,7 +1076,7 @@ def floatingip_get(floatingip_id):
 
 def floatingip_list():
     with facade_wrapper.session_for_read() as session:
-        return model_query(models.FloatingIP, session).all()
+        return session.query(models.FloatingIP).all()
 
 
 def floatingip_create(values):
@@ -1118,7 +1110,7 @@ def floatingip_destroy(floatingip_id):
 
 def _resource_property_get(session, resource_type, property_name):
     query = (
-        model_query(models.ResourceProperty, session)
+        session.query(models.ResourceProperty)
         .filter_by(resource_type=resource_type)
         .filter_by(property_name=property_name))
 

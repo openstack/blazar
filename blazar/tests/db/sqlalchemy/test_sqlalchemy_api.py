@@ -20,7 +20,6 @@ from oslo_utils import uuidutils
 
 from blazar.db import exceptions as db_exceptions
 from blazar.db.sqlalchemy import api as db_api
-from blazar.db.sqlalchemy import models
 from blazar.plugins import oshosts as host_plugin
 from blazar import tests
 
@@ -209,11 +208,6 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
 
     def setUp(self):
         super(SQLAlchemyDBApiTestCase, self).setUp()
-
-    def test_model_query(self):
-        lease = db_api.lease_create(_get_fake_phys_lease_values())
-        query = db_api.model_query(models.Lease)
-        self.assertEqual([lease.to_dict()], [l.to_dict() for l in query.all()])
 
     def test_create_phys_lease(self):
         """Check physical lease create
