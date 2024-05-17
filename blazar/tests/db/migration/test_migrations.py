@@ -63,7 +63,7 @@ class TestMigrations(migration.BaseWalkMigrationTestCase,
         """
         metadata = sqlalchemy.MetaData()
         metadata.bind = engine
-        return sqlalchemy.Table(name, metadata, autoload=True)
+        return sqlalchemy.Table(name, metadata, autoload_with=metadata.bind)
 
     def assertTableExists(self, engine, table):
         metadata = sqlalchemy.MetaData()

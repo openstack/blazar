@@ -58,8 +58,8 @@ def upgrade():
         return query
 
     meta = _get_metadata()
-    lease = sa.Table('leases', meta, autoload=True)
-    event = sa.Table('events', meta, autoload=True)
+    lease = sa.Table('leases', meta, autoload_with=meta.bind)
+    event = sa.Table('events', meta, autoload_with=meta.bind)
 
     Session = sa.orm.sessionmaker()
     sess = Session(bind=meta.bind)
@@ -106,7 +106,7 @@ def upgrade():
 
 def downgrade():
     meta = _get_metadata()
-    lease = sa.Table('leases', meta, autoload=True)
+    lease = sa.Table('leases', meta, autoload_with=meta.bind)
 
     op.execute(
         lease.update().values(status=None))
