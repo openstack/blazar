@@ -1905,7 +1905,8 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                                       'get_computehosts')
         get_computehosts.return_value = ['host']
         list_servers = self.patch(self.ServerManager, 'list')
-        list_servers.return_value = ['server1', 'server2']
+        list_servers.side_effect = [['server1', 'server2'],
+                                    ['server1', 'server2'], []]
         delete_server = self.patch(self.ServerManager, 'delete')
         # Mock delete_server so the first call fails to find the instance.
         # This can happen when the user is deleting instances concurrently.
@@ -1918,8 +1919,12 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             '04de74e8-193a-49d2-9ab8-cba7b49e45e8', {'status': 'completed'})
         host_allocation_destroy.assert_called_with(
             'bfa9aa0b-8042-43eb-a4e6-4555838bf64f')
-        list_servers.assert_called_with(search_opts={'host': 'host',
-                                                     'all_tenants': 1})
+        list_servers.assert_has_calls([
+            mock.call(search_opts={'host': 'host', 'all_tenants': 1}),
+            mock.call(search_opts={'host': 'host', 'all_tenants': 1},
+                      detailed=False),
+            mock.call(search_opts={'host': 'host', 'all_tenants': 1},
+                      detailed=False)])
         delete_server.assert_any_call(server='server1')
         delete_server.assert_any_call(server='server2')
         delete_pool.assert_called_with(1)
