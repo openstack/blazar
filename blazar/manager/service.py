@@ -71,7 +71,7 @@ class ManagerService(service_utils.RPCServer):
     """
 
     def __init__(self):
-        target = manager.get_target()
+        target = manager.get_service_target()
         super(ManagerService, self).__init__(target)
         self.plugins = self._get_plugins()
         self.resource_actions = self._setup_actions()
