@@ -146,13 +146,16 @@ class EnforcementTestCase(tests.TestCase):
     def tearDown(self):
         super(EnforcementTestCase, self).tearDown()
 
-    def get_formatted_lease(self, lease_values, rsv, allocs):
+    def get_formatted_lease(self, lease_values, rsv, allocs,
+                            resource_requests=None):
         expected_lease = lease_values.copy()
 
         if rsv:
             expected_lease['reservations'] = rsv
         for res in expected_lease['reservations']:
             res['allocations'] = allocs[res['resource_type']]
+        if resource_requests:
+            expected_lease['resource_requests'] = resource_requests
 
         return expected_lease
 
@@ -177,25 +180,30 @@ class EnforcementTestCase(tests.TestCase):
 
     def test_format_lease(self):
         lease_values, rsv, allocs = get_lease_rsv_allocs()
+        resource_requests = {"VCPUS": 4, "MEMORY_MB": 8192, "DISK_GB": 10}
 
-        formatted_lease = self.enforcement.format_lease(lease_values, rsv,
-                                                        allocs)
+        formatted_lease = self.enforcement.format_lease(
+            lease_values, rsv, allocs, resource_requests)
 
-        expected_lease = self.get_formatted_lease(lease_values, rsv, allocs)
+        expected_lease = self.get_formatted_lease(lease_values, rsv, allocs,
+                                                  resource_requests)
 
         self.assertDictEqual(expected_lease, formatted_lease)
 
     def test_check_create(self):
         lease_values, rsv, allocs = get_lease_rsv_allocs()
         ctx = context.current()
+        resource_requests = {"VCPUS": 4, "MEMORY_MB": 8192, "DISK_GB": 10}
 
         check_create = self.patch(self.enforcement.enabled_filters[0],
                                   'check_create')
 
-        self.enforcement.check_create(ctx, lease_values, rsv, allocs)
+        self.enforcement.check_create(ctx, lease_values, rsv, allocs,
+                                      resource_requests)
 
         formatted_lease = self.enforcement.format_lease(lease_values, rsv,
-                                                        allocs)
+                                                        allocs,
+                                                        resource_requests)
         formatted_context = self.enforcement.format_context(ctx, lease_values)
 
         check_create.assert_called_once_with(formatted_context,
@@ -205,7 +213,8 @@ class EnforcementTestCase(tests.TestCase):
                                 region_name=self.region,
                                 auth_url='https://fakeauth.com')
 
-        expected_lease = self.get_formatted_lease(lease_values, rsv, allocs)
+        expected_lease = self.get_formatted_lease(lease_values, rsv, allocs,
+                                                  resource_requests)
 
         self.assertDictEqual(expected_context, formatted_context)
         self.assertDictEqual(expected_lease, formatted_lease)
@@ -222,7 +231,8 @@ class EnforcementTestCase(tests.TestCase):
         self.assertRaises(exceptions.BlazarException,
                           self.enforcement.check_create,
                           context=ctx, lease_values=lease_values,
-                          reservations=rsv, allocations=allocs)
+                          reservations=rsv, allocations=allocs,
+                          resource_requests=None)
 
     def test_check_update(self):
         lease, rsv, allocs = get_lease_rsv_allocs()
@@ -230,6 +240,7 @@ class EnforcementTestCase(tests.TestCase):
         new_lease_values = get_fake_lease(end_date='2014-02-07 13:37')
         new_reservations = list(new_lease_values['reservations'])
         allocation_candidates = {'virtual:instance': [get_fake_host('2')]}
+        resources_requests = {"VCPUS": 4, "MEMORY_MB": 8192, "DISK_GB": 10}
 
         del new_lease_values['reservations']
         ctx = context.current()
@@ -239,20 +250,24 @@ class EnforcementTestCase(tests.TestCase):
 
         self.enforcement.check_update(
             ctx, lease, new_lease_values, allocs, allocation_candidates,
-            rsv, new_reservations)
+            rsv, new_reservations, resources_requests, resources_requests)
 
         formatted_context = self.enforcement.format_context(ctx, lease)
-        formatted_lease = self.enforcement.format_lease(lease, rsv, allocs)
+        formatted_lease = self.enforcement.format_lease(lease, rsv, allocs,
+                                                        resources_requests)
         new_formatted_lease = self.enforcement.format_lease(
-            new_lease_values, new_reservations, allocation_candidates)
+            new_lease_values, new_reservations, allocation_candidates,
+            resources_requests)
 
         expected_context = dict(user_id='111', project_id='222',
                                 region_name=self.region,
                                 auth_url='https://fakeauth.com')
 
-        expected_lease = self.get_formatted_lease(lease, rsv, allocs)
+        expected_lease = self.get_formatted_lease(lease, rsv, allocs,
+                                                  resources_requests)
         expected_new_lease = self.get_formatted_lease(
-            new_lease_values, new_reservations, allocation_candidates)
+            new_lease_values, new_reservations, allocation_candidates,
+            resources_requests)
 
         check_update.assert_called_once_with(
             formatted_context, formatted_lease, new_formatted_lease)
@@ -283,16 +298,17 @@ class EnforcementTestCase(tests.TestCase):
 
     def test_on_end(self):
         allocations = {'virtual:instance': [get_fake_host('1')]}
+        resource_requests = {"VCPUS": 4, "MEMORY_MB": 8192, "DISK_GB": 10}
         lease = get_fake_lease()
         ctx = context.current()
 
         on_end = self.patch(self.enforcement.enabled_filters[0], 'on_end')
 
-        self.enforcement.on_end(ctx, lease, allocations)
+        self.enforcement.on_end(ctx, lease, allocations, resource_requests)
 
         formatted_context = self.enforcement.format_context(ctx, lease)
         formatted_lease = self.enforcement.format_lease(
-            lease, lease['reservations'], allocations)
+            lease, lease['reservations'], allocations, resource_requests)
 
         on_end.assert_called_once_with(formatted_context, formatted_lease)
 
@@ -300,7 +316,8 @@ class EnforcementTestCase(tests.TestCase):
                                 region_name=self.region,
                                 auth_url='https://fakeauth.com')
 
-        expected_lease = self.get_formatted_lease(lease, None, allocations)
+        expected_lease = self.get_formatted_lease(lease, None, allocations,
+                                                  resource_requests)
 
         self.assertDictEqual(expected_context, formatted_context)
         self.assertDictEqual(expected_lease, formatted_lease)

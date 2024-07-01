@@ -59,7 +59,8 @@ class UsageEnforcement:
                     project_id=lease_values['project_id'],
                     auth_url=auth_url, region_name=region_name)
 
-    def format_lease(self, lease_values, reservations, allocations):
+    def format_lease(self, lease_values, reservations, allocations,
+                     resource_requests=None):
         lease = lease_values.copy()
         lease['reservations'] = []
 
@@ -69,31 +70,39 @@ class UsageEnforcement:
             res['allocations'] = allocations[resource_type]
             lease['reservations'].append(res)
 
+        if resource_requests:
+            lease['resource_requests'] = resource_requests
+
         return lease
 
-    def check_create(self, context, lease_values, reservations, allocations):
+    def check_create(self, context, lease_values, reservations, allocations,
+                     resource_requests=None):
         context = self.format_context(context, lease_values)
-        lease = self.format_lease(lease_values, reservations, allocations)
+        lease = self.format_lease(
+            lease_values, reservations, allocations, resource_requests)
 
         for _filter in self.enabled_filters:
             _filter.check_create(context, lease)
 
     def check_update(self, context, current_lease, new_lease,
                      current_allocations, new_allocations,
-                     current_reservations, new_reservations):
+                     current_reservations, new_reservations,
+                     current_resource_requests=None,
+                     new_resource_requests=None):
         context = self.format_context(context, current_lease)
         current_lease = self.format_lease(current_lease, current_reservations,
-                                          current_allocations)
+                                          current_allocations,
+                                          current_resource_requests)
         new_lease = self.format_lease(new_lease, new_reservations,
-                                      new_allocations)
+                                      new_allocations, new_resource_requests)
 
         for _filter in self.enabled_filters:
             _filter.check_update(context, current_lease, new_lease)
 
-    def on_end(self, context, lease, allocations):
+    def on_end(self, context, lease, allocations, resource_requests=None):
         context = self.format_context(context, lease)
         lease_values = self.format_lease(lease, lease['reservations'],
-                                         allocations)
+                                         allocations, resource_requests)
 
         for _filter in self.enabled_filters:
             _filter.on_end(context, lease_values)

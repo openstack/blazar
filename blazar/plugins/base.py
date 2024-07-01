@@ -87,6 +87,11 @@ class BasePlugin(object, metaclass=abc.ABCMeta):
         """Get candidates for reservation allocation."""
         pass
 
+    def get_enforcement_resources(self, reservation_values):
+        """Get enforcement details for the lease."""
+        # default to the existing behavior of sending lease values
+        return {}
+
     @abc.abstractmethod
     def update_reservation(self, reservation_id, values):
         """Update reservation."""

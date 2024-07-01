@@ -490,10 +490,17 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_now(self):
         lease_values = self.lease_values
+        resources = {
+            "CUSTOM_FAKE": 3, "VCPU": 1
+        }
+        self.fake_plugin.get_enforcement_resources.return_value = resources
+
         lease = self.manager.create_lease(lease_values)
 
-        self.enforcement.check_create.assert_called_once()
-
+        self.enforcement.check_create.assert_called_once_with(
+            self.context.current(), lease_values, mock.ANY, mock.ANY,
+            resources
+        )
         self.trust_ctx.assert_called_once_with(lease_values['trust_id'])
         self.lease_create.assert_called_once_with(lease_values)
         self.assertEqual(lease, self.lease)

@@ -378,8 +378,11 @@ class ManagerService(service_utils.RPCServer):
             allocations = self._allocation_candidates(
                 lease_values, reservations)
             try:
+                resource_requests = self._get_enforcement_resources(
+                    lease_values, reservations)
                 self.enforcement.check_create(
-                    context.current(), lease_values, reservations, allocations)
+                    context.current(), lease_values, reservations, allocations,
+                    resource_requests)
             except common_ex.NotAuthorized as e:
                 LOG.error("Enforcement checks failed. %s", str(e))
                 raise common_ex.NotAuthorized(e)
@@ -562,10 +565,17 @@ class ManagerService(service_utils.RPCServer):
                 new_allocs = existing_allocs
 
             try:
-                self.enforcement.check_update(context.current(), lease, values,
-                                              existing_allocs, new_allocs,
+                current_resource_requests = self._get_enforcement_resources(
+                    values, existing_reservations)
+                new_resource_requests = self._get_enforcement_resources(
+                    values, new_reservations)
+                self.enforcement.check_update(context.current(), lease,
+                                              values, existing_allocs,
+                                              new_allocs,
                                               existing_reservations,
-                                              new_reservations)
+                                              new_reservations,
+                                              current_resource_requests,
+                                              new_resource_requests)
             except common_ex.NotAuthorized as e:
                 LOG.error("Enforcement checks failed. %s", str(e))
                 raise e
@@ -682,7 +692,10 @@ class ManagerService(service_utils.RPCServer):
                 # lease is no longer in play.
                 allocations = self._existing_allocations(reservations)
                 try:
-                    self.enforcement.on_end(ctx, lease, allocations)
+                    resource_requests = self._get_enforcement_resources(
+                        lease, reservations)
+                    self.enforcement.on_end(ctx, lease, allocations,
+                                            resource_requests)
                 except Exception as e:
                     LOG.error(e)
 
@@ -716,7 +729,10 @@ class ManagerService(service_utils.RPCServer):
         with trusts.create_ctx_from_trust(lease['trust_id']) as ctx:
             allocations = self._existing_allocations(lease['reservations'])
             try:
-                self.enforcement.on_end(ctx, lease, allocations)
+                resource_requests = self._get_enforcement_resources(
+                    lease, lease['reservations'])
+                self.enforcement.on_end(ctx, lease, allocations,
+                                        resource_requests)
             except Exception as e:
                 LOG.error(e)
 
@@ -806,6 +822,33 @@ class ManagerService(service_utils.RPCServer):
                 plugin.get(cid) for cid in candidate_ids]
 
         return allocations
+
+    def _get_enforcement_resources(self, lease, reservations):
+        """Returns dict by resource type of reservation candidates."""
+        resources = defaultdict(int)
+
+        for reservation in reservations:
+            res = reservation.copy()
+            resource_type = reservation['resource_type']
+            res['start_date'] = lease['start_date']
+            res['end_date'] = lease['end_date']
+
+            if resource_type not in self.plugins:
+                raise exceptions.UnsupportedResourceType(
+                    resource_type=resource_type)
+
+            plugin = self.plugins.get(resource_type)
+
+            if not plugin:
+                raise common_ex.BlazarException(
+                    'Invalid plugin names are specified: %s' % resource_type)
+
+            reservation_resources = plugin.get_enforcement_resources(res)
+
+            for resource, amount in reservation_resources.items():
+                resources[resource] += amount
+
+        return resources
 
     def _existing_allocations(self, reservations):
         allocations = {}
