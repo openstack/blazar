@@ -1,0 +1,14 @@
+---
+upgrade:
+  - |
+    Instance reservations will no longer create a server group when the
+    ``affinity`` parameter is not set. This means that instances can be
+    deployed on any host. To achieve the old behaviour, you must now explicity
+    set ``--affinity=false``.
+    `LP#2071832 <https://launchpad.net/bugs/2071832>`__
+fixes:
+  - |
+    Instance reservations will no longer create a server group when the
+    ``affinity`` parameter is not set. This means that instances can be
+    deployed on any host.
+    `LP#2071832 <https://launchpad.net/bugs/2071832>`__

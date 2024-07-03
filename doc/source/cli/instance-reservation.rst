@@ -166,3 +166,20 @@ Result:
     openstack server create --flavor db83d6fd-c69c-4259-92cf-012db2e55a58 --image <image> --network <network> <server-name>
 
 ..
+
+
+Affinity
+--------
+
+A lease can be created with the optional ``--affinity`` parameter. This
+provides the following behavior:
+
+* ``affinity=True``: Instances will be deployed on the same host for this
+  reservation, by adding them to a server group with an affinity policy.
+
+* ``affinity=False``: Instances will be deployed on different hosts for this
+  reservation, by adding them to a server group with an anti-affinity policy.
+
+* ``affinity=None`` (default): Instances can be deployed on any host,
+  regardless of other instances in this reservation. No server group is
+  created.
