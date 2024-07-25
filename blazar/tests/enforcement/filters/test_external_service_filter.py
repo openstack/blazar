@@ -168,6 +168,25 @@ class ExternalServiceFilterTestCase(TestCase):
                  '"lease": {"is_lease": true}}')
 
     @mock.patch("requests.post")
+    def test_check_create_allowed_token(self, post_mock):
+        CONF.set_override("external_service_bearer_token", "bearer_token",
+                          group='enforcement')
+        self.addCleanup(CONF.clear_override,
+                        'external_service_bearer_token',
+                        group='enforcement')
+        self.filter = external_service_filter.ExternalServiceFilter(CONF)
+        post_mock.return_value = FakeResponse204()
+
+        self.filter.check_create(self.ctx, self.lease)
+
+        post_mock.assert_called_with(
+            "http://localhost/check-create",
+            headers={'Content-Type': 'application/json',
+                     'Authorization': 'Bearer bearer_token'},
+            data='{"context": {"is_context": true}, '
+                 '"lease": {"is_lease": true}}')
+
+    @mock.patch("requests.post")
     def test_check_create_denied(self, post_mock):
         post_mock.return_value = FakeResponse403WithMessage()
         self.assertRaises(ExternalServiceFilterException,

@@ -61,7 +61,8 @@ ExternalServiceFilter
 
 This filter delegates the decision for each API to an external HTTP service.
 The service must use token-based authentication, accepting (or ignoring)
-the static token sent by Blazar in the ``X-Auth-Token`` header.
+the static token sent by Blazar in either the ``X-Auth-Token`` header, or
+the ``Authorization: Bearer`` header, depending on your configuration.
 The following endpoints should be implemented:
 
 * ``POST /check-create``

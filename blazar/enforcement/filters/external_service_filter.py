@@ -67,7 +67,11 @@ class ExternalServiceFilter(base_filter.BaseFilter):
         cfg.StrOpt(
             'external_service_token',
             default="",
-            help='Token used for authentication with the external service.')
+            help='Token used for authentication with the external service.'),
+        cfg.StrOpt(
+            'external_service_bearer_token',
+            default="",
+            help='Bearer token for authentication with the external service.')
     ]
 
     def __init__(self, conf=None):
@@ -96,7 +100,8 @@ class ExternalServiceFilter(base_filter.BaseFilter):
             raise ExternalServiceMisconfigured(
                 message=_("ExternalService has no endpoints set."))
 
-        self.token = conf.enforcement.external_service_token
+        self.x_auth_token = conf.enforcement.external_service_token
+        self.bearer_token = conf.enforcement.external_service_bearer_token
 
     @staticmethod
     def _validate_url(url):
@@ -124,9 +129,10 @@ class ExternalServiceFilter(base_filter.BaseFilter):
     def _get_headers(self):
         headers = {'Content-Type': 'application/json'}
 
-        if self.token:
-            headers['X-Auth-Token'] = self.token
-
+        if self.x_auth_token:
+            headers['X-Auth-Token'] = self.x_auth_token
+        elif self.bearer_token:
+            headers['Authorization'] = "Bearer " + self.bearer_token
         return headers
 
     def _post(self, url, body):
