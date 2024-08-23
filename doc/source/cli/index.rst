@@ -6,6 +6,7 @@ Command-Line Interface Reference
 
    host-reservation
    instance-reservation
+   flavor-based-instance-reservation
    floatingip-reservation
 
 Two command-line interfaces exist: one as a standalone ``blazar`` client and

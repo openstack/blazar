@@ -104,6 +104,22 @@ for oversubscribing with multiple reservation types (hosts supporting the
 virtual instance reservation cannot also be targeted for compute host
 reservation at the same time).
 
+Flavor-based instance reservation
+---------------------------------
+
+Flavor-based instance reservation is similar in design to virtual instance
+reservation. However, instead of accepting specific amounts of resources as
+arguments, the reservation is based on an existing Nova flavor which must be
+accessible to the user.
+
+.. note::
+
+   The implementation of flavor-based instance reservation is still incomplete.
+   Only a limited number of flavor extra specs is supported. Virtual instance
+   reservations and flavor-based instance reservations cannot yet be created on
+   the same resources. Affinity rules and resource traits are not yet
+   supported.
+
 Neutron resource reservation
 ++++++++++++++++++++++++++++
 

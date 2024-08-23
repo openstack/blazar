@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Add a new resource type ``flavor:instance`` to reserve instances based on
+    existing flavors. This is implemented by a new plugin named
+    ``flavor.instance.plugin``. Note that this feature is available as a
+    preview but is not yet complete. See `documentation
+    <https://docs.openstack.org/blazar/latest/user/architecture.html>`__ for
+    more details.
