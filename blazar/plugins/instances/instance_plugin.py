@@ -388,8 +388,10 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
 
         reservation_id = instance_reservation['reservation_id']
 
-        check_and_delete_resource(self.nova.nova.server_groups,
-                                  instance_reservation['server_group_id'])
+        server_group_id = instance_reservation['server_group_id']
+        if server_group_id:
+            check_and_delete_resource(self.nova.nova.server_groups,
+                                      server_group_id)
         check_and_delete_resource(self.nova.nova.flavors, reservation_id)
         check_and_delete_resource(nova.ReservationPool(), reservation_id)
 

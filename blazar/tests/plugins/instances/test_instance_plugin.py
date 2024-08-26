@@ -1714,3 +1714,33 @@ class TestVirtualInstancePlugin(tests.TestCase):
         destroy_calls = [mock.call('alloc-1'), mock.call('alloc-2')]
         alloc_destroy.assert_has_calls(destroy_calls)
         self.assertEqual(False, result)
+
+    @ddt.data(False, True, None)
+    def test_cleanup_resources(self, affinity):
+        instance_reservation = {
+            'reservation_id': 'reservation-id1',
+            'vcpus': 2,
+            'memory_mb': 1024,
+            'disk_gb': 20,
+            'affinity': affinity
+        }
+
+        # Set server_group_id according to the affinity value
+        server_group_id = 'group-1' if affinity is not None else None
+        instance_reservation['server_group_id'] = server_group_id
+
+        mock_nova_client = self.patch(nova, 'NovaClientWrapper')
+        mock_nova_client.return_value = mock.MagicMock()
+        mock_nova_pool = self.patch(nova, 'ReservationPool')
+        mock_nova_pool.return_value = mock.MagicMock()
+        plugin = instance_plugin.VirtualInstancePlugin()
+        mock_nova = mock.MagicMock()
+        type(plugin).nova = mock_nova
+
+        plugin.cleanup_resources(instance_reservation)
+
+        if affinity is not None:
+            mock_nova.nova.server_groups.delete.assert_called_once_with(
+                'group-1')
+        mock_nova.nova.flavors.delete.assert_called_once_with(
+            'reservation-id1')
