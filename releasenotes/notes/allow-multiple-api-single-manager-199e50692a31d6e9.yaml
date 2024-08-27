@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Allow multiple Blazar API services to run against a single Blazar manager
+    service.
