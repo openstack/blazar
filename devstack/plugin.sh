@@ -51,7 +51,7 @@ function configure_blazar {
     iniset $BLAZAR_CONF_FILE DEFAULT host $(ipv6_unquote $SERVICE_HOST)
     iniset $BLAZAR_CONF_FILE DEFAULT debug $BLAZAR_DEBUG
 
-    iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin,virtual.instance.plugin,virtual.floatingip.plugin
+    iniset $BLAZAR_CONF_FILE manager plugins physical.host.plugin,virtual.instance.plugin,virtual.floatingip.plugin,flavor.instance.plugin
 
     iniset $BLAZAR_CONF_FILE api api_v2_controllers oshosts,leases
 
