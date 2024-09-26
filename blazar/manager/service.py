@@ -377,15 +377,6 @@ class ManagerService(service_utils.RPCServer):
 
             allocations = self._allocation_candidates(
                 lease_values, reservations)
-            try:
-                resource_requests = self._get_enforcement_resources(
-                    lease_values, reservations)
-                self.enforcement.check_create(
-                    context.current(), lease_values, reservations, allocations,
-                    resource_requests)
-            except common_ex.NotAuthorized as e:
-                LOG.error("Enforcement checks failed. %s", str(e))
-                raise common_ex.NotAuthorized(e)
 
             events.append({'event_type': 'start_lease',
                            'time': start_date,
@@ -430,6 +421,19 @@ class ManagerService(service_utils.RPCServer):
                 with save_and_reraise_exception():
                     LOG.exception('Cannot create a lease')
             else:
+                # check enforcement only after the lease_id
+                # has been created
+                try:
+                    resource_requests = self._get_enforcement_resources(
+                        lease_values, reservations)
+                    self.enforcement.check_create(
+                        context.current(), lease, reservations, allocations,
+                        resource_requests)
+                except common_ex.NotAuthorized as e:
+                    db_api.lease_destroy(lease_id)
+                    LOG.error("Enforcement checks failed. %s", str(e))
+                    raise common_ex.NotAuthorized(e)
+
                 try:
                     for reservation in reservations:
                         reservation['lease_id'] = lease['id']
