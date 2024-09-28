@@ -17,14 +17,14 @@ import datetime
 from unittest import mock
 
 import ddt
+from oslo_config import cfg
+from oslo_utils import timeutils
 
 from blazar import context
 from blazar import enforcement
 from blazar.enforcement import exceptions
 from blazar.enforcement import filters
 from blazar import tests
-
-from oslo_config import cfg
 
 
 def get_fake_host(host_id):
@@ -158,9 +158,8 @@ class MaxLeaseDurationTestCase(tests.TestCase):
         del new_lease_values['reservations']
         ctx = context.current()
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2014, 1, 1, 1, 1)
+        with mock.patch.object(timeutils, 'utcnow') as patched:
+            patched.return_value = datetime.datetime(2014, 1, 1, 1, 1)
             self.enforcement.check_update(
                 ctx, lease, new_lease_values, current_allocations,
                 allocation_candidates, reservations, new_reservations)
@@ -178,9 +177,8 @@ class MaxLeaseDurationTestCase(tests.TestCase):
         del new_lease_values['reservations']
         ctx = context.current()
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2014, 1, 1, 1, 1)
+        with mock.patch.object(timeutils, 'utcnow') as patched:
+            patched.return_value = datetime.datetime(2014, 1, 1, 1, 1)
             self.assertRaises(exceptions.MaxLeaseDurationException,
                               self.enforcement.check_update, ctx, lease,
                               new_lease_values, current_allocations,
@@ -199,9 +197,8 @@ class MaxLeaseDurationTestCase(tests.TestCase):
         del new_lease_values['reservations']
         ctx = context.current()
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2014, 1, 1, 1, 50)
+        with mock.patch.object(timeutils, 'utcnow') as patched:
+            patched.return_value = datetime.datetime(2014, 1, 1, 1, 50)
             self.enforcement.check_update(
                 ctx, lease, new_lease_values, current_allocations,
                 allocation_candidates, reservations, new_reservations)
@@ -235,9 +232,8 @@ class MaxLeaseDurationTestCase(tests.TestCase):
         del new_lease_values['reservations']
         ctx = context.current()
 
-        with mock.patch.object(datetime, 'datetime',
-                               mock.Mock(wraps=datetime.datetime)) as patched:
-            patched.utcnow.return_value = datetime.datetime(2014, 1, 1, 1, 1)
+        with mock.patch.object(timeutils, 'utcnow') as patched:
+            patched.return_value = datetime.datetime(2014, 1, 1, 1, 1)
             self.enforcement.check_update(
                 ctx, lease, new_lease_values, current_allocations,
                 allocation_candidates, reservations, new_reservations)

@@ -21,6 +21,7 @@ import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils.excutils import save_and_reraise_exception
+from oslo_utils import timeutils
 from stevedore import enabled
 
 from blazar import context
@@ -236,7 +237,7 @@ class ManagerService(service_utils.RPCServer):
             sort_dir='asc',
             filters={'status': status.event.UNDONE,
                      'time': {'op': 'le',
-                              'border': datetime.datetime.utcnow()}}
+                              'border': timeutils.utcnow()}}
         )
 
         for batch in self._select_for_execution(events):
@@ -252,7 +253,7 @@ class ManagerService(service_utils.RPCServer):
         try:
             event_fn(lease_id=event['lease_id'], event_id=event['id'])
         except common_ex.InvalidStatus:
-            now = datetime.datetime.utcnow()
+            now = timeutils.utcnow()
             if now < event['time'] + datetime.timedelta(
                     seconds=CONF.manager.event_max_retries * 10):
                 # Set the event status UNDONE for retrying the event
@@ -284,7 +285,7 @@ class ManagerService(service_utils.RPCServer):
         return date
 
     def _parse_lease_dates(self, start_date, end_date):
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
         now = datetime.datetime(now.year,
                                 now.month,
                                 now.day,

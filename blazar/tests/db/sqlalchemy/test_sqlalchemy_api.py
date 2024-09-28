@@ -16,6 +16,7 @@
 import datetime
 import operator
 
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from blazar.db import exceptions as db_exceptions
@@ -964,12 +965,12 @@ class SQLAlchemyDBApiTestCase(tests.DBTestCase):
         db_api.event_create(_get_fake_event_values(
             id='1',
             event_type=fake_event_type,
-            time=datetime.datetime.utcnow()
+            time=timeutils.utcnow()
         ))
         db_api.event_create(_get_fake_event_values(
             id='2',
             event_type=fake_event_type,
-            time=datetime.datetime.utcnow()
+            time=timeutils.utcnow()
         ))
 
         filtered_events = db_api.event_get_all_sorted_by_filters(

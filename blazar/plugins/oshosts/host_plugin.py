@@ -22,6 +22,7 @@ from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import strutils
+from oslo_utils import timeutils
 
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
@@ -304,7 +305,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                                     host['service_name'])
 
         # Allocate an alternative host.
-        start_date = max(datetime.datetime.utcnow(), lease['start_date'])
+        start_date = max(timeutils.utcnow(), lease['start_date'])
         new_hostids = self._matching_hosts(
             reservation['hypervisor_properties'],
             reservation['resource_properties'],
@@ -457,7 +458,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
 
     def is_updatable_extra_capability(self, capability, property_name):
         reservations = db_utils.get_reservations_by_host_id(
-            capability['computehost_id'], datetime.datetime.utcnow(),
+            capability['computehost_id'], timeutils.utcnow(),
             datetime.date.max)
 
         for r in reservations:
@@ -588,7 +589,7 @@ class PhysicalHostPlugin(base.BasePlugin, nova.NovaClientWrapper):
                      ]
         }.
         """
-        start = datetime.datetime.utcnow()
+        start = timeutils.utcnow()
         end = datetime.date.max
 
         # To reduce overhead, this method only executes one query
@@ -969,7 +970,7 @@ class PhysicalHostMonitorPlugin(base.BaseMonitorPlugin,
         reservation_flags = {}
         hosts = db_api.unreservable_host_get_all_by_queries([])
 
-        interval_begin = datetime.datetime.utcnow()
+        interval_begin = timeutils.utcnow()
         interval = self.get_healing_interval()
         if interval == 0:
             interval_end = datetime.date.max

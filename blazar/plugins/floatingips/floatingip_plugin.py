@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from oslo_utils.excutils import save_and_reraise_exception
 from oslo_utils import netutils
 from oslo_utils import strutils
+from oslo_utils import timeutils
 
 from blazar import context
 from blazar.db import api as db_api
@@ -422,7 +423,7 @@ class FloatingIpPlugin(base.BasePlugin):
                      ]
         }.
         """
-        start = datetime.datetime.utcnow()
+        start = timeutils.utcnow()
         end = datetime.date.max
 
         reservations = db_utils.get_reservation_allocations_by_fip_ids(
