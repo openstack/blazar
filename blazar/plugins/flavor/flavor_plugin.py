@@ -391,6 +391,7 @@ class FlavorPlugin(base.BasePlugin):
             'vcpus': source_flavor['vcpus'],
             'ram': source_flavor['ram'],
             'disk': source_flavor['disk'],
+            'ephemeral': source_flavor.get('OS-FLV-EXT-DATA:ephemeral', 0),
             'is_public': False
         }
         # create flavor using admin access

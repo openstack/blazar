@@ -347,7 +347,7 @@ class TestFlavorPlugin(tests.DBTestCase):
         })
         mock_create.assert_called_once_with(
             flavorid='12345', name='reservation:12345', vcpus=2, ram=1024,
-            disk=10, is_public=False)
+            disk=10, ephemeral=100, is_public=False)
 
     def test__query_available_hosts(self):
         get_reservations = self.patch(db_utils,
