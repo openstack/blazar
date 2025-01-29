@@ -30,7 +30,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts/{host_id}',
                 'method': 'GET'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'post',
@@ -41,7 +42,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts',
                 'method': 'POST'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'put',
@@ -52,7 +54,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts/{host_id}',
                 'method': 'PUT'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'delete',
@@ -63,7 +66,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts/{host_id}',
                 'method': 'DELETE'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'get_allocations',
@@ -78,7 +82,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts/{host_id}/allocation',
                 'method': 'GET'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'get_resource_properties',
@@ -89,7 +94,8 @@ oshosts_policies = [
                 'path': '/{api_version}/os-hosts/resource_properties',
                 'method': 'GET'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'update_resource_properties',
@@ -101,7 +107,8 @@ oshosts_policies = [
                          '{property_name}'),
                 'method': 'PATCH'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
 ]
 

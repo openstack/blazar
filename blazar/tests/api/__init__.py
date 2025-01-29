@@ -44,8 +44,8 @@ class APITest(tests.TestCase):
             if not headers:
                 return context.BlazarContext(
                     user_id=FAKE_USER, project_id=FAKE_PROJECT,
-                    roles=['member'])
-            roles = headers.get('X-Roles', str('member')).split(',')
+                    roles=['member', 'reader'])
+            roles = headers.get('X-Roles', str('member,reader')).split(',')
             return context.BlazarContext(
                 user_id=headers.get('X-User-Id', FAKE_USER),
                 project_id=headers.get('X-Project-Id', FAKE_PROJECT),

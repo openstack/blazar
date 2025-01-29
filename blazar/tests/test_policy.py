@@ -32,7 +32,7 @@ class BlazarPolicyTestCase(tests.TestCase):
 
         self.context = context.BlazarContext(user_id='fake',
                                              project_id='fake',
-                                             roles=['member'])
+                                             roles=['member', 'reader'])
 
     def test_standardpolicy(self):
         target_good = {'user_id': self.context.user_id,

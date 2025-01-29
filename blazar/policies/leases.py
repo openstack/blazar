@@ -19,7 +19,7 @@ POLICY_ROOT = 'blazar:leases:%s'
 leases_policies = [
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'get',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.PROJECT_READER_OR_ADMIN,
         description='Policy rule for List/Show Lease(s) API.',
         operations=[
             {
@@ -30,40 +30,44 @@ leases_policies = [
                 'path': '/{api_version}/leases/{lease_id}',
                 'method': 'GET'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'post',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.PROJECT_MEMBER_OR_ADMIN,
         description='Policy rule for Create Lease API.',
         operations=[
             {
                 'path': '/{api_version}/leases',
                 'method': 'POST'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'put',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.PROJECT_MEMBER_OR_ADMIN,
         description='Policy rule for Update Lease API.',
         operations=[
             {
                 'path': '/{api_version}/leases/{lease_id}',
                 'method': 'PUT'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'delete',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.PROJECT_MEMBER_OR_ADMIN,
         description='Policy rule for Delete Lease API.',
         operations=[
             {
                 'path': '/{api_version}/leases/{lease_id}',
                 'method': 'DELETE'
             }
-        ]
+        ],
+        scope_types=['project']
     )
 ]
 

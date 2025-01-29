@@ -19,7 +19,7 @@ POLICY_ROOT = 'blazar:floatingips:%s'
 floatingips_policies = [
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'get',
-        check_str=base.RULE_ADMIN,
+        check_str=base.PROJECT_READER_OR_ADMIN,
         description='Policy rule for List/Show FloatingIP(s) API.',
         operations=[
             {
@@ -30,7 +30,8 @@ floatingips_policies = [
                 'path': '/{api_version}/floatingips/{floatingip_id}',
                 'method': 'GET'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'post',
@@ -41,7 +42,8 @@ floatingips_policies = [
                 'path': '/{api_version}/floatingips',
                 'method': 'POST'
             }
-        ]
+        ],
+        scope_types=['project']
     ),
     policy.DocumentedRuleDefault(
         name=POLICY_ROOT % 'delete',
@@ -52,7 +54,8 @@ floatingips_policies = [
                 'path': '/{api_version}/floatingips/{floatingip_id}',
                 'method': 'DELETE'
             }
-        ]
+        ],
+        scope_types=['project']
     )
 ]
 

@@ -16,6 +16,22 @@ RULE_ADMIN = 'rule:admin'
 RULE_ADMIN_OR_OWNER = 'rule:admin_or_owner'
 RULE_ANY = '@'
 
+DEPRECATED_REASON = """
+Blazar API policies are introducing new default roles with scope_type
+capabilities. Old policies are deprecated and silently going to be ignored
+in future release.
+"""
+
+DEPRECATED_ADMIN_OR_OWNER_POLICY = policy.DeprecatedRule(
+    name=RULE_ADMIN_OR_OWNER,
+    check_str="rule:admin or project_id:%(project_id)s",
+    deprecated_reason=DEPRECATED_REASON,
+    deprecated_since='15.0.0'
+)
+
+PROJECT_MEMBER_OR_ADMIN = 'rule:project_member_or_admin'
+PROJECT_READER_OR_ADMIN = 'rule:project_reader_or_admin'
+
 rules = [
     policy.RuleDefault(
         name="admin",
@@ -24,7 +40,30 @@ rules = [
     policy.RuleDefault(
         name="admin_or_owner",
         check_str="rule:admin or project_id:%(project_id)s",
-        description="Default rule for most non-Admin APIs.")
+        description="Default rule for most non-Admin APIs.",
+        deprecated_for_removal=True,
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since='15.0.0'),
+    policy.RuleDefault(
+        "project_member_api",
+        "role:member and project_id:%(project_id)s",
+        "Default rule for Project Member (non-Admin) APIs.",
+        deprecated_rule=DEPRECATED_ADMIN_OR_OWNER_POLICY),
+    policy.RuleDefault(
+        "project_reader_api",
+        "role:reader and project_id:%(project_id)s",
+        "Default rule for Project Reader (read-only) APIs.",
+        deprecated_rule=DEPRECATED_ADMIN_OR_OWNER_POLICY),
+    policy.RuleDefault(
+        "project_member_or_admin",
+        "rule:project_member_api or rule:admin",
+        "Default rule for Project Member or Admin APIs.",
+        deprecated_rule=DEPRECATED_ADMIN_OR_OWNER_POLICY),
+    policy.RuleDefault(
+        "project_reader_or_admin",
+        "rule:project_reader_api or rule:admin",
+        "Default rule for Project Reader or Admin APIs.",
+        deprecated_rule=DEPRECATED_ADMIN_OR_OWNER_POLICY)
 ]
 
 
