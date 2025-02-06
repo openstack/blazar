@@ -16,6 +16,8 @@
 import datetime
 import ddt
 
+from oslo_utils import timeutils
+
 from blazar import context
 from blazar import enforcement
 from blazar.enforcement import filters
@@ -44,10 +46,10 @@ def get_fake_lease(**kwargs):
     fake_lease = {
         'id': '1',
         'name': 'lease_test',
-        'start_date': datetime.datetime.utcnow().strftime(
+        'start_date': timeutils.utcnow().strftime(
             service.LEASE_DATE_FORMAT),
         'end_date': (
-            datetime.datetime.utcnow() + datetime.timedelta(days=1)).strftime(
+            timeutils.utcnow() + datetime.timedelta(days=1)).strftime(
                 service.LEASE_DATE_FORMAT),
         'user_id': '111',
         'project_id': '222',

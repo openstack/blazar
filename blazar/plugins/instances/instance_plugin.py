@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import strutils
 from oslo_utils.strutils import bool_from_string
+from oslo_utils import timeutils
 
 from blazar import context
 from blazar.db import api as db_api
@@ -167,7 +168,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
                      ]
         }.
         """
-        start = datetime.datetime.utcnow()
+        start = timeutils.utcnow()
         end = datetime.date.max
 
         # To reduce overhead, this method only executes one query
@@ -770,8 +771,7 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
     def _select_host(self, reservation, lease):
         """Returns the alternative host id or None if not found."""
         values = {}
-        values['start_date'] = max(datetime.datetime.utcnow(),
-                                   lease['start_date'])
+        values['start_date'] = max(timeutils.utcnow(), lease['start_date'])
         values['end_date'] = lease['end_date']
         specs = ['vcpus', 'memory_mb', 'disk_gb', 'affinity', 'amount',
                  'resource_properties']
