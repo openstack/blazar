@@ -2431,7 +2431,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
         self.addCleanup(CONF.clear_override, 'cleaning_time')
         self.assertEqual(['host1', 'host2', 'host3'], result)
 
-    @mock.patch.object(random.Random, "shuffle")
+    @mock.patch.object(random, "shuffle")
     def test_random_matching_hosts_not_allocated_hosts(self, mock_shuffle):
         def host_allocation_get_all_by_values(**kwargs):
             if kwargs['compute_host_id'] == 'host1':
@@ -2465,7 +2465,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                         group=plugin.RESOURCE_TYPE)
         mock_shuffle.assert_called_once_with(['host2', 'host3'])
 
-    @mock.patch.object(random.Random, "shuffle")
+    @mock.patch.object(random, "shuffle")
     def test_random_matching_hosts_allocated_hosts(self, mock_shuffle):
         def host_allocation_get_all_by_values(**kwargs):
             if kwargs['compute_host_id'] == 'host1':
@@ -2499,7 +2499,7 @@ class PhysicalHostPluginTestCase(tests.TestCase):
                         group=plugin.RESOURCE_TYPE)
         mock_shuffle.assert_called_once_with(['host1', 'host2', 'host3'])
 
-    @mock.patch.object(random.Random, "shuffle")
+    @mock.patch.object(random, "shuffle")
     def test_random_matching_hosts_allocated_cleaning_time(self, mock_shuffle):
         def host_allocation_get_all_by_values(**kwargs):
             if kwargs['compute_host_id'] == 'host1':
