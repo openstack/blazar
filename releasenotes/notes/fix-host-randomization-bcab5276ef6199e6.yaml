@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fixes functionality of host randomization feature.
+    `LP#2099927 <https://bugs.launchpad.net/blazar/+bug/2099927>`__
