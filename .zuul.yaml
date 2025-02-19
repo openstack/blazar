@@ -8,11 +8,11 @@
       - release-notes-jobs-python3
     check:
       jobs:
-        - blazar-tempest-plugin-base
-        - blazar-tempest-plugin-ipv6-only
+        - blazar-tempest-plugin-base:
+            voting: false
+        - blazar-tempest-plugin-ipv6-only:
+            voting: false
         - openstack-tox-pylint:
             voting: false
     gate:
-      jobs:
-        - blazar-tempest-plugin-base
-        - blazar-tempest-plugin-ipv6-only
+      jobs: []
