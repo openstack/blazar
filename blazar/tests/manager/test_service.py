@@ -189,8 +189,8 @@ class ServiceTestCase(tests.DBTestCase):
                               'resource_id': '111',
                               'resource_type': 'virtual:instance',
                               'status': 'FAKE PROGRESS'}],
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
+            'start_date': '2046-11-13 13:13',
+            'end_date': '2046-12-13 13:13',
             'trust_id': 'exxee111qwwwwe'}
 
         self.good_date = datetime.datetime.strptime('2012-12-13 13:13',
@@ -505,7 +505,7 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_some_time(self):
         lease_values = self.lease_values.copy()
-        self.lease['start_date'] = '2026-11-13 13:13'
+        self.lease['start_date'] = '2046-11-13 13:13'
 
         lease = self.manager.create_lease(lease_values)
 
@@ -515,11 +515,11 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_validate_created_events(self):
         lease_values = self.lease_values.copy()
-        self.lease['start_date'] = '2026-11-13 13:13:00'
-        self.lease['end_date'] = '2026-12-13 13:13:00'
-        self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
-        self.lease['events'][1]['time'] = '2026-12-13 13:13:00'
-        self.lease['events'][2]['time'] = '2026-12-13 12:13:00'
+        self.lease['start_date'] = '2046-11-13 13:13:00'
+        self.lease['end_date'] = '2046-12-13 13:13:00'
+        self.lease['events'][0]['time'] = '2046-11-13 13:13:00'
+        self.lease['events'][1]['time'] = '2046-12-13 13:13:00'
+        self.lease['events'][2]['time'] = '2046-12-13 12:13:00'
 
         lease = self.manager.create_lease(lease_values)
 
@@ -550,11 +550,11 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_before_end_event_is_before_lease_start(self):
         lease_values = self.lease_values.copy()
-        self.lease['start_date'] = '2026-11-13 13:13:00'
-        self.lease['end_date'] = '2026-12-13 13:13:00'
-        self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
-        self.lease['events'][1]['time'] = '2026-12-13 13:13:00'
-        self.lease['events'][2]['time'] = '2026-11-13 13:13:00'
+        self.lease['start_date'] = '2046-11-13 13:13:00'
+        self.lease['end_date'] = '2046-12-13 13:13:00'
+        self.lease['events'][0]['time'] = '2046-11-13 13:13:00'
+        self.lease['events'][1]['time'] = '2046-12-13 13:13:00'
+        self.lease['events'][2]['time'] = '2046-11-13 13:13:00'
 
         self.cfg.CONF.set_override('minutes_before_end_lease', 120,
                                    group='manager')
@@ -586,7 +586,7 @@ class ServiceTestCase(tests.DBTestCase):
     def test_create_lease_before_end_event_before_start_without_lease_id(self):
         lease_values = self.lease_values.copy()
 
-        self.lease['start_date'] = '2026-11-13 13:13'
+        self.lease['start_date'] = '2046-11-13 13:13'
 
         self.cfg.CONF.set_override('minutes_before_end_lease', 120,
                                    group='manager')
@@ -599,30 +599,30 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_before_end_param_is_before_lease_start(self):
         lease_values = self.lease_values.copy()
-        lease_values['before_end_date'] = '2026-11-11 13:13'
-        lease_values['start_date'] = '2026-11-13 13:13'
+        lease_values['before_end_date'] = '2046-11-11 13:13'
+        lease_values['start_date'] = '2046-11-13 13:13'
 
-        self.lease['start_date'] = '2026-11-13 13:13'
+        self.lease['start_date'] = '2046-11-13 13:13'
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_create_lease_before_end_param_is_past_lease_ending(self):
         lease_values = self.lease_values.copy()
-        lease_values['start_date'] = '2026-11-13 13:13'
-        lease_values['end_date'] = '2026-11-14 13:13'
-        lease_values['before_end_date'] = '2026-11-15 13:13'
-        self.lease['start_date'] = '2026-11-13 13:13'
+        lease_values['start_date'] = '2046-11-13 13:13'
+        lease_values['end_date'] = '2046-11-14 13:13'
+        lease_values['before_end_date'] = '2046-11-15 13:13'
+        self.lease['start_date'] = '2046-11-13 13:13'
 
         self.assertRaises(
             exceptions.NotAuthorized, self.manager.create_lease, lease_values)
 
     def test_create_lease_no_before_end_event(self):
         lease_values = self.lease_values.copy()
-        self.lease['start_date'] = '2026-11-13 13:13:00'
-        self.lease['end_date'] = '2026-11-14 13:13:00'
-        self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
-        self.lease['events'][1]['time'] = '2026-11-14 13:13:00'
+        self.lease['start_date'] = '2046-11-13 13:13:00'
+        self.lease['end_date'] = '2046-11-14 13:13:00'
+        self.lease['events'][0]['time'] = '2046-11-13 13:13:00'
+        self.lease['events'][1]['time'] = '2046-11-14 13:13:00'
         self.lease['events'].pop()
 
         self.cfg.CONF.set_override('minutes_before_end_lease', 0,
@@ -648,13 +648,13 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_with_before_end_date_param(self):
         lease_values = self.lease_values.copy()
-        lease_values['before_end_date'] = '2026-11-14 10:13'
+        lease_values['before_end_date'] = '2046-11-14 10:13'
 
-        self.lease['start_date'] = '2026-11-13 13:13:00'
-        self.lease['end_date'] = '2026-11-14 13:13:00'
-        self.lease['events'][0]['time'] = '2026-11-13 13:13:00'
-        self.lease['events'][1]['time'] = '2026-11-14 13:13:00'
-        self.lease['events'][2]['time'] = '2026-11-14 10:13:00'
+        self.lease['start_date'] = '2046-11-13 13:13:00'
+        self.lease['end_date'] = '2046-11-14 13:13:00'
+        self.lease['events'][0]['time'] = '2046-11-13 13:13:00'
+        self.lease['events'][1]['time'] = '2046-11-14 13:13:00'
+        self.lease['events'][2]['time'] = '2046-11-14 10:13:00'
 
         lease = self.manager.create_lease(lease_values)
 
@@ -692,7 +692,7 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_wrong_format_before_end_date(self):
         lease_values = self.lease_values.copy()
-        lease_values['before_end_date'] = '2026-14 10:13'
+        lease_values['before_end_date'] = '2046-14 10:13'
 
         self.assertRaises(
             manager_ex.InvalidDate, self.manager.create_lease, lease_values)
@@ -708,8 +708,8 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_end_before_start(self):
         lease_values = self.lease_values.copy()
-        lease_values['start_date'] = '2026-11-13 13:13'
-        lease_values['end_date'] = '2026-11-13 12:13'
+        lease_values['start_date'] = '2046-11-13 13:13'
+        lease_values['end_date'] = '2046-11-13 12:13'
 
         self.assertRaises(
             exceptions.InvalidInput, self.manager.create_lease, lease_values)
@@ -742,21 +742,21 @@ class ServiceTestCase(tests.DBTestCase):
 
     def test_create_lease_without_required_params(self):
         name_missing_values = {
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
+            'start_date': '2046-11-13 13:13',
+            'end_date': '2046-12-13 13:13',
             'trust_id': 'trust1'}
         start_missing_values = {
             'name': 'name',
-            'end_date': '2026-12-13 13:13',
+            'end_date': '2046-12-13 13:13',
             'trust_id': 'trust1'}
         end_missing_values = {
             'name': 'name',
-            'start_date': '2026-11-13 13:13',
+            'start_date': '2046-11-13 13:13',
             'trust_id': 'trust1'}
         resource_type_missing_value = {
             'name': 'name',
-            'start_date': '2026-11-13 13:13',
-            'end_date': '2026-12-13 13:13',
+            'start_date': '2046-11-13 13:13',
+            'end_date': '2046-12-13 13:13',
             'reservations': [{'min': 1, 'max': 3}],
             'trust_id': 'trust1'
             }
