@@ -80,7 +80,7 @@ function configure_blazar {
     iniadd $NOVA_CONF filter_scheduler available_filters "blazarnova.scheduler.filters.blazar_filter.BlazarFilter"
 
     if [[ "$BLAZAR_USE_MOD_WSGI" == "True" ]]; then
-        write_uwsgi_config "$BLAZAR_UWSGI_CONF" "$BLAZAR_UWSGI" "/reservation"
+        write_uwsgi_config "$BLAZAR_UWSGI_CONF" "$BLAZAR_UWSGI" "/reservation" "" "blazar"
     fi
 
     # Database

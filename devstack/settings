@@ -31,7 +31,7 @@ BLAZAR_DASHBOARD_DIR=$DEST/blazar-dashboard
 # wsgi deployment
 BLAZAR_USE_MOD_WSGI=${BLAZAR_USE_MOD_WSGI:-True}
 BLAZAR_BIN_DIR=$(get_python_exec_prefix)
-BLAZAR_UWSGI=$BLAZAR_BIN_DIR/blazar-api-wsgi
+BLAZAR_UWSGI=blazar.wsgi.api:application
 BLAZAR_UWSGI_CONF=$BLAZAR_CONF_DIR/blazar-api-uwsgi.ini
 
 BLAZAR_SERVICE_HOST=${BLAZAR_SERVICE_HOST:-$SERVICE_HOST}
