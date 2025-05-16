@@ -51,7 +51,7 @@
         ],
         "events": [
             {
-                "id": "188a8584-f832-4df9-9a4a-51e6364420ff"
+                "id": "188a8584-f832-4df9-9a4a-51e6364420ff",
                 "lease_id": "6ee55c78-ac52-41a6-99af-2d2d73bcc466",
                 "status": "UNDONE",
                 "event_type": "start_lease",
@@ -69,7 +69,7 @@
                 "updated_at": null
             },
             {
-                "id": "f583af71-ca21-4b66-87de-52211d118029"
+                "id": "f583af71-ca21-4b66-87de-52211d118029",
                 "lease_id": "6ee55c78-ac52-41a6-99af-2d2d73bcc466",
                 "status": "UNDONE",
                 "time": "2017-12-27T11:00:00.000000",
