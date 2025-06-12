@@ -9,12 +9,10 @@
     check:
       jobs:
         - blazar-tempest-plugin-base
-        - blazar-tempest-plugin-jammy
         - blazar-tempest-plugin-ipv6-only
         - openstack-tox-pylint:
             voting: false
     gate:
       jobs:
         - blazar-tempest-plugin-base
-        - blazar-tempest-plugin-jammy
         - blazar-tempest-plugin-ipv6-only
