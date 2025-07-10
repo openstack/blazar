@@ -14,8 +14,8 @@
 # limitations under the License.
 
 from oslo_db.sqlalchemy import models
-from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
+from sqlalchemy.orm import declarative_base
 
 
 class _BlazarBase(models.ModelBase, models.TimestampMixin):
@@ -49,4 +49,4 @@ def datetime_to_str(dct, attr_name):
         dct[attr_name] = dct[attr_name].isoformat(' ')
 
 
-BlazarBase = declarative.declarative_base(cls=_BlazarBase)
+BlazarBase = declarative_base(cls=_BlazarBase)
