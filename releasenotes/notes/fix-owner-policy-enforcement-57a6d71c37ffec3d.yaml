@@ -1,0 +1,10 @@
+---
+security:
+  - |
+    Fixes a bug where any user could update/delete a lease from any project,
+    provided that they had the lease ID. When using the default policy
+    configuration, there is no way for a regular user to see lease IDs of
+    another project. However, operators that are running the Resource
+    Availability Calendar may have overridden this policy, and so may be
+    vulnerable without this fix.
+    `LP#2120655 <https://bugs.launchpad.net/blazar/+bug/2120655>`__
