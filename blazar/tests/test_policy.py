@@ -15,6 +15,8 @@
 
 """Test of Policy Engine For Blazar."""
 
+import unittest.mock as mock
+
 from oslo_config import cfg
 
 from blazar import context
@@ -65,3 +67,24 @@ class BlazarPolicyTestCase(tests.TestCase):
         self.assertTrue(user_method_with_action(self))
         self.assertRaises(exceptions.PolicyNotAuthorized,
                           adminonly_method_with_action, self)
+
+        @mock.patch(
+            'blazar.db.api.lease_get',
+            mock.MagicMock(return_value={'id': '1', 'user_id': 'alt_fake',
+                                         'project_id': 'alt_fake'}))
+        @policy.authorize('leases', 'get', ctx=self.context)
+        def alt_user_get_lease(self, **kwargs):
+            return True
+
+        self.assertRaises(exceptions.PolicyNotAuthorized, alt_user_get_lease,
+                          self, lease_id='1')
+
+        @mock.patch(
+            'blazar.db.api.lease_get',
+            mock.MagicMock(return_value={'id': '1', 'user_id': 'fake',
+                                         'project_id': 'fake'}))
+        @policy.authorize('leases', 'get', ctx=self.context)
+        def user_get_lease(self, **kwargs):
+            return True
+
+        self.assertTrue(user_get_lease(self, lease_id='1'))
