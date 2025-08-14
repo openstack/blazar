@@ -22,6 +22,7 @@ from oslo_log import log as logging
 from oslo_policy import policy
 
 from blazar import context
+from blazar.db import api as db_api
 from blazar import exceptions
 from blazar import policies
 
@@ -101,8 +102,22 @@ def authorize(extension, action=None, api='blazar', ctx=None,
         @functools.wraps(func)
         def wrapped(self, *args, **kwargs):
             cur_ctx = ctx or context.current()
-            tgt = target or {'project_id': cur_ctx.project_id,
-                             'user_id': cur_ctx.user_id}
+            tgt = target
+            if tgt is None:
+                obj = None
+                if kwargs.get("lease_id"):
+                    obj = db_api.lease_get(kwargs.get("lease_id"))
+                if obj:
+                    tgt = {
+                        'project_id': obj.get("project_id"),
+                        'user_id': obj.get("user_id"),
+                    }
+                else:
+                    tgt = {
+                        'project_id': cur_ctx.project_id,
+                        'user_id': cur_ctx.user_id,
+                    }
+
             if action is None:
                 act = '%s:%s' % (api, extension)
             else:
