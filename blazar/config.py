@@ -23,9 +23,7 @@ cli_opts = [
                        help='Name of this node. This can be an opaque '
                             'identifier. It is not necessarily a hostname, '
                             'FQDN, or IP address. However, the node name must '
-                            'be valid within an AMQP key, and if using '
-                            'ZeroMQ (will be removed in the Stein release), a '
-                            'valid hostname, FQDN, or IP address'),
+                            'be valid within an AMQP key.'),
     cfg.BoolOpt('log_exchange', default=False,
                 help='Log request/response exchange details: environ, '
                      'headers and bodies'),
