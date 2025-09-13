@@ -1,13 +1,10 @@
-Team and repository tags
-========================
-
-.. image:: https://governance.openstack.org/tc/badges/blazar.svg
-    :target: https://governance.openstack.org/tc/reference/tags/index.html
-
-.. Change things from this point on
-
+======
 Blazar
 ======
+
+.. image:: https://governance.openstack.org/tc/badges/blazar.svg
+
+.. Change things from this point on
 
 Blazar is a resource reservation service for OpenStack. Blazar enables users
 to reserve a specific type/amount of resources for a specific time period and
