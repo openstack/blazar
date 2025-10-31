@@ -27,6 +27,14 @@ def format_lease_payload(lease):
         'lease_id': lease['id'],
         'user_id': lease['user_id'],
         'project_id': lease['project_id'],
+        'trust_id': lease['trust_id'],
         'start_date': lease['start_date'],
-        'end_date': lease['end_date']
+        'end_date': lease['end_date'],
+        'status': lease['status'],
+        'reservations': lease['reservations'],
+        'events': lease['events'],
+        'name': lease.get('name'),
+        'created_at': lease.get('created_at'),
+        'updated_at': lease.get('updated_at'),
+        'degraded': lease.get('degraded')
     }

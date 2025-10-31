@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    The payload of a notification has been extended to send the entire lease data.
