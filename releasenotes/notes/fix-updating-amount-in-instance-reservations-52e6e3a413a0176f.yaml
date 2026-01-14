@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes an issue where the amount of instances in an instance reservation
+    could not be updated when the lease is active.
+    `LP#2138386 <https://bugs.launchpad.net/blazar/+bug/2138386>`__
