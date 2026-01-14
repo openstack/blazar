@@ -550,7 +550,8 @@ class VirtualInstancePlugin(base.BasePlugin, nova.NovaClientWrapper):
             return
 
         if (reservation['status'] == 'active' and
-                any([k in updatable[:-1] for k in new_values.keys()])):
+                any([k in updatable for k in new_values.keys()
+                     if k != 'amount'])):
             msg = "An active reservation only accepts to update amount."
             raise mgr_exceptions.InvalidStateUpdate(msg)
 
