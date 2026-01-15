@@ -97,6 +97,24 @@ are in the ``reservation`` object.
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
 
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following parameters are returned for flavor-based instance reservation.
+All parameters are in the ``reservation`` object.
+
+.. rest_parameters:: parameters.yaml
+
+  - reservation.amount: reservation_amount
+  - reservation.vcpus: reservation_vcpus
+  - reservation.memory_mb: reservation_memory_mb
+  - reservation.disk_gb: reservation_disk_gb
+  - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
+  - reservation.flavor_id: reservation_flavor_id
+  - reservation.server_group_id: reservation_server_group_id
+  - reservation.aggregate_id: reservation_aggregate_id
+
 **Example of List Leases Response**
 
 .. literalinclude:: ../../../doc/api_samples/leases/lease-list-resp.json
@@ -158,6 +176,19 @@ are in the ``reservation`` object.
   - reservation.vcpus: reservation_vcpus
   - reservation.memory_mb: reservation_memory_mb
   - reservation.disk_gb: reservation_disk_gb
+  - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
+
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following parameters are required for flavor-based instance reservation.
+All parameters are in the ``reservation`` object.
+
+.. rest_parameters:: parameters.yaml
+
+  - reservation.amount: reservation_amount
+  - reservation.flavor_id: reservation_flavor_id
   - reservation.affinity : reservation_affinity
   - reservation.resource_properties: reservation_resource_properties
 
@@ -224,6 +255,21 @@ Parameters for Instance Reservation
 
 The following parameters are returned for instance reservation. All parameters
 are in the ``reservation`` object.
+
+.. rest_parameters:: parameters.yaml
+
+  - reservation.amount: reservation_amount
+  - reservation.vcpus: reservation_vcpus
+  - reservation.memory_mb: reservation_memory_mb
+  - reservation.disk_gb: reservation_disk_gb
+  - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
+  - reservation.flavor_id: reservation_flavor_id
+  - reservation.server_group_id: reservation_server_group_id
+  - reservation.aggregate_id: reservation_aggregate_id
+
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. rest_parameters:: parameters.yaml
 
@@ -338,6 +384,21 @@ are in the ``reservation`` object.
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
 
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rest_parameters:: parameters.yaml
+
+  - reservation.amount: reservation_amount
+  - reservation.vcpus: reservation_vcpus
+  - reservation.memory_mb: reservation_memory_mb
+  - reservation.disk_gb: reservation_disk_gb
+  - reservation.affinity : reservation_affinity
+  - reservation.resource_properties: reservation_resource_properties
+  - reservation.flavor_id: reservation_flavor_id
+  - reservation.server_group_id: reservation_server_group_id
+  - reservation.aggregate_id: reservation_aggregate_id
+
 **Example of Show Lease Details Response**
 
 .. literalinclude:: ../../../doc/api_samples/leases/lease-details-resp.json
@@ -405,6 +466,12 @@ are in the ``reservation`` object.
   - reservation.disk_gb: reservation_disk_gb_optional
   - reservation.affinity : reservation_affinity_optional
   - reservation.resource_properties: reservation_resource_properties_optional
+
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Lease updates are not currently supported for flavor-based instance
+reservations.
 
 **Example of Update Lease Request**
 
@@ -481,6 +548,12 @@ are in the ``reservation`` object.
   - reservation.flavor_id: reservation_flavor_id
   - reservation.server_group_id: reservation_server_group_id
   - reservation.aggregate_id: reservation_aggregate_id
+
+Parameters for Flavor-based Instance Reservation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Lease updates are not currently supported for flavor-based instance
+reservations.
 
 **Example of Update Lease Response**
 
