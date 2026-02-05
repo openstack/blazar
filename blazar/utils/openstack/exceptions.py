@@ -19,6 +19,10 @@ class ResourceProviderRetrievalFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to get resource provider %(name)s")
 
 
+class ResourceProviderListFailed(exceptions.BlazarException):
+    msg_fmt = _("Failed to list resource providers")
+
+
 class ResourceProviderCreationFailed(exceptions.BlazarException):
     msg_fmt = _("Failed to create resource provider %(name)s")
 

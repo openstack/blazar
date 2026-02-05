@@ -29,8 +29,10 @@ from blazar.utils.openstack import placement
 
 
 class TestFlavorPlugin(tests.DBTestCase):
-    def _create_fake_host(self):
-        host_values = fake._get_fake_host_values(id=123)
+    def _create_fake_host(self, id=123, hypervisor_hostname=None):
+        host_values = fake._get_fake_host_values(id=id)
+        if hypervisor_hostname:
+            host_values['hypervisor_hostname'] = hypervisor_hostname
         host_values["reservable"] = 1
         db_api.host_create(host_values)
 
@@ -349,14 +351,17 @@ class TestFlavorPlugin(tests.DBTestCase):
             flavorid='12345', name='reservation:12345', vcpus=2, ram=1024,
             disk=10, ephemeral=100, is_public=False)
 
-    def test__query_available_hosts(self):
+    @mock.patch.object(placement.BlazarPlacementClient,
+                       'list_resource_providers')
+    def test__query_available_hosts(self, mock_list_resource_providers):
+        mock_list_resource_providers.return_value = []
         get_reservations = self.patch(db_utils,
                                       'get_reservations_by_host_id')
         get_reservations.return_value = []
         plugin = flavor_plugin.FlavorPlugin()
 
         # Check that we can fit 4 VCPU resource requests
-        self._create_fake_host()
+        self._create_fake_host(hypervisor_hostname="abc")
         fake_inventory_values = {
             'computehost_id': 123,
             'resource_class': 'VCPU',
@@ -404,3 +409,61 @@ class TestFlavorPlugin(tests.DBTestCase):
         }
         ret = plugin._query_available_hosts(**query_params)
         self.assertEqual(2, len(ret))
+
+        # No instances fit when traits do not match request
+        query_params = {
+            'start_date': datetime.datetime(2020, 7, 7, 18, 0),
+            'end_date': datetime.datetime(2020, 7, 7, 19, 0),
+            'resource_request': {
+                'VCPU': 1,
+                'MEMORY_MB': 1024
+            },
+            'resource_traits': {
+                "CUSTOM_1": "required"
+            }
+        }
+        ret = plugin._query_available_hosts(**query_params)
+        self.assertEqual(0, len(ret))
+
+        # Only hosts with the required trait are returned
+        self._create_fake_host(id=456, hypervisor_hostname="def")
+        fake_inventory_values = {
+            'computehost_id': 456,
+            'resource_class': 'VCPU',
+            'total': 3,
+            'reserved': 0,
+            'min_unit': 1,
+            'max_unit': 4,
+            'step_size': 1,
+            'allocation_ratio': 1.0
+        }
+        db_api.host_resource_inventory_create(fake_inventory_values)
+        self._create_fake_host(id=789, hypervisor_hostname="ghi")
+        fake_inventory_values = {
+            'computehost_id': 789,
+            'resource_class': 'VCPU',
+            'total': 3,
+            'reserved': 0,
+            'min_unit': 1,
+            'max_unit': 4,
+            'step_size': 1,
+            'allocation_ratio': 1.0
+        }
+        db_api.host_resource_inventory_create(fake_inventory_values)
+        mock_list_resource_providers.return_value = [{"name": "def"}]
+        query_params = {
+            'start_date': datetime.datetime(2020, 7, 7, 18, 0),
+            'end_date': datetime.datetime(2020, 7, 7, 19, 0),
+            'resource_request': {
+                'VCPU': 1,
+            },
+            'resource_traits': {
+                "CUSTOM_1": "forbidden",
+                "CUSTOM_2": "required",
+            }
+        }
+        ret = plugin._query_available_hosts(**query_params)
+        # 3 available slots on the second host
+        self.assertEqual(3, len(ret))
+        for host in ret:
+            self.assertEqual(host["id"], '456')

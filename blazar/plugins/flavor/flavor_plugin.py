@@ -116,9 +116,6 @@ class FlavorPlugin(base.BasePlugin):
         # we should be able to exclude hosts that don't match the
         # resource requests, e.g. baremetal vs virtual
         # or missing traits
-        if resource_traits:
-            raise mgr_exceptions.NotImplemented(
-                error="Resource traits not supported yet")
         hosts = db_api.reservable_host_get_all_by_queries([])
 
         # find reservations for each host in our time period
@@ -129,8 +126,42 @@ class FlavorPlugin(base.BasePlugin):
                 end_date + datetime.timedelta(minutes=CONF.cleaning_time),
                 [])
 
+        placement_rps_matching_traits = None
+        # Only query placement if we have traits to match
+        if resource_traits:
+            traits_list = []
+            for trait, value in resource_traits.items():
+                # We've already validated resource_traits at this point
+                if value == "required":
+                    traits_list.append(trait)
+                elif value == "forbidden":
+                    # prefix forbidden traits with `!`
+                    traits_list.append(f"!{trait}")
+            required_string = ",".join(traits_list)
+            placement_rps_matching_traits = \
+                self._placement_client.list_resource_providers(
+                    query=f"required={required_string}",
+                    microversion="1.22",
+                )
+        placement_rps_matching_traits_hostnames = {
+            rp['name'] for rp in placement_rps_matching_traits
+        } if placement_rps_matching_traits else set()
+
         available_hosts = []
         for host_info in (reserved_hosts + free_hosts):
+            hypervisor_hostname = host_info['host']['hypervisor_hostname']
+            if (
+                resource_traits and
+                (
+                    hypervisor_hostname
+                    not in placement_rps_matching_traits_hostnames
+                )
+            ):
+                LOG.debug(
+                    "Placement filtered out host %s based on traits",
+                    hypervisor_hostname
+                )
+                continue
             # check how many instances can fit on this host
             hosts_list = self._get_hosts_list(host_info, resource_request)
             available_hosts.extend(hosts_list)
