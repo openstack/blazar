@@ -20,6 +20,7 @@ import pecan
 import pecan.testing
 
 from blazar.api import context as api_context
+from blazar import config as cfg
 from blazar import context
 from blazar.manager.leases import rpcapi as leases_api
 from blazar.manager.oshosts import rpcapi as hosts_rpcapi
@@ -85,6 +86,11 @@ class APITest(tests.TestCase):
         #               enable_acl set to False
 
         if enable_acl:
+            # TODO(tkajinam): Remove this once AuthTokenFixture is fixed.
+            # https://review.opendev.org/989187
+            cfg.CONF.set_override('www_authenticate_uri',
+                                  'http://localhost/identity',
+                                  group='keystone_authtoken')
             self.keystone_middleware = self.useFixture(
                 fixture.AuthTokenFixture())
 
