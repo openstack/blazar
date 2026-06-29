@@ -71,7 +71,7 @@ class V2Controller(rest.RestController):
         LOG.debug("Loaded extensions: %s", extensions)
 
     @pecan.expose()
-    def _route(self, args):
+    def _route(self, args, request):
         """Overrides the default routing behavior.
 
         It allows to map controller URL with correct controller instance.
@@ -87,4 +87,4 @@ class V2Controller(rest.RestController):
                 args[0] = route
         except IndexError:
             LOG.error("No args found on V2 controller")
-        return super(V2Controller, self)._route(args)
+        return super(V2Controller, self)._route(args, request)
