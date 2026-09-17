@@ -22,6 +22,7 @@ import pecan.testing
 from blazar.api import context as api_context
 from blazar import config as cfg
 from blazar import context
+from blazar.db import api as db_api
 from blazar.manager.leases import rpcapi as leases_api
 from blazar.manager.oshosts import rpcapi as hosts_rpcapi
 from blazar import tests
@@ -71,6 +72,8 @@ class APITest(tests.TestCase):
 
         self.rpcapi = leases_api.ManagerRPCAPI
         self.hosts_rpcapi = hosts_rpcapi.ManagerRPCAPI
+
+        self.patch(db_api, 'lease_get').return_value = None
 
         # self.patch(rpcapi.ManagerRPCAPI, 'list_leases').return_value = []
 
