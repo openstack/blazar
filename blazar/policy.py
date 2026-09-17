@@ -16,6 +16,7 @@
 """Policy Engine For Blazar."""
 
 import functools
+import inspect
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -105,8 +106,21 @@ def authorize(extension, action=None, api='blazar', ctx=None,
             tgt = target
             if tgt is None:
                 obj = None
-                if kwargs.get("lease_id"):
-                    obj = db_api.lease_get(kwargs.get("lease_id"))
+                # NOTE(mattcrees): The V2 API wraps the requests with
+                # wsme_pecan.wsexpose, which causes kwargs to arrive as regular
+                # args instead. Work around this by inspecting the function and
+                # extracting out the lease_id kwarg.
+                # TODO(mattcrees): Revert to kwargs.get("lease_id") once the V2
+                # API is removed.
+                bound = inspect.signature(func).bind_partial(self, *args,
+                                                             **kwargs)
+                lease_id = kwargs.get('lease_id')
+                if lease_id is None:
+                    lease_id = bound.arguments.get('lease_id')
+                if lease_id is None and 'kwargs' in bound.arguments:
+                    lease_id = bound.arguments['kwargs'].get('lease_id')
+                if lease_id:
+                    obj = db_api.lease_get(lease_id)
                 if obj:
                     tgt = {
                         'project_id': obj.get("project_id"),
