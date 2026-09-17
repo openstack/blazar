@@ -1,0 +1,16 @@
+---
+security:
+  - |
+    Fixed two security flaws with the v2 API: any user could update/delete a
+    lease from any project via the v2 API, provided that they had the lease ID.
+    Additionally, any user could use the v2 API to list all leases, including
+    those in another project.
+    `LP#2162719 <https://bugs.launchpad.net/blazar/+bug/2162719>`__
+
+    Operators that cannot yet upgrade should consider instead disabling the v2
+    API with the following config in ``blazar.conf``:
+
+    .. code-block:: ini
+
+        [api]
+        api_v2_controllers =
