@@ -86,22 +86,28 @@ class LeasesController(extensions.BaseController):
 
     @policy.authorize('leases', 'get')
     @wsme_pecan.wsexpose(Lease, types.UuidType())
-    def get_one(self, id):
+    def get_one(self, lease_id):
         """Returns the lease having this specific uuid
 
-        :param id: ID of lease
+        :param lease_id: ID of lease
         """
-        lease = pecan.request.rpcapi.get_lease(id)
+        lease = pecan.request.rpcapi.get_lease(lease_id)
         if lease is None:
-            raise exceptions.NotFound(object={'lease_id': id})
+            raise exceptions.NotFound(object={'lease_id': lease_id})
         return Lease.convert(lease)
 
     @policy.authorize('leases', 'get')
     @wsme_pecan.wsexpose([Lease], q=[])
     def get_all(self):
-        """Returns all leases."""
+        """Returns all leases for the current project."""
+        ctx = pecan.request.context
+        if policy.enforce(ctx, 'admin', {}, do_raise=False):
+            project_id = None
+        else:
+            project_id = ctx.project_id
         return [Lease.convert(lease)
-                for lease in pecan.request.rpcapi.list_leases()]
+                for lease in pecan.request.rpcapi.list_leases(
+                    project_id=project_id)]
 
     @policy.authorize('leases', 'post')
     @wsme_pecan.wsexpose(Lease, body=Lease, status_code=201)
@@ -122,10 +128,10 @@ class LeasesController(extensions.BaseController):
 
     @policy.authorize('leases', 'put')
     @wsme_pecan.wsexpose(Lease, types.UuidType(), body=Lease)
-    def put(self, id, sublease):
+    def put(self, lease_id, sublease):
         """Update an existing lease.
 
-        :param id: UUID of a lease.
+        :param lease_id: UUID of a lease.
         :param lease: a subset of a Lease containing values to update.
         """
         sublease_dct = sublease.as_dict()
@@ -149,21 +155,21 @@ class LeasesController(extensions.BaseController):
         if before_end_date:
             sublease_dct['before_end_date'] = before_end_date
 
-        lease = pecan.request.rpcapi.update_lease(id, sublease_dct)
+        lease = pecan.request.rpcapi.update_lease(lease_id, sublease_dct)
 
         if lease is None:
-            raise exceptions.NotFound(object={'lease_id': id})
+            raise exceptions.NotFound(object={'lease_id': lease_id})
         return Lease.convert(lease)
 
     @policy.authorize('leases', 'delete')
     @wsme_pecan.wsexpose(None, types.UuidType(), status_code=204)
-    def delete(self, id):
+    def delete(self, lease_id):
         """Delete an existing lease.
 
-        :param id: UUID of a lease.
+        :param lease_id: UUID of a lease.
         """
         try:
-            pecan.request.rpcapi.delete_lease(id)
+            pecan.request.rpcapi.delete_lease(lease_id)
         except TypeError:
             # The lease was not existing when asking to delete it
-            raise exceptions.NotFound(object={'lease_id': id})
+            raise exceptions.NotFound(object={'lease_id': lease_id})
