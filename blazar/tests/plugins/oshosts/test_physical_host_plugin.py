@@ -34,6 +34,7 @@ from blazar.manager import exceptions as manager_exceptions
 from blazar.manager import service
 from blazar.plugins import oshosts as plugin
 from blazar.plugins.oshosts import host_plugin
+from blazar import policy
 from blazar import tests
 from blazar.utils.openstack import base
 from blazar.utils.openstack import nova
@@ -2663,6 +2664,31 @@ class PhysicalHostPluginTestCase(tests.TestCase):
             query={'detail': True})
 
         # Sort returned value to use assertListEqual
+        ret.sort(key=lambda x: x['property'])
+
+        self.assertListEqual(expected, ret)
+        self.db_list_resource_properties.assert_called_once_with(
+            'physical:host')
+
+    def test_list_resource_properties_with_detail_and_all(self):
+        self.db_list_resource_properties = self.patch(
+            self.db_api, 'resource_properties_list')
+        self.patch(policy, 'enforce').return_value = True
+
+        self.db_list_resource_properties.return_value = [
+            ('prop1', False, 'aaa'),
+            ('prop1', False, 'bbb'),
+            ('prop2', True, 'ccc')
+        ]
+
+        expected = [
+            {'property': 'prop1', 'private': False, 'values': ['aaa', 'bbb']},
+            {'property': 'prop2', 'private': True, 'values': ['ccc']}
+        ]
+
+        ret = self.fake_phys_plugin.list_resource_properties(
+            query={'detail': True, 'all': True})
+
         ret.sort(key=lambda x: x['property'])
 
         self.assertListEqual(expected, ret)

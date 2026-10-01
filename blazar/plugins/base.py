@@ -106,6 +106,7 @@ class BasePlugin(object, metaclass=abc.ABCMeta):
         detail = False if not query else query.get('detail', False)
         all_properties = False if not query else query.get('all', False)
         resource_properties = collections.defaultdict(list)
+        private_properties = {}
 
         include_private = all_properties and policy.enforce(
             context.current(), 'admin', {}, do_raise=False)
@@ -115,10 +116,11 @@ class BasePlugin(object, metaclass=abc.ABCMeta):
 
             if include_private or not private:
                 resource_properties[name].append(value)
+                private_properties[name] = private
 
         if detail:
             return [
-                dict(property=k, private=False, values=v)
+                dict(property=k, private=private_properties[k], values=v)
                 for k, v in resource_properties.items()]
         else:
             return [dict(property=k) for k, v in resource_properties.items()]

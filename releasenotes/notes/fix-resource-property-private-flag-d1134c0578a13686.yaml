@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The resource property list API with ``detail=true`` now returns the
+    actual ``private`` flag of each property. Previously it always
+    returned ``false``, even for private properties listed by an admin with
+    ``all=true``.
