@@ -24,7 +24,5 @@ class TestUpgradeChecks(tests.TestCase):
         super(TestUpgradeChecks, self).setUp()
         self.cmd = status.Checks()
 
-    def test__check_placeholder(self):
-        check_result = self.cmd._check_placeholder()
-        self.assertEqual(
-            Code.SUCCESS, check_result.code)
+    def test_checks_pass_with_defaults(self):
+        self.assertEqual(Code.SUCCESS, self.cmd.check())
