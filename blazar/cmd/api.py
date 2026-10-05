@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import gettext
+import socketserver
 import sys
-import threading
 
 from oslo_config import cfg
 from oslo_log import log as logging
-from wsgiref.simple_server import make_server
+from wsgiref import simple_server
 
 gettext.install('blazar')
 
@@ -44,6 +44,13 @@ CONF.import_opt('host', 'blazar.config')
 CONF.import_opt('enable_v1_api', 'blazar.config')
 
 
+class ThreadingWSGIServer(socketserver.ThreadingMixIn,
+                          simple_server.WSGIServer):
+    """WSGI server handling each request in a thread of its own."""
+
+    daemon_threads = True
+
+
 def main():
     """Entry point to start Blazar API wsgi server."""
     cfg.CONF(sys.argv[1:], project='blazar', prog='blazar-api')
@@ -53,14 +60,10 @@ def main():
     else:
         app = wsgi_app.VersionSelectorApplication()
 
-    def run_server():
-        httpd = make_server(CONF.host, CONF.port, app)
-        httpd.serve_forever()
-
-    # Start in a separate thread
-    server_thread = threading.Thread(target=run_server)
-    server_thread.daemon = True  # Allow app to exit if this is the only thread
-    server_thread.start()
+    # Serve in the foreground: the process lives as long as the server.
+    httpd = simple_server.make_server(CONF.host, CONF.port, app,
+                                      server_class=ThreadingWSGIServer)
+    httpd.serve_forever()
 
 
 if __name__ == '__main__':

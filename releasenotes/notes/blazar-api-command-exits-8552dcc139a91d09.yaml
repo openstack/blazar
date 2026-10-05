@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    The ``blazar-api`` command exited as soon as it started, with status 0,
+    since eventlet was replaced with threading in the API: it started its
+    HTTP server in a daemon thread and returned. It now serves in the
+    foreground again, handling each request in a thread of its own as the
+    eventlet server handled them concurrently. Deployments that run the API
+    under a WSGI server, through ``blazar.wsgi.api:application``, were not
+    affected.
