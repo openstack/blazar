@@ -134,31 +134,29 @@ function create_blazar_accounts {
 # install_blazar() - Collect sources and install
 function install_blazar {
     echo "Install"
-    git_clone $BLAZAR_REPO $BLAZAR_DIR $BLAZAR_BRANCH
-    git_clone $BLAZARCLIENT_REPO $BLAZARCLIENT_DIR $BLAZARCLIENT_BRANCH
-    git_clone $BLAZARNOVA_REPO $BLAZARNOVA_DIR $BLAZARNOVA_BRANCH
-
     setup_develop $BLAZAR_DIR
-    setup_develop $BLAZARCLIENT_DIR
-    setup_develop $BLAZARNOVA_DIR
+
+    git_clone_by_name "python-blazarclient"
+    setup_dev_lib "python-blazarclient"
+    git_clone_by_name "blazar-nova"
+    setup_dev_lib "blazar-nova"
 }
 
 
 # install_blazar_dashboard() - Install Blazar dashboard for Horizon
 function install_blazar_dashboard {
-    git_clone $BLAZAR_DASHBOARD_REPO $BLAZAR_DASHBOARD_DIR $BLAZAR_DASHBOARD_BRANCH
-    setup_develop $BLAZAR_DASHBOARD_DIR
-    blazar_setup_horizon
+    git_clone_by_name "blazar-dashboard"
+    setup_dev_lib "blazar-dashboard"
 }
 
 
 # Set up Horizon integration with Blazar
 function blazar_setup_horizon {
     # Link Dashboard panel to Horizon's directory
-    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_90_admin_reservation_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
-    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_90_project_reservations_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
-    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_91_admin_reservation_hosts_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
-    ln -fs $BLAZAR_DASHBOARD_DIR/blazar_dashboard/enabled/_91_project_reservations_leases_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs ${GITDIR["blazar-dashboard"]}/blazar_dashboard/enabled/_90_admin_reservation_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs ${GITDIR["blazar-dashboard"]}/blazar_dashboard/enabled/_90_project_reservations_panelgroup.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs ${GITDIR["blazar-dashboard"]}/blazar_dashboard/enabled/_91_admin_reservation_hosts_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
+    ln -fs ${GITDIR["blazar-dashboard"]}/blazar_dashboard/enabled/_91_project_reservations_leases_panel.py $HORIZON_DIR/openstack_dashboard/local/enabled/
 
     # Restart Horizon
     restart_apache_server
