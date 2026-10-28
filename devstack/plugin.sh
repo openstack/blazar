@@ -110,12 +110,7 @@ function create_blazar_aggregate_freepool {
 # service              blazar     admin        # if enabled
 #
 function create_blazar_accounts {
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    BLAZAR_USER_ID=$(get_or_create_user $BLAZAR_USER_NAME \
-        "$SERVICE_PASSWORD" "default" "blazar@example.com")
-    get_or_add_user_project_role $ADMIN_ROLE $BLAZAR_USER_ID $SERVICE_TENANT
+    create_service_user "blazar" "admin"
 
     if [[ "$BLAZAR_USE_MOD_WSGI" == "True" ]]; then
         blazar_api_url="$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST/reservation"
@@ -123,11 +118,8 @@ function create_blazar_accounts {
         blazar_api_url="$BLAZAR_SERVICE_PROTOCOL://$BLAZAR_SERVICE_HOST:$BLAZAR_SERVICE_PORT"
     fi
 
-    BLAZAR_SERVICE=$(get_or_create_service "blazar" \
-        "reservation" "Blazar Reservation Service")
-    get_or_create_endpoint $BLAZAR_SERVICE \
-        "$REGION_NAME" \
-        "$blazar_api_url/v1"
+    get_or_create_service "blazar" "reservation" "Blazar Reservation Service"
+    get_or_create_endpoint "reservation" "$REGION_NAME" "$blazar_api_url/v1"
 }
 
 
