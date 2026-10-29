@@ -65,7 +65,7 @@ function configure_blazar {
 
     ACTUAL_FILTERS=$(iniget $NOVA_CONF filter_scheduler enabled_filters)
     if [[ -z "$ACTUAL_FILTERS" ]]; then
-        iniadd $NOVA_CONF filter_scheduler enabled_filters "AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter,BlazarFilter"
+        iniadd $NOVA_CONF filter_scheduler enabled_filters "ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter,BlazarFilter"
     else
         if [[ $ACTUAL_FILTERS != *BlazarFilter* ]];  then
             ACTUAL_FILTERS="$ACTUAL_FILTERS,BlazarFilter"
