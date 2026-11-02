@@ -10,23 +10,10 @@ enable_service blazar-a
 BLAZAR_DEBUG=${BLAZAR_DEBUG:-True}
 BLAZAR_USER_NAME=${BLAZAR_USER_NAME:-blazar}
 
-# Set up default repos
-BLAZAR_REPO=${BLAZAR_REPO:-${GIT_BASE}/openstack/blazar.git}
-BLAZAR_BRANCH=${BLAZAR_BRANCH:-master}
-BLAZARCLIENT_REPO=${BLAZARCLIENT_REPO:-${GIT_BASE}/openstack/python-blazarclient.git}
-BLAZARCLIENT_BRANCH=${BLAZARCLIENT_BRANCH:-master}
-BLAZARNOVA_REPO=${BLAZARNOVA_REPO:-${GIT_BASE}/openstack/blazar-nova.git}
-BLAZARNOVA_BRANCH=${BLAZARNOVA_BRANCH:-master}
-BLAZAR_DASHBOARD_REPO=${BLAZAR_DASHBOARD_REPO:-${GIT_BASE}/openstack/blazar-dashboard.git}
-BLAZAR_DASHBOARD_BRANCH=${BLAZAR_DASHBOARD_BRANCH:-master}
-
 # Set up default directories
 BLAZAR_DIR=$DEST/blazar
 BLAZAR_CONF_DIR=${BLAZAR_CONF_DIR:-/etc/blazar}
 BLAZAR_CONF_FILE=$BLAZAR_CONF_DIR/blazar.conf
-BLAZARCLIENT_DIR=$DEST/python-blazarclient
-BLAZARNOVA_DIR=$DEST/blazar-nova
-BLAZAR_DASHBOARD_DIR=$DEST/blazar-dashboard
 
 # wsgi deployment
 BLAZAR_USE_MOD_WSGI=${BLAZAR_USE_MOD_WSGI:-True}
@@ -41,3 +28,13 @@ BLAZAR_SERVICE_PROTOCOL=${BLAZAR_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 # Blazar specific configurations
 BLAZAR_IDENTITY_SERVICE_NAME=${BLAZAR_IDENTITY_SERVICE_NAME:-"identity"}
 BLAZAR_FREEPOOL_NAME=${BLAZAR_FREEPOOL_NAME:-freepool}
+
+GITDIR["python-blazarclient"]=$DEST/python-blazarclient
+GITREPO["python-blazarclient"]=${BLAZARCLIENT_REPO:-${GIT_BASE}/openstack/python-blazarclient.git}
+GITBRANCH["python-blazarclient"]=${BLAZARCLIENT_BRANCH:-master}
+GITDIR["blazar-nova"]=$DEST/blazar-nova
+GITREPO["blazar-nova"]=${BLAZARNOVA_REPO:-${GIT_BASE}/openstack/blazar-nova.git}
+GITBRANCH["blazar-nova"]=${BLAZARNOVA_BRANCH:-master}
+GITDIR["blazar-dashboard"]=$DEST/blazar-dashboard
+GITREPO["blazar-dashboard"]=${BLAZARDASHBOARD_REPO:-${GIT_BASE}/openstack/blazar-dashboard.git}
+GITBRANCH["blazar-dashboard"]=${BLAZARDASHBOARD_BRANCH:-master}
