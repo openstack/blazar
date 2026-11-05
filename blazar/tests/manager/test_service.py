@@ -29,6 +29,7 @@ import testtools
 from blazar import context
 from blazar.db import api as db_api
 from blazar.db import exceptions as db_ex
+from blazar.db.sqlalchemy import models
 from blazar import enforcement
 from blazar.enforcement import exceptions as enforcement_ex
 from blazar import exceptions
@@ -728,8 +729,12 @@ class ServiceTestCase(tests.DBTestCase):
         lease_values = self.lease_values.copy()
         lease_values['name'] = 'duplicated_name'
 
-        self.patch(self.db_api,
-                   'lease_create').side_effect = db_ex.BlazarDBDuplicateEntry
+        self.patch(
+            self.db_api, 'lease_create'
+        ).side_effect = db_ex.BlazarDBDuplicateEntry(
+            model=models.Lease.__name__,
+            columns=['name'],
+        )
         self.assertRaises(manager_ex.LeaseNameAlreadyExists,
                           self.manager.create_lease, lease_values)
 
