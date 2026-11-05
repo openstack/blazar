@@ -64,5 +64,5 @@ blazar = "blazar.opts:list_opts"
 [project.entry-points."oslo.policy.policies"]
 blazar = "blazar.policies:list_rules"
 
-[tool.setuptools]
-packages = ["blazar"]
+[tool.setuptools.packages.find]
+include = ["blazar*"]
