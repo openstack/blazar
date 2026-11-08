@@ -32,14 +32,15 @@ cli_opts = [
 os_opts = [
     cfg.StrOpt('os_auth_protocol',
                default='http',
+               choices=('http', 'https'),
                help='Protocol used to access OpenStack Identity service'),
     cfg.HostAddressOpt('os_auth_host',
                        default='127.0.0.1',
                        help='IP or hostname of machine on which OpenStack '
                             'Identity service is located'),
-    cfg.StrOpt('os_auth_port',
-               default='5000',
-               help='Port of OpenStack Identity service.'),
+    cfg.PortOpt('os_auth_port',
+                default=5000,
+                help='Port of OpenStack Identity service.'),
     cfg.StrOpt('os_auth_prefix',
                default='',
                help='Prefix of URL to access OpenStack Identity service.'),
