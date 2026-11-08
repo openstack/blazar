@@ -50,6 +50,7 @@ os_opts = [
                     'project.'),
     cfg.StrOpt('os_admin_password',
                default='blazar',
+               secret=True,
                help='Password of the admin user to treat trusts.'),
     cfg.StrOpt('os_admin_project_name',
                default='admin',
