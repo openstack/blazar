@@ -20,8 +20,6 @@
               - ^tox\.ini$
         - blazar-tempest-plugin-ipv6-only:
             irrelevant-files: *irrelevant-files
-        - openstack-tox-pylint:
-            voting: false
     gate:
       jobs:
         - blazar-tempest-plugin-base:
