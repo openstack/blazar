@@ -32,7 +32,7 @@ class TestPlacementClient(tests.TestCase):
         super(TestPlacementClient, self).setUp()
         self.cfg = self.useFixture(conf_fixture.Config(CONF))
         self.cfg.config(os_auth_host='foofoo')
-        self.cfg.config(os_auth_port='8080')
+        self.cfg.config(os_auth_port=8080)
         self.cfg.config(os_auth_prefix='identity')
         self.cfg.config(os_auth_version='v3')
         self.cfg.config(os_region_name='region_foo')
