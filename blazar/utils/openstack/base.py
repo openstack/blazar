@@ -18,8 +18,8 @@ from keystoneauth1.identity import access
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from keystoneclient import client as keystone_client
-import netaddr
 from oslo_config import cfg
+from oslo_utils import netutils
 
 from blazar import context
 from blazar.manager import exceptions
@@ -33,10 +33,7 @@ def get_os_auth_host(conf):
 
     Returns os_auth_host from conf, surrounded by brackets if IPv6.
     """
-    os_auth_host = conf.os_auth_host
-    if netaddr.valid_ipv6(os_auth_host, netaddr.core.INET_PTON):
-        os_auth_host = "[%s]" % os_auth_host
-    return os_auth_host
+    return netutils.escape_ipv6(conf.os_auth_host)
 
 
 def client_kwargs(**_kwargs):
